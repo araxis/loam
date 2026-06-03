@@ -1,0 +1,171 @@
+---
+title: Pickers
+---
+
+# Pickers
+
+Loam provides five picker controls that mirror the MudBlazor picker family. All controls are self-contained `TemplatedControl` or `Decorator` subclasses that open Material-style `Flyout` popups — there is no dependency on Avalonia's built-in FluentTheme `Calendar`. Controls live in `Loam.Controls`; when both `Avalonia.Controls` and `Loam.Controls` are imported, qualify the Loam types as `Loam.Controls.DatePicker`, `Loam.Controls.TimePicker`, and `Loam.Controls.ColorPicker` to avoid ambiguity with Avalonia's own types of the same name.
+
+---
+
+## DatePicker
+
+Mirrors MudBlazor's `MudDatePicker`. An outlined box displays the selected date formatted by `DateFormat`; clicking opens a `MonthCalendar` flyout. `Date` is two-way by default.
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Date` | `DateTime?` | `null` | The selected date. Two-way binding. |
+| `Label` | `string?` | `null` | Field label rendered above the box. |
+| `Placeholder` | `string?` | `"Select a date"` | Text shown when `Date` is `null`. |
+| `DateFormat` | `string` | `"d"` | .NET date format string used to render `Date`. |
+
+### Example
+
+```csharp
+using Avalonia.Controls;
+using Loam.Controls;
+
+var picker = new Loam.Controls.DatePicker
+{
+    Label = "Start date",
+    DateFormat = "MMM d, yyyy",
+};
+
+picker.Bind(Loam.Controls.DatePicker.DateProperty, viewModel.GetObservable(vm => vm.StartDate));
+```
+
+---
+
+## TimePicker
+
+Mirrors MudBlazor's `MudTimePicker`. An outlined box displays the selected `TimeSpan` formatted by `TimeFormat`; clicking opens a flyout with scrollable hour and minute columns. `Time` is two-way by default.
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Time` | `TimeSpan?` | `null` | The selected time. Two-way binding. |
+| `Label` | `string?` | `null` | Field label rendered above the box. |
+| `Placeholder` | `string?` | `"Select a time"` | Text shown when `Time` is `null`. |
+| `TimeFormat` | `string` | `"t"` | .NET time format string used to render `Time`. |
+| `MinuteStep` | `int` | `5` | Granularity of the minute column (1–30). Mirrors MudBlazor's `MinuteSelectionStep`. |
+
+### Example
+
+```csharp
+using Avalonia.Controls;
+using Loam.Controls;
+
+var picker = new Loam.Controls.TimePicker
+{
+    Label = "Meeting time",
+    MinuteStep = 15,
+    TimeFormat = "HH:mm",
+};
+
+picker.Bind(Loam.Controls.TimePicker.TimeProperty, viewModel.GetObservable(vm => vm.MeetingTime));
+```
+
+---
+
+## ColorPicker
+
+Mirrors MudBlazor's `MudColorPicker` (palette mode). An outlined box displays a color swatch and the current hex value; clicking opens a flyout of preset Material swatches. `Value` is two-way by default.
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Value` | `Color` | `#594AE2` | The selected color. Two-way binding. |
+| `Label` | `string?` | `null` | Field label rendered above the box. |
+| `DefaultPalette` _(static)_ | `IReadOnlyList<Color>` | 20 Material 500-ish hues + neutrals | The curated palette shown in the flyout. |
+| `ToHex(Color)` _(static)_ | `string` | — | Formats a `Color` as an upper-case `#RRGGBB` string. |
+
+### Example
+
+```csharp
+using Avalonia.Media;
+using Loam.Controls;
+
+var picker = new Loam.Controls.ColorPicker
+{
+    Label = "Accent color",
+    Value = Color.Parse("#2196F3"),
+};
+
+picker.Bind(Loam.Controls.ColorPicker.ValueProperty, viewModel.GetObservable(vm => vm.AccentColor));
+
+// Convert programmatically
+string hex = Loam.Controls.ColorPicker.ToHex(picker.Value); // e.g. "#2196F3"
+```
+
+---
+
+## DateRangePicker
+
+Mirrors MudBlazor's `MudDateRangePicker`. An outlined box displays the selected range; clicking opens a `MonthCalendar` flyout where the first click sets `Start` and the second click sets `End` (dates are auto-ordered). Both `Start` and `End` are two-way by default.
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Start` | `DateTime?` | `null` | Range start. Two-way binding. Mirrors MudBlazor's `DateRange.Start`. |
+| `End` | `DateTime?` | `null` | Range end. Two-way binding. Mirrors MudBlazor's `DateRange.End`. |
+| `Label` | `string?` | `null` | Field label rendered above the box. |
+| `Placeholder` | `string?` | `"Select a range"` | Text shown when no range is set. |
+| `DateFormat` | `string` | `"d"` | .NET date format string used to render start and end dates. |
+| `Format(start, end, fmt)` _(static)_ | `string?` | — | Returns a formatted `"start – end"` string, or just the start if `end` is `null`, or `null` when `start` is `null`. |
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+var picker = new DateRangePicker
+{
+    Label = "Booking period",
+    DateFormat = "MMM d",
+};
+
+picker.Bind(DateRangePicker.StartProperty, viewModel.GetObservable(vm => vm.BookingStart));
+picker.Bind(DateRangePicker.EndProperty,   viewModel.GetObservable(vm => vm.BookingEnd));
+
+// Format programmatically
+string? display = DateRangePicker.Format(picker.Start, picker.End, "d");
+```
+
+---
+
+## MonthCalendar
+
+A reusable Material month-grid control used internally by `DatePicker` and `DateRangePicker` (eliminating any dependency on Avalonia's FluentTheme `Calendar`). Shows `DisplayMonth` with previous/next month navigation; clicking a day raises `DateSelected` and highlights `SelectedDate`.
+
+### Properties
+
+| Property / Member | Type | Default | Description |
+|---|---|---|---|
+| `SelectedDate` | `DateTime?` | `null` | The highlighted day. |
+| `DisplayMonth` | `DateTime` | First day of the current month | The month currently rendered. |
+| `DateSelected` | `event Action<DateTime>?` | — | Raised when the user clicks a day cell. |
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+var calendar = new MonthCalendar
+{
+    SelectedDate = DateTime.Today,
+    DisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1),
+};
+
+calendar.DateSelected += date =>
+{
+    Console.WriteLine($"User picked {date:d}");
+};
+
+// Embed directly in any layout panel
+var panel = new StackPanel { Children = { calendar } };
+```

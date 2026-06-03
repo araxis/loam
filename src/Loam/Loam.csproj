@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Loam</RootNamespace>
+    <AssemblyName>Loam</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Packaging -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Loam</PackageId>
+    <Description>Material-Design Avalonia controls with a MudBlazor-flavored API, authored in pure C#.</Description>
+    <PackageTags>avalonia;ui;material-design;mudblazor;controls;theme</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
