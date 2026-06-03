@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Loam.Gallery/Loam.Gallery.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Loam/Loam.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Loam.Tests/Loam.Tests.csproj" />
+  </Folder>
+</Solution>

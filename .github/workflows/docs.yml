@@ -1,0 +1,75 @@
+name: Deploy Docs
+
+# Builds the VitePress documentation site (docs/) and publishes it to GitHub Pages.
+#
+# One-time setup: in the repository's Settings → Pages, set "Source" to "GitHub Actions".
+#
+# Pages base path: docs/.vitepress/config.mts uses `process.env.DOCS_BASE ?? '/MudAvalonia/'`.
+# For a project site at https://<user>.github.io/<repo>/ the base must be '/<repo>/'. If your
+# repository is not named "MudAvalonia", set the DOCS_BASE env below to '/<your-repo>/'
+# (or '/' for a user/org root site).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+# Allow the GITHUB_TOKEN to deploy to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment; do not cancel an in-progress run.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Change to '/<your-repo>/' if the repository isn't named "MudAvalonia".
+      DOCS_BASE: /MudAvalonia/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so VitePress lastUpdated works
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install dependencies
+        working-directory: docs
+        run: npm ci
+
+      - name: Build with VitePress
+        working-directory: docs
+        run: npm run docs:build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
