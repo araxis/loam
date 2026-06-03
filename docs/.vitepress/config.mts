@@ -1,12 +1,8 @@
 import { defineConfig } from 'vitepress'
 
-// NOTE: `base` must match the GitHub Pages path. For a project site published at
-// https://<user>.github.io/<repo>/ set base to '/<repo>/'. This repo's folder is
-// "MudAvalonia"; change it (or set to '/' for a user/org root site) if your repo differs.
-const base = process.env.DOCS_BASE ?? '/MudAvalonia/'
+const base = process.env.DOCS_BASE ?? '/loam/'
 
-// Set this to your repository URL (no git remote was configured when these docs were generated).
-const repo = process.env.DOCS_REPO ?? 'https://github.com/your-org/MudAvalonia'
+const repo = process.env.DOCS_REPO ?? 'https://github.com/araxis/loam'
 
 export default defineConfig({
   base,
