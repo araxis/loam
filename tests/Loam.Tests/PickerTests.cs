@@ -205,4 +205,43 @@ public class PickerTests
             close.Handled.ShouldBeTrue();
         }
     }
+
+    [AvaloniaFact]
+    public void Picker_labels_rest_or_float_with_shared_field_chrome()
+    {
+        var picker = new Loam.Controls.DatePicker { Label = "Start date", Placeholder = "Pick a date" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_LabelHost").IsVisible.ShouldBeFalse();
+        picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_RestingLabel").IsVisible.ShouldBeTrue();
+        picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_Display").IsVisible.ShouldBeFalse();
+
+        picker.Date = new DateTime(2026, 6, 4);
+        Dispatcher.UIThread.RunJobs();
+
+        picker.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_LabelHost").IsVisible.ShouldBeTrue();
+        picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_RestingLabel").IsVisible.ShouldBeFalse();
+        picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_Display").IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Picker_error_state_uses_shared_field_chrome()
+    {
+        var picker = new DateRangePicker
+        {
+            Label = "Range",
+            Error = true,
+            ErrorText = "Required",
+            HelperText = "Optional",
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Box(picker).BorderThickness.ShouldBe(new Avalonia.Thickness(2));
+        picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_HelperText").Text
+            .ShouldBe("Required");
+    }
 }

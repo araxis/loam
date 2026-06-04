@@ -3,7 +3,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Threading;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -37,6 +39,22 @@ public class Autocomplete : TemplatedControl
     /// <summary>Identifies the <see cref="MaxItems"/> property.</summary>
     public static readonly StyledProperty<int> MaxItemsProperty =
         AvaloniaProperty.Register<Autocomplete, int>(nameof(MaxItems), 10);
+
+    /// <summary>Identifies the <see cref="HelperText"/> property.</summary>
+    public static readonly StyledProperty<string?> HelperTextProperty =
+        AvaloniaProperty.Register<Autocomplete, string?>(nameof(HelperText));
+
+    /// <summary>Identifies the <see cref="ErrorText"/> property.</summary>
+    public static readonly StyledProperty<string?> ErrorTextProperty =
+        AvaloniaProperty.Register<Autocomplete, string?>(nameof(ErrorText));
+
+    /// <summary>Identifies the <see cref="Error"/> property.</summary>
+    public static readonly StyledProperty<bool> ErrorProperty =
+        AvaloniaProperty.Register<Autocomplete, bool>(nameof(Error));
+
+    /// <summary>Identifies the <see cref="ShrinkLabel"/> property.</summary>
+    public static readonly StyledProperty<bool> ShrinkLabelProperty =
+        AvaloniaProperty.Register<Autocomplete, bool>(nameof(ShrinkLabel));
 
     private TextField? _field;
     private Flyout? _flyout;
@@ -97,6 +115,34 @@ public class Autocomplete : TemplatedControl
         set => SetValue(MaxItemsProperty, value);
     }
 
+    /// <summary>Helper text shown below the field.</summary>
+    public string? HelperText
+    {
+        get => GetValue(HelperTextProperty);
+        set => SetValue(HelperTextProperty, value);
+    }
+
+    /// <summary>Error message shown instead of helper text when <see cref="Error"/>.</summary>
+    public string? ErrorText
+    {
+        get => GetValue(ErrorTextProperty);
+        set => SetValue(ErrorTextProperty, value);
+    }
+
+    /// <summary>Whether the field is in an error state.</summary>
+    public bool Error
+    {
+        get => GetValue(ErrorProperty);
+        set => SetValue(ErrorProperty, value);
+    }
+
+    /// <summary>When true, the label stays floated above the field even when empty and unfocused.</summary>
+    public bool ShrinkLabel
+    {
+        get => GetValue(ShrinkLabelProperty);
+        set => SetValue(ShrinkLabelProperty, value);
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(Autocomplete);
 
@@ -109,6 +155,7 @@ public class Autocomplete : TemplatedControl
         {
             _field.Bind(TextField.TextProperty, new Binding(nameof(Value)) { Source = this, Mode = BindingMode.TwoWay });
             _field.GotFocus += (_, _) => _ = ShowSuggestionsAsync(Value);
+            _field.KeyDown += OnFieldKeyDown;
         }
     }
 
@@ -117,6 +164,19 @@ public class Autocomplete : TemplatedControl
     {
         base.OnPropertyChanged(change);
         if (change.Property == ValueProperty && !_selecting)
+        {
+            _ = ShowSuggestionsAsync(Value);
+        }
+    }
+
+    private void OnFieldKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            _flyout?.Hide();
+            e.Handled = true;
+        }
+        else if (InteractionAssist.IsActivationKey(e.Key))
         {
             _ = ShowSuggestionsAsync(Value);
         }

@@ -82,7 +82,11 @@ internal static class ButtonStyles
 
         theme.Add(new Style(x => x.Nesting().Class(":disabled"))
         {
-            Setters = { Dyn(TemplatedControl.ForegroundProperty, disabledFg) },
+            Setters =
+            {
+                Dyn(TemplatedControl.ForegroundProperty, disabledFg),
+                Dyn(Visual.OpacityProperty, LoamTokens.StateDisabledOpacity),
+            },
         });
         theme.Add(new Style(x => x.Nesting().PropertyEquals(Button.VariantProperty, Variant.Filled).Class(":disabled"))
         {

@@ -363,6 +363,53 @@ public class InputTests
     }
 
     [AvaloniaFact]
+    public void Select_label_rests_inside_until_active_or_selected()
+    {
+        var select = new Select { Label = "Priority", Placeholder = "Pick one" };
+        select.Items.Add(new SelectItem("High", "high"));
+        Show(select);
+        select.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Part(select, "PART_LabelHost").IsVisible.ShouldBeFalse();
+        select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_RestingLabel")
+            .IsVisible.ShouldBeTrue();
+        select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Display")
+            .IsVisible.ShouldBeFalse();
+
+        select.Value = "high";
+        Dispatcher.UIThread.RunJobs();
+
+        Part(select, "PART_LabelHost").IsVisible.ShouldBeTrue();
+        select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_RestingLabel")
+            .IsVisible.ShouldBeFalse();
+        select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Display")
+            .IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Select_error_state_uses_error_text_and_active_border()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var select = new Select
+        {
+            Label = "Priority",
+            Error = true,
+            ErrorText = "Choose one",
+            HelperText = "Shown when valid",
+        };
+        Show(select);
+        select.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var border = Part(select, "PART_Box");
+        border.BorderThickness.ShouldBe(new Thickness(2));
+        ((ISolidColorBrush)border.BorderBrush!).Color.ShouldBe(Color.Parse("#F44336"));
+        select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_HelperText").Text
+            .ShouldBe("Choose one");
+    }
+
+    [AvaloniaFact]
     public void Select_multiselect_display_uses_selected_values()
     {
         var select = new Select { MultiSelect = true, Placeholder = "Pick many" };
@@ -526,6 +573,28 @@ public class InputTests
         ac.Value = "Banana";
         Dispatcher.UIThread.RunJobs();
         field.Text.ShouldBe("Banana");
+    }
+
+    [AvaloniaFact]
+    public void Autocomplete_forwards_field_state_properties()
+    {
+        var ac = new Autocomplete
+        {
+            Label = "Fruit",
+            ShrinkLabel = true,
+            Error = true,
+            ErrorText = "Required",
+            HelperText = "Pick one",
+        };
+        Show(ac);
+        ac.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var field = ac.GetVisualDescendants().OfType<TextField>().First();
+        field.ShrinkLabel.ShouldBeTrue();
+        field.Error.ShouldBeTrue();
+        field.ErrorText.ShouldBe("Required");
+        field.HelperText.ShouldBe("Pick one");
     }
 
     [Fact]

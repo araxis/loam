@@ -237,6 +237,12 @@ Plain data class representing one option.
 | `Value` | `object?` | `null` | The selected value (two-way). |
 | `Label` | `string?` | `null` | Field label. |
 | `Placeholder` | `string?` | `null` | Text shown when nothing is selected. |
+| `Variant` | `Variant` | `Variant.Outlined` | Visual chrome style. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Items` | `ObservableCollection<SelectItem>` | empty | The available options. |
 | `MultiSelect` | `bool` | `false` | Enables toggling several option values without closing the flyout. |
 | `SelectedValues` | `ObservableCollection<object?>` | empty | Selected values used when `MultiSelect` is enabled. |
@@ -251,6 +257,7 @@ var select = new Select
 {
     Label       = "Country",
     Placeholder = "Choose one…",
+    HelperText  = "Click anywhere in the field to open",
     Items =
     {
         new SelectItem("Canada",        "ca"),
@@ -293,6 +300,10 @@ text (case-insensitive); choosing one fills the field.
 | `Placeholder` | `string?` | `null` | Placeholder shown when empty. |
 | `Variant` | `Variant` | `Variant.Outlined` | Visual chrome style. |
 | `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `MaxItems` | `int` | `10` | Maximum suggestions shown in the flyout. |
 | `Items` | `ObservableCollection<string>` | empty | The full candidate list. |
 | `SearchFunc` | `Func<string?, IEnumerable<string>>?` | `null` | Synchronous search source used instead of `Items` filtering. |

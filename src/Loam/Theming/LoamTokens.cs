@@ -21,6 +21,15 @@ public static class LoamTokens
     /// <summary>Resource key for a semantic color's hover overlay brush (color at hover opacity).</summary>
     public static string PaletteHover(string name) => $"Loam.Palette.{name}.Hover";
 
+    /// <summary>Resource key for a semantic color's focus overlay brush.</summary>
+    public static string PaletteFocus(string name) => $"Loam.Palette.{name}.Focus";
+
+    /// <summary>Resource key for a semantic color's pressed overlay brush.</summary>
+    public static string PalettePressed(string name) => $"Loam.Palette.{name}.Pressed";
+
+    /// <summary>Resource key for a semantic color's selected overlay brush.</summary>
+    public static string PaletteSelected(string name) => $"Loam.Palette.{name}.Selected";
+
     /// <summary>Resource key for a semantic color's darkened brush (pressed/active fill).</summary>
     public static string PaletteDarken(string name) => $"Loam.Palette.{name}.Darken";
 
@@ -83,6 +92,72 @@ public static class LoamTokens
     public const string DrawerMiniWidth = "Loam.Layout.DrawerMiniWidth";
     /// <summary>App bar height (double).</summary>
     public const string AppBarHeight = "Loam.Layout.AppBarHeight";
+
+    // Shape
+    /// <summary>Extra-small component corner radius.</summary>
+    public const string ShapeExtraSmall = "Loam.Shape.ExtraSmall";
+    /// <summary>Small component corner radius.</summary>
+    public const string ShapeSmall = "Loam.Shape.Small";
+    /// <summary>Medium component corner radius.</summary>
+    public const string ShapeMedium = "Loam.Shape.Medium";
+    /// <summary>Large component corner radius.</summary>
+    public const string ShapeLarge = "Loam.Shape.Large";
+    /// <summary>Full pill/circle component corner radius.</summary>
+    public const string ShapeFull = "Loam.Shape.Full";
+
+    // Field metrics
+    /// <summary>Outlined field minimum height.</summary>
+    public const string FieldOutlinedHeight = "Loam.Field.OutlinedHeight";
+    /// <summary>Filled field minimum height.</summary>
+    public const string FieldFilledHeight = "Loam.Field.FilledHeight";
+    /// <summary>Text field minimum height.</summary>
+    public const string FieldTextHeight = "Loam.Field.TextHeight";
+    /// <summary>Resting field outline width.</summary>
+    public const string FieldOutlineWidth = "Loam.Field.OutlineWidth";
+    /// <summary>Active field outline width.</summary>
+    public const string FieldActiveOutlineWidth = "Loam.Field.ActiveOutlineWidth";
+    /// <summary>Outlined field padding.</summary>
+    public const string FieldOutlinedPadding = "Loam.Field.OutlinedPadding";
+    /// <summary>Filled field padding.</summary>
+    public const string FieldFilledPadding = "Loam.Field.FilledPadding";
+    /// <summary>Text field padding.</summary>
+    public const string FieldTextPadding = "Loam.Field.TextPadding";
+    /// <summary>Floating label x offset.</summary>
+    public const string FieldLabelX = "Loam.Field.LabelX";
+    /// <summary>Floating label top margin.</summary>
+    public const string FieldFloatingLabelTopMargin = "Loam.Field.FloatingLabelTopMargin";
+    /// <summary>Floating label horizontal padding.</summary>
+    public const string FieldFloatingLabelHorizontalPadding = "Loam.Field.FloatingLabelHorizontalPadding";
+    /// <summary>Field icon spacing.</summary>
+    public const string FieldIconSpacing = "Loam.Field.IconSpacing";
+    /// <summary>Helper/error text top spacing.</summary>
+    public const string FieldHelperTopSpacing = "Loam.Field.HelperTopSpacing";
+
+    // State layers
+    /// <summary>Hover state layer opacity.</summary>
+    public const string StateHoverOpacity = "Loam.State.HoverOpacity";
+    /// <summary>Focus state layer opacity.</summary>
+    public const string StateFocusOpacity = "Loam.State.FocusOpacity";
+    /// <summary>Pressed state layer opacity.</summary>
+    public const string StatePressedOpacity = "Loam.State.PressedOpacity";
+    /// <summary>Selected state layer opacity.</summary>
+    public const string StateSelectedOpacity = "Loam.State.SelectedOpacity";
+    /// <summary>Dragged state layer opacity.</summary>
+    public const string StateDraggedOpacity = "Loam.State.DraggedOpacity";
+    /// <summary>Disabled state opacity.</summary>
+    public const string StateDisabledOpacity = "Loam.State.DisabledOpacity";
+
+    // Motion
+    /// <summary>Short motion duration.</summary>
+    public const string MotionDurationShort = "Loam.Motion.DurationShort";
+    /// <summary>Medium motion duration.</summary>
+    public const string MotionDurationMedium = "Loam.Motion.DurationMedium";
+    /// <summary>Long motion duration.</summary>
+    public const string MotionDurationLong = "Loam.Motion.DurationLong";
+    /// <summary>Standard easing string.</summary>
+    public const string MotionEasingStandard = "Loam.Motion.EasingStandard";
+    /// <summary>Emphasized easing string.</summary>
+    public const string MotionEasingEmphasized = "Loam.Motion.EasingEmphasized";
 
     // Z-index
     /// <summary>Resource key for an overlay z-index (int), e.g. <c>ZIndex(nameof(LoamZIndex.Dialog))</c>.</summary>

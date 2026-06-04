@@ -5,7 +5,7 @@ title: Theming
 # Theming
 
 Loam's theme engine centers on **`LoamTheme`** (an Avalonia `Styles`) and projects a
-**`LoamThemeData`** — palette, typography, shadows, layout metrics and z-indices — into Avalonia
+**`LoamThemeData`** — palette, typography, shadows, layout, shape, state, motion, field metrics and z-indices — into Avalonia
 resources, with separate **light** and **dark** dictionaries. Every control resolves its colors, fonts
 and elevations from these tokens, so theme and variant changes restyle the whole tree automatically.
 
@@ -24,6 +24,9 @@ Styles.Add(theme);                    // in your App.Initialize()
 var data = LoamThemeData.Default with
 {
     PaletteLight = LoamPalette.DefaultLight with { Primary = Color.Parse("#0A7E8C") },
+    Shape = LoamShape.Default with { Medium = new CornerRadius(10) },
+    FieldMetrics = LoamFieldMetrics.Default with { OutlinedHeight = 56 },
+    StateLayer = LoamStateLayer.Default with { HoverOpacity = 0.1 },
 };
 Styles.Add(new LoamTheme(data));
 ```
@@ -47,7 +50,7 @@ restyle.
 | --- | --- |
 | `SetPrimary(Color color)` | Recolor the primary (and its contrast text) for both variants. |
 | `SetPalette(LoamPalette light, LoamPalette dark)` | Swap the whole light/dark palettes. |
-| `SetData(LoamThemeData data)` | Replace the entire theme data (palette + typography + shadows + …). |
+| `SetData(LoamThemeData data)` | Replace the entire theme data. |
 
 ```csharp
 theme.SetPrimary(Colors.Indigo);
@@ -75,12 +78,22 @@ new Text   { Text = "Heading", Typo = Typo.H4 };
 
 All values are exposed as Avalonia dynamic resources keyed by **`LoamTokens`** (e.g.
 `LoamTokens.Primary`, `LoamTokens.Surface`, `LoamTokens.Palette(name)`,
-`LoamTokens.Elevation(level)`, `LoamTokens.TypographyFontSize(name)`). Custom controls can bind to
+`LoamTokens.Elevation(level)`, `LoamTokens.TypographyFontSize(name)`, field metrics,
+shape, state, and motion tokens). Custom controls can bind to
 them the same way Loam's do:
 
 ```csharp
 border.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Surface));
 ```
+
+Common additive token groups:
+
+| Data record | Token examples |
+| --- | --- |
+| `LoamShape` | `LoamTokens.ShapeSmall`, `LoamTokens.ShapeMedium`, `LoamTokens.ShapeFull` |
+| `LoamStateLayer` | `LoamTokens.StateHoverOpacity`, `LoamTokens.StateDisabledOpacity` |
+| `LoamMotion` | `LoamTokens.MotionDurationShort`, `LoamTokens.MotionEasingStandard` |
+| `LoamFieldMetrics` | `LoamTokens.FieldOutlinedHeight`, `LoamTokens.FieldOutlinedPadding` |
 
 ## Elevation
 

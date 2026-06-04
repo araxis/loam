@@ -25,6 +25,18 @@ public sealed record LoamThemeData
     /// <summary>Overlay stacking order.</summary>
     public LoamZIndex ZIndex { get; init; } = LoamZIndex.Default;
 
+    /// <summary>Corner radii used by component families.</summary>
+    public LoamShape Shape { get; init; } = LoamShape.Default;
+
+    /// <summary>Interaction state opacity values.</summary>
+    public LoamStateLayer StateLayer { get; init; } = LoamStateLayer.Default;
+
+    /// <summary>Motion durations and easing names.</summary>
+    public LoamMotion Motion { get; init; } = LoamMotion.Default;
+
+    /// <summary>Shared field-style input metrics.</summary>
+    public LoamFieldMetrics FieldMetrics { get; init; } = LoamFieldMetrics.Default;
+
     /// <summary>The Loam defaults.</summary>
     public static LoamThemeData Default { get; } = new();
 }

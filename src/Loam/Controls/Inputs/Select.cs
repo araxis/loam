@@ -57,12 +57,42 @@ public class Select : TemplatedControl
     public static readonly StyledProperty<bool> MultiSelectProperty =
         AvaloniaProperty.Register<Select, bool>(nameof(MultiSelect));
 
+    /// <summary>Identifies the <see cref="Variant"/> property.</summary>
+    public static readonly StyledProperty<Variant> VariantProperty =
+        AvaloniaProperty.Register<Select, Variant>(nameof(Variant), Loam.Variant.Outlined);
+
+    /// <summary>Identifies the <see cref="Color"/> property.</summary>
+    public static readonly StyledProperty<LoamColor> ColorProperty =
+        AvaloniaProperty.Register<Select, LoamColor>(nameof(Color), LoamColor.Primary);
+
+    /// <summary>Identifies the <see cref="Error"/> property.</summary>
+    public static readonly StyledProperty<bool> ErrorProperty =
+        AvaloniaProperty.Register<Select, bool>(nameof(Error));
+
+    /// <summary>Identifies the <see cref="HelperText"/> property.</summary>
+    public static readonly StyledProperty<string?> HelperTextProperty =
+        AvaloniaProperty.Register<Select, string?>(nameof(HelperText));
+
+    /// <summary>Identifies the <see cref="ErrorText"/> property.</summary>
+    public static readonly StyledProperty<string?> ErrorTextProperty =
+        AvaloniaProperty.Register<Select, string?>(nameof(ErrorText));
+
+    /// <summary>Identifies the <see cref="ShrinkLabel"/> property.</summary>
+    public static readonly StyledProperty<bool> ShrinkLabelProperty =
+        AvaloniaProperty.Register<Select, bool>(nameof(ShrinkLabel));
+
     private Border? _box;
     private Border? _labelHost;
     private Text? _display;
     private Text? _label;
+    private Text? _restingLabel;
+    private Text? _helper;
     private IDisposable? _displayForeground;
     private IDisposable? _boxBorderBrush;
+    private IDisposable? _boxBackground;
+    private IDisposable? _labelForeground;
+    private IDisposable? _restingLabelForeground;
+    private IDisposable? _helperForeground;
     private Popup? _popup;
 
     /// <summary>Creates the select.</summary>
@@ -115,6 +145,48 @@ public class Select : TemplatedControl
         set => SetValue(MultiSelectProperty, value);
     }
 
+    /// <summary>Visual chrome style.</summary>
+    public Variant Variant
+    {
+        get => GetValue(VariantProperty);
+        set => SetValue(VariantProperty, value);
+    }
+
+    /// <summary>Focus accent color.</summary>
+    public LoamColor Color
+    {
+        get => GetValue(ColorProperty);
+        set => SetValue(ColorProperty, value);
+    }
+
+    /// <summary>Whether the field is in an error state.</summary>
+    public bool Error
+    {
+        get => GetValue(ErrorProperty);
+        set => SetValue(ErrorProperty, value);
+    }
+
+    /// <summary>Helper text shown below the field.</summary>
+    public string? HelperText
+    {
+        get => GetValue(HelperTextProperty);
+        set => SetValue(HelperTextProperty, value);
+    }
+
+    /// <summary>Error message shown instead of helper text when <see cref="Error"/>.</summary>
+    public string? ErrorText
+    {
+        get => GetValue(ErrorTextProperty);
+        set => SetValue(ErrorTextProperty, value);
+    }
+
+    /// <summary>When true, the label stays floated above the field even when empty and unfocused.</summary>
+    public bool ShrinkLabel
+    {
+        get => GetValue(ShrinkLabelProperty);
+        set => SetValue(ShrinkLabelProperty, value);
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(Select);
 
@@ -127,6 +199,8 @@ public class Select : TemplatedControl
         _popup = e.NameScope.Find("PART_Popup") as Popup;
         _display = e.NameScope.Find("PART_Display") as Text;
         _label = e.NameScope.Find("PART_Label") as Text;
+        _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
+        _helper = e.NameScope.Find("PART_HelperText") as Text;
         if (_popup is not null)
         {
             _popup.Closed += (_, _) => ApplyBoxChrome();
@@ -158,9 +232,16 @@ public class Select : TemplatedControl
         {
             UpdateDisplay();
         }
-        else if (change.Property == LabelProperty)
+        else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
+                 change.Property == HelperTextProperty || change.Property == ErrorTextProperty ||
+                 change.Property == ErrorProperty)
         {
             UpdateLabel();
+        }
+        else if (change.Property == VariantProperty || change.Property == ColorProperty ||
+                 change.Property == IsEnabledProperty)
+        {
+            ApplyBoxChrome();
         }
     }
 
@@ -231,12 +312,44 @@ public class Select : TemplatedControl
 
     private void UpdateLabel()
     {
+        var labelForeground = LabelForegroundKey();
+        var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
+        var hasLabel = !string.IsNullOrEmpty(Label);
+        var active = IsFocused || _box?.IsFocused == true || _popup?.IsOpen == true;
+        var floating = hasLabel && (ShrinkLabel || active || HasSelection());
+        var resting = hasLabel && !floating;
+
         if (_label is not null)
         {
             _label.Text = Label;
-            _label.IsVisible = !string.IsNullOrEmpty(Label);
+            _label.IsVisible = floating;
+            _labelForeground?.Dispose();
+            _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
         }
-        FieldChrome.ApplyLabelLayout(_box, _labelHost, _label?.IsVisible == true);
+
+        if (_restingLabel is not null)
+        {
+            _restingLabel.Text = Label;
+            _restingLabel.IsVisible = resting;
+            _restingLabelForeground?.Dispose();
+            _restingLabelForeground = _restingLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
+        }
+
+        if (_display is not null)
+        {
+            _display.IsVisible = !resting;
+        }
+
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating);
+
+        if (_helper is not null)
+        {
+            var text = Error && !string.IsNullOrEmpty(ErrorText) ? ErrorText : HelperText;
+            _helper.Text = text;
+            _helper.IsVisible = !string.IsNullOrEmpty(text);
+            _helperForeground?.Dispose();
+            _helperForeground = _helper.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(helperForeground));
+        }
 
         InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
     }
@@ -249,11 +362,9 @@ public class Select : TemplatedControl
         }
 
         var active = IsFocused || _box.IsFocused || _popup?.IsOpen == true;
-        var brush = active ? LoamTokens.Primary : LoamTokens.Palette(nameof(LoamPalette.LinesInputs));
-        _box.BorderThickness = new Thickness(active ? 2 : 1);
-        _boxBorderBrush?.Dispose();
-        _boxBorderBrush = _box.Bind(Border.BorderBrushProperty, this.GetResourceObservable(brush));
-        FieldChrome.ApplyLabelLayout(_box, _labelHost, _label?.IsVisible == true);
+        FieldChrome.Apply(this, _box, Variant, Color, Error, active, IsEnabled,
+            ref _boxBorderBrush, ref _boxBackground);
+        UpdateLabel();
     }
 
     private void UpdateDisplay()
@@ -270,6 +381,7 @@ public class Select : TemplatedControl
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(!string.IsNullOrEmpty(text) ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
         InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
+        UpdateLabel();
     }
 
     private Control BuildItemContent(SelectItem item)
@@ -288,6 +400,32 @@ public class Select : TemplatedControl
     }
 
     private string DisplayText(SelectItem item) => DisplayTextFunc?.Invoke(item) ?? item.Text ?? item.Value?.ToString() ?? string.Empty;
+
+    private bool HasSelection()
+    {
+        if (MultiSelect)
+        {
+            return SelectedValues.Count > 0;
+        }
+
+        return Value is not null || Items.Any(i => Equals(i.Value, Value));
+    }
+
+    private string LabelForegroundKey()
+    {
+        if (Error)
+        {
+            return LoamTokens.Error;
+        }
+
+        if (IsFocused || _box?.IsFocused == true || _popup?.IsOpen == true)
+        {
+            var paletteName = Color.ToPaletteName();
+            return paletteName is null ? LoamTokens.Primary : LoamTokens.Palette(paletteName);
+        }
+
+        return LoamTokens.TextSecondary;
+    }
 
     private string? MultiSelectText()
     {

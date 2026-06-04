@@ -45,6 +45,44 @@ public class ThemingTests
     }
 
     [Fact]
+    public void Shape_state_motion_and_field_tokens_resolve()
+    {
+        var theme = new LoamTheme();
+        var res = theme.Resources;
+
+        res.TryGetResource(LoamTokens.ShapeSmall, ThemeVariant.Light, out var shape).ShouldBeTrue();
+        shape.ShouldBe(new Avalonia.CornerRadius(4));
+        res.TryGetResource(LoamTokens.StateHoverOpacity, ThemeVariant.Light, out var hover).ShouldBeTrue();
+        hover.ShouldBe(0.08);
+        res.TryGetResource(LoamTokens.StateDisabledOpacity, ThemeVariant.Light, out var disabled).ShouldBeTrue();
+        disabled.ShouldBe(0.38);
+        res.TryGetResource(LoamTokens.MotionDurationMedium, ThemeVariant.Light, out var duration).ShouldBeTrue();
+        duration.ShouldBe(TimeSpan.FromMilliseconds(180));
+        res.TryGetResource(LoamTokens.FieldOutlinedHeight, ThemeVariant.Light, out var height).ShouldBeTrue();
+        height.ShouldBe(52d);
+        res.TryGetResource(LoamTokens.FieldOutlinedPadding, ThemeVariant.Light, out var padding).ShouldBeTrue();
+        padding.ShouldBe(new Avalonia.Thickness(12, 14));
+    }
+
+    [Fact]
+    public void Custom_state_and_field_tokens_flow_into_resources()
+    {
+        var theme = new LoamTheme(LoamThemeData.Default with
+        {
+            StateLayer = LoamStateLayer.Default with { HoverOpacity = 0.2, DisabledOpacity = 0.6 },
+            FieldMetrics = LoamFieldMetrics.Default with { OutlinedHeight = 60 },
+        });
+
+        theme.Resources.TryGetResource(LoamTokens.StateHoverOpacity, ThemeVariant.Light, out var hover).ShouldBeTrue();
+        hover.ShouldBe(0.2);
+        theme.Resources.TryGetResource(LoamTokens.StateDisabledOpacity, ThemeVariant.Light, out var disabled).ShouldBeTrue();
+        disabled.ShouldBe(0.6);
+        theme.Resources.TryGetResource(LoamTokens.FieldOutlinedHeight, ThemeVariant.Light, out var height).ShouldBeTrue();
+        height.ShouldBe(60d);
+        Brush(theme.Resources, LoamTokens.PaletteHover(nameof(LoamPalette.Primary)), ThemeVariant.Light).A.ShouldBe((byte)51);
+    }
+
+    [Fact]
     public void Elevation_tokens_resolve()
     {
         var res = new LoamTheme().Resources;

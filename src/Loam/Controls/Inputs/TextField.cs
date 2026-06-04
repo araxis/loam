@@ -317,7 +317,7 @@ public class TextField : TemplatedControl
             _textBox.PlaceholderText = resting ? null : Placeholder;
         }
 
-        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, floating);
+        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, floating);
 
         if (_helper is not null)
         {
@@ -362,7 +362,6 @@ public class TextField : TemplatedControl
 
     private void ApplyChrome()
     {
-        Opacity = IsEnabled ? 1 : 0.5;
         if (_inputBorder is null)
         {
             return;
