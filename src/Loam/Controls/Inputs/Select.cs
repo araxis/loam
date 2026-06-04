@@ -3,8 +3,10 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -64,6 +66,7 @@ public class Select : TemplatedControl
     /// <summary>Creates the select.</summary>
     public Select()
     {
+        Focusable = true;
         Items.CollectionChanged += (_, _) => UpdateDisplay();
         SelectedValues.CollectionChanged += (_, _) => UpdateDisplay();
     }
@@ -120,7 +123,11 @@ public class Select : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         if (_box is not null)
         {
-            _box.PointerPressed += (_, _) => Open();
+            _box.PointerPressed += (_, _) =>
+            {
+                Focus();
+                Open();
+            };
         }
 
         UpdateLabel();
@@ -131,13 +138,30 @@ public class Select : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == ValueProperty || change.Property == MultiSelectProperty)
+        if (change.Property == ValueProperty || change.Property == MultiSelectProperty ||
+            change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
         }
         else if (change.Property == LabelProperty)
         {
             UpdateLabel();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            Open();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            _flyout?.Hide();
+            e.Handled = true;
         }
     }
 
@@ -179,6 +203,8 @@ public class Select : TemplatedControl
             _label.Text = Label;
             _label.IsVisible = !string.IsNullOrEmpty(Label);
         }
+
+        InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
     }
 
     private void UpdateDisplay()
@@ -194,6 +220,7 @@ public class Select : TemplatedControl
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(!string.IsNullOrEmpty(text) ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+        InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
     }
 
     private Control BuildItemContent(SelectItem item)

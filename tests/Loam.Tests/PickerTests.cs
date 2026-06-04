@@ -1,5 +1,7 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -16,6 +18,15 @@ public class PickerTests
         new Window { Width = 400, Height = 400, Content = content }.Show();
         Dispatcher.UIThread.RunJobs();
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
+
+    private static Border Box(Control control) =>
+        control.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Box");
 
     [AvaloniaFact]
     public void DatePicker_display_shows_placeholder_then_formatted_date()
@@ -162,5 +173,36 @@ public class PickerTests
         picker.ShowAlpha = false;
         Dispatcher.UIThread.RunJobs();
         hex.Text.ShouldBe("#102030");
+    }
+
+    [AvaloniaFact]
+    public void Pickers_are_focusable_named_and_keyboard_openable()
+    {
+        Control[] pickers =
+        [
+            new Loam.Controls.DatePicker { Label = "Start date" },
+            new DateRangePicker { Label = "Range" },
+            new Loam.Controls.TimePicker { Label = "Start time" },
+            new ColorPicker { Label = "Accent" },
+        ];
+
+        foreach (var picker in pickers)
+        {
+            Show(picker);
+            picker.ApplyTemplate();
+            Dispatcher.UIThread.RunJobs();
+
+            picker.Focusable.ShouldBeTrue();
+            Box(picker).Focusable.ShouldBeTrue();
+            AutomationProperties.GetName(picker).ShouldNotBeNullOrWhiteSpace();
+
+            var open = KeyArgs(Key.Space);
+            picker.RaiseEvent(open);
+            open.Handled.ShouldBeTrue();
+
+            var close = KeyArgs(Key.Escape);
+            picker.RaiseEvent(close);
+            close.Handled.ShouldBeTrue();
+        }
     }
 }

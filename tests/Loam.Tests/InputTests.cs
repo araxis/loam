@@ -1,7 +1,9 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -27,6 +29,12 @@ public class InputTests
         control.ApplyTemplate();
         return control.GetVisualDescendants().OfType<Border>().First(b => b.Name == name);
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
 
     [AvaloniaFact]
     public void CheckBox_checked_fills_box_with_color()
@@ -241,6 +249,27 @@ public class InputTests
 
         var display = select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Display");
         display.Text.ShouldBe("#2");
+    }
+
+    [AvaloniaFact]
+    public void Select_is_focusable_named_and_keyboard_openable()
+    {
+        var select = new Select { Label = "Fruit", Placeholder = "Pick one" };
+        Show(select);
+        select.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        select.Focusable.ShouldBeTrue();
+        Part(select, "PART_Box").Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(select).ShouldBe("Fruit");
+
+        var open = KeyArgs(Key.Enter);
+        select.RaiseEvent(open);
+        open.Handled.ShouldBeTrue();
+
+        var close = KeyArgs(Key.Escape);
+        select.RaiseEvent(close);
+        close.Handled.ShouldBeTrue();
     }
 
     [Fact]

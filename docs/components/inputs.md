@@ -4,7 +4,7 @@ title: Form inputs
 
 # Form inputs
 
-Loam's input controls map the Material Design form surface to Avalonia-native `TemplatedControl` and control
+Loam's input controls map familiar form surfaces to Avalonia-native `TemplatedControl` and control
 subclasses. Shared enums (`LoamColor`, `Variant`, `LoamSize`) live in the `Loam` namespace; all controls
 are in `Loam.Controls`.
 
@@ -12,7 +12,7 @@ are in `Loam.Controls`.
 
 ## TextField
 
-Material text input equivalent to the reference API's `TextField`. Wraps an Avalonia `TextBox` with an
+Text input equivalent to the reference API's `TextField`. Wraps an Avalonia `TextBox` with an
 optional label, helper/error text, and Text/Filled/Outlined variant chrome that highlights in `Color`
 on focus and switches to the error color when `Error` is set. Validates automatically on blur when
 `Required` or `Validation` is set.
@@ -65,7 +65,7 @@ var amount = new TextField
 ## NumericField
 
 Numeric text input with spinner buttons, equivalent to the reference API's `NumericField`. Shares the
-`TextField` Material chrome and adds `Minimum`/`Maximum` clamping, a `Step` increment/decrement,
+`TextField` chrome and adds `Minimum`/`Maximum` clamping, a `Step` increment/decrement,
 and optional .NET format-string display.
 
 ### Properties
@@ -152,6 +152,7 @@ string formatted = Mask.Apply("5551234567", "(###) ###-####"); // → "(555) 123
 
 Dropdown single-select control equivalent to the reference API's `Select`/`SelectItem`. An outlined field
 shows the chosen option's display text; clicking opens a flyout list built from the `Items` collection.
+The field is focusable: Enter or Space opens the list, and Escape closes it.
 
 ### SelectItem
 
@@ -213,7 +214,7 @@ tags.SelectedValues.Add("review");
 ## Autocomplete
 
 Free-text input with a filtered suggestion flyout, equivalent to the reference API's `Autocomplete`. Wraps
-a `TextField` for Material chrome and opens a `Flyout` listing `Items` entries that contain the typed
+a `TextField` for field chrome and opens a `Flyout` listing `Items` entries that contain the typed
 text (case-insensitive); choosing one fills the field.
 
 ### Properties
@@ -259,7 +260,7 @@ var remote = new Autocomplete
 
 ## CheckBox
 
-Material checkbox equivalent to the reference API's `CheckBox`. Subclasses Avalonia's `CheckBox` (inheriting
+Checkbox equivalent to the reference API's `CheckBox`. Subclasses Avalonia's `CheckBox` (inheriting
 tri-state, keyboard toggle, and `IsChecked`) and renders a token-colored box and checkmark scaled by
 `Size`.
 
@@ -289,7 +290,7 @@ var cb = new CheckBox
 
 ## Switch
 
-Material toggle switch equivalent to the reference API's `Switch`. Subclasses Avalonia's `ToggleButton`
+Toggle switch equivalent to the reference API's `Switch`. Subclasses Avalonia's `ToggleButton`
 (toggle behavior, `:checked` pseudo-class) and renders a tinted sliding track and thumb.
 
 ### Properties
@@ -318,7 +319,7 @@ var sw = new Switch
 
 ## Radio and RadioGroup
 
-`Radio` is a Material radio button equivalent to the reference API's `Radio`. It subclasses Avalonia's
+`Radio` is a radio button equivalent to the reference API's `Radio`. It subclasses Avalonia's
 `RadioButton` and renders a token-colored ring and dot. `RadioGroup` is a `Decorator` that coordinates
 child `Radio` controls and exposes the chosen option's value as a two-way `Value` property, mirroring
 the reference API's `RadioGroup`.

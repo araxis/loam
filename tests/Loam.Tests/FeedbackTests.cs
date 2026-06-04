@@ -43,6 +43,38 @@ public class FeedbackTests
         progress.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Fill").Width.ShouldBeGreaterThan(0);
     }
 
+    [AvaloniaFact]
+    public void ProgressLinear_indeterminate_uses_moving_fill()
+    {
+        var progress = new ProgressLinear { Indeterminate = true, Width = 200 };
+        Show(progress);
+        progress.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var fill = progress.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Fill");
+        fill.Width.ShouldBeGreaterThanOrEqualTo(24);
+
+        progress.IndeterminateOffset = 0.5;
+        Dispatcher.UIThread.RunJobs();
+
+        var transform = fill.RenderTransform.ShouldBeOfType<TranslateTransform>();
+        transform.X.ShouldNotBe(0);
+    }
+
+    [AvaloniaFact]
+    public void Skeleton_static_and_animated_modes_are_configurable()
+    {
+        var skeleton = new Skeleton { Animate = false };
+        Show(skeleton);
+
+        skeleton.Animate.ShouldBeFalse();
+        skeleton.Opacity.ShouldBe(1);
+
+        skeleton.Animate = true;
+        Dispatcher.UIThread.RunJobs();
+        skeleton.Animate.ShouldBeTrue();
+    }
+
     [Fact]
     public void ProgressCircular_fraction_clamps_and_sizes_by_size()
     {

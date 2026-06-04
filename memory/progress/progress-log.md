@@ -7,6 +7,29 @@ Next.
 
 ---
 
+## 2026-06-04 — v1.2 — Polish release
+
+**Done**
+- Public API polish: `Text.Align`, `ToggleIconButton.ToggledColor`, and `ChipSet.MultiSelect` /
+  `SelectedIndexes` with single-select compatibility preserved.
+- Interaction/accessibility polish: `Select`, date/time/range/color pickers, `ExpansionPanel`,
+  `NavGroup`, and tree rows are focusable where needed; Enter/Space activation, Escape flyout close,
+  and basic automation names are covered by headless tests.
+- Feedback/motion polish: `ProgressLinear.Indeterminate`, `Skeleton.Animate`, and animated
+  `Collapse` with configurable `Duration`; expansion and nav reveal now use `Collapse`.
+- Release maintenance: package version moved to `1.2.0`; workflows opt into the Node 24 action
+  runtime; docs, gallery, inventory, and README were updated with neutral wording.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release -p:UseSharedCompilation=false /nodeReuse:false` passed with
+  isolated NuGet caches.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release -p:UseSharedCompilation=false
+  /nodeReuse:false` passed: 139 tests.
+
+**Next:** run docs build, pack, hygiene scans, then merge/tag `v1.2.0` for package publishing.
+
+---
+
 ## 2026-06-04 — v1.1 — Full component hardening pass
 
 **Done**

@@ -7,7 +7,7 @@ namespace Loam.Controls;
 /// <summary>
 /// A Material button, mirroring the reference API's <c>Button</c>. Subclasses Avalonia's
 /// <see cref="Avalonia.Controls.Button"/> (for click/command/keyboard/pseudo-class states) and adds
-/// the Material Design-style <see cref="Variant"/>, <see cref="Color"/>, <see cref="Size"/> and
+/// the reference-style <see cref="Variant"/>, <see cref="Color"/>, <see cref="Size"/> and
 /// <see cref="FullWidth"/> parameters. All visuals come from theme tokens via its control theme.
 /// </summary>
 public class Button : global::Avalonia.Controls.Button

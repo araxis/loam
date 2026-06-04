@@ -5,12 +5,13 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
 
 /// <summary>
-/// A time input with a Material popup, mirroring the reference API's <c>TimePicker</c>. An outlined box shows
+/// A time input with a popup, mirroring the reference API's <c>TimePicker</c>. An outlined box shows
 /// the two-way <see cref="Time"/> formatted by <see cref="TimeFormat"/>; clicking it opens a flyout with
 /// scrollable hour and minute columns (no FluentTheme dependency).
 /// </summary>
@@ -45,6 +46,9 @@ public class TimePicker : TemplatedControl
     private Text? _label;
     private IDisposable? _displayForeground;
     private Flyout? _flyout;
+
+    /// <summary>Creates the picker.</summary>
+    public TimePicker() => Focusable = true;
 
     /// <summary>The selected time (two-way). Mirrors the reference API's <c>Time</c>.</summary>
     public TimeSpan? Time
@@ -93,7 +97,11 @@ public class TimePicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         if (_box is not null)
         {
-            _box.PointerPressed += (_, _) => Open();
+            _box.PointerPressed += (_, _) =>
+            {
+                Focus();
+                Open();
+            };
         }
 
         UpdateLabel();
@@ -104,13 +112,30 @@ public class TimePicker : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == TimeProperty || change.Property == TimeFormatProperty)
+        if (change.Property == TimeProperty || change.Property == TimeFormatProperty ||
+            change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
         }
         else if (change.Property == LabelProperty)
         {
             UpdateLabel();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            Open();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            _flyout?.Hide();
+            e.Handled = true;
         }
     }
 
@@ -223,6 +248,8 @@ public class TimePicker : TemplatedControl
             _label.Text = Label;
             _label.IsVisible = !string.IsNullOrEmpty(Label);
         }
+
+        InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
     }
 
     private void UpdateDisplay()
@@ -239,5 +266,6 @@ public class TimePicker : TemplatedControl
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasTime ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+        InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
     }
 }

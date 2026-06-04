@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -47,7 +48,11 @@ public class TreeViewItem : TemplatedControl
     private IDisposable? _rowBackground;
 
     /// <summary>Creates the node.</summary>
-    public TreeViewItem() => Items.CollectionChanged += OnItemsChanged;
+    public TreeViewItem()
+    {
+        Focusable = true;
+        Items.CollectionChanged += OnItemsChanged;
+    }
 
     /// <summary>Raised when the node's row is clicked.</summary>
     public event EventHandler<RoutedEventArgs> ItemSelected
@@ -104,6 +109,7 @@ public class TreeViewItem : TemplatedControl
         {
             _chevron.PointerPressed += (_, e) =>
             {
+                Focus();
                 Expanded = !Expanded;
                 e.Handled = true;
             };
@@ -111,7 +117,13 @@ public class TreeViewItem : TemplatedControl
 
         if (_row is not null)
         {
-            _row.PointerPressed += (_, _) => RaiseEvent(new RoutedEventArgs(ItemSelectedEvent));
+            _row.Focusable = true;
+            _row.PointerPressed += (_, _) =>
+            {
+                Focus();
+                SelectItem();
+            };
+            _row.KeyDown += (_, e) => HandleKeyDown(e);
         }
 
         UpdateText();
@@ -148,6 +160,13 @@ public class TreeViewItem : TemplatedControl
     }
 
     /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        HandleKeyDown(e);
+    }
+
+    /// <inheritdoc />
     protected override void OnPointerEntered(PointerEventArgs e)
     {
         base.OnPointerEntered(e);
@@ -175,6 +194,8 @@ public class TreeViewItem : TemplatedControl
         {
             _text.Text = Text;
         }
+
+        InteractionAssist.SetAutomationName(this, Text);
     }
 
     private void UpdateIcon()
@@ -210,6 +231,35 @@ public class TreeViewItem : TemplatedControl
 
         _children.IsVisible = Expanded;
     }
+
+    private void HandleKeyDown(KeyEventArgs e)
+    {
+        if (e.Handled)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            SelectItem();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Space)
+        {
+            if (Items.Count > 0)
+            {
+                Expanded = !Expanded;
+            }
+            else
+            {
+                SelectItem();
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void SelectItem() => RaiseEvent(new RoutedEventArgs(ItemSelectedEvent));
 
     private void UpdateRow()
     {

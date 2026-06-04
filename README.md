@@ -1,13 +1,13 @@
 # Loam
 
-**Pure C# Material Design controls for Avalonia applications.**
+**Pure C# themed controls for Avalonia applications.**
 
-Loam gives Avalonia apps a complete Material Design control set with a familiar, compact API,
-runtime theming, and no XAML.
+Loam gives Avalonia apps a complete themed control set with a familiar, compact API, runtime
+theming, and no XAML.
 
-> **Status:** ✅ **v1 component-complete.** Every component on the v1 component catalog is
+> **Status:** ✅ **v1.2 polish release.** Every component on the v1 component catalog is
 > mapped — built, themed, registered, tested, and demonstrated in the gallery. Full solution builds
-> clean (Debug + Release, 0 warnings) with **111 headless/unit tests passing**.
+> clean with **139 headless/unit tests passing**.
 > See the **[Development Plan](DEVELOPMENT_PLAN.md)** and the project **[memory](memory/README.md)**
 > (decisions, progress log, learnings, and the per-component status tracker).
 
@@ -33,7 +33,7 @@ npm run docs:build    # static build → docs/.vitepress/dist
 - **Familiar API.** Component parameters use predictable names (`Variant`, `Color`, `Size`, `Dense`,
   `Elevation`, …); types live in `Loam.Controls` (e.g. `Button`, `TextField`, `DataGrid<T>`, the
   `DialogService`).
-- **Material look.** Palette-driven colors, elevation/shadows, a click ripple, and a full typography
+- **Polished look.** Palette-driven colors, elevation/shadows, a click ripple, and a full typography
   scale, all token-driven.
 - **Pure C#.** Controls, `ControlTheme`s, and templates are authored in C# — no `.axaml`.
 - **Self-contained.** Pickers (date/time/color) and the calendar are custom-built, so a LoamTheme-only

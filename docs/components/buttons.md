@@ -4,7 +4,7 @@ title: Buttons & menus
 
 # Buttons & menus
 
-Loam's button family maps the Material Design button suite to Avalonia, using the shared `Variant`, `LoamColor`, and `LoamSize` enums from the `Loam` namespace to keep the API intentionally familiar. All controls are in `Loam.Controls` and driven entirely by their control themes.
+Loam's button family maps a familiar button suite to Avalonia, using the shared `Variant`, `LoamColor`, and `LoamSize` enums from the `Loam` namespace to keep the API intentionally familiar. All controls are in `Loam.Controls` and driven entirely by their control themes.
 
 ---
 
@@ -85,6 +85,7 @@ Mirrors the reference API's `ToggleIconButton`. Inherits `IconButton`; clicking 
 |---|---|---|---|
 | `Toggled` | `bool` | `false` | Whether the button is in the on state. Two-way bindable. |
 | `ToggledIcon` | `string?` | `null` | Glyph shown when `Toggled` is `true`. Falls back to `Icon` if `null`. |
+| `ToggledColor` | `LoamColor?` | `null` | Optional glyph color while `Toggled` is `true`; unset keeps the inherited icon color. |
 | `Icon` | `string?` | `null` | Inherited; glyph shown when not toggled. |
 | `Color` | `LoamColor` | `LoamColor.Default` | Inherited semantic color. |
 | `Size` | `LoamSize` | `LoamSize.Medium` | Inherited size. |
@@ -99,6 +100,7 @@ var bookmark = new ToggleIconButton
     Icon        = Icons.Material.Outlined.BookmarkBorder,
     ToggledIcon = Icons.Material.Filled.Bookmark,
     Color       = LoamColor.Primary,
+    ToggledColor = LoamColor.Success,
 };
 bookmark.Bind(ToggleIconButton.ToggledProperty,
     new Avalonia.Data.Binding(nameof(ViewModel.IsBookmarked)) { Source = ViewModel });

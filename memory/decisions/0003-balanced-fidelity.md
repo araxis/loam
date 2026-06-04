@@ -17,7 +17,7 @@ styling model, so 1:1 pixel parity is costly and sometimes impossible.
 1. **Mirrors the reference API's public API shape** — component names, and the key parameters Blazor devs
    know: `Variant`, `Color`, `Size`, `Dense`, `Elevation`, `Disabled`, `Square`, `Outlined`,
    `Class`, `Style`, plus per-component params — so the mental model transfers.
-2. **Approximates the Material Design look** reference produces (elevation/shadows, ripple,
+2. **Approximates the polished look** the reference produces (elevation/shadows, ripple,
    typography scale, palette-driven colors, rounded corners), *good enough* to feel like the same
    design language, without committing to pixel parity.
 3. **Diverges deliberately** where Avalonia's model is better served otherwise; every divergence is

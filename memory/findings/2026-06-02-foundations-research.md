@@ -60,7 +60,7 @@ Confirmed C# APIs (Avalonia docs):
 
 ## Prior art (study, don't necessarily depend on)
 
-- **Material.Avalonia** (AvaloniaCommunity) — Material Design styles for ~all Avalonia controls +
+- **AvaloniaCommunity style library** — themed styles for many Avalonia controls +
   extra controls (Snackbar, side sheets, FAB, cards, dialogs). Theme via `MaterialTheme`
   (`BaseTheme`, `PrimaryColor`, `SecondaryColor`), design+runtime palette, separate Material icons
   pack. Validates our extra-control list and runtime-palette approach.

@@ -2,13 +2,15 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
 
 /// <summary>
-/// A date input with a Material calendar popup, mirroring the reference API's <c>DatePicker</c>. An outlined
+/// A date input with a calendar popup, mirroring the reference API's <c>DatePicker</c>. An outlined
 /// box shows the two-way <see cref="Date"/> formatted by <see cref="DateFormat"/>; clicking it opens a
 /// self-contained <see cref="MonthCalendar"/> flyout (no FluentTheme dependency).
 /// </summary>
@@ -43,6 +45,9 @@ public class DatePicker : TemplatedControl
     private Text? _label;
     private IDisposable? _displayForeground;
     private Flyout? _flyout;
+
+    /// <summary>Creates the picker.</summary>
+    public DatePicker() => Focusable = true;
 
     /// <summary>The selected date (two-way). Mirrors the reference API's <c>Date</c>.</summary>
     public DateTime? Date
@@ -98,7 +103,11 @@ public class DatePicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         if (_box is not null)
         {
-            _box.PointerPressed += (_, _) => Open();
+            _box.PointerPressed += (_, _) =>
+            {
+                Focus();
+                Open();
+            };
         }
 
         UpdateLabel();
@@ -109,13 +118,30 @@ public class DatePicker : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == DateProperty || change.Property == DateFormatProperty)
+        if (change.Property == DateProperty || change.Property == DateFormatProperty ||
+            change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
         }
         else if (change.Property == LabelProperty)
         {
             UpdateLabel();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            Open();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            _flyout?.Hide();
+            e.Handled = true;
         }
     }
 
@@ -151,6 +177,8 @@ public class DatePicker : TemplatedControl
             _label.Text = Label;
             _label.IsVisible = !string.IsNullOrEmpty(Label);
         }
+
+        InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
     }
 
     private void UpdateDisplay()
@@ -165,5 +193,6 @@ public class DatePicker : TemplatedControl
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasDate ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+        InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
     }
 }

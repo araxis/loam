@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -23,6 +24,10 @@ public class Text : TextBlock
     /// <summary>Identifies the <see cref="GutterBottom"/> property.</summary>
     public static readonly StyledProperty<bool> GutterBottomProperty =
         AvaloniaProperty.Register<Text, bool>(nameof(GutterBottom));
+
+    /// <summary>Identifies the <see cref="Align"/> property.</summary>
+    public static readonly StyledProperty<TextAlignment> AlignProperty =
+        AvaloniaProperty.Register<Text, TextAlignment>(nameof(Align), TextAlignment.Left);
 
     private IDisposable? _fontSizeBinding;
     private IDisposable? _fontWeightBinding;
@@ -57,6 +62,13 @@ public class Text : TextBlock
         set => SetValue(GutterBottomProperty, value);
     }
 
+    /// <summary>Horizontal text alignment, mapped to <see cref="TextBlock.TextAlignment"/>.</summary>
+    public TextAlignment Align
+    {
+        get => GetValue(AlignProperty);
+        set => SetValue(AlignProperty, value);
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(Text);
 
@@ -75,6 +87,10 @@ public class Text : TextBlock
         else if (change.Property == GutterBottomProperty)
         {
             Margin = GutterBottom ? new Thickness(0, 0, 0, 8) : default;
+        }
+        else if (change.Property == AlignProperty)
+        {
+            TextAlignment = Align;
         }
     }
 

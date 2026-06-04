@@ -4,7 +4,7 @@ title: Navigation
 
 # Navigation
 
-Loam provides five controls for in-app navigation, each mapping directly to its Material Design counterpart. All controls live in `Loam.Controls`; enums (`LoamColor`) live in `Loam`.
+Loam provides five controls for in-app navigation, each mapping directly to its reference counterpart. All controls live in `Loam.Controls`; enums (`LoamColor`) live in `Loam`.
 
 ---
 
@@ -133,7 +133,7 @@ var navLink = new NavLink
 
 ## NavGroup
 
-A collapsible group of navigation entries that mirrors the reference API's `NavGroup`. Extends `TemplatedControl` and renders a clickable header row (with optional `Icon`, `Title`, and a chevron) that toggles `Expanded`. The nested `Items` (`ObservableCollection<Control>`) are rendered indented beneath the header and are only visible when `Expanded` is `true`. The chevron rotates 180° when the group is open. `Expanded` uses two-way binding by default.
+A collapsible group of navigation entries that mirrors the reference API's `NavGroup`. Extends `TemplatedControl` and renders a clickable, focusable header row (with optional `Icon`, `Title`, and a chevron) that toggles `Expanded`. The nested `Items` (`ObservableCollection<Control>`) are rendered indented beneath the header and are only visible when `Expanded` is `true`. Enter or Space toggles the group, the chevron rotates 180° when open, and the reveal uses `Collapse`. `Expanded` uses two-way binding by default.
 
 ### Properties
 

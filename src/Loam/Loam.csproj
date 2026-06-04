@@ -9,9 +9,9 @@
     <!-- Packaging -->
     <IsPackable>true</IsPackable>
     <PackageId>Loam</PackageId>
-    <Version>1.1.0</Version>
-    <Description>Pure C# Material Design controls for Avalonia applications.</Description>
-    <PackageTags>avalonia;ui;material-design;controls;theme;csharp</PackageTags>
+    <Version>1.2.0</Version>
+    <Description>Pure C# themed controls for Avalonia applications.</Description>
+    <PackageTags>avalonia;ui;controls;theme;csharp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://araxis.github.io/loam/</PackageProjectUrl>

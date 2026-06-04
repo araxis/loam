@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.Reflection;
 using Loam;
 using Loam.Controls;
 using Shouldly;
@@ -109,6 +110,49 @@ public class DisplayTests
         set.Items[1].Variant.ShouldBe(Variant.Filled);
         set.Items[0].Variant.ShouldBe(Variant.Outlined);
         set.Items[2].Variant.ShouldBe(Variant.Outlined);
+    }
+
+    [AvaloniaFact]
+    public void ChipSet_multiselect_fills_all_selected_indexes_and_tracks_first()
+    {
+        var set = new ChipSet { Selectable = true, MultiSelect = true };
+        set.Items.Add(new Chip { Text = "A" });
+        set.Items.Add(new Chip { Text = "B" });
+        set.Items.Add(new Chip { Text = "C" });
+        Show(set);
+        set.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        set.SelectedIndexes.Add(0);
+        set.SelectedIndexes.Add(2);
+        Dispatcher.UIThread.RunJobs();
+
+        set.SelectedIndex.ShouldBe(0);
+        set.Items[0].Variant.ShouldBe(Variant.Filled);
+        set.Items[1].Variant.ShouldBe(Variant.Outlined);
+        set.Items[2].Variant.ShouldBe(Variant.Filled);
+
+        set.SelectedIndexes.Add(2);
+        set.SelectedIndexes.Add(99);
+        set.SelectedIndexes.ShouldBe([0, 2]);
+    }
+
+    [AvaloniaFact]
+    public void ChipSet_mandatory_multiselect_keeps_last_selected_chip_when_clicked()
+    {
+        var set = new ChipSet { Selectable = true, MultiSelect = true, Mandatory = true };
+        set.Items.Add(new Chip { Text = "A" });
+        Show(set);
+        set.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        set.SelectedIndexes.Add(0);
+        var press = typeof(ChipSet).GetMethod("OnChipPressed", BindingFlags.Instance | BindingFlags.NonPublic);
+        press.ShouldNotBeNull();
+        press!.Invoke(set, [set.Items[0], null]);
+
+        set.SelectedIndexes.ShouldBe([0]);
+        set.SelectedIndex.ShouldBe(0);
     }
 
     [AvaloniaFact]

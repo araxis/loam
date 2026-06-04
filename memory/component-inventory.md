@@ -16,7 +16,7 @@ source before implementation (source-first, ADR-0007).
 | `Theme` | `LoamTheme` + `LoamThemeData` | ✅ | Styles-derived; projects data → resources; `SetData`/`SetPalette`/`SetPrimary`. |
 | `Palette`/`PaletteLight`/`PaletteDark` | `LoamPalette` (Default Light/Dark) | ✅ | Full faithful palette, both variants; projected to `ThemeDictionaries` by reflection. |
 | `Typography` | `LoamTypography` | ✅ | 14-style Material scale (Default, H1–H6, Subtitle1/2, Body1/2, Button, Caption, Overline). |
-| `Shadows` | `LoamShadows` (elevation 0–25) | ✅ | CSS→`BoxShadows` converter (`ParseCss`); faithful MUI table. |
+| `Shadows` | `LoamShadows` (elevation 0–25) | ✅ | CSS→`BoxShadows` converter (`ParseCss`); faithful reference table. |
 | `LayoutProperties` | `LoamLayout` | ✅ | radius 4, drawer 240/56, appbar 64. |
 | `ZIndex` | `LoamZIndex` | ✅ | drawer/popover/appbar/dialog/snackbar/tooltip (1100–1600). |
 | `ThemeProvider` | `LoamTheme` setup + runtime API | ✅ | one-line `App.Styles` add; runtime variant + palette swap. |
@@ -26,17 +26,17 @@ source before implementation (source-first, ADR-0007).
 
 | reference | Loam | Status | Notes |
 | --- | --- | --- | --- |
-| `Text` | `Text` | ✅ | `Typo`, `Color`, `GutterBottom` (`: TextBlock`, token-driven). `Align` pending. |
+| `Text` | `Text` | ✅ | `Typo`, `Color`, `GutterBottom`, `Align` (`: TextBlock`, token-driven). |
 | `Icon` | `Icon` | ✅ | custom-drawn; `Data` (path), `Color`, `Size`, `ViewBox`; inherits `Foreground`. |
 | `Button` | `Button` | ✅ | `Variant`×`Color`×`Size`×`FullWidth` + `StartIcon`/`EndIcon` + hover/disabled + automatic ripple host. |
 | `IconButton` | `IconButton` | ✅ | circular icon-only; reuses shared `ButtonStyles` matrix. |
 | `ButtonGroup` | `ButtonGroup` | 🟦 | Connected `Items` (Buttons) with merged borders (−1px overlap) + shared outer corners; pushes group `Variant`/`Color`/`Size` onto children (`OverrideChildStyles`); `Vertical`. Local per-button `CornerRadius` overrides the theme setter. |
-| `ToggleIconButton` | `ToggleIconButton` | 🟦 | `: IconButton` (reuses its theme via inherited style key); two-way `Toggled` swaps the glyph (`Icon` off ↔ `ToggledIcon` on); `OnClick` flips it. `ToggledColor` ⬜. |
+| `ToggleIconButton` | `ToggleIconButton` | ✅ | `: IconButton` (reuses its theme via inherited style key); two-way `Toggled` swaps the glyph (`Icon` off ↔ `ToggledIcon` on); `ToggledColor` colors the on glyph; `OnClick` flips it. |
 | `Fab` | `Fab` | ✅ | pill, filled, elevated; `Label` + `StartIcon`. |
 | `Paper` | `Paper` | ✅ | `Elevation` (0–25 shadow tokens), `Square`, `Outlined`. Replaced the Phase-1 `Surface` smoke control. |
 | `Card` (+Header/Content/Actions/Media) | `Card` (+ parts) | ✅ | `Card`/`CardContent`/`CardActions` (Paper/Decorator). `CardHeader` (`Avatar`/`Title`/`Subtitle`/`Action`, theme-bound slot visibility). `CardMedia` (`Source` `IImage` + `MediaHeight`, gray placeholder band). |
 | `Divider` | `Divider` | ✅ | `Vertical`, `Light`, `DividerType` (`: Border`). |
-| `Chip`/`ChipSet` | `Chip`/`ChipSet` | ✅ | `Chip` (Text/Icon/variant/color/size/closeable/Label). `ChipSet` (`Items`, `Selectable`/`Mandatory`, two-way `SelectedIndex` → selected Filled, others Outlined). Multi-select ⬜. |
+| `Chip`/`ChipSet` | `Chip`/`ChipSet` | ✅ | `Chip` (Text/Icon/variant/color/size/closeable/Label). `ChipSet` (`Items`, `Selectable`/`Mandatory`, `MultiSelect`, two-way `SelectedIndex`, `SelectedIndexes` → selected Filled, others Outlined). |
 | `Badge` | `Badge` | ✅ | `Value`/`Dot`/`Color`/`Origin`/`Overlap`/`Bordered`/`Max`/`Visible`. |
 | `Avatar`/`AvatarGroup` | `Avatar`/`AvatarGroup` | ✅ | `Avatar` (Variant/Color/Size/Square/Rounded). `AvatarGroup` (`Items`, `Max` + "+N" surplus, `Spacing` overlap). |
 | (ripple effect) | `Ripple` | ✅ | `: Decorator`; on press animates a translucent circle from the press point (`Animation` on `Progress`, `Render` draws it), `ClipToBounds`. Pure `Ripple.MaxReach`. Button/IconButton templates auto-wire it. |
@@ -65,7 +65,7 @@ source before implementation (source-first, ADR-0007).
 | `Field` | `Field` | 🟦 | chrome (label/helper/error/variant) built into `TextField` for now; extract a shared `Field` base later. |
 | `TextField` | `TextField` | ✅ | `Text`(two-way)/`Label`/`HelperText`/`Placeholder`/`Variant`/`Color`/`Error`/`ReadOnly`; `StartAdornment`/`EndAdornment`; optional `FloatingLabel`. |
 | `NumericField` | `NumericField` | 🟦 | Shares `TextField` chrome + vertical spinner (`PART_Up`/`PART_Down`). Two-way `Value` clamped to `Minimum`/`Maximum`; `Step`; `Format`; text↔value parse (current culture). Generic `T` numeric type ⬜ (double-only for now). |
-| `Select`/`SelectItem` | `Select`/`SelectItem` | ✅ | Outlined box + chevron opens a `Flyout` of `ListItem` rows; two-way `Value`/`Label`/`Placeholder`; `MultiSelect` + `SelectedValues`; `DisplayTextFunc`; `ItemTemplate`. |
+| `Select`/`SelectItem` | `Select`/`SelectItem` | ✅ | Outlined box + chevron opens a `Flyout` of `ListItem` rows; two-way `Value`/`Label`/`Placeholder`; `MultiSelect` + `SelectedValues`; `DisplayTextFunc`; `ItemTemplate`; focusable with Enter/Space open, Escape close, automation name from label/display text. |
 | `Autocomplete` | `Autocomplete` | ✅ | Composes a `TextField` (`PART_Field`, chrome forwarded) + a `Flyout` of `ListItem` matches. Two-way `Value`; static `Filter`; `SearchFunc`/`SearchAsync`; templated string rows. Generic `T` remains a future expansion. |
 | `CheckBox` | `CheckBox` | ✅ | `Color`/`Size`; Material box + check (`: Avalonia CheckBox`, tri-state inherited). |
 | `Switch` | `Switch` | ✅ | `Color`/`Size`; sliding track + thumb (`: ToggleButton`). |
@@ -89,9 +89,9 @@ source before implementation (source-first, ADR-0007).
 | `ISnackbar` + `SnackbarProvider` | `ISnackbar`/`SnackbarService` | ✅ | overlay-layer auto-dismiss toasts with optional action callbacks and visible-count limits. |
 | `Alert` | `Alert` | ✅ | severity `Color` + Filled/Outlined/Text-tint + icon. |
 | `ProgressCircular` | `ProgressCircular` | 🟦 | Custom `Render` arc (`: Control`); determinate sweep from `Value` + spinning `Indeterminate` (default, `Animation` on `SpinAngle`). `Color`/`Size`/`StrokeWidth`. Faint `Divider` track on determinate. |
-| `ProgressLinear` | `ProgressLinear` | ✅ | determinate fill. Indeterminate animation pending. |
-| `Skeleton` | `Skeleton` | ✅ | placeholder block + `Circle`. Shimmer animation pending. |
-| `Collapse` | `Collapse` | 🟦 | `: Decorator`; two-way `Expanded` clips `Child` (MaxHeight 0↔∞) with `ClipToBounds`. Slide animation ⬜. |
+| `ProgressLinear` | `ProgressLinear` | ✅ | Determinate fill plus `Indeterminate` moving fill; `Color`/`Value`/`Minimum`/`Maximum`. |
+| `Skeleton` | `Skeleton` | ✅ | Placeholder block + `Circle` + `Animate` shimmer toggle (default on). |
+| `Collapse` | `Collapse` | ✅ | `: Decorator`; two-way `Expanded` clips `Child` with `ClipToBounds`; `Animated` + `Duration` reveal/collapse. |
 
 ## Phase 7 — Data display
 
@@ -101,8 +101,8 @@ source before implementation (source-first, ADR-0007).
 | `SimpleTable` | `SimpleTable` | 🟦 | Data-driven `Headers`/`Rows` (`TableRow` of cells; string→`Text`, else hosted `Control`) into a `Grid` inside an elevated `Paper`. `Striped`/`Hover`/`Bordered`/`Dense`/`Elevation`. Content-child (`<tr>`-style) API ⬜. |
 | `Table` | `Table` | ✅ | covered by `SimpleTable` (simple data table) + `DataGrid<T>` (typed sort/page/select). No separate redundant control built — intentional. |
 | `DataGrid`/`Column` | `DataGrid<T>`/`DataGridColumn<T>` | ✅ | Typed, self-rendering `: Decorator` (generics can't host `StyledProperty`/`ControlTheme`): sort headers, `PageSize` paging, striping/hover/`Dense`, single-row selection, `FilterText`/`Filter`, `Virtualize`/`MaxRenderedRows`, editable text cells via `SetText`, custom `CellTemplate`. Pure `DataGrids.Sort`/`PageCount`/`Filter`. Grouping remains future expansion. |
-| `TreeView`/`TreeViewItem` | `TreeView`/`TreeViewItem` | 🟦 | `TreeViewItem` (`Text`/`Icon`/`Items`/`Expanded`/`IsSelected`; expander chevron, indented children, hover/select highlight; bubbling `ItemSelectedEvent`). `TreeView` coordinates single selection (`SelectedItem`). Qualify vs `Avalonia.Controls.TreeView`. Checkboxes/lazy-load ⬜. |
-| `ExpansionPanels`/`ExpansionPanel` | `ExpansionPanels`/`ExpansionPanel` | 🟦 | `ExpansionPanel` (`: HeaderedContentControl`, `IsExpanded` two-way, clickable header + rotating chevron + collapsible content). `ExpansionPanels` container (`Panels`, `MultiExpansion`; accordion via `PropertyChanged`). Expand animation ⬜. |
+| `TreeView`/`TreeViewItem` | `TreeView`/`TreeViewItem` | 🟦 | `TreeViewItem` (`Text`/`Icon`/`Items`/`Expanded`/`IsSelected`; expander chevron, indented children, hover/select highlight; bubbling `ItemSelectedEvent`; focusable row with Enter select / Space toggle and automation name). `TreeView` coordinates single selection (`SelectedItem`). Qualify vs `Avalonia.Controls.TreeView`. Checkboxes/lazy-load ⬜. |
+| `ExpansionPanels`/`ExpansionPanel` | `ExpansionPanels`/`ExpansionPanel` | ✅ | `ExpansionPanel` (`: HeaderedContentControl`, `IsExpanded` two-way, focusable header + rotating chevron + `Collapse`-based content reveal + automation name from header). `ExpansionPanels` container (`Panels`, `MultiExpansion`; accordion via `PropertyChanged`). |
 | `Tabs`/`TabPanel`/`DynamicTabs` | `Tabs`/`TabItem` | 🟦 | `Tabs` + `TabItem` (header strip + content switch). `DynamicTabs` (closeable) ⬜. |
 | `Timeline`/`TimelineItem` | `Timeline`/`TimelineItem` | 🟦 | `: Decorator`; vertical `Items` down a `Divider` connector line, each a colored dot beside a `Paper` content card. Alternating/horizontal modes + `TimelineAlign` ⬜. |
 | `Carousel`/`CarouselItem` | `Carousel`/`CarouselItem` | 🟦 | Z-stacked slide (`PART_Content`) + overlay prev/next arrows + clickable bottom bullets; two-way `SelectedIndex`, `Next`/`Previous` wrap; `ShowArrows`/`ShowBullets`. Auto-cycle + transitions ⬜. Qualify vs `Avalonia.Controls.Carousel`. |
@@ -112,14 +112,14 @@ source before implementation (source-first, ADR-0007).
 
 | reference | Loam | Status | Notes |
 | --- | --- | --- | --- |
-| `NavMenu`/`NavLink`/`NavGroup` | `NavMenu`/`NavLink`/`NavGroup` | 🟦 | `NavLink` (`: ContentControl`, `Icon`/`IsActive`/`Color`/`OnClick`/`Href`; active = accent tint, hover otherwise). `NavMenu` (`: StackPanel`). `NavGroup` (`: TemplatedControl`; `Title`/`Icon`/`Expanded` header + indented collapsible `Items`). Expand animation ⬜. |
+| `NavMenu`/`NavLink`/`NavGroup` | `NavMenu`/`NavLink`/`NavGroup` | 🟦 | `NavLink` (`: ContentControl`, `Icon`/`IsActive`/`Color`/`OnClick`/`Href`; active = accent tint, hover otherwise). `NavMenu` (`: StackPanel`). `NavGroup` (`: TemplatedControl`; `Title`/`Icon`/`Expanded` focusable header + indented `Collapse`-revealed `Items`, automation name from title). |
 | `Breadcrumbs` | `Breadcrumbs` | 🟦 | `BreadcrumbItem` (`Text`/`OnClick`/`Href`/`Disabled`); non-last entries are `Link`s, last is the muted current page; `Separator` (default `/`). Icon/maxitems-collapse ⬜. |
 | `Link` | `Link` | 🟦 | `: Text`; `Color` (default Primary), hover underline + `Underline` (always), `OnClick`, `Href` (launches via `TopLevel.Launcher`). |
 | `Stepper` | `Stepper` | 🟦 | `: TemplatedControl` + `Step` (`Title`/`Content`/`Completed`). Numbered marker header w/ connectors (active/completed = Primary, check icon when done), active `Content`, Back/Next(Finish) nav; two-way `ActiveIndex`, `OnCompleted`. Non-linear/vertical/validation ⬜. |
-| `DatePicker` | `DatePicker` | ✅ | Outlined box (Select-style) + calendar icon opens a **self-contained** `MonthCalendar` flyout (no FluentTheme `Calendar` dep): month nav, weekday row, day grid w/ today/selected highlight and min/max disabling. Two-way `Date`, `DateFormat`, `MinDate`, `MaxDate`. Views remain future expansion. Qualify vs `Avalonia.Controls.DatePicker`. |
-| `TimePicker` | `TimePicker` | 🟦 | Outlined box (Select-style) + clock icon opens a flyout with scrollable hour/minute columns (`MinuteStep`), live-highlighted selection. Two-way `Time` (`TimeSpan`), `TimeFormat`. Clock-face UI / AM-PM toggle ⬜. Qualify vs `Avalonia.Controls.TimePicker`. |
-| `DateRangePicker` | `DateRangePicker` | ✅ | Outlined box shows `Start – End` (two-way), opens a `MonthCalendar` flyout: 1st click = start, 2nd = end (auto-ordered), min/max disabling, range highlight. `Format` static. |
-| `ColorPicker` | `ColorPicker` | ✅ | Palette mode: outlined box (swatch + hex) opens a `UniformGrid` flyout of preset Material swatches (`DefaultPalette`) that set two-way `Value` (`Color`). `ShowAlpha`, `ToHex`, `ToHexWithAlpha`, `ToHsv`, `FromHsv`. Full HSV editor remains future expansion. |
+| `DatePicker` | `DatePicker` | ✅ | Outlined box (Select-style) + calendar icon opens a **self-contained** `MonthCalendar` flyout (no FluentTheme `Calendar` dep): month nav, weekday row, day grid w/ today/selected highlight and min/max disabling. Two-way `Date`, `DateFormat`, `MinDate`, `MaxDate`; focusable with Enter/Space open, Escape close, automation name. Views remain future expansion. Qualify vs `Avalonia.Controls.DatePicker`. |
+| `TimePicker` | `TimePicker` | 🟦 | Outlined box (Select-style) + clock icon opens a flyout with scrollable hour/minute columns (`MinuteStep`), live-highlighted selection. Two-way `Time` (`TimeSpan`), `TimeFormat`; focusable with Enter/Space open, Escape close, automation name. Clock-face UI / AM-PM toggle ⬜. Qualify vs `Avalonia.Controls.TimePicker`. |
+| `DateRangePicker` | `DateRangePicker` | ✅ | Outlined box shows `Start – End` (two-way), opens a `MonthCalendar` flyout: 1st click = start, 2nd = end (auto-ordered), min/max disabling, range highlight. `Format` static; focusable with Enter/Space open, Escape close, automation name. |
+| `ColorPicker` | `ColorPicker` | ✅ | Palette mode: outlined box (swatch + hex) opens a `UniformGrid` flyout of preset swatches (`DefaultPalette`) that set two-way `Value` (`Color`). `ShowAlpha`, `ToHex`, `ToHexWithAlpha`, `ToHsv`, `FromHsv`; focusable with Enter/Space open, Escape close, automation name. Full HSV editor remains future expansion. |
 
 ## Phase 9 — Charts (stretch / optional `Loam.Charts`)
 

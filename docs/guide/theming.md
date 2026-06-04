@@ -14,7 +14,7 @@ and elevations from these tokens, so theme and variant changes restyle the whole
 ```csharp
 using Loam.Theming;
 
-var theme = new LoamTheme();          // defaults (Material light + dark)
+var theme = new LoamTheme();          // default light + dark palettes
 Styles.Add(theme);                    // in your App.Initialize()
 ```
 
@@ -61,7 +61,7 @@ Loam controls use the same theme-aware knobs:
   `Warning`, `Error`, `Dark`, plus `Default`/`Inherit`/`Transparent`.
 - **`Variant`** — `Filled`, `Outlined`, `Text`.
 - **`Size` (`LoamSize`)** — `Small`, `Medium`, `Large`.
-- **`Typo`** — the Material type scale (`H1`–`H6`, `Subtitle1/2`, `Body1/2`, `Button`, `Caption`,
+- **`Typo`** — the built-in type scale (`H1`–`H6`, `Subtitle1/2`, `Body1/2`, `Button`, `Caption`,
   `Overline`).
 
 ```csharp
@@ -84,7 +84,7 @@ border.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Sur
 
 ## Elevation
 
-`Paper`, `Card` and other surfaces take an `Elevation` (0–25) that maps to the Material shadow table:
+`Paper`, `Card` and other surfaces take an `Elevation` (0–25) that maps to the built-in shadow table:
 
 ```csharp
 new Paper { Elevation = 8, Content = /* … */ };

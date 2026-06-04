@@ -43,16 +43,19 @@ internal static class ExpansionPanelTheme
                 Padding = new Thickness(16, 12),
                 Background = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.Hand),
+                Focusable = true,
             }.Named("PART_Header", scope);
 
             var content = new ContentPresenter { Padding = new Thickness(16, 0, 16, 16), IsVisible = false }
                 .Named("PART_Content", scope);
             content.Bind(ContentPresenter.ContentProperty, panel.GetObservable(ContentControl.ContentProperty));
 
+            var collapse = new Collapse { Child = content }.Named("PART_Collapse", scope);
+
             var root = new Border
             {
                 BorderThickness = new Thickness(0, 0, 0, 1),
-                Child = new StackPanel { Children = { header, content } },
+                Child = new StackPanel { Children = { header, collapse } },
             }.Named("PART_Root", scope);
             root.Bind(Border.BorderBrushProperty, panel.GetResourceObservable(LoamTokens.Divider));
 

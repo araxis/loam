@@ -19,6 +19,10 @@ public class ToggleIconButton : IconButton
     public static readonly StyledProperty<string?> ToggledIconProperty =
         AvaloniaProperty.Register<ToggleIconButton, string?>(nameof(ToggledIcon));
 
+    /// <summary>Identifies the <see cref="ToggledColor"/> property.</summary>
+    public static readonly StyledProperty<LoamColor?> ToggledColorProperty =
+        AvaloniaProperty.Register<ToggleIconButton, LoamColor?>(nameof(ToggledColor));
+
     private Icon? _icon;
 
     /// <summary>Whether the button is in the toggled (on) state. Mirrors the reference API's <c>Toggled</c>.</summary>
@@ -35,6 +39,13 @@ public class ToggleIconButton : IconButton
         set => SetValue(ToggledIconProperty, value);
     }
 
+    /// <summary>Optional glyph color while <see cref="Toggled"/> is on.</summary>
+    public LoamColor? ToggledColor
+    {
+        get => GetValue(ToggledColorProperty);
+        set => SetValue(ToggledColorProperty, value);
+    }
+
     /// <inheritdoc />
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -48,7 +59,7 @@ public class ToggleIconButton : IconButton
     {
         base.OnPropertyChanged(change);
         if (change.Property == ToggledProperty || change.Property == ToggledIconProperty ||
-            change.Property == IconProperty)
+            change.Property == IconProperty || change.Property == ToggledColorProperty)
         {
             UpdateDisplay();
         }
@@ -66,6 +77,7 @@ public class ToggleIconButton : IconButton
         if (_icon is not null)
         {
             _icon.Data = Toggled ? ToggledIcon ?? Icon : Icon;
+            _icon.Color = Toggled && ToggledColor.HasValue ? ToggledColor.Value : LoamColor.Inherit;
         }
     }
 }

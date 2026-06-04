@@ -48,12 +48,12 @@ TableStriped `.20` · DividerLight `.06` · Skeleton `.11` · AppbarText `.70`.
 | Caption† | .75→12 | 400 | 1.66 | .03333 |
 | Overline† | .75→12 | 400 | 2.66 | .08333 (uppercase) |
 
-† Button/Caption/Overline rows were below the scrape window; filled from the standard MUI defaults
+† Button/Caption/Overline rows were below the scrape window; filled from the standard reference defaults
 reference uses. **TODO:** re-verify these three against source when convenient.
 
 ## Shadows (`Shadow.cs`)
 
-26 levels (0 = none; 1–24 = MUI elevation set; 25 = a custom soft shadow). Each is a 3-layer CSS
+26 levels (0 = none; 1–24 = reference elevation set; 25 = a custom soft shadow). Each is a 3-layer CSS
 box-shadow (`rgba(0,0,0,.2)` umbra / `.14` penumbra / `.12` ambient). Loam stores the exact strings
 and converts via `LoamShadows.ParseCss` → Avalonia `BoxShadows`.
 
