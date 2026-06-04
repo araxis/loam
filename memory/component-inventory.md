@@ -86,7 +86,7 @@ source before implementation (source-first, ADR-0007).
 | `Menu`/`MenuItem` | `Menu`/`MenuItem` | ✅ | `Menu` (`: Button`) opens a `Flyout` of `MenuItem` rows. Qualify vs `Avalonia.Controls.Menu`. |
 | `Dialog` + `IDialogService` + `DialogProvider` | `IDialogService`/`DialogService` | ✅ | overlay-layer scrim + `Paper`; `ShowAsync`/`ConfirmAsync`, `DialogResult`. No provider component. |
 | `MessageBox` | `MessageBox` | ✅ | `DialogService.MessageBoxAsync(title, message, yes, no?, cancel?)` → `bool?` (yes/no/cancel); omitting no/cancel hides those buttons. |
-| `ISnackbar` + `SnackbarProvider` | `ISnackbar`/`SnackbarService` | ✅ | overlay-layer auto-dismiss toasts. Actions/queue limits ⬜. |
+| `ISnackbar` + `SnackbarProvider` | `ISnackbar`/`SnackbarService` | ✅ | overlay-layer auto-dismiss toasts with optional action callbacks and visible-count limits. |
 | `Alert` | `Alert` | ✅ | severity `Color` + Filled/Outlined/Text-tint + icon. |
 | `ProgressCircular` | `ProgressCircular` | 🟦 | Custom `Render` arc (`: Control`); determinate sweep from `Value` + spinning `Indeterminate` (default, `Animation` on `SpinAngle`). `Color`/`Size`/`StrokeWidth`. Faint `Divider` track on determinate. |
 | `ProgressLinear` | `ProgressLinear` | ✅ | determinate fill. Indeterminate animation pending. |

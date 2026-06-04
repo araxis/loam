@@ -386,6 +386,22 @@ public sealed class ComponentsView : UserControl
             }
         };
 
+        var actionSnackbar = new LoamButton { Content = "Show action snackbar", Variant = Variant.Outlined, Color = LoamColor.Info };
+        actionSnackbar.Click += (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                var snackbar = SnackbarService.For(control);
+                snackbar.Add(new SnackbarOptions("Item archived")
+                {
+                    Severity = LoamColor.Info,
+                    ActionText = "Undo",
+                    Action = () => snackbar.Add("Archive undone", LoamColor.Success),
+                    Duration = TimeSpan.FromSeconds(8),
+                });
+            }
+        };
+
         var messageBox = new LoamButton { Content = "Message box", Variant = Variant.Outlined, Color = LoamColor.Secondary };
         messageBox.Click += async (sender, _) =>
         {
@@ -398,7 +414,7 @@ public sealed class ComponentsView : UserControl
             }
         };
 
-        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { openDialog, showSnackbar, messageBox } };
+        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { openDialog, showSnackbar, actionSnackbar, messageBox } };
     }
 
     private static StackPanel BuildRadioSlider()

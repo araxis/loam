@@ -91,6 +91,55 @@ public class OverlayTests
     }
 
     [AvaloniaFact]
+    public void Snackbar_action_invokes_callback_and_dismisses_toast()
+    {
+        var layer = ShowAnchor(out var anchor);
+        var snackbar = SnackbarService.For(anchor);
+        var invoked = false;
+
+        snackbar.Add(new SnackbarOptions("Archived")
+        {
+            Severity = LoamColor.Info,
+            ActionText = "Undo",
+            Action = () => invoked = true,
+            Duration = Timeout.InfiniteTimeSpan,
+        });
+        Dispatcher.UIThread.RunJobs();
+
+        var action = layer.GetVisualDescendants().OfType<Loam.Controls.Button>()
+            .First(button => (string?)button.Content == "Undo");
+        action.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        invoked.ShouldBeTrue();
+        layer.GetVisualDescendants().OfType<Alert>().ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Snackbar_limits_visible_toasts_across_service_instances()
+    {
+        var layer = ShowAnchor(out var anchor);
+
+        for (var i = 1; i <= 4; i++)
+        {
+            SnackbarService.For(anchor).Add(new SnackbarOptions($"Message {i}")
+            {
+                Duration = Timeout.InfiniteTimeSpan,
+                MaxVisible = 2,
+            });
+        }
+
+        Dispatcher.UIThread.RunJobs();
+
+        layer.GetVisualDescendants().OfType<Alert>().Count().ShouldBe(2);
+        var messages = layer.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ToArray();
+        messages.ShouldNotContain("Message 1");
+        messages.ShouldNotContain("Message 2");
+        messages.ShouldContain("Message 3");
+        messages.ShouldContain("Message 4");
+    }
+
+    [AvaloniaFact]
     public void Overlay_visible_toggles_and_dark_scrim_applies()
     {
         var overlay = new Overlay { DarkBackground = true, Content = new TextBlock { Text = "Loading" } };

@@ -115,6 +115,18 @@ ISnackbar snackbar = SnackbarService.For(this);
 |--------|-----------|-------------|
 | `SnackbarService.For` | `static SnackbarService For(Visual visual)` | Creates a service for the window hosting `visual`. |
 | `Add` | `void Add(string message, LoamColor severity = LoamColor.Info, TimeSpan? duration = null)` | Queues a toast. The default duration is 4 seconds. |
+| `Add` | `void Add(SnackbarOptions options)` | Queues a toast with action text, callback, duration, severity, and visible-count options. |
+
+### SnackbarOptions
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Message` | `string` | required | Toast message text. |
+| `Severity` | `LoamColor` | `LoamColor.Info` | Toast color. |
+| `Duration` | `TimeSpan?` | `null` | Visible duration. `null` uses 4 seconds; `Timeout.InfiniteTimeSpan` keeps the toast until dismissed. |
+| `ActionText` | `string?` | `null` | Optional action button text. |
+| `Action` | `Action?` | `null` | Invoked when the action button is clicked; the toast then dismisses. |
+| `MaxVisible` | `int?` | `null` | Maximum visible toast count after this toast is added. Uses the service default when null. |
 
 ### Example
 
@@ -127,6 +139,15 @@ ISnackbar snackbar = SnackbarService.For(this);
 snackbar.Add("Record saved.");
 snackbar.Add("Validation failed.", LoamColor.Error);
 snackbar.Add("Processing…", LoamColor.Warning, TimeSpan.FromSeconds(8));
+
+snackbar.Add(new SnackbarOptions("Item archived")
+{
+    Severity = LoamColor.Info,
+    ActionText = "Undo",
+    Action = () => RestoreItem(),
+    Duration = TimeSpan.FromSeconds(8),
+    MaxVisible = 3,
+});
 ```
 
 ---

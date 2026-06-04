@@ -9,7 +9,7 @@
     <!-- Packaging -->
     <IsPackable>true</IsPackable>
     <PackageId>Loam</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Description>Pure C# Material Design controls for Avalonia applications.</Description>
     <PackageTags>avalonia;ui;material-design;controls;theme;csharp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
