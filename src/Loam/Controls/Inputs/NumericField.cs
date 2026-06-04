@@ -291,7 +291,7 @@ public class NumericField : TemplatedControl
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
-        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, _label?.IsVisible == true);
+        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, _label?.IsVisible == true);
 
         if (_helper is not null)
         {
@@ -305,7 +305,6 @@ public class NumericField : TemplatedControl
 
     private void ApplyChrome()
     {
-        Opacity = IsEnabled ? 1 : 0.5;
         if (_inputBorder is null)
         {
             return;

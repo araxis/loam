@@ -76,13 +76,13 @@ public sealed class LoamTheme : Styles
     {
         // Palette → per-variant dictionaries. Assigning fresh dictionaries guarantees a resource
         // change notification so bound controls re-resolve immediately on a runtime swap.
-        Resources.ThemeDictionaries[ThemeVariant.Light] = BuildPaletteDictionary(_data.PaletteLight);
-        Resources.ThemeDictionaries[ThemeVariant.Dark] = BuildPaletteDictionary(_data.PaletteDark);
+        Resources.ThemeDictionaries[ThemeVariant.Light] = BuildPaletteDictionary(_data.PaletteLight, _data.StateLayer);
+        Resources.ThemeDictionaries[ThemeVariant.Dark] = BuildPaletteDictionary(_data.PaletteDark, _data.StateLayer);
 
         ProjectSharedTokens();
     }
 
-    private static ResourceDictionary BuildPaletteDictionary(LoamPalette palette)
+    private static ResourceDictionary BuildPaletteDictionary(LoamPalette palette, LoamStateLayer stateLayer)
     {
         var dict = new ResourceDictionary();
 
@@ -97,11 +97,13 @@ public sealed class LoamTheme : Styles
             dict[$"Loam.Palette.{prop.Name}"] = (double)prop.GetValue(palette)!;
         }
 
-        // Derived interaction brushes per semantic color (hover overlay + pressed/darkened fill).
         foreach (var name in SemanticColorNames)
         {
             var baseColor = (Color)typeof(LoamPalette).GetProperty(name)!.GetValue(palette)!;
-            dict[$"Loam.Palette.{name}.Hover"] = new ImmutableSolidColorBrush(baseColor.WithAlpha(palette.HoverOpacity));
+            dict[$"Loam.Palette.{name}.Hover"] = new ImmutableSolidColorBrush(baseColor.WithAlpha(stateLayer.HoverOpacity));
+            dict[$"Loam.Palette.{name}.Focus"] = new ImmutableSolidColorBrush(baseColor.WithAlpha(stateLayer.FocusOpacity));
+            dict[$"Loam.Palette.{name}.Pressed"] = new ImmutableSolidColorBrush(baseColor.WithAlpha(stateLayer.PressedOpacity));
+            dict[$"Loam.Palette.{name}.Selected"] = new ImmutableSolidColorBrush(baseColor.WithAlpha(stateLayer.SelectedOpacity));
             dict[$"Loam.Palette.{name}.Darken"] = new ImmutableSolidColorBrush(baseColor.Darken(0.075));
         }
 
@@ -128,6 +130,43 @@ public sealed class LoamTheme : Styles
         Resources[LoamTokens.DrawerWidth] = _data.Layout.DrawerWidth;
         Resources[LoamTokens.DrawerMiniWidth] = _data.Layout.DrawerMiniWidth;
         Resources[LoamTokens.AppBarHeight] = _data.Layout.AppBarHeight;
+
+        var shape = _data.Shape;
+        Resources[LoamTokens.ShapeExtraSmall] = shape.ExtraSmall;
+        Resources[LoamTokens.ShapeSmall] = shape.Small;
+        Resources[LoamTokens.ShapeMedium] = shape.Medium;
+        Resources[LoamTokens.ShapeLarge] = shape.Large;
+        Resources[LoamTokens.ShapeFull] = shape.Full;
+
+        var field = _data.FieldMetrics;
+        Resources[LoamTokens.FieldOutlinedHeight] = field.OutlinedHeight;
+        Resources[LoamTokens.FieldFilledHeight] = field.FilledHeight;
+        Resources[LoamTokens.FieldTextHeight] = field.TextHeight;
+        Resources[LoamTokens.FieldOutlineWidth] = field.OutlineWidth;
+        Resources[LoamTokens.FieldActiveOutlineWidth] = field.ActiveOutlineWidth;
+        Resources[LoamTokens.FieldOutlinedPadding] = field.OutlinedPadding;
+        Resources[LoamTokens.FieldFilledPadding] = field.FilledPadding;
+        Resources[LoamTokens.FieldTextPadding] = field.TextPadding;
+        Resources[LoamTokens.FieldLabelX] = field.LabelX;
+        Resources[LoamTokens.FieldFloatingLabelTopMargin] = field.FloatingLabelTopMargin;
+        Resources[LoamTokens.FieldFloatingLabelHorizontalPadding] = field.FloatingLabelHorizontalPadding;
+        Resources[LoamTokens.FieldIconSpacing] = field.IconSpacing;
+        Resources[LoamTokens.FieldHelperTopSpacing] = field.HelperTopSpacing;
+
+        var state = _data.StateLayer;
+        Resources[LoamTokens.StateHoverOpacity] = state.HoverOpacity;
+        Resources[LoamTokens.StateFocusOpacity] = state.FocusOpacity;
+        Resources[LoamTokens.StatePressedOpacity] = state.PressedOpacity;
+        Resources[LoamTokens.StateSelectedOpacity] = state.SelectedOpacity;
+        Resources[LoamTokens.StateDraggedOpacity] = state.DraggedOpacity;
+        Resources[LoamTokens.StateDisabledOpacity] = state.DisabledOpacity;
+
+        var motion = _data.Motion;
+        Resources[LoamTokens.MotionDurationShort] = motion.DurationShort;
+        Resources[LoamTokens.MotionDurationMedium] = motion.DurationMedium;
+        Resources[LoamTokens.MotionDurationLong] = motion.DurationLong;
+        Resources[LoamTokens.MotionEasingStandard] = motion.EasingStandard;
+        Resources[LoamTokens.MotionEasingEmphasized] = motion.EasingEmphasized;
 
         foreach (var prop in ZIndexProps)
         {

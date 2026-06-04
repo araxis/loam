@@ -461,11 +461,17 @@ public sealed class ComponentsView : UserControl
             var autocomplete = new Autocomplete
             {
                 Label = "Fruit",
+                HelperText = "Type to filter",
                 Items = { "Apple", "Banana", "Grape" },
             };
             """,
         "Select" => """
-            var select = new Select { Label = "Country" };
+            var select = new Select
+            {
+                Label = "Country",
+                Placeholder = "Choose a country",
+                HelperText = "Full field opens the list",
+            };
             select.Items.Add(new SelectItem("United States", "us"));
             select.Items.Add(new SelectItem("Germany", "de"));
             select.Value = "us";
@@ -505,10 +511,10 @@ public sealed class ComponentsView : UserControl
             };
             form.Validate();
             """,
-        "DatePicker" => """new Loam.Controls.DatePicker { Label = "Start date", MinDate = DateTime.Today };""",
-        "TimePicker" => """new Loam.Controls.TimePicker { Label = "Reminder", MinuteStep = 15 };""",
-        "DateRangePicker" => """new Loam.Controls.DateRangePicker { Label = "Trip dates" };""",
-        "ColorPicker" => """new Loam.Controls.ColorPicker { Label = "Accent", ShowAlpha = true };""",
+        "DatePicker" => """new Loam.Controls.DatePicker { Label = "Start date", HelperText = "Keyboard opens with Enter or Space" };""",
+        "TimePicker" => """new Loam.Controls.TimePicker { Label = "Reminder", MinuteStep = 15, ShrinkLabel = true };""",
+        "DateRangePicker" => """new Loam.Controls.DateRangePicker { Label = "Trip dates", Error = true, ErrorText = "Required" };""",
+        "ColorPicker" => """new Loam.Controls.ColorPicker { Label = "Accent", ShowAlpha = true, HelperText = "Palette mode" };""",
         "MonthCalendar" => """
             var calendar = new MonthCalendar
             {
@@ -1298,11 +1304,11 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(new TextField { Label = "Underline", Variant = Variant.Text, Placeholder = "Search" });
         stack.Children.Add(new TextField { Label = "Budget", StartAdornment = new TextBlock { Text = "$" }, EndAdornment = new TextBlock { Text = "USD" }, FloatingLabel = true });
         stack.Children.Add(new TextField { Label = "Email", Variant = Variant.Outlined, Text = "not-an-email", Error = true, ErrorText = "Enter a valid email" });
-        stack.Children.Add(new NumericField { Label = "Quantity", Minimum = 0, Maximum = 99, Value = 3, HelperText = "0–99" });
+        stack.Children.Add(new NumericField { Label = "Quantity", Minimum = 0, Maximum = 99, Value = 3, HelperText = "0-99" });
         stack.Children.Add(new NumericField { Label = "Price", Variant = Variant.Filled, Minimum = 0, Step = 0.5, Value = 9.5, Format = "0.00" });
         stack.Children.Add(new MaskedTextField { Label = "Phone", Pattern = "(###) ###-####", Placeholder = "(555) 123-4567" });
 
-        var fruit = new Autocomplete { Label = "Fruit", Placeholder = "Start typing…" };
+        var fruit = new Autocomplete { Label = "Fruit", Placeholder = "Start typing…", HelperText = "Suggestions use the same field chrome" };
         foreach (var name in new[] { "Apple", "Apricot", "Banana", "Blueberry", "Cherry", "Grape", "Mango", "Orange", "Peach", "Pineapple" })
         {
             fruit.Items.Add(name);
@@ -1667,15 +1673,16 @@ public sealed class ComponentsView : UserControl
     private static StackPanel BuildColorPicker()
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Theme color" });
+        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Theme color", HelperText = "Default palette" });
         stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Accent", Value = Avalonia.Media.Color.Parse("#FF9800"), ShowAlpha = true });
+        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Error state", Error = true, ErrorText = "Choose a visible color" });
         return stack;
     }
 
     private static StackPanel BuildDateRangePicker()
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 320, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Loam.Controls.DateRangePicker { Label = "Trip dates" });
+        stack.Children.Add(new Loam.Controls.DateRangePicker { Label = "Trip dates", Placeholder = "Pick start and end" });
         stack.Children.Add(new Loam.Controls.DateRangePicker
         {
             Label = "Reporting period",
@@ -1691,9 +1698,9 @@ public sealed class ComponentsView : UserControl
     private static StackPanel BuildDateTimePickers()
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Loam.Controls.DatePicker { Label = "Start date", MinDate = DateTime.Today, MaxDate = DateTime.Today.AddMonths(6) });
+        stack.Children.Add(new Loam.Controls.DatePicker { Label = "Start date", MinDate = DateTime.Today, MaxDate = DateTime.Today.AddMonths(6), HelperText = "Resting label until active" });
         stack.Children.Add(new Loam.Controls.DatePicker { Label = "Due date", Date = new DateTime(2026, 6, 30), DateFormat = "ddd, MMM d yyyy" });
-        stack.Children.Add(new Loam.Controls.TimePicker { Label = "Reminder", TimeFormat = "t" });
+        stack.Children.Add(new Loam.Controls.TimePicker { Label = "Reminder", TimeFormat = "t", ShrinkLabel = true });
         stack.Children.Add(new Loam.Controls.TimePicker { Label = "Standup", Time = new TimeSpan(9, 30, 0), TimeFormat = "HH:mm", MinuteStep = 15 });
         return stack;
     }
@@ -1731,26 +1738,34 @@ public sealed class ComponentsView : UserControl
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
 
-        var country = new Select { Label = "Country", Placeholder = "Choose a country" };
+        var country = new Select { Label = "Country", Placeholder = "Choose a country", HelperText = "Click anywhere in the field" };
         country.Items.Add(new SelectItem("United States", "us"));
         country.Items.Add(new SelectItem("Germany", "de"));
         country.Items.Add(new SelectItem("Japan", "jp"));
         country.Items.Add(new SelectItem("Brazil", "br"));
         stack.Children.Add(country);
 
-        var size = new Select { Label = "Size", Value = "m" };
+        var size = new Select { Label = "Size", Value = "m", Variant = Variant.Filled };
         size.Items.Add(new SelectItem("Small", "s"));
         size.Items.Add(new SelectItem("Medium", "m"));
         size.Items.Add(new SelectItem("Large", "l"));
         stack.Children.Add(size);
 
-        var tags = new Select { Label = "Tags", MultiSelect = true };
+        var tags = new Select { Label = "Tags", MultiSelect = true, ShrinkLabel = true };
         tags.Items.Add(new SelectItem("Design", "design"));
         tags.Items.Add(new SelectItem("Build", "build"));
         tags.Items.Add(new SelectItem("Review", "review"));
         tags.SelectedValues.Add("design");
         tags.SelectedValues.Add("review");
         stack.Children.Add(tags);
+
+        stack.Children.Add(new Select
+        {
+            Label = "Required",
+            Error = true,
+            ErrorText = "Choose at least one option",
+            Placeholder = "No value selected",
+        });
 
         return stack;
     }

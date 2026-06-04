@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -103,6 +104,6 @@ public class Radio : RadioButton
             _dotBackground = _dot.Bind(Border.BackgroundProperty, this.GetResourceObservable(tokens.Fill));
         }
 
-        Opacity = IsEnabled ? 1 : 0.5;
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
     }
 }

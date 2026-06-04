@@ -32,6 +32,7 @@ internal static class FieldChrome
     public static Border BuildLabelHost(Text label, Control owner, Avalonia.Controls.INameScope scope)
     {
         label.Margin = default;
+        var metrics = ReadFieldMetrics(owner);
 
         var host = new Border
         {
@@ -40,24 +41,27 @@ internal static class FieldChrome
             VerticalAlignment = VerticalAlignment.Top,
             IsHitTestVisible = false,
             IsVisible = false,
-            Margin = new Thickness(10, 0, 0, 0),
-            Padding = new Thickness(5, 0),
+            Margin = new Thickness(metrics.LabelX, 0, 0, 0),
+            Padding = new Thickness(metrics.FloatingLabelHorizontalPadding, 0),
         }.Named("PART_LabelHost", scope);
 
         host.Bind(Border.BackgroundProperty, owner.GetResourceObservable(LoamTokens.Surface));
         return host;
     }
 
-    public static void ApplyLabelLayout(Border? inputBorder, Border? labelHost, bool showLabel)
+    public static void ApplyLabelLayout(Control owner, Border? inputBorder, Border? labelHost, bool showLabel)
     {
+        var metrics = ReadFieldMetrics(owner);
         if (labelHost is not null)
         {
             labelHost.IsVisible = showLabel;
+            labelHost.Margin = new Thickness(metrics.LabelX, 0, 0, 0);
+            labelHost.Padding = new Thickness(metrics.FloatingLabelHorizontalPadding, 0);
         }
 
         if (inputBorder is not null)
         {
-            inputBorder.Margin = showLabel ? new Thickness(0, 7, 0, 0) : default;
+            inputBorder.Margin = showLabel ? new Thickness(0, metrics.FloatingLabelTopMargin, 0, 0) : default;
         }
     }
 
@@ -75,14 +79,18 @@ internal static class FieldChrome
         Thickness? filledPadding = null,
         Thickness? outlinedPadding = null)
     {
-        host.Opacity = enabled ? 1 : 0.5;
+        var metrics = ReadFieldMetrics(host);
+        var shape = ReadShape(host);
+        var disabledOpacity = ResourceOrDefault(host, LoamTokens.StateDisabledOpacity, LoamStateLayer.Default.DisabledOpacity);
+
+        host.Opacity = enabled ? 1 : disabledOpacity;
 
         var paletteName = color.ToPaletteName();
         var accent = paletteName is null ? LoamTokens.Primary : LoamTokens.Palette(paletteName);
         var brushKey = error ? LoamTokens.Error
             : focused ? accent
             : LoamTokens.Palette(nameof(LoamPalette.LinesInputs));
-        var emphasized = focused || error;
+        var outlineWidth = focused || error ? metrics.ActiveOutlineWidth : metrics.OutlineWidth;
 
         borderBrush?.Dispose();
         borderBrush = inputBorder.Bind(Border.BorderBrushProperty, host.GetResourceObservable(brushKey));
@@ -93,27 +101,71 @@ internal static class FieldChrome
         switch (variant)
         {
             case Variant.Filled:
-                inputBorder.MinHeight = 48;
-                inputBorder.CornerRadius = new CornerRadius(4, 4, 0, 0);
-                inputBorder.BorderThickness = new Thickness(0, 0, 0, emphasized ? 2 : 1);
-                inputBorder.Padding = filledPadding ?? new Thickness(12, 12);
+                inputBorder.MinHeight = metrics.FilledHeight;
+                inputBorder.CornerRadius = new CornerRadius(
+                    shape.Small.TopLeft,
+                    shape.Small.TopRight,
+                    0,
+                    0);
+                inputBorder.BorderThickness = new Thickness(0, 0, 0, outlineWidth);
+                inputBorder.Padding = filledPadding ?? metrics.FilledPadding;
                 background = inputBorder.Bind(Border.BackgroundProperty,
                     host.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.ActionDisabledBackground))));
                 break;
             case Variant.Text:
-                inputBorder.MinHeight = 40;
+                inputBorder.MinHeight = metrics.TextHeight;
                 inputBorder.CornerRadius = default;
-                inputBorder.BorderThickness = new Thickness(0, 0, 0, emphasized ? 2 : 1);
-                inputBorder.Padding = textPadding ?? new Thickness(0, 9);
+                inputBorder.BorderThickness = new Thickness(0, 0, 0, outlineWidth);
+                inputBorder.Padding = textPadding ?? metrics.TextPadding;
                 inputBorder.Background = Brushes.Transparent;
                 break;
             default:
-                inputBorder.MinHeight = 52;
-                inputBorder.CornerRadius = new CornerRadius(4);
-                inputBorder.BorderThickness = new Thickness(emphasized ? 2 : 1);
-                inputBorder.Padding = outlinedPadding ?? new Thickness(12, 14);
+                inputBorder.MinHeight = metrics.OutlinedHeight;
+                inputBorder.CornerRadius = shape.Small;
+                inputBorder.BorderThickness = new Thickness(outlineWidth);
+                inputBorder.Padding = outlinedPadding ?? metrics.OutlinedPadding;
                 inputBorder.Background = Brushes.Transparent;
                 break;
         }
+    }
+
+    private static LoamFieldMetrics ReadFieldMetrics(Control host)
+    {
+        var defaults = LoamFieldMetrics.Default;
+        return defaults with
+        {
+            OutlinedHeight = ResourceOrDefault(host, LoamTokens.FieldOutlinedHeight, defaults.OutlinedHeight),
+            FilledHeight = ResourceOrDefault(host, LoamTokens.FieldFilledHeight, defaults.FilledHeight),
+            TextHeight = ResourceOrDefault(host, LoamTokens.FieldTextHeight, defaults.TextHeight),
+            OutlineWidth = ResourceOrDefault(host, LoamTokens.FieldOutlineWidth, defaults.OutlineWidth),
+            ActiveOutlineWidth = ResourceOrDefault(host, LoamTokens.FieldActiveOutlineWidth, defaults.ActiveOutlineWidth),
+            OutlinedPadding = ResourceOrDefault(host, LoamTokens.FieldOutlinedPadding, defaults.OutlinedPadding),
+            FilledPadding = ResourceOrDefault(host, LoamTokens.FieldFilledPadding, defaults.FilledPadding),
+            TextPadding = ResourceOrDefault(host, LoamTokens.FieldTextPadding, defaults.TextPadding),
+            LabelX = ResourceOrDefault(host, LoamTokens.FieldLabelX, defaults.LabelX),
+            FloatingLabelTopMargin = ResourceOrDefault(host, LoamTokens.FieldFloatingLabelTopMargin, defaults.FloatingLabelTopMargin),
+            FloatingLabelHorizontalPadding = ResourceOrDefault(
+                host,
+                LoamTokens.FieldFloatingLabelHorizontalPadding,
+                defaults.FloatingLabelHorizontalPadding),
+            IconSpacing = ResourceOrDefault(host, LoamTokens.FieldIconSpacing, defaults.IconSpacing),
+            HelperTopSpacing = ResourceOrDefault(host, LoamTokens.FieldHelperTopSpacing, defaults.HelperTopSpacing),
+        };
+    }
+
+    private static LoamShape ReadShape(Control host)
+    {
+        var defaults = LoamShape.Default;
+        return defaults with
+        {
+            Small = ResourceOrDefault(host, LoamTokens.ShapeSmall, defaults.Small),
+        };
+    }
+
+    private static T ResourceOrDefault<T>(Control host, string key, T fallback)
+    {
+        return host.TryGetResource(key, host.ActualThemeVariant, out var value) && value is T typed
+            ? typed
+            : fallback;
     }
 }

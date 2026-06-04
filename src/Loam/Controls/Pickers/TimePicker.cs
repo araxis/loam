@@ -39,16 +39,49 @@ public class TimePicker : TemplatedControl
     public static readonly StyledProperty<int> MinuteStepProperty =
         AvaloniaProperty.Register<TimePicker, int>(nameof(MinuteStep), 5);
 
+    /// <summary>Identifies the <see cref="Color"/> property.</summary>
+    public static readonly StyledProperty<LoamColor> ColorProperty =
+        AvaloniaProperty.Register<TimePicker, LoamColor>(nameof(Color), LoamColor.Primary);
+
+    /// <summary>Identifies the <see cref="Error"/> property.</summary>
+    public static readonly StyledProperty<bool> ErrorProperty =
+        AvaloniaProperty.Register<TimePicker, bool>(nameof(Error));
+
+    /// <summary>Identifies the <see cref="HelperText"/> property.</summary>
+    public static readonly StyledProperty<string?> HelperTextProperty =
+        AvaloniaProperty.Register<TimePicker, string?>(nameof(HelperText));
+
+    /// <summary>Identifies the <see cref="ErrorText"/> property.</summary>
+    public static readonly StyledProperty<string?> ErrorTextProperty =
+        AvaloniaProperty.Register<TimePicker, string?>(nameof(ErrorText));
+
+    /// <summary>Identifies the <see cref="ShrinkLabel"/> property.</summary>
+    public static readonly StyledProperty<bool> ShrinkLabelProperty =
+        AvaloniaProperty.Register<TimePicker, bool>(nameof(ShrinkLabel));
+
     private readonly List<(Border Row, int Value)> _hourRows = new();
     private readonly List<(Border Row, int Value)> _minuteRows = new();
     private Border? _box;
+    private Border? _labelHost;
     private Text? _display;
     private Text? _label;
+    private Text? _restingLabel;
+    private Text? _helper;
     private IDisposable? _displayForeground;
+    private IDisposable? _boxBorderBrush;
+    private IDisposable? _boxBackground;
+    private IDisposable? _labelForeground;
+    private IDisposable? _restingLabelForeground;
+    private IDisposable? _helperForeground;
     private Flyout? _flyout;
 
     /// <summary>Creates the picker.</summary>
-    public TimePicker() => Focusable = true;
+    public TimePicker()
+    {
+        Focusable = true;
+        GotFocus += (_, _) => ApplyBoxChrome();
+        LostFocus += (_, _) => ApplyBoxChrome();
+    }
 
     /// <summary>The selected time (two-way). Mirrors the reference API's <c>Time</c>.</summary>
     public TimeSpan? Time
@@ -85,6 +118,41 @@ public class TimePicker : TemplatedControl
         set => SetValue(MinuteStepProperty, value);
     }
 
+    /// <summary>Focus accent color.</summary>
+    public LoamColor Color
+    {
+        get => GetValue(ColorProperty);
+        set => SetValue(ColorProperty, value);
+    }
+
+    /// <summary>Whether the field is in an error state.</summary>
+    public bool Error
+    {
+        get => GetValue(ErrorProperty);
+        set => SetValue(ErrorProperty, value);
+    }
+
+    /// <summary>Helper text shown below the field.</summary>
+    public string? HelperText
+    {
+        get => GetValue(HelperTextProperty);
+        set => SetValue(HelperTextProperty, value);
+    }
+
+    /// <summary>Error message shown instead of helper text when <see cref="Error"/>.</summary>
+    public string? ErrorText
+    {
+        get => GetValue(ErrorTextProperty);
+        set => SetValue(ErrorTextProperty, value);
+    }
+
+    /// <summary>When true, the label stays floated above the field even when empty and unfocused.</summary>
+    public bool ShrinkLabel
+    {
+        get => GetValue(ShrinkLabelProperty);
+        set => SetValue(ShrinkLabelProperty, value);
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(TimePicker);
 
@@ -93,10 +161,15 @@ public class TimePicker : TemplatedControl
     {
         base.OnApplyTemplate(e);
         _box = e.NameScope.Find("PART_Box") as Border;
+        _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _display = e.NameScope.Find("PART_Display") as Text;
         _label = e.NameScope.Find("PART_Label") as Text;
+        _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
+        _helper = e.NameScope.Find("PART_HelperText") as Text;
         if (_box is not null)
         {
+            _box.GotFocus += (_, _) => ApplyBoxChrome();
+            _box.LostFocus += (_, _) => ApplyBoxChrome();
             _box.PointerPressed += (_, _) =>
             {
                 Focus();
@@ -106,6 +179,7 @@ public class TimePicker : TemplatedControl
 
         UpdateLabel();
         UpdateDisplay();
+        ApplyBoxChrome();
     }
 
     /// <inheritdoc />
@@ -117,8 +191,16 @@ public class TimePicker : TemplatedControl
         {
             UpdateDisplay();
         }
-        else if (change.Property == LabelProperty)
+        else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
+                 change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
+            UpdateLabel();
+        }
+
+        if (change.Property == ColorProperty || change.Property == ErrorProperty ||
+            change.Property == IsEnabledProperty)
+        {
+            ApplyBoxChrome();
             UpdateLabel();
         }
     }
@@ -135,6 +217,7 @@ public class TimePicker : TemplatedControl
         else if (e.Key == Key.Escape)
         {
             _flyout?.Hide();
+            ApplyBoxChrome();
             e.Handled = true;
         }
     }
@@ -164,6 +247,7 @@ public class TimePicker : TemplatedControl
             Placement = PlacementMode.BottomEdgeAlignedLeft,
         };
         _flyout.ShowAt(_box ?? (Control)this);
+        ApplyBoxChrome();
     }
 
     private StackPanel BuildColumn(string heading, List<(Border Row, int Value)> rows, IEnumerable<int> values, int selected, Action<int> onPick)
@@ -243,10 +327,42 @@ public class TimePicker : TemplatedControl
 
     private void UpdateLabel()
     {
+        var labelForeground = LabelForegroundKey();
+        var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
+        var hasLabel = !string.IsNullOrEmpty(Label);
+        var floating = hasLabel && (ShrinkLabel || IsActive() || Time is not null);
+        var resting = hasLabel && !floating;
+
         if (_label is not null)
         {
             _label.Text = Label;
-            _label.IsVisible = !string.IsNullOrEmpty(Label);
+            _label.IsVisible = floating;
+            _labelForeground?.Dispose();
+            _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
+        }
+
+        if (_restingLabel is not null)
+        {
+            _restingLabel.Text = Label;
+            _restingLabel.IsVisible = resting;
+            _restingLabelForeground?.Dispose();
+            _restingLabelForeground = _restingLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
+        }
+
+        if (_display is not null)
+        {
+            _display.IsVisible = !resting;
+        }
+
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating);
+
+        if (_helper is not null)
+        {
+            var text = Error && !string.IsNullOrEmpty(ErrorText) ? ErrorText : HelperText;
+            _helper.Text = text;
+            _helper.IsVisible = !string.IsNullOrEmpty(text);
+            _helperForeground?.Dispose();
+            _helperForeground = _helper.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(helperForeground));
         }
 
         InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
@@ -267,5 +383,36 @@ public class TimePicker : TemplatedControl
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasTime ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
         InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
+        UpdateLabel();
+    }
+
+    private void ApplyBoxChrome()
+    {
+        if (_box is null)
+        {
+            return;
+        }
+
+        FieldChrome.Apply(this, _box, Variant.Outlined, Color, Error, IsActive(), IsEnabled,
+            ref _boxBorderBrush, ref _boxBackground);
+        UpdateLabel();
+    }
+
+    private bool IsActive() => IsFocused || _box?.IsFocused == true;
+
+    private string LabelForegroundKey()
+    {
+        if (Error)
+        {
+            return LoamTokens.Error;
+        }
+
+        if (IsActive())
+        {
+            var paletteName = Color.ToPaletteName();
+            return paletteName is null ? LoamTokens.Primary : LoamTokens.Palette(paletteName);
+        }
+
+        return LoamTokens.TextSecondary;
     }
 }

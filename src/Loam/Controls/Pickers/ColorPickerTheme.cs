@@ -28,9 +28,7 @@ internal static class ColorPickerTheme
                 Typo = Typo.Caption,
                 Color = LoamColor.Inherit,
                 IsVisible = false,
-                Margin = new Thickness(0, 0, 0, 3),
             }.Named("PART_Label", scope);
-            label.Bind(TextBlock.ForegroundProperty, picker.GetResourceObservable(LoamTokens.TextSecondary));
 
             var swatch = new Border
             {
@@ -49,15 +47,26 @@ internal static class ColorPickerTheme
             var box = new Border
             {
                 Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { swatch, hex } },
-                CornerRadius = new CornerRadius(4),
-                BorderThickness = new Thickness(1),
-                Padding = new Thickness(12, 8),
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
-            box.Bind(Border.BorderBrushProperty,
-                picker.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.LinesInputs))));
 
-            return new StackPanel { Children = { label, box } };
+            var labelHost = FieldChrome.BuildLabelHost(label, picker, scope);
+            var fieldSurface = new Panel
+            {
+                ClipToBounds = false,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Children = { box, labelHost },
+            };
+
+            var helper = new Text
+            {
+                Typo = Typo.Caption,
+                Color = LoamColor.Inherit,
+                IsVisible = false,
+                Margin = new Thickness(0, 3, 0, 0),
+            }.Named("PART_HelperText", scope);
+
+            return new StackPanel { Children = { fieldSurface, helper } };
         });
 }

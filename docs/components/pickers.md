@@ -6,7 +6,7 @@ title: Pickers
 
 Loam provides five picker controls. All controls are self-contained `TemplatedControl` or `Decorator` subclasses that open `Flyout` popups, with no dependency on Avalonia's built-in FluentTheme `Calendar`. Controls live in `Loam.Controls`; when both `Avalonia.Controls` and `Loam.Controls` are imported, qualify the Loam types as `Loam.Controls.DatePicker`, `Loam.Controls.TimePicker`, and `Loam.Controls.ColorPicker` to avoid ambiguity with Avalonia's own types of the same name.
 
-Field-style pickers are focusable. Enter or Space opens the flyout, Escape closes it, and the automation name is derived from the label or displayed value.
+Field-style pickers are focusable. Enter or Space opens the flyout, Escape closes it, and the automation name is derived from the label or displayed value. Labels rest inside empty fields, float when focused or filled, and can be forced to float with `ShrinkLabel`.
 
 ---
 
@@ -24,6 +24,11 @@ Mirrors the reference API's `DatePicker`. An outlined box displays the selected 
 | `DateFormat` | `string` | `"d"` | .NET date format string used to render `Date`. |
 | `MinDate` | `DateTime?` | `null` | First selectable date. |
 | `MaxDate` | `DateTime?` | `null` | Last selectable date. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 
 ### Example
 
@@ -57,6 +62,11 @@ Mirrors the reference API's `TimePicker`. An outlined box displays the selected 
 | `Placeholder` | `string?` | `"Select a time"` | Text shown when `Time` is `null`. |
 | `TimeFormat` | `string` | `"t"` | .NET time format string used to render `Time`. |
 | `MinuteStep` | `int` | `5` | Granularity of the minute column (1–30). Mirrors the reference API's `MinuteSelectionStep`. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 
 ### Example
 
@@ -87,6 +97,11 @@ Mirrors the reference API's `ColorPicker` (palette mode). An outlined box displa
 | `Value` | `Color` | `#594AE2` | The selected color. Two-way binding. |
 | `Label` | `string?` | `null` | Field label rendered above the box. |
 | `ShowAlpha` | `bool` | `false` | Shows an alpha slider in the flyout and displays `#AARRGGBB`. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated. |
 | `DefaultPalette` _(static)_ | `IReadOnlyList<Color>` | 20 hues + neutrals | The curated palette shown in the flyout. |
 | `ToHex(Color)` _(static)_ | `string` | — | Formats a `Color` as an upper-case `#RRGGBB` string. |
 | `ToHexWithAlpha(Color)` _(static)_ | `string` | — | Formats a `Color` as an upper-case `#AARRGGBB` string. |
@@ -131,6 +146,11 @@ Mirrors the reference API's `DateRangePicker`. An outlined box displays the sele
 | `DateFormat` | `string` | `"d"` | .NET date format string used to render start and end dates. |
 | `MinDate` | `DateTime?` | `null` | First selectable date. |
 | `MaxDate` | `DateTime?` | `null` | Last selectable date. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Format(start, end, fmt)` _(static)_ | `string?` | — | Returns a formatted `"start – end"` string, or just the start if `end` is `null`, or `null` when `start` is `null`. |
 
 ### Example

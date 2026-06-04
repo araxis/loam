@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Loam.Controls.Internal;
 using Loam.Theming;
+using AvaColor = Avalonia.Media.Color;
 
 namespace Loam.Controls;
 
@@ -19,18 +20,18 @@ public class ColorPicker : TemplatedControl
     private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
     /// <summary>The default palette shown in the flyout.</summary>
-    public static readonly IReadOnlyList<Color> DefaultPalette = new[]
+    public static readonly IReadOnlyList<AvaColor> DefaultPalette = new[]
     {
-        Color.Parse("#F44336"), Color.Parse("#E91E63"), Color.Parse("#9C27B0"), Color.Parse("#673AB7"),
-        Color.Parse("#3F51B5"), Color.Parse("#2196F3"), Color.Parse("#03A9F4"), Color.Parse("#00BCD4"),
-        Color.Parse("#009688"), Color.Parse("#4CAF50"), Color.Parse("#8BC34A"), Color.Parse("#CDDC39"),
-        Color.Parse("#FFEB3B"), Color.Parse("#FFC107"), Color.Parse("#FF9800"), Color.Parse("#FF5722"),
-        Color.Parse("#795548"), Color.Parse("#9E9E9E"), Color.Parse("#607D8B"), Color.Parse("#000000"),
+        AvaColor.Parse("#F44336"), AvaColor.Parse("#E91E63"), AvaColor.Parse("#9C27B0"), AvaColor.Parse("#673AB7"),
+        AvaColor.Parse("#3F51B5"), AvaColor.Parse("#2196F3"), AvaColor.Parse("#03A9F4"), AvaColor.Parse("#00BCD4"),
+        AvaColor.Parse("#009688"), AvaColor.Parse("#4CAF50"), AvaColor.Parse("#8BC34A"), AvaColor.Parse("#CDDC39"),
+        AvaColor.Parse("#FFEB3B"), AvaColor.Parse("#FFC107"), AvaColor.Parse("#FF9800"), AvaColor.Parse("#FF5722"),
+        AvaColor.Parse("#795548"), AvaColor.Parse("#9E9E9E"), AvaColor.Parse("#607D8B"), AvaColor.Parse("#000000"),
     };
 
     /// <summary>Identifies the <see cref="Value"/> property.</summary>
-    public static readonly StyledProperty<Color> ValueProperty =
-        AvaloniaProperty.Register<ColorPicker, Color>(nameof(Value), Color.Parse("#594AE2"),
+    public static readonly StyledProperty<AvaColor> ValueProperty =
+        AvaloniaProperty.Register<ColorPicker, AvaColor>(nameof(Value), AvaColor.Parse("#594AE2"),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     /// <summary>Identifies the <see cref="Label"/> property.</summary>
@@ -41,17 +42,48 @@ public class ColorPicker : TemplatedControl
     public static readonly StyledProperty<bool> ShowAlphaProperty =
         AvaloniaProperty.Register<ColorPicker, bool>(nameof(ShowAlpha));
 
+    /// <summary>Identifies the <see cref="Color"/> property.</summary>
+    public static readonly StyledProperty<LoamColor> ColorProperty =
+        AvaloniaProperty.Register<ColorPicker, LoamColor>(nameof(Color), LoamColor.Primary);
+
+    /// <summary>Identifies the <see cref="Error"/> property.</summary>
+    public static readonly StyledProperty<bool> ErrorProperty =
+        AvaloniaProperty.Register<ColorPicker, bool>(nameof(Error));
+
+    /// <summary>Identifies the <see cref="HelperText"/> property.</summary>
+    public static readonly StyledProperty<string?> HelperTextProperty =
+        AvaloniaProperty.Register<ColorPicker, string?>(nameof(HelperText));
+
+    /// <summary>Identifies the <see cref="ErrorText"/> property.</summary>
+    public static readonly StyledProperty<string?> ErrorTextProperty =
+        AvaloniaProperty.Register<ColorPicker, string?>(nameof(ErrorText));
+
+    /// <summary>Identifies the <see cref="ShrinkLabel"/> property.</summary>
+    public static readonly StyledProperty<bool> ShrinkLabelProperty =
+        AvaloniaProperty.Register<ColorPicker, bool>(nameof(ShrinkLabel));
+
     private Border? _box;
+    private Border? _labelHost;
     private Border? _swatch;
     private Text? _hex;
     private Text? _label;
+    private Text? _helper;
+    private IDisposable? _boxBorderBrush;
+    private IDisposable? _boxBackground;
+    private IDisposable? _labelForeground;
+    private IDisposable? _helperForeground;
     private Flyout? _flyout;
 
     /// <summary>Creates the picker.</summary>
-    public ColorPicker() => Focusable = true;
+    public ColorPicker()
+    {
+        Focusable = true;
+        GotFocus += (_, _) => ApplyBoxChrome();
+        LostFocus += (_, _) => ApplyBoxChrome();
+    }
 
     /// <summary>The selected color (two-way). Mirrors the reference API's <c>Value</c>.</summary>
-    public Color Value
+    public AvaColor Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
@@ -71,17 +103,52 @@ public class ColorPicker : TemplatedControl
         set => SetValue(ShowAlphaProperty, value);
     }
 
+    /// <summary>Focus accent color.</summary>
+    public LoamColor Color
+    {
+        get => GetValue(ColorProperty);
+        set => SetValue(ColorProperty, value);
+    }
+
+    /// <summary>Whether the field is in an error state.</summary>
+    public bool Error
+    {
+        get => GetValue(ErrorProperty);
+        set => SetValue(ErrorProperty, value);
+    }
+
+    /// <summary>Helper text shown below the field.</summary>
+    public string? HelperText
+    {
+        get => GetValue(HelperTextProperty);
+        set => SetValue(HelperTextProperty, value);
+    }
+
+    /// <summary>Error message shown instead of helper text when <see cref="Error"/>.</summary>
+    public string? ErrorText
+    {
+        get => GetValue(ErrorTextProperty);
+        set => SetValue(ErrorTextProperty, value);
+    }
+
+    /// <summary>When true, the label stays floated above the field even when empty and unfocused.</summary>
+    public bool ShrinkLabel
+    {
+        get => GetValue(ShrinkLabelProperty);
+        set => SetValue(ShrinkLabelProperty, value);
+    }
+
     /// <summary>A hue/saturation/value color triple using degrees and unit fractions.</summary>
     public readonly record struct HsvColor(double Hue, double Saturation, double Value);
 
     /// <summary>Formats a color as an upper-case <c>#RRGGBB</c> string.</summary>
-    public static string ToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    public static string ToHex(AvaColor color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
     /// <summary>Formats a color as an upper-case <c>#AARRGGBB</c> string.</summary>
-    public static string ToHexWithAlpha(Color color) => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+    public static string ToHexWithAlpha(AvaColor color) => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
 
     /// <summary>Converts an HSV color to an Avalonia color.</summary>
-    public static Color FromHsv(double hue, double saturation, double value, byte alpha = 255)
+    public static AvaColor FromHsv(double hue, double saturation, double value, byte alpha = 255)
     {
         var h = NormalizeHue(hue);
         var s = Math.Clamp(saturation, 0d, 1d);
@@ -100,11 +167,11 @@ public class ColorPicker : TemplatedControl
             _ => (c, 0d, x),
         };
 
-        return Color.FromArgb(alpha, ToByte(r + m), ToByte(g + m), ToByte(b + m));
+        return AvaColor.FromArgb(alpha, ToByte(r + m), ToByte(g + m), ToByte(b + m));
     }
 
     /// <summary>Converts an Avalonia color to HSV.</summary>
-    public static HsvColor ToHsv(Color color)
+    public static HsvColor ToHsv(AvaColor color)
     {
         var r = color.R / 255d;
         var g = color.G / 255d;
@@ -129,11 +196,15 @@ public class ColorPicker : TemplatedControl
     {
         base.OnApplyTemplate(e);
         _box = e.NameScope.Find("PART_Box") as Border;
+        _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _swatch = e.NameScope.Find("PART_Swatch") as Border;
         _hex = e.NameScope.Find("PART_Hex") as Text;
         _label = e.NameScope.Find("PART_Label") as Text;
+        _helper = e.NameScope.Find("PART_HelperText") as Text;
         if (_box is not null)
         {
+            _box.GotFocus += (_, _) => ApplyBoxChrome();
+            _box.LostFocus += (_, _) => ApplyBoxChrome();
             _box.PointerPressed += (_, _) =>
             {
                 Focus();
@@ -143,6 +214,7 @@ public class ColorPicker : TemplatedControl
 
         UpdateLabel();
         UpdateDisplay();
+        ApplyBoxChrome();
     }
 
     /// <inheritdoc />
@@ -153,8 +225,16 @@ public class ColorPicker : TemplatedControl
         {
             UpdateDisplay();
         }
-        else if (change.Property == LabelProperty)
+        else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
+                 change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
+            UpdateLabel();
+        }
+
+        if (change.Property == ColorProperty || change.Property == ErrorProperty ||
+            change.Property == IsEnabledProperty)
+        {
+            ApplyBoxChrome();
             UpdateLabel();
         }
     }
@@ -171,6 +251,7 @@ public class ColorPicker : TemplatedControl
         else if (e.Key == Key.Escape)
         {
             _flyout?.Hide();
+            ApplyBoxChrome();
             e.Handled = true;
         }
     }
@@ -193,9 +274,10 @@ public class ColorPicker : TemplatedControl
             swatch.PointerPressed += (_, _) =>
             {
                 Value = ShowAlpha
-                    ? Color.FromArgb(Value.A, captured.R, captured.G, captured.B)
+                    ? AvaColor.FromArgb(Value.A, captured.R, captured.G, captured.B)
                     : captured;
                 _flyout?.Hide();
+                ApplyBoxChrome();
             };
             grid.Children.Add(swatch);
         }
@@ -216,7 +298,7 @@ public class ColorPicker : TemplatedControl
                 if (change.Property == global::Avalonia.Controls.Slider.ValueProperty)
                 {
                     var next = (byte)Math.Clamp(Math.Round(alpha.Value), 0d, 255d);
-                    Value = Color.FromArgb(next, Value.R, Value.G, Value.B);
+                    Value = AvaColor.FromArgb(next, Value.R, Value.G, Value.B);
                 }
             };
 
@@ -229,14 +311,32 @@ public class ColorPicker : TemplatedControl
             Placement = PlacementMode.BottomEdgeAlignedLeft,
         };
         _flyout.ShowAt(_box ?? (Control)this);
+        ApplyBoxChrome();
     }
 
     private void UpdateLabel()
     {
+        var labelForeground = LabelForegroundKey();
+        var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
+        var hasLabel = !string.IsNullOrEmpty(Label);
+
         if (_label is not null)
         {
             _label.Text = Label;
-            _label.IsVisible = !string.IsNullOrEmpty(Label);
+            _label.IsVisible = hasLabel;
+            _labelForeground?.Dispose();
+            _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
+        }
+
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, hasLabel);
+
+        if (_helper is not null)
+        {
+            var text = Error && !string.IsNullOrEmpty(ErrorText) ? ErrorText : HelperText;
+            _helper.Text = text;
+            _helper.IsVisible = !string.IsNullOrEmpty(text);
+            _helperForeground?.Dispose();
+            _helperForeground = _helper.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(helperForeground));
         }
 
         InteractionAssist.SetAutomationName(this, Label, _hex?.Text);
@@ -255,6 +355,37 @@ public class ColorPicker : TemplatedControl
         }
 
         InteractionAssist.SetAutomationName(this, Label, _hex?.Text);
+        UpdateLabel();
+    }
+
+    private void ApplyBoxChrome()
+    {
+        if (_box is null)
+        {
+            return;
+        }
+
+        FieldChrome.Apply(this, _box, Variant.Outlined, Color, Error, IsActive(), IsEnabled,
+            ref _boxBorderBrush, ref _boxBackground);
+        UpdateLabel();
+    }
+
+    private bool IsActive() => IsFocused || _box?.IsFocused == true;
+
+    private string LabelForegroundKey()
+    {
+        if (Error)
+        {
+            return LoamTokens.Error;
+        }
+
+        if (IsActive())
+        {
+            var paletteName = Color.ToPaletteName();
+            return paletteName is null ? LoamTokens.Primary : LoamTokens.Palette(paletteName);
+        }
+
+        return LoamTokens.TextSecondary;
     }
 
     private static double NormalizeHue(double hue)

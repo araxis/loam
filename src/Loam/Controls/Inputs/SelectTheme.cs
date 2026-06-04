@@ -29,7 +29,15 @@ internal static class SelectTheme
                 Color = LoamColor.Inherit,
                 IsVisible = false,
             }.Named("PART_Label", scope);
-            label.Bind(TextBlock.ForegroundProperty, select.GetResourceObservable(LoamTokens.TextSecondary));
+
+            var restingLabel = new Text
+            {
+                Typo = Typo.Body1,
+                Color = LoamColor.Inherit,
+                IsHitTestVisible = false,
+                IsVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+            }.Named("PART_RestingLabel", scope);
 
             var display = new Text { Color = LoamColor.Inherit, VerticalAlignment = VerticalAlignment.Center }
                 .Named("PART_Display", scope);
@@ -37,15 +45,12 @@ internal static class SelectTheme
             var chevron = new Icon { Data = Icons.Material.Filled.ExpandMore, Color = LoamColor.Default, VerticalAlignment = VerticalAlignment.Center };
             DockPanel.SetDock(chevron, Dock.Right);
 
+            var textLayer = new Avalonia.Controls.Grid { Children = { display, restingLabel } };
             var box = new Border
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Child = new DockPanel { LastChildFill = true, Children = { chevron, display } },
+                Child = new DockPanel { LastChildFill = true, Children = { chevron, textLayer } },
                 Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)),
-                CornerRadius = new CornerRadius(4),
-                BorderThickness = new Thickness(1),
-                MinHeight = 52,
-                Padding = new Thickness(12, 14),
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
@@ -66,6 +71,14 @@ internal static class SelectTheme
                 PlacementTarget = box,
             }.Named("PART_Popup", scope);
 
-            return new StackPanel { Children = { fieldSurface, popup } };
+            var helper = new Text
+            {
+                Typo = Typo.Caption,
+                Color = LoamColor.Inherit,
+                IsVisible = false,
+                Margin = new Thickness(0, 3, 0, 0),
+            }.Named("PART_HelperText", scope);
+
+            return new StackPanel { Children = { fieldSurface, helper, popup } };
         });
 }

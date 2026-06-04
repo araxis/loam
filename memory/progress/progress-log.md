@@ -7,6 +7,27 @@ Next.
 
 ---
 
+## 2026-06-04 — Unreleased — Component adaptation tokens and fields
+
+**Done**
+- Bumped the package version to `1.3.0` and started branch `work/component-adaptation`.
+- Added additive theme data for shape, state layers, motion, and field metrics, and projected them
+  through `LoamTokens`.
+- Updated shared field chrome to consume field metrics, shape, and disabled-state opacity tokens.
+- Brought `Select`, `Autocomplete`, and the field-style pickers onto the shared field-state surface:
+  resting/floating labels, helper/error text, shrink labels, focus/error chrome, and keyboard close.
+- Updated gallery samples and docs for the new field APIs; added an audit tracker for the broader
+  component adaptation pass.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release --no-restore` passed after the source changes.
+- Focused test additions cover theme token projection, select field states, autocomplete forwarding,
+  and picker shared chrome; final full test run remains next.
+
+**Next:** run the full release checks, gallery launch, hygiene scans, then commit and push.
+
+---
+
 ## 2026-06-04 — Unreleased — Field and gallery navigation
 
 **Done**

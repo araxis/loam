@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -86,6 +87,6 @@ public class Switch : ToggleButton
                 this.GetResourceObservable(isChecked ? tokens.Fill : LoamTokens.Palette(nameof(LoamPalette.GrayLight))));
         }
 
-        Opacity = IsEnabled ? 1 : 0.5;
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
     }
 }

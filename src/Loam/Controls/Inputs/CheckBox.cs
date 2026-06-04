@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 using AvaPath = Avalonia.Controls.Shapes.Path;
 
@@ -103,6 +104,6 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
             _checkFill = _check.Bind(Shape.FillProperty, this.GetResourceObservable(tokens.FillText));
         }
 
-        Opacity = IsEnabled ? 1 : 0.5;
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
     }
 }

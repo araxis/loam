@@ -23,6 +23,10 @@ internal static class AutocompleteTheme
             field.Bind(TextField.PlaceholderProperty, autocomplete.GetObservable(Autocomplete.PlaceholderProperty));
             field.Bind(TextField.VariantProperty, autocomplete.GetObservable(Autocomplete.VariantProperty));
             field.Bind(TextField.ColorProperty, autocomplete.GetObservable(Autocomplete.ColorProperty));
+            field.Bind(TextField.HelperTextProperty, autocomplete.GetObservable(Autocomplete.HelperTextProperty));
+            field.Bind(TextField.ErrorTextProperty, autocomplete.GetObservable(Autocomplete.ErrorTextProperty));
+            field.Bind(TextField.ErrorProperty, autocomplete.GetObservable(Autocomplete.ErrorProperty));
+            field.Bind(TextField.ShrinkLabelProperty, autocomplete.GetObservable(Autocomplete.ShrinkLabelProperty));
             return field;
         });
 }
