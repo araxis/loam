@@ -44,6 +44,6 @@ picking the project up cold. Read this file first.
 
 ## Current status (update me)
 
-- **Phase:** 5 done + 6/7 in progress 🟢 (54 tests green). ~52 components across Phases 0–7, incl. **Dialog + Snackbar** (overlay-layer services).
-- **Next (large remaining surface):** Menu/Popover/Tooltip (reuse overlay), Select/Autocomplete/NumericField, Tabs/Table/DataGrid/TreeView, ProgressCircular, nav (NavMenu/Breadcrumbs/Stepper), pickers (Date/Time/Color), Timeline/Carousel/Pagination, charts, ripple, ChipSet/ButtonGroup, Hidden/Spacer/ScrollToTop. See `component-inventory.md`.
-- **Last updated:** 2026-06-03
+- **Phase:** v1 catalog component-complete. Remaining work is polish, deeper feature variants, and release-by-release hardening.
+- **Latest:** `Field` is now a standalone custom-content field shell, field-style input chrome is shared, and the gallery uses side-menu component pages.
+- **Last updated:** 2026-06-04

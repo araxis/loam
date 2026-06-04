@@ -62,7 +62,7 @@ source before implementation (source-first, ADR-0007).
 | reference | Loam | Status | Notes |
 | --- | --- | --- | --- |
 | `Form` | `Form` | ✅ | `Validate()` aggregates `TextField` validation; `IsValid`. (Full `INotifyDataErrorInfo` later.) |
-| `Field` | `Field` | 🟦 | chrome (label/helper/error/variant) built into `TextField` for now; extract a shared `Field` base later. |
+| `Field` | `Field` | ✅ | Standalone custom-content field shell with `Label`, `HelperText`/`ErrorText`, `Variant`, `Color`, adornments, `InnerPadding`, focus/error chrome, and automation name. Shared chrome helper now backs field-style input borders. |
 | `TextField` | `TextField` | ✅ | `Text`(two-way)/`Label`/`HelperText`/`Placeholder`/`Variant`/`Color`/`Error`/`ReadOnly`; `StartAdornment`/`EndAdornment`; optional `FloatingLabel`. |
 | `NumericField` | `NumericField` | 🟦 | Shares `TextField` chrome + vertical spinner (`PART_Up`/`PART_Down`). Two-way `Value` clamped to `Minimum`/`Maximum`; `Step`; `Format`; text↔value parse (current culture). Generic `T` numeric type ⬜ (double-only for now). |
 | `Select`/`SelectItem` | `Select`/`SelectItem` | ✅ | Outlined box + chevron opens a `Flyout` of `ListItem` rows; two-way `Value`/`Label`/`Placeholder`; `MultiSelect` + `SelectedValues`; `DisplayTextFunc`; `ItemTemplate`; focusable with Enter/Space open, Escape close, automation name from label/display text. |

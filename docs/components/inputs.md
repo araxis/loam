@@ -10,6 +10,72 @@ are in `Loam.Controls`.
 
 ---
 
+## Field
+
+Generic field chrome for custom input-like content. It gives arbitrary Avalonia content the same
+label, helper/error text, Text/Filled/Outlined variants, focus accent, and start/end adornment slots
+as the built-in field-style inputs.
+
+Use it when you are composing a custom editor that should visually line up with `TextField`,
+`NumericField`, `Select`, and the pickers.
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Content` | `object?` | `null` | Custom content hosted inside the field chrome. |
+| `Label` | `string?` | `null` | Field label shown above the chrome. |
+| `HelperText` | `string?` | `null` | Hint shown below the field. |
+| `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
+| `Variant` | `Variant` | `Variant.Outlined` | Visual chrome style (`Text`, `Filled`, `Outlined`). |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
+| `Error` | `bool` | `false` | Puts the field in an error state. |
+| `StartAdornment` | `object?` | `null` | Content shown before the custom content. |
+| `EndAdornment` | `object?` | `null` | Content shown after the custom content. |
+| `InnerPadding` | `bool` | `true` | Applies standard field padding; set `false` when the child owns spacing. |
+
+```csharp
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Loam;
+using Loam.Controls;
+
+var rawInput = new TextBox
+{
+    PlaceholderText = "(555) 123-4567",
+    BorderBrush = Brushes.Transparent,
+    BorderThickness = default,
+    Background = Brushes.Transparent,
+    Padding = default,
+};
+
+var phone = new Field
+{
+    Label = "Phone",
+    HelperText = "Custom phone editor",
+    StartAdornment = new TextBlock { Text = "+1" },
+    Content = rawInput,
+};
+
+var compactOptions = new Field
+{
+    Label = "Channels",
+    InnerPadding = false,
+    Content = new StackPanel
+    {
+        Margin = new Thickness(8, 6),
+        Children =
+        {
+            new Loam.Controls.CheckBox { Content = "Email", IsChecked = true },
+            new Loam.Controls.CheckBox { Content = "SMS" },
+        },
+    },
+};
+```
+
+---
+
 ## TextField
 
 Text input equivalent to the reference API's `TextField`. Wraps an Avalonia `TextBox` with an

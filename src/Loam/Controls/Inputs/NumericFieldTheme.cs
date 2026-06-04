@@ -33,11 +33,13 @@ internal static class NumericFieldTheme
             var textBox = new TextBox
             {
                 BorderThickness = default,
+                BorderBrush = Brushes.Transparent,
                 Background = Brushes.Transparent,
                 Padding = default,
                 MinHeight = 24,
                 VerticalContentAlignment = VerticalAlignment.Center,
             }.Named("PART_TextBox", scope);
+            FieldChrome.ResetInnerTextBox(textBox);
 
             var spinners = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { Spinner(Icons.Material.Filled.ExpandLess, "PART_Up", scope), Spinner(Icons.Material.Filled.ExpandMore, "PART_Down", scope) } };
             DockPanel.SetDock(spinners, Dock.Right);

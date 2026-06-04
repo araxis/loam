@@ -21,65 +21,42 @@ public sealed class ComponentsView : UserControl
         LoamColor.Info, LoamColor.Success, LoamColor.Warning, LoamColor.Error, LoamColor.Dark,
     ];
 
+    private readonly IReadOnlyList<GalleryPage> _pages;
+    private readonly Dictionary<string, NavLink> _links = [];
+    private readonly Text _pageTitle = new() { Typo = Typo.H5 };
+    private readonly Text _pageDescription = new()
+    {
+        Typo = Typo.Body2,
+        Color = LoamColor.Secondary,
+        TextWrapping = TextWrapping.Wrap,
+        MaxWidth = 760,
+    };
+
+    private readonly ContentControl _pageHost = new() { HorizontalAlignment = HorizontalAlignment.Stretch };
+
     public ComponentsView()
     {
-        var stack = new StackPanel
+        _pages = BuildPageCatalog();
+
+        var nav = BuildSideMenu();
+        var navSurface = new Border
         {
-            Margin = new Thickness(24),
-            Spacing = 28,
-            Children =
-            {
-                Section("Text", BuildText()),
-                Section("Buttons", BuildButtons()),
-                Section("Button group", BuildButtonGroup()),
-                Section(
-                    "Icons & icon buttons",
-                    new StackPanel
-                    {
-                        Spacing = 10,
-                        Children = { Labeled("Icons", BuildIcons()), Labeled("Icon buttons", BuildIconButtons()) },
-                    }),
-                Section("Floating action button", BuildFabs()),
-                Section("Avatars", BuildAvatars()),
-                Section("Chips", BuildChips()),
-                Section("Chip set (selectable)", BuildChipSet()),
-                Section("Badges", BuildBadges()),
-                Section("Selection (checkbox / switch)", BuildInputs()),
-                Section("Text fields", BuildTextFields()),
-                Section("Select", BuildSelect()),
-                Section("File upload", BuildFileUpload()),
-                Section("Date & time pickers", BuildDateTimePickers()),
-                Section("Date range picker", BuildDateRangePicker()),
-                Section("Color picker", BuildColorPicker()),
-                Section("Radio / Slider", BuildRadioSlider()),
-                Section("Progress", BuildProgress()),
-                Section("Rating", BuildRating()),
-                Section("Toggle group", BuildToggleGroup()),
-                Section("Overlays (dialog / snackbar)", BuildOverlays()),
-                Section("Overlay (scrim)", BuildOverlayScrim()),
-                Section("Popover", BuildPopover()),
-                Section("Tabs / Menu / Tooltip", BuildTabsMenu()),
-                Section("Table", BuildTable()),
-                Section("Data grid", BuildDataGrid()),
-                Section("Tree view", BuildTreeView()),
-                Section("Carousel", BuildCarousel()),
-                Section("Expansion panels", BuildExpansionPanels()),
-                Section("Collapse", BuildCollapse()),
-                Section("Timeline", BuildTimeline()),
-                Section("Stepper", BuildStepper()),
-                Section("Pagination", BuildPagination()),
-                Section("Navigation (breadcrumbs / link)", BuildNavigation()),
-                Section("List & spacer", BuildList()),
-                Section("Card", BuildCard()),
-                Section("Ripple", BuildRipple()),
-                Section("Charts", BuildCharts()),
-                Section("Paper", BuildPaper()),
-                Section("Divider", BuildDivider()),
-                Section("Responsive (Hidden)", BuildHidden()),
-            },
+            Width = 268,
+            Padding = new Thickness(8, 14),
+            BorderThickness = new Thickness(0, 0, 1, 0),
+            Child = new ScrollViewer { Content = nav },
+        };
+        navSurface.Bind(Border.BackgroundProperty, navSurface.GetResourceObservable(LoamTokens.Surface));
+        navSurface.Bind(Border.BorderBrushProperty, navSurface.GetResourceObservable(LoamTokens.Divider));
+
+        var pageStack = new StackPanel
+        {
+            Margin = new Thickness(28),
+            Spacing = 14,
+            Children = { _pageTitle, _pageDescription, _pageHost },
         };
 
-        var scroller = new ScrollViewer { Content = stack };
+        var scroller = new ScrollViewer { Content = pageStack };
         var scrollToTop = new ScrollToTop
         {
             Target = scroller,
@@ -89,20 +66,159 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 24),
         };
 
-        var background = new Border { Child = new Panel { Children = { scroller, scrollToTop } } };
+        var content = new Panel { Children = { scroller, scrollToTop } };
+        var shell = new Avalonia.Controls.Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            Children = { navSurface, content },
+        };
+        Avalonia.Controls.Grid.SetColumn(content, 1);
+
+        var background = new Border { Child = shell };
         background.Bind(Border.BackgroundProperty, background.GetResourceObservable(LoamTokens.Background));
         Content = background;
+
+        ShowPage(_pages[0]);
     }
 
-    private static StackPanel Section(string title, Control body) =>
-        new()
+    private sealed record GalleryPage(string Group, string Title, string Description, Func<Control> Build);
+
+    private static IReadOnlyList<GalleryPage> BuildPageCatalog() =>
+    [
+        new("Display", "Text", "Typography, color, spacing, and alignment.", BuildText),
+        new("Display", "Icon", "Vector icon rendering with semantic colors and sizes.", BuildIcons),
+        new("Display", "Divider", "Horizontal and vertical dividers with token colors.", BuildDivider),
+        new("Display", "Chip", "Compact labels, icons, close affordances, and variants.", BuildChips),
+        new("Display", "ChipSet", "Selectable single and multi-select chip groups.", BuildChipSet),
+        new("Display", "Badge", "Numeric and dot badges positioned around child content.", BuildBadges),
+        new("Display", "Avatar", "Initials, icon avatars, sizes, colors, and shapes.", BuildAvatars),
+        new("Display", "AvatarGroup", "Grouped avatars with overflow count behavior.", BuildAvatars),
+
+        new("Buttons", "Button", "Filled, outlined, text, color, size, disabled, and icon buttons.", BuildButtons),
+        new("Buttons", "IconButton", "Icon-only actions in default, filled, and outlined variants.", BuildIconButtons),
+        new("Buttons", "ToggleIconButton", "Two-state icon action with a separate toggled color.", BuildToggleIconButton),
+        new("Buttons", "ButtonGroup", "Connected button segments with shared variant and color.", BuildButtonGroup),
+        new("Buttons", "Fab", "Floating action buttons with icon-only and label modes.", BuildFabs),
+        new("Buttons", "Menu", "Button-anchored menu rows and tooltip behavior.", BuildTabsMenu),
+
+        new("Inputs", "Field", "A reusable field shell for custom input-like content.", BuildField),
+        new("Inputs", "TextField", "Text, numeric, masked, and autocomplete field examples.", BuildTextFields),
+        new("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.", BuildTextFields),
+        new("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.", BuildTextFields),
+        new("Inputs", "Autocomplete", "Text entry with filtered suggestions.", BuildTextFields),
+        new("Inputs", "Select", "Single and multi-select dropdowns.", BuildSelect),
+        new("Inputs", "CheckBox", "Checkbox states, colors, and disabled rendering.", BuildInputs),
+        new("Inputs", "Switch", "On/off switch states and colors.", BuildInputs),
+        new("Inputs", "Radio", "Radio choices coordinated by a radio group.", BuildRadioSlider),
+        new("Inputs", "RadioGroup", "Grouped single-choice selection.", BuildRadioSlider),
+        new("Inputs", "Slider", "Pointer-driven range selection.", BuildRadioSlider),
+        new("Inputs", "Rating", "Interactive and read-only star ratings.", BuildRating),
+        new("Inputs", "ToggleGroup", "Segmented single selection.", BuildToggleGroup),
+        new("Inputs", "FileUpload", "Platform file picking and selected-name chips.", BuildFileUpload),
+        new("Inputs", "Form", "Lightweight validation over text-field descendants.", BuildFormDemo),
+
+        new("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDateTimePickers),
+        new("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildDateTimePickers),
+        new("Pickers", "DateRangePicker", "Two-click date range selection.", BuildDateRangePicker),
+        new("Pickers", "ColorPicker", "Swatch picker with hex display.", BuildColorPicker),
+        new("Pickers", "MonthCalendar", "Standalone month grid used by date pickers.", BuildMonthCalendar),
+
+        new("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.", BuildProgress),
+        new("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.", BuildProgress),
+        new("Feedback", "Skeleton", "Animated and static loading placeholders.", BuildProgress),
+        new("Feedback", "Overlay", "Auto-closing scrim over local content.", BuildOverlayScrim),
+        new("Feedback", "Popover", "Anchored floating content.", BuildPopover),
+        new("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildOverlays),
+        new("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildOverlays),
+
+        new("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.", BuildTable),
+        new("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.", BuildDataGrid),
+        new("Data", "TreeView", "Nested rows with selection and expansion.", BuildTreeView),
+        new("Data", "Tabs", "Header strip and selected content region.", BuildTabsMenu),
+        new("Data", "ExpansionPanels", "Accordion-style expandable content.", BuildExpansionPanels),
+        new("Data", "Collapse", "Animated and static content reveal.", BuildCollapse),
+        new("Data", "Timeline", "Vertical event sequence.", BuildTimeline),
+        new("Data", "Carousel", "Slide navigation with arrows and bullets.", BuildCarousel),
+        new("Data", "Stepper", "Multi-step workflow navigation.", BuildStepper),
+        new("Data", "Pagination", "Page buttons with boundary and ellipsis behavior.", BuildPagination),
+
+        new("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildNavigation),
+        new("Navigation", "Link", "Clickable text link variants.", BuildNavigation),
+        new("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavigation),
+        new("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavigation),
+        new("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavigation),
+
+        new("Surfaces", "Paper", "Elevation, outlined, square, and filled surfaces.", BuildPaper),
+        new("Surfaces", "Card", "Header, media, content, and actions.", BuildCard),
+        new("Surfaces", "List", "List rows, subheaders, and spacer-driven toolbar layout.", BuildList),
+        new("Surfaces", "Hidden", "Breakpoint-based visibility.", BuildHidden),
+        new("Surfaces", "Ripple", "Pointer feedback effect.", BuildRipple),
+        new("Charts", "Charts", "Pie, donut, bar, and line charts.", BuildCharts),
+    ];
+
+    private NavMenu BuildSideMenu()
+    {
+        var nav = new NavMenu { Width = 244, Spacing = 2 };
+        foreach (var group in _pages.GroupBy(page => page.Group))
         {
-            Children =
+            var navGroup = new NavGroup
             {
-                new Text { Text = title, Typo = Typo.H6, Margin = new Thickness(0, 0, 0, 12) },
-                body,
-            },
-        };
+                Title = group.Key,
+                Icon = IconForGroup(group.Key),
+                Expanded = group.Key is "Display" or "Buttons" or "Inputs",
+            };
+
+            foreach (var page in group)
+            {
+                var link = new NavLink { Content = page.Title, Icon = IconForPage(page.Title) };
+                link.OnClick = () => ShowPage(page);
+                _links[page.Title] = link;
+                navGroup.Items.Add(link);
+            }
+
+            nav.Children.Add(navGroup);
+        }
+
+        return nav;
+    }
+
+    private void ShowPage(GalleryPage page)
+    {
+        _pageTitle.Text = page.Title;
+        _pageDescription.Text = page.Description;
+        _pageHost.Content = page.Build();
+
+        foreach (var link in _links)
+        {
+            link.Value.IsActive = string.Equals(link.Key, page.Title, StringComparison.Ordinal);
+        }
+    }
+
+    private static string IconForGroup(string group) => group switch
+    {
+        "Buttons" => Icons.Material.Filled.Check,
+        "Inputs" => Icons.Material.Filled.Edit,
+        "Pickers" => Icons.Material.Filled.CalendarToday,
+        "Feedback" => Icons.Material.Filled.Settings,
+        "Data" => Icons.Material.Filled.Menu,
+        "Navigation" => Icons.Material.Filled.Menu,
+        "Surfaces" => Icons.Material.Filled.Home,
+        "Charts" => Icons.Material.Filled.Star,
+        _ => Icons.Material.Filled.Favorite,
+    };
+
+    private static string IconForPage(string title) => title switch
+    {
+        "Field" or "TextField" or "NumericField" or "MaskedTextField" or "Autocomplete" => Icons.Material.Filled.Edit,
+        "Select" or "Menu" or "NavGroup" => Icons.Material.Filled.ExpandMore,
+        "DatePicker" or "TimePicker" or "DateRangePicker" => Icons.Material.Filled.CalendarToday,
+        "ColorPicker" => Icons.Material.Filled.Favorite,
+        "FileUpload" => Icons.Material.Filled.CloudUpload,
+        "DialogService" or "SnackbarService" or "Overlay" or "Popover" => Icons.Material.Filled.Settings,
+        "DataGrid" or "SimpleTable" or "TreeView" => Icons.Material.Filled.Menu,
+        "Button" or "IconButton" or "ToggleIconButton" or "ButtonGroup" or "Fab" => Icons.Material.Filled.Check,
+        _ => Icons.Material.Filled.Star,
+    };
 
     private static StackPanel BuildText()
     {
@@ -146,6 +262,30 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(favorites);
 
         return stack;
+    }
+
+    private static StackPanel BuildToggleIconButton()
+    {
+        var favorites = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        favorites.Children.Add(new Text { Text = "Favorite", VerticalAlignment = VerticalAlignment.Center });
+        favorites.Children.Add(new ToggleIconButton
+        {
+            Icon = Icons.Material.Filled.FavoriteBorder,
+            ToggledIcon = Icons.Material.Filled.Favorite,
+            Color = LoamColor.Default,
+            ToggledColor = LoamColor.Error,
+        });
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                favorites,
+                new Text { Text = "The toggled state swaps the glyph and can tint it independently.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+            },
+        };
     }
 
     private static StackPanel BuildButtons()
@@ -363,6 +503,88 @@ public sealed class ComponentsView : UserControl
         switches.Children.Add(new Switch { Content = "Disabled", IsChecked = true, IsEnabled = false, Margin = m });
 
         return new StackPanel { Spacing = 12, Children = { Labeled("Checkboxes", checks), Labeled("Switches", switches) } };
+    }
+
+    private static StackPanel BuildField()
+    {
+        static TextBox InnerTextBox(string text, string? watermark = null) => new()
+        {
+            Text = text,
+            PlaceholderText = watermark,
+            BorderBrush = Brushes.Transparent,
+            BorderThickness = default,
+            Background = Brushes.Transparent,
+            Padding = default,
+            MinHeight = 24,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        var phone = new Field
+        {
+            Label = "Phone",
+            HelperText = "Custom phone entry inside shared field chrome.",
+            Content = InnerTextBox("(555) 123-4567", "(555) 123-4567"),
+            StartAdornment = new TextBlock { Text = "+1" },
+            EndAdornment = new Icon { Data = Icons.Material.Filled.Check, Color = LoamColor.Success, Size = LoamSize.Small },
+        };
+
+        var colorSwatch = new Border
+        {
+            Width = 24,
+            Height = 24,
+            CornerRadius = new CornerRadius(4),
+            Background = new SolidColorBrush(Color.Parse("#594AE2")),
+        };
+        var color = new Field
+        {
+            Label = "Accent",
+            Variant = Variant.Filled,
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 10,
+                Children =
+                {
+                    colorSwatch,
+                    new Text { Text = "#594AE2", VerticalAlignment = VerticalAlignment.Center },
+                },
+            },
+        };
+
+        var options = new Field
+        {
+            Label = "Notification channels",
+            InnerPadding = false,
+            Variant = Variant.Outlined,
+            Content = new StackPanel
+            {
+                Margin = new Thickness(8, 6),
+                Spacing = 4,
+                Children =
+                {
+                    new Loam.Controls.CheckBox { Content = "Email", IsChecked = true },
+                    new Loam.Controls.CheckBox { Content = "SMS" },
+                    new Loam.Controls.CheckBox { Content = "Push", IsChecked = true },
+                },
+            },
+        };
+
+        var invalid = new Field
+        {
+            Label = "Custom amount",
+            Error = true,
+            ErrorText = "Enter a value greater than zero",
+            StartAdornment = new TextBlock { Text = "$" },
+            Content = InnerTextBox("0"),
+        };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 380,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { phone, color, options, invalid },
+        };
     }
 
     private static StackPanel BuildTabsMenu()
@@ -799,6 +1021,40 @@ public sealed class ComponentsView : UserControl
         return new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Left, Children = { upload, status } };
     }
 
+    private static StackPanel BuildFormDemo()
+    {
+        var name = new TextField { Label = "Name", Required = true };
+        var email = new TextField
+        {
+            Label = "Email",
+            Required = true,
+            Validation = value => value?.Contains('@', StringComparison.Ordinal) == true ? null : "Enter a valid email",
+        };
+        var form = new Form
+        {
+            Child = new StackPanel
+            {
+                Spacing = 14,
+                Children = { name, email },
+            },
+        };
+        var status = new Text { Typo = Typo.Caption, Color = LoamColor.Secondary };
+        var validate = new LoamButton { Content = "Validate", Variant = Variant.Filled, Color = LoamColor.Primary };
+        validate.Click += (_, _) =>
+        {
+            status.Text = form.Validate() ? "Ready to submit" : "Review the highlighted fields";
+            status.Color = form.IsValid ? LoamColor.Success : LoamColor.Error;
+        };
+
+        return new StackPanel
+        {
+            Spacing = 14,
+            MaxWidth = 360,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { form, validate, status },
+        };
+    }
+
     private static StackPanel BuildColorPicker()
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
@@ -831,6 +1087,35 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(new Loam.Controls.TimePicker { Label = "Reminder", TimeFormat = "t" });
         stack.Children.Add(new Loam.Controls.TimePicker { Label = "Standup", Time = new TimeSpan(9, 30, 0), TimeFormat = "HH:mm", MinuteStep = 15 });
         return stack;
+    }
+
+    private static StackPanel BuildMonthCalendar()
+    {
+        var selected = new Text { Typo = Typo.Caption, Color = LoamColor.Secondary };
+        var calendar = new MonthCalendar
+        {
+            DisplayMonth = new DateTime(2026, 6, 1),
+            SelectedDate = new DateTime(2026, 6, 4),
+            RangeStart = new DateTime(2026, 6, 10),
+            RangeEnd = new DateTime(2026, 6, 16),
+        };
+        selected.Text = "Selected: Jun 4, 2026";
+        calendar.DateSelected += date =>
+        {
+            calendar.SelectedDate = date;
+            selected.Text = $"Selected: {date:MMM d, yyyy}";
+        };
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Paper { Elevation = 1, Padding = new Thickness(14), Content = calendar },
+                selected,
+            },
+        };
     }
 
     private static StackPanel BuildSelect()

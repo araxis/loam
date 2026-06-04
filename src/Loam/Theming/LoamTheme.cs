@@ -155,6 +155,7 @@ public sealed class LoamTheme : Styles
         Resources[typeof(Layout)] = LayoutTheme.Create();
         Resources[typeof(Loam.Controls.CheckBox)] = CheckBoxTheme.Create();
         Resources[typeof(Switch)] = SwitchTheme.Create();
+        Resources[typeof(Field)] = FieldTheme.Create();
         Resources[typeof(TextField)] = TextFieldTheme.Create();
         Resources[typeof(Select)] = SelectTheme.Create();
         Resources[typeof(NumericField)] = NumericFieldTheme.Create();
