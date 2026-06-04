@@ -36,6 +36,10 @@ public class ColorPicker : TemplatedControl
     public static readonly StyledProperty<string?> LabelProperty =
         AvaloniaProperty.Register<ColorPicker, string?>(nameof(Label));
 
+    /// <summary>Identifies the <see cref="ShowAlpha"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowAlphaProperty =
+        AvaloniaProperty.Register<ColorPicker, bool>(nameof(ShowAlpha));
+
     private Border? _box;
     private Border? _swatch;
     private Text? _hex;
@@ -56,8 +60,62 @@ public class ColorPicker : TemplatedControl
         set => SetValue(LabelProperty, value);
     }
 
+    /// <summary>Whether the flyout exposes alpha and the display includes it in the hex value.</summary>
+    public bool ShowAlpha
+    {
+        get => GetValue(ShowAlphaProperty);
+        set => SetValue(ShowAlphaProperty, value);
+    }
+
+    /// <summary>A hue/saturation/value color triple using degrees and unit fractions.</summary>
+    public readonly record struct HsvColor(double Hue, double Saturation, double Value);
+
     /// <summary>Formats a color as an upper-case <c>#RRGGBB</c> string.</summary>
     public static string ToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+
+    /// <summary>Formats a color as an upper-case <c>#AARRGGBB</c> string.</summary>
+    public static string ToHexWithAlpha(Color color) => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+
+    /// <summary>Converts an HSV color to an Avalonia color.</summary>
+    public static Color FromHsv(double hue, double saturation, double value, byte alpha = 255)
+    {
+        var h = NormalizeHue(hue);
+        var s = Math.Clamp(saturation, 0d, 1d);
+        var v = Math.Clamp(value, 0d, 1d);
+        var c = v * s;
+        var x = c * (1d - Math.Abs((h / 60d % 2d) - 1d));
+        var m = v - c;
+
+        var (r, g, b) = h switch
+        {
+            < 60d => (c, x, 0d),
+            < 120d => (x, c, 0d),
+            < 180d => (0d, c, x),
+            < 240d => (0d, x, c),
+            < 300d => (x, 0d, c),
+            _ => (c, 0d, x),
+        };
+
+        return Color.FromArgb(alpha, ToByte(r + m), ToByte(g + m), ToByte(b + m));
+    }
+
+    /// <summary>Converts an Avalonia color to HSV.</summary>
+    public static HsvColor ToHsv(Color color)
+    {
+        var r = color.R / 255d;
+        var g = color.G / 255d;
+        var b = color.B / 255d;
+        var max = Math.Max(r, Math.Max(g, b));
+        var min = Math.Min(r, Math.Min(g, b));
+        var delta = max - min;
+
+        var hue = delta == 0d ? 0d :
+            max == r ? 60d * (((g - b) / delta) % 6d) :
+            max == g ? 60d * (((b - r) / delta) + 2d) :
+            60d * (((r - g) / delta) + 4d);
+
+        return new HsvColor(NormalizeHue(hue), max == 0d ? 0d : delta / max, max);
+    }
 
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(ColorPicker);
@@ -83,7 +141,7 @@ public class ColorPicker : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == ValueProperty)
+        if (change.Property == ValueProperty || change.Property == ShowAlphaProperty)
         {
             UpdateDisplay();
         }
@@ -110,15 +168,40 @@ public class ColorPicker : TemplatedControl
             var captured = color;
             swatch.PointerPressed += (_, _) =>
             {
-                Value = captured;
+                Value = ShowAlpha
+                    ? Color.FromArgb(Value.A, captured.R, captured.G, captured.B)
+                    : captured;
                 _flyout?.Hide();
             };
             grid.Children.Add(swatch);
         }
 
+        Control content = grid;
+        if (ShowAlpha)
+        {
+            var alpha = new global::Avalonia.Controls.Slider
+            {
+                Minimum = 0,
+                Maximum = 255,
+                Value = Value.A,
+                Width = 180,
+                Margin = new Thickness(0, 8, 0, 0),
+            };
+            alpha.PropertyChanged += (_, change) =>
+            {
+                if (change.Property == global::Avalonia.Controls.Slider.ValueProperty)
+                {
+                    var next = (byte)Math.Clamp(Math.Round(alpha.Value), 0d, 255d);
+                    Value = Color.FromArgb(next, Value.R, Value.G, Value.B);
+                }
+            };
+
+            content = new StackPanel { Children = { grid, alpha } };
+        }
+
         _flyout = new Flyout
         {
-            Content = new Paper { Elevation = 8, Padding = new Thickness(8), Content = grid },
+            Content = new Paper { Elevation = 8, Padding = new Thickness(8), Content = content },
             Placement = PlacementMode.BottomEdgeAlignedLeft,
         };
         _flyout.ShowAt(_box ?? (Control)this);
@@ -142,7 +225,15 @@ public class ColorPicker : TemplatedControl
 
         if (_hex is not null)
         {
-            _hex.Text = ToHex(Value);
+            _hex.Text = ShowAlpha ? ToHexWithAlpha(Value) : ToHex(Value);
         }
     }
+
+    private static double NormalizeHue(double hue)
+    {
+        var normalized = hue % 360d;
+        return normalized < 0d ? normalized + 360d : normalized;
+    }
+
+    private static byte ToByte(double unit) => (byte)Math.Clamp(Math.Round(unit * 255d), 0d, 255d);
 }

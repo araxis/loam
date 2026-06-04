@@ -32,6 +32,20 @@ public static class DataGrids
         return sorted;
     }
 
+    /// <summary>Filters rows using the supplied predicate and search text.</summary>
+    public static IReadOnlyList<T> Filter<T>(IReadOnlyList<T> items, string? text, Func<T, string, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return items;
+        }
+
+        return items.Where(item => predicate(item, text)).ToList();
+    }
+
     /// <summary>The total page count for <paramref name="count"/> rows at <paramref name="pageSize"/> (0 = single page).</summary>
     public static int PageCount(int count, int pageSize) =>
         pageSize <= 0 ? 1 : Math.Max(1, (count + pageSize - 1) / pageSize);
@@ -87,6 +101,10 @@ public class DataGrid<T> : Decorator
     private bool _hover = true;
     private bool _dense;
     private int _elevation = 1;
+    private string? _filterText;
+    private Func<T, string, bool>? _filter;
+    private bool _virtualize;
+    private int _maxRenderedRows = 200;
     private DataGridColumn<T>? _sortColumn;
     private bool _sortDescending;
 
@@ -155,6 +173,34 @@ public class DataGrid<T> : Decorator
         set { _elevation = value; Rebuild(); }
     }
 
+    /// <summary>Optional text filter. By default it searches the text of all columns.</summary>
+    public string? FilterText
+    {
+        get => _filterText;
+        set { _filterText = value; _page = 1; Rebuild(); }
+    }
+
+    /// <summary>Custom row filter used with <see cref="FilterText"/>.</summary>
+    public Func<T, string, bool>? Filter
+    {
+        get => _filter;
+        set { _filter = value; _page = 1; Rebuild(); }
+    }
+
+    /// <summary>Limits rendered rows for large unpaged data sets.</summary>
+    public bool Virtualize
+    {
+        get => _virtualize;
+        set { _virtualize = value; Rebuild(); }
+    }
+
+    /// <summary>Maximum rows rendered when <see cref="Virtualize"/> is enabled and paging is off.</summary>
+    public int MaxRenderedRows
+    {
+        get => _maxRenderedRows;
+        set { _maxRenderedRows = Math.Max(1, value); Rebuild(); }
+    }
+
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
@@ -166,11 +212,14 @@ public class DataGrid<T> : Decorator
         }
 
         var all = _items?.ToList() ?? new List<T>();
-        var sorted = DataGrids.Sort(all, _sortColumn, _sortDescending);
+        var filtered = DataGrids.Filter(all, _filterText, MatchesFilter);
+        var sorted = DataGrids.Sort(filtered, _sortColumn, _sortDescending);
 
         var pageCount = DataGrids.PageCount(sorted.Count, _pageSize);
         var page = Math.Clamp(_page, 1, pageCount);
-        var rows = _pageSize <= 0 ? sorted : sorted.Skip((page - 1) * _pageSize).Take(_pageSize).ToList();
+        var rows = _pageSize <= 0
+            ? _virtualize ? sorted.Take(_maxRenderedRows).ToList() : sorted
+            : sorted.Skip((page - 1) * _pageSize).Take(_pageSize).ToList();
 
         var grid = BuildGrid(rows);
 
@@ -261,6 +310,26 @@ public class DataGrid<T> : Decorator
     private Border BuildBodyCell(DataGridColumn<T> column, T item)
     {
         var pad = _dense ? new Thickness(8, 6) : new Thickness(16, 10);
+        if (column.CellTemplate is not null)
+        {
+            return new Border { Child = column.CellTemplate(item), Padding = pad };
+        }
+
+        if (column.Editable && column.SetText is not null)
+        {
+            var editor = new TextBox
+            {
+                Text = column.Display(item),
+                BorderThickness = default,
+                Background = Brushes.Transparent,
+                Padding = default,
+                HorizontalAlignment = column.Align,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            editor.TextChanged += (_, _) => column.SetText(item, editor.Text);
+            return new Border { Child = editor, Padding = pad };
+        }
+
         var text = new Text { Text = column.Display(item), Typo = Typo.Body2, Color = LoamColor.Inherit, HorizontalAlignment = column.Align, VerticalAlignment = VerticalAlignment.Center };
         return new Border { Child = text, Padding = pad };
     }
@@ -328,6 +397,16 @@ public class DataGrid<T> : Decorator
         }
 
         Rebuild();
+    }
+
+    private bool MatchesFilter(T item, string text)
+    {
+        if (_filter is not null)
+        {
+            return _filter(item, text);
+        }
+
+        return Columns.Any(column => column.Display(item).Contains(text, StringComparison.OrdinalIgnoreCase));
     }
 
     private sealed class PageObserver : IObserver<int>

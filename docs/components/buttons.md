@@ -11,6 +11,7 @@ Loam's button family maps the Material Design button suite to Avalonia, using th
 ## Button
 
 Mirrors the reference API's `Button`. Subclasses Avalonia's `Button` and adds `Variant`, `Color`, `Size`, `FullWidth`, and optional leading/trailing icons via `StartIcon` and `EndIcon`.
+Button templates include press ripple feedback automatically.
 
 ### Properties
 
@@ -46,6 +47,7 @@ var saveButton = new Button
 ## IconButton
 
 Mirrors the reference API's `IconButton`. Inherits `Button` and renders a single centered glyph via the `Icon` property; the `Variant`, `Color`, and `Size` properties are inherited.
+Icon button templates include the same press ripple host as regular buttons.
 
 ### Properties
 

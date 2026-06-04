@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -25,6 +26,16 @@ public class ShellTests
         Drawer.ResolveWidth(open: true, mini: false, width: 240, miniWidth: 56).ShouldBe(240d);
         Drawer.ResolveWidth(open: true, mini: true, width: 240, miniWidth: 56).ShouldBe(56d);
         Drawer.ResolveWidth(open: false, mini: false, width: 240, miniWidth: 56).ShouldBe(0d);
+    }
+
+    [AvaloniaFact]
+    public void Drawer_mode_defaults_to_docked_with_scrim_close_enabled()
+    {
+        var drawer = new Drawer();
+
+        drawer.Mode.ShouldBe(DrawerMode.Docked);
+        drawer.ShowScrim.ShouldBeTrue();
+        drawer.CloseOnScrimClick.ShouldBeTrue();
     }
 
     [AvaloniaFact]
@@ -69,5 +80,53 @@ public class ShellTests
         layout.GetVisualDescendants().OfType<AppBar>().ShouldNotBeEmpty();
         layout.GetVisualDescendants().OfType<Drawer>().ShouldNotBeEmpty();
         layout.GetVisualDescendants().OfType<MainContent>().ShouldNotBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Layout_docked_drawer_reserves_content_space()
+    {
+        var drawer = new Drawer { Content = new TextBlock { Text = "Nav" } };
+        var layout = new Layout
+        {
+            Drawer = drawer,
+            Content = new MainContent { Content = new TextBlock { Text = "Body" } },
+        };
+        Show(layout);
+        layout.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var content = layout.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_ContentPresenter");
+        content.Bounds.X.ShouldBe(240d, 1d);
+    }
+
+    [AvaloniaFact]
+    public void Layout_temporary_drawer_overlays_content_and_shows_scrim()
+    {
+        var drawer = new Drawer
+        {
+            Mode = DrawerMode.Temporary,
+            Open = true,
+            Content = new TextBlock { Text = "Nav" },
+        };
+        var layout = new Layout
+        {
+            Drawer = drawer,
+            Content = new MainContent { Content = new TextBlock { Text = "Body" } },
+        };
+        Show(layout);
+        layout.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var content = layout.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_ContentPresenter");
+        content.Bounds.X.ShouldBe(0d, 1d);
+
+        var scrim = layout.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_DrawerScrim");
+        scrim.IsVisible.ShouldBeTrue();
+
+        drawer.Open = false;
+        Dispatcher.UIThread.RunJobs();
+        scrim.IsVisible.ShouldBeFalse();
     }
 }

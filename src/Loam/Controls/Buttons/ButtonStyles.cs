@@ -121,7 +121,9 @@ internal static class ButtonStyles
                 Children = { start, presenter, end },
             };
 
-            var border = new AC.Border { Child = panel }.Named("PART_Root", scope);
+            var ripple = new Ripple { Child = panel }.Named("PART_Ripple", scope);
+
+            var border = new AC.Border { Child = ripple }.Named("PART_Root", scope);
             border.Bind(AC.Border.BackgroundProperty, button.GetObservable(TemplatedControl.BackgroundProperty));
             border.Bind(AC.Border.BorderBrushProperty, button.GetObservable(TemplatedControl.BorderBrushProperty));
             border.Bind(AC.Border.BorderThicknessProperty, button.GetObservable(TemplatedControl.BorderThicknessProperty));

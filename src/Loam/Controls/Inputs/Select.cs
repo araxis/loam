@@ -51,6 +51,10 @@ public class Select : TemplatedControl
     public static readonly StyledProperty<string?> PlaceholderProperty =
         AvaloniaProperty.Register<Select, string?>(nameof(Placeholder));
 
+    /// <summary>Identifies the <see cref="MultiSelect"/> property.</summary>
+    public static readonly StyledProperty<bool> MultiSelectProperty =
+        AvaloniaProperty.Register<Select, bool>(nameof(MultiSelect));
+
     private Border? _box;
     private Text? _display;
     private Text? _label;
@@ -58,10 +62,23 @@ public class Select : TemplatedControl
     private Flyout? _flyout;
 
     /// <summary>Creates the select.</summary>
-    public Select() => Items.CollectionChanged += (_, _) => UpdateDisplay();
+    public Select()
+    {
+        Items.CollectionChanged += (_, _) => UpdateDisplay();
+        SelectedValues.CollectionChanged += (_, _) => UpdateDisplay();
+    }
 
     /// <summary>The selectable options.</summary>
     public ObservableCollection<SelectItem> Items { get; } = new();
+
+    /// <summary>Selected values when <see cref="MultiSelect"/> is enabled.</summary>
+    public ObservableCollection<object?> SelectedValues { get; } = new();
+
+    /// <summary>Optional display text formatter for options.</summary>
+    public Func<SelectItem, string>? DisplayTextFunc { get; set; }
+
+    /// <summary>Optional row content factory for flyout items.</summary>
+    public Func<SelectItem, Control>? ItemTemplate { get; set; }
 
     /// <summary>The selected value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public object? Value
@@ -82,6 +99,13 @@ public class Select : TemplatedControl
     {
         get => GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
+    }
+
+    /// <summary>Whether multiple values can be selected.</summary>
+    public bool MultiSelect
+    {
+        get => GetValue(MultiSelectProperty);
+        set => SetValue(MultiSelectProperty, value);
     }
 
     /// <inheritdoc />
@@ -107,7 +131,7 @@ public class Select : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == ValueProperty)
+        if (change.Property == ValueProperty || change.Property == MultiSelectProperty)
         {
             UpdateDisplay();
         }
@@ -122,12 +146,20 @@ public class Select : TemplatedControl
         var list = new StackPanel();
         foreach (var item in Items)
         {
-            var row = new ListItem { Content = item.Text, MinWidth = 180 };
+            var row = new ListItem { Content = BuildItemContent(item), MinWidth = 180 };
             var captured = item;
             row.PointerPressed += (_, _) =>
             {
-                Value = captured.Value;
-                _flyout?.Hide();
+                if (MultiSelect)
+                {
+                    ToggleSelectedValue(captured.Value);
+                    row.Content = BuildItemContent(captured);
+                }
+                else
+                {
+                    Value = captured.Value;
+                    _flyout?.Hide();
+                }
             };
             list.Children.Add(row);
         }
@@ -157,9 +189,52 @@ public class Select : TemplatedControl
         }
 
         var selected = Items.FirstOrDefault(i => Equals(i.Value, Value));
-        _display.Text = selected?.Text ?? Placeholder;
+        var text = MultiSelect ? MultiSelectText() : selected is not null ? DisplayText(selected) : Value?.ToString();
+        _display.Text = string.IsNullOrEmpty(text) ? Placeholder : text;
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
-            this.GetResourceObservable(selected is not null ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+            this.GetResourceObservable(!string.IsNullOrEmpty(text) ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+    }
+
+    private Control BuildItemContent(SelectItem item)
+    {
+        if (ItemTemplate is not null)
+        {
+            return ItemTemplate(item);
+        }
+
+        var selected = MultiSelect && SelectedValues.Any(value => Equals(value, item.Value));
+        return new Text
+        {
+            Text = selected ? $"[x] {DisplayText(item)}" : DisplayText(item),
+            Color = selected ? LoamColor.Primary : LoamColor.Inherit,
+        };
+    }
+
+    private string DisplayText(SelectItem item) => DisplayTextFunc?.Invoke(item) ?? item.Text ?? item.Value?.ToString() ?? string.Empty;
+
+    private string? MultiSelectText()
+    {
+        if (SelectedValues.Count == 0)
+        {
+            return null;
+        }
+
+        return string.Join(", ", SelectedValues.Select(value =>
+            Items.FirstOrDefault(item => Equals(item.Value, value)) is { } item ? DisplayText(item) : value?.ToString()));
+    }
+
+    private void ToggleSelectedValue(object? value)
+    {
+        var existing = SelectedValues.FirstOrDefault(selected => Equals(selected, value));
+        var hasExisting = SelectedValues.Any(selected => Equals(selected, value));
+        if (hasExisting)
+        {
+            SelectedValues.Remove(existing);
+        }
+        else
+        {
+            SelectedValues.Add(value);
+        }
     }
 }

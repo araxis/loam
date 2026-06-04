@@ -72,12 +72,42 @@ public class PickerTests
     }
 
     [Fact]
+    public void ColorPicker_formats_alpha_and_converts_hsv()
+    {
+        ColorPicker.ToHexWithAlpha(Color.FromArgb(0x80, 0x10, 0x20, 0x30)).ShouldBe("#80102030");
+
+        ColorPicker.FromHsv(120, 1, 1, 0x80).ShouldBe(Color.FromArgb(0x80, 0, 255, 0));
+
+        var original = Color.Parse("#336699");
+        var hsv = ColorPicker.ToHsv(original);
+        hsv.Hue.ShouldBe(210d, 0.001);
+        hsv.Saturation.ShouldBe(2d / 3d, 0.001);
+        hsv.Value.ShouldBe(0.6d, 0.001);
+        ColorPicker.FromHsv(hsv.Hue, hsv.Saturation, hsv.Value).ShouldBe(original);
+    }
+
+    [Fact]
     public void DateRangePicker_format_handles_partial_and_full_ranges()
     {
         DateRangePicker.Format(null, null, "yyyy-MM-dd").ShouldBeNull();
         DateRangePicker.Format(new DateTime(2026, 6, 1), null, "yyyy-MM-dd").ShouldBe("2026-06-01");
         DateRangePicker.Format(new DateTime(2026, 6, 1), new DateTime(2026, 6, 10), "yyyy-MM-dd")
             .ShouldBe("2026-06-01 – 2026-06-10");
+    }
+
+    [Fact]
+    public void MonthCalendar_bounds_and_range_helpers_handle_dates()
+    {
+        var min = new DateTime(2026, 6, 3);
+        var max = new DateTime(2026, 6, 10);
+
+        MonthCalendar.IsDisabled(new DateTime(2026, 6, 2), min, max).ShouldBeTrue();
+        MonthCalendar.IsDisabled(new DateTime(2026, 6, 11), min, max).ShouldBeTrue();
+        MonthCalendar.IsDisabled(new DateTime(2026, 6, 6), min, max).ShouldBeFalse();
+
+        MonthCalendar.IsInRange(new DateTime(2026, 6, 6), max, min).ShouldBeTrue();
+        MonthCalendar.IsInRange(new DateTime(2026, 6, 12), max, min).ShouldBeFalse();
+        MonthCalendar.IsInRange(new DateTime(2026, 6, 6), min, null).ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -112,5 +142,25 @@ public class PickerTests
         picker.Value = Colors.Black;
         Dispatcher.UIThread.RunJobs();
         picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_Hex").Text.ShouldBe("#000000");
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_showalpha_displays_alpha_hex()
+    {
+        var picker = new ColorPicker
+        {
+            ShowAlpha = true,
+            Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var hex = picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_Hex");
+        hex.Text.ShouldBe("#80102030");
+
+        picker.ShowAlpha = false;
+        Dispatcher.UIThread.RunJobs();
+        hex.Text.ShouldBe("#102030");
     }
 }

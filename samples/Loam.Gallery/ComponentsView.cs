@@ -445,6 +445,7 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(new TextField { Label = "Outlined", Placeholder = "Type here…", HelperText = "We never share this", Variant = Variant.Outlined });
         stack.Children.Add(new TextField { Label = "Filled", Variant = Variant.Filled, Text = "Prefilled value" });
         stack.Children.Add(new TextField { Label = "Underline", Variant = Variant.Text, Placeholder = "Search" });
+        stack.Children.Add(new TextField { Label = "Budget", StartAdornment = new TextBlock { Text = "$" }, EndAdornment = new TextBlock { Text = "USD" }, FloatingLabel = true });
         stack.Children.Add(new TextField { Label = "Email", Variant = Variant.Outlined, Text = "not-an-email", Error = true, ErrorText = "Enter a valid email" });
         stack.Children.Add(new NumericField { Label = "Quantity", Minimum = 0, Maximum = 99, Value = 3, HelperText = "0–99" });
         stack.Children.Add(new NumericField { Label = "Price", Variant = Variant.Filled, Minimum = 0, Step = 0.5, Value = 9.5, Format = "0.00" });
@@ -455,6 +456,9 @@ public sealed class ComponentsView : UserControl
         {
             fruit.Items.Add(name);
         }
+
+        fruit.SearchFunc = text => fruit.Items.Where(item => item.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
+        fruit.ItemTemplate = name => new Text { Text = name, Typo = Typo.Body2 };
 
         stack.Children.Add(fruit);
         return stack;
@@ -691,12 +695,32 @@ public sealed class ComponentsView : UserControl
         return tree;
     }
 
-    private sealed record Dessert(string Name, int Calories, double Fat);
+    private sealed class Dessert(string name, int calories, double fat)
+    {
+        public string Name { get; set; } = name;
+
+        public int Calories { get; } = calories;
+
+        public double Fat { get; } = fat;
+    }
 
     private static Loam.Controls.DataGrid<Dessert> BuildDataGrid()
     {
-        var grid = new Loam.Controls.DataGrid<Dessert> { Striped = true, Hover = true, PageSize = 4, MaxWidth = 480, HorizontalAlignment = HorizontalAlignment.Left };
-        grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name));
+        var grid = new Loam.Controls.DataGrid<Dessert>
+        {
+            Striped = true,
+            Hover = true,
+            PageSize = 4,
+            FilterText = "i",
+            Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name)
+        {
+            Editable = true,
+            SetText = (dessert, text) => dessert.Name = text ?? "",
+        });
         grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
         grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
         grid.Items = new List<Dessert>
@@ -738,7 +762,7 @@ public sealed class ComponentsView : UserControl
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
         stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Theme color" });
-        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Accent", Value = Avalonia.Media.Color.Parse("#FF9800") });
+        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Accent", Value = Avalonia.Media.Color.Parse("#FF9800"), ShowAlpha = true });
         return stack;
     }
 
@@ -751,6 +775,8 @@ public sealed class ComponentsView : UserControl
             Label = "Reporting period",
             Start = new DateTime(2026, 6, 1),
             End = new DateTime(2026, 6, 30),
+            MinDate = new DateTime(2026, 6, 1),
+            MaxDate = new DateTime(2026, 7, 31),
             DateFormat = "MMM d",
         });
         return stack;
@@ -759,7 +785,7 @@ public sealed class ComponentsView : UserControl
     private static StackPanel BuildDateTimePickers()
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Loam.Controls.DatePicker { Label = "Start date" });
+        stack.Children.Add(new Loam.Controls.DatePicker { Label = "Start date", MinDate = DateTime.Today, MaxDate = DateTime.Today.AddMonths(6) });
         stack.Children.Add(new Loam.Controls.DatePicker { Label = "Due date", Date = new DateTime(2026, 6, 30), DateFormat = "ddd, MMM d yyyy" });
         stack.Children.Add(new Loam.Controls.TimePicker { Label = "Reminder", TimeFormat = "t" });
         stack.Children.Add(new Loam.Controls.TimePicker { Label = "Standup", Time = new TimeSpan(9, 30, 0), TimeFormat = "HH:mm", MinuteStep = 15 });
@@ -782,6 +808,14 @@ public sealed class ComponentsView : UserControl
         size.Items.Add(new SelectItem("Medium", "m"));
         size.Items.Add(new SelectItem("Large", "l"));
         stack.Children.Add(size);
+
+        var tags = new Select { Label = "Tags", MultiSelect = true };
+        tags.Items.Add(new SelectItem("Design", "design"));
+        tags.Items.Add(new SelectItem("Build", "build"));
+        tags.Items.Add(new SelectItem("Review", "review"));
+        tags.SelectedValues.Add("design");
+        tags.SelectedValues.Add("review");
+        stack.Children.Add(tags);
 
         return stack;
     }

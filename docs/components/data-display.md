@@ -98,6 +98,10 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Items` | `IEnumerable<T>?` | `null` | Source rows. Mirrors the reference API's `Items`. |
 | `PageSize` | `int` | `0` | Rows per page; `0` disables paging. Mirrors the reference API's `RowsPerPage`. |
 | `Page` | `int` | `1` | Current 1-based page. |
+| `FilterText` | `string?` | `null` | Text passed to the filter pipeline before sorting/paging. |
+| `Filter` | `Func<T, string, bool>?` | `null` | Custom row predicate for `FilterText`; defaults to searching rendered cell values. |
+| `Virtualize` | `bool` | `false` | Limits unpaged rendering to `MaxRenderedRows`. |
+| `MaxRenderedRows` | `int` | `200` | Maximum rows rendered when `Virtualize` is enabled and paging is off. |
 | `SelectedItem` | `T?` | `default` | Selected row; row click updates this. Mirrors the reference API's `SelectedItem`. |
 | `Striped` | `bool` | `true` | Alternating row shading. Mirrors the reference API's `Striped`. |
 | `Hover` | `bool` | `true` | Row hover highlight. Mirrors the reference API's `Hover`. |
@@ -114,6 +118,9 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Format` | `string?` | `null` | Optional .NET format string applied to the cell value (e.g. `"N2"`). |
 | `Sortable` | `bool` | `true` | Whether clicking the header sorts by this column. |
 | `Align` | `HorizontalAlignment` | `Left` | Cell content alignment. |
+| `CellTemplate` | `Func<T, Control>?` | `null` | Custom cell content. |
+| `Editable` | `bool` | `false` | Renders a text editor for this column when `SetText` is provided. |
+| `SetText` | `Action<T, string?>?` | `null` | Applies edited text back to the row. |
 
 ### DataGrids static helpers
 
@@ -121,19 +128,33 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 |--------|-----------|-------------|
 | `Sort<T>` | `(IReadOnlyList<T> items, DataGridColumn<T>? column, bool descending) → IReadOnlyList<T>` | Sorts `items` by `column.Value`; returns original order when `column` is `null`. |
 | `PageCount` | `(int count, int pageSize) → int` | Total page count for `count` rows at `pageSize` (`0` = 1 page). |
+| `Filter<T>` | `(IReadOnlyList<T> items, string? text, Func<T, string, bool> predicate) → IReadOnlyList<T>` | Returns matching rows when `text` has content; otherwise returns the original rows. |
 
 ```csharp
-record Employee(string Name, string Department, decimal Salary);
+class Employee
+{
+    public string Name { get; set; } = "";
+    public string Department { get; set; } = "";
+    public decimal Salary { get; set; }
+}
 
 var grid = new DataGrid<Employee>
 {
     Striped   = true,
     Hover     = true,
     PageSize  = 20,
+    FilterText = searchText,
+    Filter = (employee, text) =>
+        employee.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+        employee.Department.Contains(text, StringComparison.OrdinalIgnoreCase),
     Elevation = 1,
 };
 
-grid.Columns.Add(new DataGridColumn<Employee>("Name",       e => e.Name));
+grid.Columns.Add(new DataGridColumn<Employee>("Name", e => e.Name)
+{
+    Editable = true,
+    SetText = (employee, text) => employee.Name = text ?? "",
+});
 grid.Columns.Add(new DataGridColumn<Employee>("Department", e => e.Department));
 grid.Columns.Add(new DataGridColumn<Employee>("Salary",     e => e.Salary)
 {

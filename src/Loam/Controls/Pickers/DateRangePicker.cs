@@ -34,6 +34,14 @@ public class DateRangePicker : TemplatedControl
     public static readonly StyledProperty<string> DateFormatProperty =
         AvaloniaProperty.Register<DateRangePicker, string>(nameof(DateFormat), "d");
 
+    /// <summary>Identifies the <see cref="MinDate"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> MinDateProperty =
+        AvaloniaProperty.Register<DateRangePicker, DateTime?>(nameof(MinDate));
+
+    /// <summary>Identifies the <see cref="MaxDate"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> MaxDateProperty =
+        AvaloniaProperty.Register<DateRangePicker, DateTime?>(nameof(MaxDate));
+
     private Border? _box;
     private Text? _display;
     private Text? _label;
@@ -73,6 +81,20 @@ public class DateRangePicker : TemplatedControl
     {
         get => GetValue(DateFormatProperty);
         set => SetValue(DateFormatProperty, value);
+    }
+
+    /// <summary>First selectable date.</summary>
+    public DateTime? MinDate
+    {
+        get => GetValue(MinDateProperty);
+        set => SetValue(MinDateProperty, value);
+    }
+
+    /// <summary>Last selectable date.</summary>
+    public DateTime? MaxDate
+    {
+        get => GetValue(MaxDateProperty);
+        set => SetValue(MaxDateProperty, value);
     }
 
     /// <summary>Formats a range for display (null when empty).</summary>
@@ -122,7 +144,14 @@ public class DateRangePicker : TemplatedControl
 
     private void Open()
     {
-        var calendar = new MonthCalendar { SelectedDate = End ?? Start };
+        var calendar = new MonthCalendar
+        {
+            SelectedDate = End ?? Start,
+            RangeStart = Start,
+            RangeEnd = End,
+            MinDate = MinDate,
+            MaxDate = MaxDate,
+        };
         if ((Start ?? End) is { } anchor)
         {
             calendar.DisplayMonth = new DateTime(anchor.Year, anchor.Month, 1);
@@ -130,21 +159,32 @@ public class DateRangePicker : TemplatedControl
 
         calendar.DateSelected += picked =>
         {
+            if (MonthCalendar.IsDisabled(picked, MinDate, MaxDate))
+            {
+                return;
+            }
+
             if (Start is null || End is not null)
             {
                 Start = picked;
                 End = null;
                 calendar.SelectedDate = picked;
+                calendar.RangeStart = Start;
+                calendar.RangeEnd = End;
             }
             else if (picked < Start)
             {
                 End = Start;
                 Start = picked;
+                calendar.RangeStart = Start;
+                calendar.RangeEnd = End;
                 _flyout?.Hide();
             }
             else
             {
                 End = picked;
+                calendar.RangeStart = Start;
+                calendar.RangeEnd = End;
                 _flyout?.Hide();
             }
         };
