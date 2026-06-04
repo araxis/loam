@@ -7,6 +7,24 @@ Next.
 
 ---
 
+## 2026-06-04 — v1.1 — Snackbar actions and limits
+
+**Done**
+- `SnackbarOptions` added for action callbacks, action text, custom duration, severity, and per-toast
+  visible-count limits.
+- `SnackbarService` keeps a shared overlay host per window, so repeated `SnackbarService.For(...)`
+  calls participate in the same visible queue.
+- Gallery and docs show an undo-style action toast.
+
+**Verified**
+- Added headless tests for action invocation/dismissal and visible-count trimming across service
+  instances.
+
+**Next:** continue hardening: input chrome reuse, picker constraints/range visuals, and data-grid
+filtering/virtualization.
+
+---
+
 ## 2026-06-03 — Cross-cutting — Ripple + DateRangePicker; Table & CSS-utils resolved — INVENTORY 100%
 
 **Done** (build green; PickerTests+LayoutTests 18/18 isolated)

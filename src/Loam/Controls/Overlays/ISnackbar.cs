@@ -10,4 +10,7 @@ public interface ISnackbar
 {
     /// <summary>Queues a toast with a severity color and optional duration (default 4s).</summary>
     void Add(string message, LoamColor severity = LoamColor.Info, TimeSpan? duration = null);
+
+    /// <summary>Queues a toast with action and display options.</summary>
+    void Add(SnackbarOptions options);
 }
