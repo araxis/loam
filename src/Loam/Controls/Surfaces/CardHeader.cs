@@ -4,7 +4,7 @@ using Avalonia.Controls.Primitives;
 namespace Loam.Controls;
 
 /// <summary>
-/// The header row of a <see cref="Card"/>, mirroring MudBlazor's <c>MudCardHeader</c>. Lays out an
+/// The header row of a <see cref="Card"/>, mirroring the reference API's <c>CardHeader</c>. Lays out an
 /// optional leading <see cref="Avatar"/>, a <see cref="Title"/>/<see cref="Subtitle"/> stack, and a
 /// trailing <see cref="Action"/> (e.g. an icon button).
 /// </summary>
@@ -26,14 +26,14 @@ public class CardHeader : TemplatedControl
     public static readonly StyledProperty<object?> ActionProperty =
         AvaloniaProperty.Register<CardHeader, object?>(nameof(Action));
 
-    /// <summary>A leading visual (typically an <see cref="Avatar"/>). Mirrors MudBlazor's <c>CardHeaderAvatar</c>.</summary>
+    /// <summary>A leading visual (typically an <see cref="Avatar"/>). Mirrors the reference API's <c>CardHeaderAvatar</c>.</summary>
     public object? Avatar
     {
         get => GetValue(AvatarProperty);
         set => SetValue(AvatarProperty, value);
     }
 
-    /// <summary>The header title. Mirrors MudBlazor's <c>CardHeaderContent</c> title.</summary>
+    /// <summary>The header title. Mirrors the reference API's <c>CardHeaderContent</c> title.</summary>
     public string? Title
     {
         get => GetValue(TitleProperty);
@@ -47,7 +47,7 @@ public class CardHeader : TemplatedControl
         set => SetValue(SubtitleProperty, value);
     }
 
-    /// <summary>A trailing visual (typically an icon button). Mirrors MudBlazor's <c>CardHeaderActions</c>.</summary>
+    /// <summary>A trailing visual (typically an icon button). Mirrors the reference API's <c>CardHeaderActions</c>.</summary>
     public object? Action
     {
         get => GetValue(ActionProperty);
@@ -59,7 +59,7 @@ public class CardHeader : TemplatedControl
 }
 
 /// <summary>
-/// A media band for a <see cref="Card"/>, mirroring MudBlazor's <c>MudCardMedia</c>. Shows
+/// A media band for a <see cref="Card"/>, mirroring the reference API's <c>CardMedia</c>. Shows
 /// <see cref="Source"/> stretched to fill a band of <see cref="MediaHeight"/> pixels (with a neutral
 /// placeholder behind it when no image is set).
 /// </summary>
@@ -73,14 +73,14 @@ public class CardMedia : TemplatedControl
     public static readonly StyledProperty<double> MediaHeightProperty =
         AvaloniaProperty.Register<CardMedia, double>(nameof(MediaHeight), 180);
 
-    /// <summary>The image to display. Mirrors MudBlazor's <c>Image</c>.</summary>
+    /// <summary>The image to display. Mirrors the reference API's <c>Image</c>.</summary>
     public Avalonia.Media.IImage? Source
     {
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);
     }
 
-    /// <summary>The media band height in pixels. Mirrors MudBlazor's <c>Height</c>.</summary>
+    /// <summary>The media band height in pixels. Mirrors the reference API's <c>Height</c>.</summary>
     public double MediaHeight
     {
         get => GetValue(MediaHeightProperty);

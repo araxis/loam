@@ -6,7 +6,7 @@ using Avalonia.Platform.Storage;
 namespace Loam.Controls;
 
 /// <summary>
-/// A file selection control, mirroring MudBlazor's <c>MudFileUpload</c>. A button opens the platform
+/// A file selection control, mirroring the reference API's <c>FileUpload</c>. A button opens the platform
 /// file picker (via <see cref="TopLevel"/>'s <see cref="IStorageProvider"/>); chosen files are exposed
 /// as <see cref="Files"/>, their names shown as chips, and <see cref="FilesSelected"/> is raised.
 /// </summary>
@@ -26,20 +26,20 @@ public class FileUpload : TemplatedControl
     /// <summary>Raised with the picked files (empty if the dialog was cancelled).</summary>
     public event Action<IReadOnlyList<IStorageFile>>? FilesSelected;
 
-    /// <summary>The last picked files. Mirrors MudBlazor's <c>Files</c>.</summary>
+    /// <summary>The last picked files. Mirrors the reference API's <c>Files</c>.</summary>
     public IReadOnlyList<IStorageFile> Files { get; private set; } = Array.Empty<IStorageFile>();
 
     /// <summary>The display names of the current selection.</summary>
     public IReadOnlyList<string> FileNames { get; private set; } = Array.Empty<string>();
 
-    /// <summary>The picker button caption. Mirrors MudBlazor's button content.</summary>
+    /// <summary>The picker button caption. Mirrors the reference API's button content.</summary>
     public string ButtonText
     {
         get => GetValue(ButtonTextProperty);
         set => SetValue(ButtonTextProperty, value);
     }
 
-    /// <summary>Whether multiple files may be picked. Mirrors MudBlazor's <c>Multiple</c>.</summary>
+    /// <summary>Whether multiple files may be picked. Mirrors the reference API's <c>Multiple</c>.</summary>
     public bool AllowMultiple
     {
         get => GetValue(AllowMultipleProperty);

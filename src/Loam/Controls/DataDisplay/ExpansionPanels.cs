@@ -7,7 +7,7 @@ using Avalonia.Controls.Primitives;
 namespace Loam.Controls;
 
 /// <summary>
-/// A container for <see cref="ExpansionPanel"/>s, mirroring MudBlazor's <c>MudExpansionPanels</c>.
+/// A container for <see cref="ExpansionPanel"/>s, mirroring the reference API's <c>ExpansionPanels</c>.
 /// Stacks the <see cref="Panels"/> on an elevated surface. Unless <see cref="MultiExpansion"/> is set,
 /// it behaves as an accordion: expanding one panel collapses the others.
 /// </summary>
@@ -26,7 +26,7 @@ public class ExpansionPanels : TemplatedControl
     /// <summary>The contained panels.</summary>
     public ObservableCollection<ExpansionPanel> Panels { get; } = new();
 
-    /// <summary>Whether multiple panels may be open at once. Mirrors MudBlazor's <c>MultiExpansion</c>.</summary>
+    /// <summary>Whether multiple panels may be open at once. Mirrors the reference API's <c>MultiExpansion</c>.</summary>
     public bool MultiExpansion
     {
         get => GetValue(MultiExpansionProperty);

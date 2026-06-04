@@ -6,7 +6,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material surface, mirroring MudBlazor's <c>MudPaper</c>. Hosts content on a token-driven
+/// A Material surface, mirroring the reference API's <c>Paper</c>. Hosts content on a token-driven
 /// background with an elevation shadow, optionally squared corners or an outline. Supersedes the
 /// Phase-1 <c>Surface</c> smoke control.
 /// </summary>
@@ -30,21 +30,21 @@ public class Paper : ContentControl
     private IDisposable? _shadowBinding;
     private IDisposable? _borderBinding;
 
-    /// <summary>Shadow depth (0–25). Mirrors MudBlazor's <c>Elevation</c>.</summary>
+    /// <summary>Shadow depth (0–25). Mirrors the reference API's <c>Elevation</c>.</summary>
     public int Elevation
     {
         get => GetValue(ElevationProperty);
         set => SetValue(ElevationProperty, value);
     }
 
-    /// <summary>Removes corner rounding. Mirrors MudBlazor's <c>Square</c>.</summary>
+    /// <summary>Removes corner rounding. Mirrors the reference API's <c>Square</c>.</summary>
     public bool Square
     {
         get => GetValue(SquareProperty);
         set => SetValue(SquareProperty, value);
     }
 
-    /// <summary>Draws a 1px outline and removes the shadow. Mirrors MudBlazor's <c>Outlined</c>.</summary>
+    /// <summary>Draws a 1px outline and removes the shadow. Mirrors the reference API's <c>Outlined</c>.</summary>
     public bool Outlined
     {
         get => GetValue(OutlinedProperty);

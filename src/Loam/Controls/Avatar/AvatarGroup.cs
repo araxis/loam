@@ -7,7 +7,7 @@ using Avalonia.Controls.Primitives;
 namespace Loam.Controls;
 
 /// <summary>
-/// A cluster of overlapping <see cref="Avatar"/>s, mirroring MudBlazor's <c>MudAvatarGroup</c>. Shows up
+/// A cluster of overlapping <see cref="Avatar"/>s, mirroring the reference API's <c>AvatarGroup</c>. Shows up
 /// to <see cref="Max"/> avatars overlapped by <see cref="Spacing"/>; any beyond <see cref="Max"/> collapse
 /// into a trailing "+N" surplus avatar.
 /// </summary>
@@ -29,14 +29,14 @@ public class AvatarGroup : TemplatedControl
     /// <summary>The avatars in the cluster.</summary>
     public ObservableCollection<Avatar> Items { get; } = new();
 
-    /// <summary>Maximum avatars shown before a "+N" surplus. Mirrors MudBlazor's <c>Max</c>.</summary>
+    /// <summary>Maximum avatars shown before a "+N" surplus. Mirrors the reference API's <c>Max</c>.</summary>
     public int Max
     {
         get => GetValue(MaxProperty);
         set => SetValue(MaxProperty, value);
     }
 
-    /// <summary>Horizontal overlap (negative overlaps). Mirrors MudBlazor's <c>Spacing</c>.</summary>
+    /// <summary>Horizontal overlap (negative overlaps). Mirrors the reference API's <c>Spacing</c>.</summary>
     public double Spacing
     {
         get => GetValue(SpacingProperty);

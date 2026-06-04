@@ -8,7 +8,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A date input with a Material calendar popup, mirroring MudBlazor's <c>MudDatePicker</c>. An outlined
+/// A date input with a Material calendar popup, mirroring the reference API's <c>DatePicker</c>. An outlined
 /// box shows the two-way <see cref="Date"/> formatted by <see cref="DateFormat"/>; clicking it opens a
 /// self-contained <see cref="MonthCalendar"/> flyout (no FluentTheme dependency).
 /// </summary>
@@ -36,28 +36,28 @@ public class DatePicker : TemplatedControl
     private IDisposable? _displayForeground;
     private Flyout? _flyout;
 
-    /// <summary>The selected date (two-way). Mirrors MudBlazor's <c>Date</c>.</summary>
+    /// <summary>The selected date (two-way). Mirrors the reference API's <c>Date</c>.</summary>
     public DateTime? Date
     {
         get => GetValue(DateProperty);
         set => SetValue(DateProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Text shown when no date is set. Mirrors MudBlazor's <c>Placeholder</c>.</summary>
+    /// <summary>Text shown when no date is set. Mirrors the reference API's <c>Placeholder</c>.</summary>
     public string? Placeholder
     {
         get => GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
     }
 
-    /// <summary>A .NET date format string for the display. Mirrors MudBlazor's <c>DateFormat</c>.</summary>
+    /// <summary>A .NET date format string for the display. Mirrors the reference API's <c>DateFormat</c>.</summary>
     public string DateFormat
     {
         get => GetValue(DateFormatProperty);

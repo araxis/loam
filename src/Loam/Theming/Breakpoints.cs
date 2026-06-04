@@ -3,7 +3,7 @@ using Loam;
 namespace Loam.Theming;
 
 /// <summary>
-/// Responsive breakpoint thresholds (device-independent pixels), mirroring MudBlazor's defaults.
+/// Responsive breakpoint thresholds (device-independent pixels), mirroring the reference API's defaults.
 /// Loam evaluates breakpoints from a control's own available width (container-query style) rather
 /// than a global viewport — self-contained and more reusable.
 /// </summary>

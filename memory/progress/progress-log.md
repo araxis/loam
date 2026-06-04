@@ -17,7 +17,7 @@ Next.
 - **`DateRangePicker`** (`: TemplatedControl`) — DatePicker-style outlined box showing `Start – End`
   (two-way); flyout `MonthCalendar` where 1st click = start, 2nd = end (auto-ordered, swaps if
   earlier). Pure static `Format(start, end, fmt)`.
-- **Inventory cleanup:** `MudTable` → marked ✅ as **covered by `SimpleTable` + `DataGrid<T>`** (no
+- **Inventory cleanup:** `Table` → marked ✅ as **covered by `SimpleTable` + `DataGrid<T>`** (no
   redundant control). **CSS utility classes** → marked ❌ **intentional** (Avalonia is property-based:
   `Margin`/`Padding`/`Spacing`/`Paper.Elevation`; no utility-class layer).
 - Tests: `Ripple.MaxReach` (3-4-5 etc.), `DateRangePicker.Format` (partial/full), range display.
@@ -43,7 +43,7 @@ deliberate v1 scope cuts, all documented.
 - Tests: `SliceSweeps`/`BarHeights` math + all three charts render without throwing. Gallery: a
   "Charts" wrap (pie/donut/bar/line).
 
-**Milestone:** with the chart family in, **every MudBlazor component on the master inventory is now
+**Milestone:** with the chart family in, **every reference component on the master inventory is now
 mapped** (most ✅/🟦; remaining work is documented per-row enhancements, e.g. StackedBar/TimeSeries,
 DataGrid filter/group/edit, picker HSV/clock-face, animations). Charts live in `Loam.Controls` for now;
 extracting a separate `Loam.Charts` package is the only structural follow-up.
@@ -71,7 +71,7 @@ control's `Child`, bind `IsOpen`/`Placement`/`PlacementTarget`, and hook `Closed
 light-dismiss. Headless renders popups via `OverlayPopupHost` into the TopLevel, so their content is
 assertable in the visual tree.
 
-**Status:** all non-stretch MudBlazor components are now mapped. Only the **`Chart` family** (Phase 9
+**Status:** all non-stretch reference components are now mapped. Only the **`Chart` family** (Phase 9
 stretch, separate `Loam.Charts` package) remains ⏸️.
 
 ---
@@ -266,7 +266,7 @@ Grid needed. `Carousel` clashes with `Avalonia.Controls.Carousel` (qualify in `L
   with `TextSecondary` (alpha 0x8A light). Gallery: a mailbox List (subheaders + items) and a
   Spacer-driven toolbar row.
 
-**Learnings:** `MudSpacer`'s flex-grow has no StackPanel analog, but the `DockPanel` fill child is the
+**Learnings:** `Spacer`'s flex-grow has no StackPanel analog, but the `DockPanel` fill child is the
 idiomatic Avalonia equivalent — a stretch `Control` as the last (fill) child does the same job.
 
 **Next:** `Hidden`, `ScrollToTop`, `Carousel`, pickers.
@@ -686,7 +686,7 @@ spanning all columns (added before cells) so they hit-test for hover.
 - Test: placeholder → selected text on `Value` change. Gallery: "Select" section (country + size).
 
 **Learnings:** `Select` trips **CA1716** (VB reserved keyword) → `[SuppressMessage]` on the type
-(deliberate, mirrors `MudSelect`). Icon path constants are nested under
+(deliberate, mirrors `Select`). Icon path constants are nested under
 `Icons.Material.Filled.*`, not flat on `Icons`. `Select` is clash-free vs `Avalonia.Controls`
 (their dropdown is `ComboBox`).
 
@@ -762,7 +762,7 @@ remaining multi-session effort.
 ## 2026-06-03 — Phase 5 (part 2) — TextField 🟦
 
 **Done** (build + 44 tests green, Debug & Release)
-- Source-checked MudTextField params (v9.5.0).
+- Source-checked TextField params (v9.5.0).
 - **`TextField`** (`: TemplatedControl`) wrapping a borderless Avalonia `TextBox` with built-in
   Field chrome: `Label`, `HelperText`/`ErrorText`, `Placeholder`, `Text` (two-way), `Variant`
   (Text/Filled/Outlined), `Color` focus accent, `Error`, `ReadOnly`. Focus + error recolor the
@@ -782,7 +782,7 @@ under warnings-as-errors).
 ## 2026-06-03 — Phase 5 (part 1) — Boolean inputs (CheckBox, Switch) 🟦
 
 **Done** (build + 41 tests green, Debug & Release)
-- Source-checked MudCheckBox/MudSwitch params (v9.5.0).
+- Source-checked CheckBox/Switch params (v9.5.0).
 - **`CheckBox`** (`: Avalonia CheckBox`) — `Color`/`Size`; Material box + check `Path`, token-filled
   when checked, outlined when not; disabled dims. Tested.
 - **`Switch`** (`: ToggleButton`) — `Color`/`Size`; track + thumb that slides on checked; thumb
@@ -803,7 +803,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 ## 2026-06-03 — Phase 4 (part 2) — App shell (Layout, AppBar, Drawer, MainContent) 🟦
 
 **Done** (build + 38 tests green, Debug & Release)
-- Source-checked MudAppBar/MudDrawer params (v9.5.0).
+- Source-checked AppBar/Drawer params (v9.5.0).
 - **`AppBar`** (`: ContentControl`) — `Color`/`Elevation`/`Dense`; default uses app-bar palette,
   semantic color overrides; elevation shadow. Imperative token color.
 - **`Drawer`** (`: ContentControl`) — `Open`/`Mini`/`DrawerWidth`/`MiniWidth`; **slides** via a Width
@@ -823,7 +823,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 ## 2026-06-02 — Phase 4 (part 1) — Layout primitives 🟦
 
 **Done** (build + 33 tests green, Debug & Release)
-- Source-checked MudContainer/MudGrid/MudItem/MudStack params (v9.5.0).
+- Source-checked Container/Grid/Item/Stack params (v9.5.0).
 - **`Breakpoint`** enum + **`Breakpoints`** helper (xs–xxl thresholds; container-width / container-query
   based, not a global viewport — documented divergence).
 - **`Grid`** (`: Panel`) + **`Item`** (`: Decorator`, `Xs`–`Xxl` spans) — responsive 12-column layout
@@ -843,7 +843,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 ## 2026-06-02 — Phase 3 (part 3) — Display primitives (Avatar, Chip, Badge) 🟦
 
 **Done** (build + 28 tests green, Debug & Release)
-- Source-checked MudAvatar/MudChip/MudBadge params (v9.5.0).
+- Source-checked Avatar/Chip/Badge params (v9.5.0).
 - Extracted `SemanticColor.Resolve` (color→token mapping) into a shared internal helper; ButtonStyles
   now delegates to it. Reused by the display primitives.
 - **`Avatar`** (`: ContentControl`) — `Variant`/`Color`/`Size`/`Square`/`Rounded`; circular by
@@ -864,10 +864,10 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 ## 2026-06-02 — Phase 3 (part 2) — Icon & button family 🟦
 
 **Done** (build + 24 tests green, Debug & Release)
-- Source-checked MudIcon/MudIconButton/MudFab params (v9.5.0); verified `Geometry.Parse`.
+- Source-checked Icon/IconButton/Fab params (v9.5.0); verified `Geometry.Parse`.
 - **`Icon`** (`: Control`, custom-drawn) — `Data` (path), `Color`, `Size`, `ViewBox`; inherits
   `Foreground` so it picks up button text color. ADR-0006 finalized.
-- **`Icons.Material.Filled.*`** — curated core set (~13 glyphs) mirroring MudBlazor's structure.
+- **`Icons.Material.Filled.*`** — curated core set (~13 glyphs) mirroring the reference API's structure.
 - **`Button.StartIcon`/`EndIcon`** — leading/trailing icons (imperative part wiring).
 - **`IconButton`** (`: Button`) — circular icon-only button, reuses the shared color matrix.
 - **`Fab`** (`: Button`) — pill, filled, elevated; `Label` + inherited `StartIcon`.
@@ -886,8 +886,8 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 ## 2026-06-02 — Phase 3 (part 1) — Core Primitives 🟦
 
 **Done** (build + 19 tests green, Debug & Release)
-- Source-checked MudBlazor v9.5.0 enums/params (Variant/Size/Color/Typo/Align; MudText/MudButton/
-  MudPaper/MudDivider).
+- Source-checked reference v9.5.0 enums/params (Variant/Size/Color/Typo/Align; Text/Button/
+  Paper/Divider).
 - **Shared API vocabulary**: `Variant`, `LoamColor`, `LoamSize`, `Typo`, `Align`, `DividerType`
   enums (ADR-0007 naming: `LoamColor`/`LoamSize` avoid `Avalonia.Color`/`Avalonia.Size` clashes;
   property names stay `Color`/`Size`). `LoamColorExtensions.ToPaletteName`.
@@ -915,9 +915,9 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 ## 2026-06-02 — Phase 2 — Design System & Theming Engine ✅
 
 **Done**
-- Sourced MudBlazor **v9.5.0** theme defaults via GitHub API → `findings/2026-06-02-mudblazor-theme-defaults.md`.
+- Sourced reference **v9.5.0** theme defaults via GitHub API → `findings/2026-06-02-reference-theme-defaults.md`.
 - Expanded `LoamTheme` into a full design system (pure C#):
-  - `LoamPalette` (record) — full semantic palette, both variants, faithful MudBlazor values;
+  - `LoamPalette` (record) — full semantic palette, both variants, faithful reference values;
     dark derived via `with`.
   - `LoamTypography` — 14-style Material scale (rem→px, weights, line heights).
   - `LoamShadows` — elevation 0–25 with a CSS→Avalonia `BoxShadows` converter (`ParseCss`).
@@ -938,7 +938,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 - Fixed static-init ordering (LoamShadows `Default` vs `Css`) via static ctor; renamed
   `LoamPalette.Light/Dark` factories to `DefaultLight/DefaultDark` (clash with `Dark` color prop).
 
-**Verified facts** — `findings/2026-06-02-mudblazor-theme-defaults.md`.
+**Verified facts** — `findings/2026-06-02-reference-theme-defaults.md`.
 
 **Verification gap** — gallery GUI not launched here; `dotnet run --project samples/Loam.Gallery`.
 
@@ -960,7 +960,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
   `tests/Loam.Tests` (net8.0, xunit v3 headless).
 - Built the **fluent template helper seed** (`Internal/Templating/TemplateScope.Named`).
 - Implemented the **theming seed**: `LoamTheme` (Styles-derived, Light/Dark ThemeDictionaries,
-  MudBlazor-default palette tokens), `LoamTokens` (resource keys).
+  reference-default palette tokens), `LoamTokens` (resource keys).
 - Implemented the **smoke control** `Surface` (`ContentControl`) + `SurfaceTheme` — a pure-C#
   `ControlTheme` + `FuncControlTemplate`, all visuals token-bound via `GetResourceObservable`.
 - Gallery shows the Surface + a live light/dark toggle (FluentTheme is temporary shell scaffolding).
@@ -981,7 +981,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 `dotnet run --project samples/Loam.Gallery` to view.
 
 **Next (Phase 2 — Design System & Theming Engine)**
-1. Expand `LoamTheme` model: full `Palette` (all MudBlazor colors), `Typography`, `Shadows` 0–24,
+1. Expand `LoamTheme` model: full `Palette` (all reference colors), `Typography`, `Shadows` 0–24,
    `LayoutProperties`, `ZIndex`.
 2. Token catalog + `LoamColor` derivations (hover/ripple/disabled, on-color contrast).
 3. Runtime palette-edit demo in the gallery; headless tests for palette resolution + variant + swap.
@@ -995,7 +995,7 @@ clashes with `Avalonia.Controls.CheckBox` → qualify.
 - Verified environment: .NET 10/11 SDKs installed; repo not yet under git; only local workspace
   notes present.
 - Researched & recorded foundations (`findings/2026-06-02-foundations-research.md`): Avalonia 12.x,
-  MudBlazor v8/v9, pure-C# ControlTheme feasibility, prior art (Material.Avalonia, Semi.Avalonia).
+  reference v8/v9, pure-C# ControlTheme feasibility, prior art (Material.Avalonia, Semi.Avalonia).
 - Captured 3 owner decisions via clarifying questions → ADR-0001 (name **Loam**), ADR-0002
   (**pure C#, no XAML**), ADR-0003 (**balanced fidelity**); plus engineering ADR-0004…0007.
 - Authored `DEVELOPMENT_PLAN.md` (Phases 0–10, per-phase + per-component Definition of Done).

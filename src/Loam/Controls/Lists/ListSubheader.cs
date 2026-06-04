@@ -6,7 +6,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A section header inside a <see cref="List"/>, mirroring MudBlazor's <c>MudListSubheader</c>. A muted,
+/// A section header inside a <see cref="List"/>, mirroring the reference API's <c>ListSubheader</c>. A muted,
 /// caption-weight <see cref="Text"/> with list-aligned padding.
 /// </summary>
 public class ListSubheader : Text

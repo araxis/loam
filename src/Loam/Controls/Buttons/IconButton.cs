@@ -4,7 +4,7 @@ using Avalonia.Controls.Primitives;
 namespace Loam.Controls;
 
 /// <summary>
-/// An icon-only button, mirroring MudBlazor's <c>MudIconButton</c>. Inherits the button family's
+/// An icon-only button, mirroring the reference API's <c>IconButton</c>. Inherits the button family's
 /// <c>Variant</c>/<c>Color</c>/<c>Size</c> and renders a single centered <see cref="Icon"/>.
 /// </summary>
 public class IconButton : Button
@@ -15,7 +15,7 @@ public class IconButton : Button
 
     private Loam.Controls.Icon? _iconPart;
 
-    /// <summary>Icon path data. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Icon path data. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);

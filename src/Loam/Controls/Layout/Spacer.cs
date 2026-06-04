@@ -4,7 +4,7 @@ using Avalonia.Layout;
 namespace Loam.Controls;
 
 /// <summary>
-/// A flexible gap, mirroring MudBlazor's <c>MudSpacer</c>. An empty stretch control: placed as the
+/// A flexible gap, mirroring the reference API's <c>Spacer</c>. An empty stretch control: placed as the
 /// fill child of a <see cref="DockPanel"/> (or a star <see cref="Grid"/> cell) it takes the remaining
 /// space, pushing its docked siblings to the edges (e.g. left/right groups in an app bar).
 /// </summary>

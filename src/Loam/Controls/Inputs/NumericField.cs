@@ -12,7 +12,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A numeric input with spinner buttons, mirroring MudBlazor's <c>MudNumericField</c>. Shares the
+/// A numeric input with spinner buttons, mirroring the reference API's <c>NumericField</c>. Shares the
 /// <see cref="TextField"/> Material chrome (label, variant border, helper/error) and adds
 /// <see cref="Minimum"/>/<see cref="Maximum"/> clamping, <see cref="Step"/> increment/decrement, and
 /// optional <see cref="Format"/>ting of the two-way <see cref="Value"/>.
@@ -76,77 +76,77 @@ public class NumericField : TemplatedControl
     private IDisposable? _labelForeground;
     private IDisposable? _helperForeground;
 
-    /// <summary>The numeric value (two-way). Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>The numeric value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public double Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>Smallest allowed value. Mirrors MudBlazor's <c>Min</c>.</summary>
+    /// <summary>Smallest allowed value. Mirrors the reference API's <c>Min</c>.</summary>
     public double Minimum
     {
         get => GetValue(MinimumProperty);
         set => SetValue(MinimumProperty, value);
     }
 
-    /// <summary>Largest allowed value. Mirrors MudBlazor's <c>Max</c>.</summary>
+    /// <summary>Largest allowed value. Mirrors the reference API's <c>Max</c>.</summary>
     public double Maximum
     {
         get => GetValue(MaximumProperty);
         set => SetValue(MaximumProperty, value);
     }
 
-    /// <summary>Increment/decrement step. Mirrors MudBlazor's <c>Step</c>.</summary>
+    /// <summary>Increment/decrement step. Mirrors the reference API's <c>Step</c>.</summary>
     public double Step
     {
         get => GetValue(StepProperty);
         set => SetValue(StepProperty, value);
     }
 
-    /// <summary>A .NET numeric format string for display. Mirrors MudBlazor's <c>Format</c>.</summary>
+    /// <summary>A .NET numeric format string for display. Mirrors the reference API's <c>Format</c>.</summary>
     public string? Format
     {
         get => GetValue(FormatProperty);
         set => SetValue(FormatProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Helper text shown below the field. Mirrors MudBlazor's <c>HelperText</c>.</summary>
+    /// <summary>Helper text shown below the field. Mirrors the reference API's <c>HelperText</c>.</summary>
     public string? HelperText
     {
         get => GetValue(HelperTextProperty);
         set => SetValue(HelperTextProperty, value);
     }
 
-    /// <summary>Error message shown instead of helper text when <see cref="Error"/>. Mirrors MudBlazor's <c>ErrorText</c>.</summary>
+    /// <summary>Error message shown instead of helper text when <see cref="Error"/>. Mirrors the reference API's <c>ErrorText</c>.</summary>
     public string? ErrorText
     {
         get => GetValue(ErrorTextProperty);
         set => SetValue(ErrorTextProperty, value);
     }
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Focus accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Focus accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Whether the field is in an error state. Mirrors MudBlazor's <c>Error</c>.</summary>
+    /// <summary>Whether the field is in an error state. Mirrors the reference API's <c>Error</c>.</summary>
     public bool Error
     {
         get => GetValue(ErrorProperty);

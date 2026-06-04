@@ -10,7 +10,7 @@ This page covers the read-only and decorative display controls in Loam: `Text`, 
 
 ## Text
 
-Typography-aware text label that mirrors MudBlazor's `MudText`. Extends `TextBlock`; font size, weight, and family are driven by theme tokens via `Typo` and update automatically on theme changes. Set content with the inherited `Text` or `Inlines` properties.
+Typography-aware text label that mirrors the reference API's `Text`. Extends `TextBlock`; font size, weight, and family are driven by theme tokens via `Typo` and update automatically on theme changes. Set content with the inherited `Text` or `Inlines` properties.
 
 ### Properties
 
@@ -18,7 +18,7 @@ Typography-aware text label that mirrors MudBlazor's `MudText`. Extends `TextBlo
 |---|---|---|---|
 | `Typo` | `Typo` | `Typo.Body1` | Typographic role (`H1`–`H6`, `Subtitle1/2`, `Body1/2`, `Button`, `Caption`, `Overline`, `Inherit`). |
 | `Color` | `LoamColor` | `LoamColor.Default` | Semantic text color; `Default` and `Inherit` both resolve to the theme primary text token. |
-| `GutterBottom` | `bool` | `false` | Adds 8 px bottom margin, matching MudBlazor's gutter spacing. |
+| `GutterBottom` | `bool` | `false` | Adds 8 px bottom margin, matching the reference API's gutter spacing. |
 
 ### Example
 
@@ -45,7 +45,7 @@ var body = new Text
 
 ## Icon
 
-SVG vector icon that mirrors MudBlazor's `MudIcon`. Renders an SVG path string (e.g. from `Icons.Material.Filled.*`) scaled from its `ViewBox` coordinate space to a fixed pixel box determined by `Size`. Fill color is driven by theme tokens when `Color` is set; `LoamColor.Inherit` (the default) inherits the ambient `Foreground`, so icons inside a `Button` automatically adopt the button's text color.
+SVG vector icon that mirrors the reference API's `Icon`. Renders an SVG path string (e.g. from `Icons.Material.Filled.*`) scaled from its `ViewBox` coordinate space to a fixed pixel box determined by `Size`. Fill color is driven by theme tokens when `Color` is set; `LoamColor.Inherit` (the default) inherits the ambient `Foreground`, so icons inside a `Button` automatically adopt the button's text color.
 
 ### Icon path catalog
 
@@ -63,7 +63,7 @@ The `ViewBox` property accepts any `"x y w h"` string, defaulting to `"0 0 24 24
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `Data` | `string?` | `null` | SVG path data. Mirrors MudBlazor's `Icon` property (renamed to avoid the type/member name clash). |
+| `Data` | `string?` | `null` | SVG path data. Mirrors the reference API's `Icon` property (renamed to avoid the type/member name clash). |
 | `Color` | `LoamColor` | `LoamColor.Inherit` | Semantic fill color. `Inherit` uses the ambient `Foreground`; `Default` resolves to the theme `ActionDefault` palette token. |
 | `Size` | `LoamSize` | `LoamSize.Medium` | Rendered pixel size: `Small` = 20 px, `Medium` = 24 px, `Large` = 32 px. |
 | `ViewBox` | `string` | `"0 0 24 24"` | SVG coordinate space. Space- or comma-separated `"x y w h"`. |
@@ -96,7 +96,7 @@ var customIcon = new Icon
 
 ## Divider
 
-A thin 1 px separator line that mirrors MudBlazor's `MudDivider`. Extends `Border`; color is bound to theme tokens automatically. Supports horizontal and vertical orientations and three inset styles via `DividerType`.
+A thin 1 px separator line that mirrors the reference API's `Divider`. Extends `Border`; color is bound to theme tokens automatically. Supports horizontal and vertical orientations and three inset styles via `DividerType`.
 
 ### Properties
 
@@ -128,7 +128,7 @@ var verticalDivider = new Divider
 
 ## Chip
 
-A compact pill element representing an input, attribute, or action, mirroring MudBlazor's `MudChip`. Displays an optional leading icon path, a text label, and an optional close button. Visual style (`Variant`) and semantic color drive the background, foreground, and border via theme tokens.
+A compact pill element representing an input, attribute, or action, mirroring the reference API's `Chip`. Displays an optional leading icon path, a text label, and an optional close button. Visual style (`Variant`) and semantic color drive the background, foreground, and border via theme tokens.
 
 ### Properties
 
@@ -170,7 +170,7 @@ chip.Closed += (_, _) => panel.Children.Remove(chip);
 
 ## ChipSet
 
-A wrap-layout container of `Chip` items that mirrors MudBlazor's `MudChipSet`. When `Selectable` is `true`, clicking a chip updates the two-way `SelectedIndex` and toggles chip variants automatically (selected = `Filled`, others = `Outlined`). Set `Mandatory` to prevent clearing the selection.
+A wrap-layout container of `Chip` items that mirrors the reference API's `ChipSet`. When `Selectable` is `true`, clicking a chip updates the two-way `SelectedIndex` and toggles chip variants automatically (selected = `Filled`, others = `Outlined`). Set `Mandatory` to prevent clearing the selection.
 
 ### Properties
 
@@ -205,7 +205,7 @@ var chipSet = new ChipSet
 
 ## Badge
 
-Overlays a small indicator (a count, text, or dot) on its wrapped `Content`, mirroring MudBlazor's `MudBadge`. Extends `ContentControl`; the wrapped element is set via `Content` in the usual Avalonia way. The badge pill is positioned at one of four corners and can optionally overlap the content.
+Overlays a small indicator (a count, text, or dot) on its wrapped `Content`, mirroring the reference API's `Badge`. Extends `ContentControl`; the wrapped element is set via `Content` in the usual Avalonia way. The badge pill is positioned at one of four corners and can optionally overlap the content.
 
 ### Properties
 
@@ -245,7 +245,7 @@ var badge = new Badge
 
 ## Avatar
 
-A circular (or square/rounded) content holder for initials, icons, or images, mirroring MudBlazor's `MudAvatar`. Extends `ContentControl`. Background and foreground colors are bound to theme tokens based on `Variant` and `Color`. Size is controlled by `Size`, and corner shape by `Square` / `Rounded`.
+A circular (or square/rounded) content holder for initials, icons, or images, mirroring the reference API's `Avatar`. Extends `ContentControl`. Background and foreground colors are bound to theme tokens based on `Variant` and `Color`. Size is controlled by `Size`, and corner shape by `Square` / `Rounded`.
 
 ### Properties
 
@@ -284,7 +284,7 @@ var iconAvatar = new Avatar
 
 ## AvatarGroup
 
-A horizontal cluster of overlapping `Avatar` controls that mirrors MudBlazor's `MudAvatarGroup`. Shows up to `Max` avatars; any beyond the limit collapse into a trailing `"+N"` surplus avatar that inherits the size and shape of the first avatar in the collection.
+A horizontal cluster of overlapping `Avatar` controls that mirrors the reference API's `AvatarGroup`. Shows up to `Max` avatars; any beyond the limit collapse into a trailing `"+N"` surplus avatar that inherits the size and shape of the first avatar in the collection.
 
 ### Properties
 

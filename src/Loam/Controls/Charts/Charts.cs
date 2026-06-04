@@ -7,7 +7,7 @@ using Loam.Theming;
 
 namespace Loam.Controls;
 
-/// <summary>Shared chart math + the default series palette, mirroring MudBlazor's <c>MudChart</c> helpers.</summary>
+/// <summary>Shared chart math + the default series palette, mirroring the reference API's <c>Chart</c> helpers.</summary>
 public static class Charts
 {
     /// <summary>The default categorical series colors (Material 500-ish).</summary>
@@ -72,7 +72,7 @@ public abstract class ChartBase : Control
 }
 
 /// <summary>
-/// A pie (or donut) chart, mirroring MudBlazor's <c>MudChart</c> Pie/Donut. Draws one slice per value,
+/// A pie (or donut) chart, mirroring the reference API's <c>Chart</c> Pie/Donut. Draws one slice per value,
 /// sized by its share of the total; set <see cref="Donut"/> for a ring.
 /// </summary>
 public sealed class PieChart : ChartBase
@@ -82,7 +82,7 @@ public sealed class PieChart : ChartBase
     private bool _donut;
     private double _holeRatio = 0.6;
 
-    /// <summary>Whether to render a center hole (donut). Mirrors MudBlazor's Donut chart.</summary>
+    /// <summary>Whether to render a center hole (donut). Mirrors the reference API's Donut chart.</summary>
     public bool Donut
     {
         get => _donut;
@@ -179,7 +179,7 @@ public sealed class PieChart : ChartBase
     }
 }
 
-/// <summary>A vertical bar chart, mirroring MudBlazor's <c>MudChart</c> Bar. Bars are scaled to the largest value.</summary>
+/// <summary>A vertical bar chart, mirroring the reference API's <c>Chart</c> Bar. Bars are scaled to the largest value.</summary>
 public sealed class BarChart : ChartBase
 {
     /// <inheritdoc />
@@ -208,7 +208,7 @@ public sealed class BarChart : ChartBase
     }
 }
 
-/// <summary>A line chart, mirroring MudBlazor's <c>MudChart</c> Line. Plots values left-to-right with dots; set <see cref="Area"/> to fill beneath.</summary>
+/// <summary>A line chart, mirroring the reference API's <c>Chart</c> Line. Plots values left-to-right with dots; set <see cref="Area"/> to fill beneath.</summary>
 public sealed class LineChart : ChartBase
 {
     private bool _area;

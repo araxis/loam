@@ -1,0 +1,92 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional package version override
+        required: false
+        type: string
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      INPUT_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Loam.slnx
+
+      - name: Resolve package version
+        shell: bash
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            echo "PACKAGE_VERSION=$INPUT_VERSION" >> "$GITHUB_ENV"
+          elif [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            echo "PACKAGE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build
+        shell: bash
+        run: |
+          build_args=()
+          if [ -n "${PACKAGE_VERSION:-}" ]; then
+            build_args+=("/p:PackageVersion=$PACKAGE_VERSION")
+          fi
+
+          dotnet build Loam.slnx \
+            -c Release \
+            --no-restore \
+            /p:ContinuousIntegrationBuild=true \
+            "${build_args[@]}"
+
+      - name: Test
+        run: dotnet test Loam.slnx -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Pack
+        shell: bash
+        run: |
+          pack_args=()
+          if [ -n "${PACKAGE_VERSION:-}" ]; then
+            pack_args+=("/p:PackageVersion=$PACKAGE_VERSION")
+          fi
+
+          dotnet pack src/Loam/Loam.csproj \
+            -c Release \
+            --no-build \
+            -o artifacts/packages \
+            /p:ContinuousIntegrationBuild=true \
+            "${pack_args[@]}"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
+      - name: Publish
+        shell: bash
+        run: |
+          for package in artifacts/packages/*.nupkg; do
+            dotnet nuget push "$package" \
+              --api-key "${{ secrets.NUGET_API_KEY }}" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --skip-duplicate
+          done

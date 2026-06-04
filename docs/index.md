@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: Loam
-  text: MudBlazor, mapped to Avalonia
-  tagline: Material-Design controls with a familiar API — authored in pure C#, no XAML.
+  text: Material Design controls for Avalonia
+  tagline: Pure C# controls with runtime theming and no XAML.
   actions:
     - theme: brand
       text: Get Started
@@ -19,7 +19,7 @@ hero:
 features:
   - icon: 🧩
     title: Familiar API
-    details: Parameters mirror MudBlazor — Variant, Color, Size, Dense, Elevation. If you know MudBlazor, you already know Loam.
+    details: Predictable names for variant, color, size, density, and elevation.
   - icon: 🎨
     title: Material look
     details: Palette-driven colors, elevation shadows, a click ripple and a full typography scale — all token-driven.
@@ -31,7 +31,7 @@ features:
     details: Custom calendar, time and color pickers — a LoamTheme-only app needs no extra control packages.
   - icon: 🌗
     title: Themeable
-    details: A LoamTheme (mirroring MudTheme) with light/dark variants and runtime palette swapping.
+    details: A LoamTheme data model with light/dark variants and runtime palette swapping.
   - icon: 🖥️
     title: Cross-platform
     details: One library targeting Avalonia 12 — desktop, mobile and browser.
@@ -54,7 +54,7 @@ var card = new Card
             new CardHeader { Title = "Project Loam", Subtitle = "Updated today" },
             new CardContent
             {
-                Child = new Text { Text = "MudBlazor components, mapped to Avalonia in pure C#." },
+                Child = new Text { Text = "Material Design components, mapped to Avalonia in pure C#." },
             },
             new CardActions
             {
@@ -65,11 +65,8 @@ var card = new Card
 };
 ```
 
-Every MudBlazor component on the master inventory is mapped — built, themed, tested, and demonstrated
+Every component in the v1 catalog is built, themed, tested, and demonstrated
 in the live gallery. The full solution builds clean (Debug + Release, 0 warnings) with **111 headless
 and unit tests passing**.
-
-> Loam is an independent, MudBlazor-*inspired* library and is **not affiliated** with the MudBlazor
-> project. "MudBlazor" is a trademark of its respective owners.
 
 </div>

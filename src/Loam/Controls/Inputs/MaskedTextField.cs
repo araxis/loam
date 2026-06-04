@@ -4,7 +4,7 @@ namespace Loam.Controls;
 
 /// <summary>
 /// A <see cref="TextField"/> that formats its input through a <see cref="Mask"/> pattern, mirroring
-/// MudBlazor's masked <c>MudTextField</c>/<c>MudMask</c>. Reuses the <see cref="TextField"/> chrome
+/// the reference API's masked <c>TextField</c>/<c>Mask</c>. Reuses the <see cref="TextField"/> chrome
 /// (inherited style key) and reformats <see cref="TextField.Text"/> as the user types.
 /// </summary>
 public class MaskedTextField : TextField
@@ -15,7 +15,7 @@ public class MaskedTextField : TextField
 
     private bool _masking;
 
-    /// <summary>The mask pattern (see <see cref="Mask"/>). Mirrors MudBlazor's <c>Mask</c>.</summary>
+    /// <summary>The mask pattern (see <see cref="Mask"/>). Mirrors the reference API's <c>Mask</c>.</summary>
     public string? Pattern
     {
         get => GetValue(PatternProperty);

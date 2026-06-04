@@ -1,7 +1,7 @@
-# Findings — MudBlazor theme defaults (sourced 2026-06-02)
+# Findings — reference theme defaults (sourced 2026-06-02)
 
-Values read from MudBlazor **v9.5.0** source via the GitHub API
-(`src/MudBlazor/Themes/Models/`). These are the faithful defaults Loam mirrors in
+Values read from reference **v9.5.0** source via the GitHub API
+(`src/reference/Themes/Models/`). These are the faithful defaults Loam mirrors in
 `LoamPalette`, `LoamTypography`, `LoamShadows`, `LoamLayout`, `LoamZIndex`.
 
 ## Palette — light (base `Palette.cs`)
@@ -49,7 +49,7 @@ TableStriped `.20` · DividerLight `.06` · Skeleton `.11` · AppbarText `.70`.
 | Overline† | .75→12 | 400 | 2.66 | .08333 (uppercase) |
 
 † Button/Caption/Overline rows were below the scrape window; filled from the standard MUI defaults
-MudBlazor uses. **TODO:** re-verify these three against source when convenient.
+reference uses. **TODO:** re-verify these three against source when convenient.
 
 ## Shadows (`Shadow.cs`)
 

@@ -10,7 +10,7 @@ namespace Loam.Controls;
 
 /// <summary>
 /// Overlays a small indicator (count or dot) on its <see cref="ContentControl.Content"/>, mirroring
-/// MudBlazor's <c>MudBadge</c>. The wrapped element goes in <c>Content</c>; the badge value is
+/// the reference API's <c>Badge</c>. The wrapped element goes in <c>Content</c>; the badge value is
 /// <see cref="Value"/> (or a <see cref="Dot"/>).
 /// </summary>
 public class Badge : ContentControl
@@ -53,56 +53,56 @@ public class Badge : ContentControl
     private IDisposable? _foregroundBinding;
     private IDisposable? _borderBinding;
 
-    /// <summary>The badge value (number or text). Mirrors MudBlazor's <c>Content</c>.</summary>
+    /// <summary>The badge value (number or text). Mirrors the reference API's <c>Content</c>.</summary>
     public object? Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>Show a small dot instead of a value. Mirrors MudBlazor's <c>Dot</c>.</summary>
+    /// <summary>Show a small dot instead of a value. Mirrors the reference API's <c>Dot</c>.</summary>
     public bool Dot
     {
         get => GetValue(DotProperty);
         set => SetValue(DotProperty, value);
     }
 
-    /// <summary>Pull the badge inward over the content. Mirrors MudBlazor's <c>Overlap</c>.</summary>
+    /// <summary>Pull the badge inward over the content. Mirrors the reference API's <c>Overlap</c>.</summary>
     public bool Overlap
     {
         get => GetValue(OverlapProperty);
         set => SetValue(OverlapProperty, value);
     }
 
-    /// <summary>Draw a surface-colored ring around the badge. Mirrors MudBlazor's <c>Bordered</c>.</summary>
+    /// <summary>Draw a surface-colored ring around the badge. Mirrors the reference API's <c>Bordered</c>.</summary>
     public bool Bordered
     {
         get => GetValue(BorderedProperty);
         set => SetValue(BorderedProperty, value);
     }
 
-    /// <summary>Corner placement. Mirrors MudBlazor's <c>Origin</c>.</summary>
+    /// <summary>Corner placement. Mirrors the reference API's <c>Origin</c>.</summary>
     public BadgeOrigin Origin
     {
         get => GetValue(OriginProperty);
         set => SetValue(OriginProperty, value);
     }
 
-    /// <summary>Cap for numeric values (e.g. <c>99+</c>). Mirrors MudBlazor's <c>Max</c>.</summary>
+    /// <summary>Cap for numeric values (e.g. <c>99+</c>). Mirrors the reference API's <c>Max</c>.</summary>
     public int Max
     {
         get => GetValue(MaxProperty);
         set => SetValue(MaxProperty, value);
     }
 
-    /// <summary>Whether the badge is shown. Mirrors MudBlazor's <c>Visible</c>.</summary>
+    /// <summary>Whether the badge is shown. Mirrors the reference API's <c>Visible</c>.</summary>
     public bool Visible
     {
         get => GetValue(VisibleProperty);
         set => SetValue(VisibleProperty, value);
     }
 
-    /// <summary>Badge color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Badge color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);

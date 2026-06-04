@@ -8,7 +8,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A contextual message banner, mirroring MudBlazor's <c>MudAlert</c>. Colored by <see cref="Color"/>
+/// A contextual message banner, mirroring the reference API's <c>Alert</c>. Colored by <see cref="Color"/>
 /// (severity) and styled by <see cref="Variant"/> (Filled / Outlined / Text-tint), with an optional
 /// leading <see cref="Icon"/>.
 /// </summary>
@@ -32,21 +32,21 @@ public class Alert : ContentControl
     private IDisposable? _foreground;
     private IDisposable? _border;
 
-    /// <summary>Severity color. Mirrors MudBlazor's <c>Severity</c>.</summary>
+    /// <summary>Severity color. Mirrors the reference API's <c>Severity</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Leading icon path. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);

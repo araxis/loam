@@ -8,7 +8,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material slider, mirroring MudBlazor's <c>MudSlider</c>. A custom track + fill + draggable thumb
+/// A Material slider, mirroring the reference API's <c>Slider</c>. A custom track + fill + draggable thumb
 /// bound to <see cref="Value"/> within <see cref="Minimum"/>/<see cref="Maximum"/>, tinted by <see cref="Color"/>.
 /// </summary>
 public class Slider : TemplatedControl
@@ -38,28 +38,28 @@ public class Slider : TemplatedControl
     private IDisposable? _fillBackground;
     private IDisposable? _thumbBackground;
 
-    /// <summary>The current value (two-way). Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>The current value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public double Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>Minimum value. Mirrors MudBlazor's <c>Min</c>.</summary>
+    /// <summary>Minimum value. Mirrors the reference API's <c>Min</c>.</summary>
     public double Minimum
     {
         get => GetValue(MinimumProperty);
         set => SetValue(MinimumProperty, value);
     }
 
-    /// <summary>Maximum value. Mirrors MudBlazor's <c>Max</c>.</summary>
+    /// <summary>Maximum value. Mirrors the reference API's <c>Max</c>.</summary>
     public double Maximum
     {
         get => GetValue(MaximumProperty);
         set => SetValue(MaximumProperty, value);
     }
 
-    /// <summary>Accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);

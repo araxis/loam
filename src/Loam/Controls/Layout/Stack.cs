@@ -6,10 +6,10 @@ using Avalonia.Layout;
 namespace Loam.Controls;
 
 /// <summary>
-/// A spaced stack of children, mirroring MudBlazor's <c>MudStack</c>. Vertical by default;
+/// A spaced stack of children, mirroring the reference API's <c>Stack</c>. Vertical by default;
 /// <see cref="Row"/> lays out horizontally. Spacing reuses <see cref="StackPanel.Spacing"/>.
 /// </summary>
-[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Mirrors MudBlazor's MudStack.")]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Mirrors the reference API's Stack.")]
 public class Stack : StackPanel
 {
     /// <summary>Identifies the <see cref="Row"/> property.</summary>
@@ -19,7 +19,7 @@ public class Stack : StackPanel
     /// <summary>Creates the stack with a sensible default spacing.</summary>
     public Stack() => Spacing = 8;
 
-    /// <summary>Lays out horizontally instead of vertically. Mirrors MudBlazor's <c>Row</c>.</summary>
+    /// <summary>Lays out horizontally instead of vertically. Mirrors the reference API's <c>Row</c>.</summary>
     public bool Row
     {
         get => GetValue(RowProperty);

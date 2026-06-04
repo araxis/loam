@@ -7,8 +7,8 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// A circular (or square) content holder for initials, icons or images, mirroring MudBlazor's
-/// <c>MudAvatar</c>. Token-driven background/foreground per <see cref="Variant"/> and
+/// A circular (or square) content holder for initials, icons or images, mirroring the reference API's
+/// <c>Avatar</c>. Token-driven background/foreground per <see cref="Variant"/> and
 /// <see cref="Color"/>; circular by default, <see cref="Square"/>/<see cref="Rounded"/> alter the shape.
 /// </summary>
 public class Avatar : ContentControl
@@ -38,35 +38,35 @@ public class Avatar : ContentControl
     private IDisposable? _foregroundBinding;
     private IDisposable? _borderBinding;
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Semantic color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Semantic color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Avatar size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Avatar size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Square corners. Mirrors MudBlazor's <c>Square</c>.</summary>
+    /// <summary>Square corners. Mirrors the reference API's <c>Square</c>.</summary>
     public bool Square
     {
         get => GetValue(SquareProperty);
         set => SetValue(SquareProperty, value);
     }
 
-    /// <summary>Rounded-rectangle corners (between circle and square). Mirrors MudBlazor's <c>Rounded</c>.</summary>
+    /// <summary>Rounded-rectangle corners (between circle and square). Mirrors the reference API's <c>Rounded</c>.</summary>
     public bool Rounded
     {
         get => GetValue(RoundedProperty);

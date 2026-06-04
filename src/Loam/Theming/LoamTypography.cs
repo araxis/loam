@@ -3,7 +3,7 @@ using Avalonia.Media;
 namespace Loam.Theming;
 
 /// <summary>
-/// A single typographic style. Sizes are in device-independent pixels (MudBlazor rem × 16);
+/// A single typographic style. Sizes are in device-independent pixels (Material Design rem × 16);
 /// <see cref="LineHeight"/> is a multiplier and <see cref="LineHeightPx"/> the absolute value
 /// Avalonia's <c>TextBlock.LineHeight</c> expects.
 /// </summary>
@@ -29,8 +29,8 @@ public sealed record LoamTypeStyle
 }
 
 /// <summary>
-/// The Material type scale, mirroring MudBlazor's <c>Typography</c> (values verified against
-/// MudBlazor v9.5.0; Button/Caption/Overline use the standard MUI defaults).
+/// The Material type scale, mirroring the reference API's <c>Typography</c> (values verified against
+/// Material Design v9.5.0; Button/Caption/Overline use the standard MUI defaults).
 /// </summary>
 public sealed record LoamTypography
 {

@@ -8,7 +8,7 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// A container of <see cref="Chip"/>s, mirroring MudBlazor's <c>MudChipSet</c>. Lays the <see cref="Items"/>
+/// A container of <see cref="Chip"/>s, mirroring the reference API's <c>ChipSet</c>. Lays the <see cref="Items"/>
 /// out in a wrap; when <see cref="Selectable"/>, clicking a chip sets the two-way <see cref="SelectedIndex"/>
 /// and renders it filled (others outlined). Set <see cref="Mandatory"/> to keep one always selected.
 /// </summary>
@@ -36,14 +36,14 @@ public class ChipSet : TemplatedControl
     /// <summary>The chips.</summary>
     public ObservableCollection<Chip> Items { get; } = new();
 
-    /// <summary>Whether chips can be selected by clicking. Mirrors MudBlazor's selection.</summary>
+    /// <summary>Whether chips can be selected by clicking. Mirrors the reference API's selection.</summary>
     public bool Selectable
     {
         get => GetValue(SelectableProperty);
         set => SetValue(SelectableProperty, value);
     }
 
-    /// <summary>Whether a selection is required (clicking the selected chip won't clear it). Mirrors MudBlazor's <c>Mandatory</c>.</summary>
+    /// <summary>Whether a selection is required (clicking the selected chip won't clear it). Mirrors the reference API's <c>Mandatory</c>.</summary>
     public bool Mandatory
     {
         get => GetValue(MandatoryProperty);

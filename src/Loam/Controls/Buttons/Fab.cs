@@ -6,7 +6,7 @@ using AC = Avalonia.Controls;
 namespace Loam.Controls;
 
 /// <summary>
-/// A floating action button, mirroring MudBlazor's <c>MudFab</c>. A pill-shaped, elevated, filled
+/// A floating action button, mirroring the reference API's <c>Fab</c>. A pill-shaped, elevated, filled
 /// button with an optional <see cref="Label"/> and the inherited <c>StartIcon</c>/<c>EndIcon</c>.
 /// </summary>
 public class Fab : Button
@@ -17,7 +17,7 @@ public class Fab : Button
 
     private AC.Border? _root;
 
-    /// <summary>The text label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The text label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);

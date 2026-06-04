@@ -7,7 +7,7 @@ using Avalonia.Data;
 namespace Loam.Controls;
 
 /// <summary>
-/// A text input with a filtered suggestion list, mirroring MudBlazor's <c>MudAutocomplete</c>. Composes
+/// A text input with a filtered suggestion list, mirroring the reference API's <c>Autocomplete</c>. Composes
 /// a <see cref="TextField"/> for the Material chrome and opens a <see cref="Flyout"/> of <see cref="Items"/>
 /// that match the typed <see cref="Value"/> (case-insensitive contains); choosing one fills the field.
 /// </summary>
@@ -44,42 +44,42 @@ public class Autocomplete : TemplatedControl
     /// <summary>The candidate suggestions.</summary>
     public ObservableCollection<string> Items { get; } = new();
 
-    /// <summary>The current text value (two-way). Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>The current text value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public string? Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Placeholder shown when empty. Mirrors MudBlazor's <c>Placeholder</c>.</summary>
+    /// <summary>Placeholder shown when empty. Mirrors the reference API's <c>Placeholder</c>.</summary>
     public string? Placeholder
     {
         get => GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
     }
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Focus accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Focus accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Maximum suggestions shown. Mirrors MudBlazor's <c>MaxItems</c>.</summary>
+    /// <summary>Maximum suggestions shown. Mirrors the reference API's <c>MaxItems</c>.</summary>
     public int MaxItems
     {
         get => GetValue(MaxItemsProperty);

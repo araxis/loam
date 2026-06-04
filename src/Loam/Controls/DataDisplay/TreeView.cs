@@ -9,7 +9,7 @@ using Avalonia.VisualTree;
 namespace Loam.Controls;
 
 /// <summary>
-/// A hierarchical tree, mirroring MudBlazor's <c>MudTreeView</c>. Hosts root <see cref="Items"/>
+/// A hierarchical tree, mirroring the reference API's <c>TreeView</c>. Hosts root <see cref="Items"/>
 /// (<see cref="TreeViewItem"/>s, each with their own children); clicking any node selects it and
 /// updates <see cref="SelectedItem"/>, highlighting that single row.
 /// </summary>

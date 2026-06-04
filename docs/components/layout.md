@@ -12,7 +12,7 @@ All controls live in `Loam.Controls`. Enums such as `Breakpoint`, `LoamColor`, a
 
 ## Paper
 
-Equivalent of MudBlazor's `MudPaper`. A `ContentControl` that renders on a token-driven surface background with an elevation shadow. Optionally removes corner rounding (`Square`) or replaces the shadow with a 1 px outline (`Outlined`).
+Equivalent of the reference API's `Paper`. A `ContentControl` that renders on a token-driven surface background with an elevation shadow. Optionally removes corner rounding (`Square`) or replaces the shadow with a 1 px outline (`Outlined`).
 
 ### Properties
 
@@ -46,7 +46,7 @@ var outlined = new Paper
 
 ## Card
 
-Equivalent of MudBlazor's `MudCard`. Inherits `Paper` and applies card-specific styling. Compose children using `CardHeader`, `CardMedia`, `CardContent`, and `CardActions`.
+Equivalent of the reference API's `Card`. Inherits `Paper` and applies card-specific styling. Compose children using `CardHeader`, `CardMedia`, `CardContent`, and `CardActions`.
 
 ### Properties
 
@@ -54,15 +54,15 @@ Inherits all `Paper` properties (`Elevation`, `Square`, `Outlined`). No addition
 
 ### CardContent
 
-Equivalent of `MudCardContent`. A `Decorator` that wraps the card body with default padding (`16 px` on all sides).
+Equivalent of `CardContent`. A `Decorator` that wraps the card body with default padding (`16 px` on all sides).
 
 ### CardActions
 
-Equivalent of `MudCardActions`. A `Decorator` for hosting action buttons at the bottom of a card, with default padding (`8 px` on all sides).
+Equivalent of `CardActions`. A `Decorator` for hosting action buttons at the bottom of a card, with default padding (`8 px` on all sides).
 
 ### CardHeader
 
-Equivalent of `MudCardHeader`. A `TemplatedControl` that lays out an optional leading avatar, a title/subtitle text stack, and a trailing action slot.
+Equivalent of `CardHeader`. A `TemplatedControl` that lays out an optional leading avatar, a title/subtitle text stack, and a trailing action slot.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -73,7 +73,7 @@ Equivalent of `MudCardHeader`. A `TemplatedControl` that lays out an optional le
 
 ### CardMedia
 
-Equivalent of `MudCardMedia`. A `TemplatedControl` that shows an image stretched to fill a fixed-height band, with a neutral placeholder background when no image is set.
+Equivalent of `CardMedia`. A `TemplatedControl` that shows an image stretched to fill a fixed-height band, with a neutral placeholder background when no image is set.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -128,7 +128,7 @@ var card = new Card
 
 ## Container
 
-Equivalent of MudBlazor's `MudContainer`. A `Decorator` that centers its child and caps its width at a responsive breakpoint. Optional `Gutters` add `16 px` horizontal padding on each side.
+Equivalent of the reference API's `Container`. A `Decorator` that centers its child and caps its width at a responsive breakpoint. Optional `Gutters` add `16 px` horizontal padding on each side.
 
 ### Properties
 
@@ -155,7 +155,7 @@ var container = new Container
 
 ## Grid
 
-Equivalent of MudBlazor's `MudGrid`. A `Panel` that arranges `Item` children (or arbitrary controls, treated as full-width) in a responsive 12-column grid. Column spans are resolved from the grid's own available width (container-query style), not the window width.
+Equivalent of the reference API's `Grid`. A `Panel` that arranges `Item` children (or arbitrary controls, treated as full-width) in a responsive 12-column grid. Column spans are resolved from the grid's own available width (container-query style), not the window width.
 
 > **Note:** Qualify as `Loam.Controls.Grid` when the file also uses `Avalonia.Controls.Grid`.
 
@@ -167,7 +167,7 @@ Equivalent of MudBlazor's `MudGrid`. A `Panel` that arranges `Item` children (or
 
 ### Item
 
-Equivalent of MudBlazor's `MudItem`. A `Decorator` child of `Grid` that declares how many of the 12 columns it occupies at each breakpoint. Span resolution cascades down to the nearest smaller breakpoint that has a value set; defaults to `12` (full row) when nothing is set.
+Equivalent of the reference API's `Item`. A `Decorator` child of `Grid` that declares how many of the 12 columns it occupies at each breakpoint. Span resolution cascades down to the nearest smaller breakpoint that has a value set; defaults to `12` (full row) when nothing is set.
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -204,7 +204,7 @@ var grid = new Loam.Controls.Grid
 
 ## Stack
 
-Equivalent of MudBlazor's `MudStack`. Extends `StackPanel` with a `Row` toggle and a sensible default `Spacing` of `8 px`. Vertical by default; set `Row = true` for horizontal layout.
+Equivalent of the reference API's `Stack`. Extends `StackPanel` with a `Row` toggle and a sensible default `Spacing` of `8 px`. Vertical by default; set `Row = true` for horizontal layout.
 
 ### Properties
 
@@ -243,7 +243,7 @@ var row = new Stack
 
 ## Spacer
 
-Equivalent of MudBlazor's `MudSpacer`. An empty `Control` with `HorizontalAlignment = Stretch` and `VerticalAlignment = Stretch`. Place it as the fill child of a `DockPanel` or a star-sized `Grid` cell to push surrounding siblings to the edges.
+Equivalent of the reference API's `Spacer`. An empty `Control` with `HorizontalAlignment = Stretch` and `VerticalAlignment = Stretch`. Place it as the fill child of a `DockPanel` or a star-sized `Grid` cell to push surrounding siblings to the edges.
 
 ### Properties
 
@@ -273,7 +273,7 @@ var toolbar = new DockPanel
 
 ## Hidden
 
-Equivalent of MudBlazor's `MudHidden`. A `Decorator` that monitors the host `TopLevel` (window) width and toggles `IsVisible` on its `Child` based on a breakpoint rule. The rule compares the current `Breakpoint` bucket to the configured `Breakpoint` value using the `HiddenMode` strategy.
+Equivalent of the reference API's `Hidden`. A `Decorator` that monitors the host `TopLevel` (window) width and toggles `IsVisible` on its `Child` based on a breakpoint rule. The rule compares the current `Breakpoint` bucket to the configured `Breakpoint` value using the `HiddenMode` strategy.
 
 ### HiddenMode enum
 
@@ -319,7 +319,7 @@ var mobileOnly = new Hidden
 
 ## ScrollToTop
 
-Equivalent of MudBlazor's `MudScrollToTop`. A `Decorator` that watches a `ScrollViewer` and shows its `Child` once the scroll position passes `VisibleOffset`. Clicking the control scrolls the target back to the top. The default `Child` is an up-arrow FAB.
+Equivalent of the reference API's `ScrollToTop`. A `Decorator` that watches a `ScrollViewer` and shows its `Child` once the scroll position passes `VisibleOffset`. Clicking the control scrolls the target back to the top. The default `Child` is an up-arrow FAB.
 
 ### Properties
 
@@ -362,7 +362,7 @@ var page = new Grid
 
 ## Layout
 
-Equivalent of MudBlazor's `MudLayout`. A `ContentControl` that forms the application shell. It docks an `AppBar` at the top (full width), a `Drawer` on the left below the bar, and fills the remaining space with its `Content` (typically a `MainContent`).
+Equivalent of the reference API's `Layout`. A `ContentControl` that forms the application shell. It docks an `AppBar` at the top (full width), a `Drawer` on the left below the bar, and fills the remaining space with its `Content` (typically a `MainContent`).
 
 ### Properties
 
@@ -376,7 +376,7 @@ Equivalent of MudBlazor's `MudLayout`. A `ContentControl` that forms the applica
 
 ## AppBar
 
-Equivalent of MudBlazor's `MudAppBar`. A full-width, elevated, colored toolbar surface hosted in the `Layout.AppBar` slot. The default color follows the theme's app-bar palette; set `Color` to any `LoamColor` to override. Height is `64 px` normally and `48 px` when `Dense` is `true`.
+Equivalent of the reference API's `AppBar`. A full-width, elevated, colored toolbar surface hosted in the `Layout.AppBar` slot. The default color follows the theme's app-bar palette; set `Color` to any `LoamColor` to override. Height is `64 px` normally and `48 px` when `Dense` is `true`.
 
 ### Properties
 
@@ -390,7 +390,7 @@ Equivalent of MudBlazor's `MudAppBar`. A full-width, elevated, colored toolbar s
 
 ## Drawer
 
-Equivalent of MudBlazor's `MudDrawer`. A left-anchored `ContentControl` that slides open or closed by animating its `Width`. Toggling `Open` switches between `DrawerWidth` and `0`; enabling `Mini` collapses to `MiniWidth` instead of hiding entirely.
+Equivalent of the reference API's `Drawer`. A left-anchored `ContentControl` that slides open or closed by animating its `Width`. Toggling `Open` switches between `DrawerWidth` and `0`; enabling `Mini` collapses to `MiniWidth` instead of hiding entirely.
 
 ### Properties
 
@@ -405,7 +405,7 @@ Equivalent of MudBlazor's `MudDrawer`. A left-anchored `ContentControl` that sli
 
 ## MainContent
 
-Equivalent of MudBlazor's `MudMainContent`. A `ContentControl` that provides the scrollable, padded main content region of a `Layout`. Place page content inside this control rather than directly in `Layout.Content`.
+Equivalent of the reference API's `MainContent`. A `ContentControl` that provides the scrollable, padded main content region of a `Layout`. Place page content inside this control rather than directly in `Layout.Content`.
 
 ### Properties
 

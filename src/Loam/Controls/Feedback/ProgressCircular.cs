@@ -11,7 +11,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A circular progress indicator, mirroring MudBlazor's <c>MudProgressCircular</c>. Draws an arc
+/// A circular progress indicator, mirroring the reference API's <c>ProgressCircular</c>. Draws an arc
 /// tinted by <see cref="Color"/>: a determinate sweep from <see cref="Value"/> within
 /// <see cref="Minimum"/>/<see cref="Maximum"/>, or a continuously spinning arc when
 /// <see cref="Indeterminate"/> (the default).
@@ -65,49 +65,49 @@ public class ProgressCircular : Control
         AffectsMeasure<ProgressCircular>(SizeProperty, StrokeWidthProperty);
     }
 
-    /// <summary>Current value. Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>Current value. Mirrors the reference API's <c>Value</c>.</summary>
     public double Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>Minimum value. Mirrors MudBlazor's <c>Min</c>.</summary>
+    /// <summary>Minimum value. Mirrors the reference API's <c>Min</c>.</summary>
     public double Minimum
     {
         get => GetValue(MinimumProperty);
         set => SetValue(MinimumProperty, value);
     }
 
-    /// <summary>Maximum value. Mirrors MudBlazor's <c>Max</c>.</summary>
+    /// <summary>Maximum value. Mirrors the reference API's <c>Max</c>.</summary>
     public double Maximum
     {
         get => GetValue(MaximumProperty);
         set => SetValue(MaximumProperty, value);
     }
 
-    /// <summary>Accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Indicator size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Indicator size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Stroke thickness in pixels. Mirrors MudBlazor's <c>StrokeWidth</c>.</summary>
+    /// <summary>Stroke thickness in pixels. Mirrors the reference API's <c>StrokeWidth</c>.</summary>
     public double StrokeWidth
     {
         get => GetValue(StrokeWidthProperty);
         set => SetValue(StrokeWidthProperty, value);
     }
 
-    /// <summary>Whether the indicator spins indefinitely. Mirrors MudBlazor's <c>Indeterminate</c>.</summary>
+    /// <summary>Whether the indicator spins indefinitely. Mirrors the reference API's <c>Indeterminate</c>.</summary>
     public bool Indeterminate
     {
         get => GetValue(IndeterminateProperty);

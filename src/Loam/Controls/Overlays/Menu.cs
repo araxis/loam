@@ -4,7 +4,7 @@ using Avalonia.Controls;
 
 namespace Loam.Controls;
 
-/// <summary>An item in a <see cref="Menu"/>, mirroring MudBlazor's <c>MudMenuItem</c>.</summary>
+/// <summary>An item in a <see cref="Menu"/>, mirroring the reference API's <c>MenuItem</c>.</summary>
 public sealed class MenuItem
 {
     /// <summary>The item label.</summary>
@@ -18,7 +18,7 @@ public sealed class MenuItem
 }
 
 /// <summary>
-/// A button that opens a dropdown of <see cref="Items"/>, mirroring MudBlazor's <c>MudMenu</c>.
+/// A button that opens a dropdown of <see cref="Items"/>, mirroring the reference API's <c>Menu</c>.
 /// Inherits the <see cref="Button"/> look for the trigger; opens an Avalonia flyout of menu rows.
 /// </summary>
 public class Menu : Button

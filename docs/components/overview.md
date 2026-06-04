@@ -4,7 +4,7 @@ title: Components overview
 
 # Components
 
-Every component on the MudBlazor master inventory is mapped to a Loam control, grouped below. Each page
+Every component in the v1 catalog is grouped below. Each page
 documents the real public API (properties, events, static helpers) with copy-paste C# examples.
 
 > Types live in `Loam.Controls`; shared enums (`LoamColor`, `Variant`, `LoamSize`, `Typo`) live in
@@ -26,7 +26,7 @@ documents the real public API (properties, events, static helpers) with copy-pas
 
 ## Common parameters
 
-Most controls accept the familiar MudBlazor knobs:
+Most controls accept the same familiar knobs:
 
 - **`Variant`** — `Filled` · `Outlined` · `Text`
 - **`Color` (`LoamColor`)** — `Primary` · `Secondary` · `Tertiary` · `Info` · `Success` · `Warning` ·

@@ -8,7 +8,7 @@ versions in Phase 1.
 - Installed .NET SDKs: `10.0.100-rc.2`, `10.0.300`, `11.0.100-preview.4`. Default `dotnet` →
   11.0.100-preview.4. (`dotnet --list-sdks`, 2026-06-02.)
 - Repo is **not** a git repository yet; only local workspace notes are present in
-  `D:\Projects\MudAvalonia`.
+  `D:\Projects\Avalonia`.
 
 ## Avalonia
 
@@ -47,15 +47,15 @@ Confirmed C# APIs (Avalonia docs):
 - Selector construction in code for nested pseudo-class styles
   (`new Style { Selector = … }` builder vs. `Selectors.*` fluent API).
 
-## MudBlazor (reference being mapped)
+## reference (reference being mapped)
 
-- Latest stable MudBlazor **9.5.0**; **v8.0.0** was the prior major with a migration guide. Use
-  v8/v9 docs as the API reference. Sources: https://www.nuget.org/packages/MudBlazor ,
-  https://github.com/MudBlazor/MudBlazor/issues/9953 , https://mudblazor.com/docs/overview
-- ⚠️ `mudblazor.com/docs/overview` is a Blazor SPA — not scrapable via simple fetch. Use the GitHub
-  source (`src/MudBlazor/Components`) and per-component doc pages for source-first verification.
+- Latest stable reference **9.5.0**; **v8.0.0** was the prior major with a migration guide. Use
+  v8/v9 docs as the API reference. Sources: https://www.nuget.org/packages/reference ,
+  https://github.com/reference/reference/issues/9953 , https://reference.com/docs/overview
+- ⚠️ `reference.com/docs/overview` is a Blazor SPA — not scrapable via simple fetch. Use the GitHub
+  source (`src/reference/Components`) and per-component doc pages for source-first verification.
 - Component categories (DeepWiki + knowledge): Layout & Navigation, Form/Input (built on
-  `MudBaseInput<T>` / `MudFormComponent<T,U>`), Data display (`MudTable`, `MudDataGrid`),
+  `BaseInput<T>` / `FormComponent<T,U>`), Data display (`Table`, `DataGrid`),
   Feedback/overlay, Pickers, Utilities/Providers, Charts. Full catalog → `component-inventory.md`.
 
 ## Prior art (study, don't necessarily depend on)
@@ -68,4 +68,4 @@ Confirmed C# APIs (Avalonia docs):
 - **Semi.Avalonia** — ControlThemes + style `Classes` for built-in controls; good reference for
   the ControlTheme + class-based variant pattern. Source: https://docs.irihi.tech/semi/
 - Useful difference: those map *Material/Semi* design onto Avalonia's native control APIs. **Loam's
-  differentiator** is mapping the *MudBlazor API surface* (param names, services), not just a look.
+  differentiator** is mapping the *reference API surface* (param names, services), not just a look.

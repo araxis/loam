@@ -41,11 +41,11 @@ ambiguous with `System.IO.Path` (ImplicitUsings) → alias `using AvaPath = ...S
 
 ## 2026-06-03 — CA1716: `Select` is a reserved keyword (VB)
 
-**What:** Naming a public type `Select` (mirroring `MudSelect`) trips **CA1716** — `Select` is a
+**What:** Naming a public type `Select` (mirroring `Select`) trips **CA1716** — `Select` is a
 reserved keyword in VB.NET (LINQ-ish), so analyzers flag it for cross-language consumers. Same class
-of issue as CA1711 (`Stack` suffix). Other MudBlazor names to watch: any that map to VB keywords.
+of issue as CA1711 (`Stack` suffix). Other reference names to watch: any that map to VB keywords.
 
-**How to apply:** Keep the MudBlazor-parity name and suppress on the type with
+**How to apply:** Keep the reference-parity name and suppress on the type with
 `[SuppressMessage("Naming", "CA1716:Identifiers should not match keywords", Justification = "...")]`.
 Document the parity intent in the justification.
 
@@ -56,7 +56,7 @@ Document the parity intent in the justification.
 files the local Grid wins, no clash. (2) There is **no `AffectsParentMeasure`** — use
 `AffectsMeasure<Item>(spanProps)`; invalidating a child's measure bubbles up and re-runs the parent
 panel's `MeasureOverride`. (3) `class Stack` trips **CA1711** (reserved suffix) → suppress with
-`[SuppressMessage("Naming","CA1711",...)]` (intentional MudBlazor parity).
+`[SuppressMessage("Naming","CA1711",...)]` (intentional reference parity).
 
 **How to apply:** Qualify `Grid` in non-`Loam.Controls` files; use `AffectsMeasure` on child layout
 props; suppress CA1711 on `Stack`. **Update (2026-06-03):** *inside* `Loam.Controls` (e.g.
@@ -106,7 +106,7 @@ are imported (CS0104). The enums `LoamColor`/`LoamSize` are deliberately prefixe
 `Avalonia.Media.Color`/`Avalonia.Size`.
 
 **How to apply:** Qualify (`Loam.Controls.Button`) or alias (`using LoamButton = ...`) in gallery/
-tests. Keep control property names un-prefixed (`Color`, `Size`) for MudBlazor familiarity.
+tests. Keep control property names un-prefixed (`Color`, `Size`) for reference familiarity.
 
 ---
 
@@ -138,7 +138,7 @@ field initializers regardless of textual position), or declare the dependency fi
 
 ## 2026-06-02 — Record color prop vs static factory name clash
 
-**What:** `LoamPalette` has a `Dark` color property (MudBlazor parity) and we tried a static `Dark`
+**What:** `LoamPalette` has a `Dark` color property (reference parity) and we tried a static `Dark`
 factory → CS0102. Renamed factories to `DefaultLight`/`DefaultDark`.
 
 **How to apply:** Name palette static factories `Default*` to avoid clashing with color properties
@@ -224,11 +224,11 @@ Standardize `PART_*` template-part names.
 
 ---
 
-## 2026-06-02 — MudBlazor docs site is a SPA; use GitHub source for source-first checks
+## 2026-06-02 — reference docs site is a SPA; use GitHub source for source-first checks
 
-**What:** `mudblazor.com/docs/*` renders client-side and won't yield content to a plain fetch.
+**What:** `reference.com/docs/*` renders client-side and won't yield content to a plain fetch.
 
-**Why it matters:** We must verify MudBlazor component params source-first per ADR-0007.
+**Why it matters:** We must verify reference component params source-first per ADR-0007.
 
-**How to apply:** Read `MudBlazor/MudBlazor` `src/MudBlazor/Components/**` on GitHub (matching the
+**How to apply:** Read `reference/reference` `src/reference/Components/**` on GitHub (matching the
 v8/v9 tag) plus per-component doc pages rendered in a real browser when needed.

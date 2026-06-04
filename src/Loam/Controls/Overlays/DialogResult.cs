@@ -1,6 +1,6 @@
 namespace Loam.Controls;
 
-/// <summary>The outcome of a dialog, mirroring MudBlazor's <c>DialogResult</c>.</summary>
+/// <summary>The outcome of a dialog, mirroring the reference API's <c>DialogResult</c>.</summary>
 public sealed class DialogResult
 {
     private DialogResult(bool canceled, object? data)

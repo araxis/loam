@@ -8,7 +8,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A date-range input, mirroring MudBlazor's <c>MudDateRangePicker</c>. An outlined box shows the
+/// A date-range input, mirroring the reference API's <c>DateRangePicker</c>. An outlined box shows the
 /// two-way <see cref="Start"/>/<see cref="End"/> dates; clicking opens a <see cref="MonthCalendar"/>
 /// flyout where the first click sets the start and the second the end (auto-ordered).
 /// </summary>
@@ -40,14 +40,14 @@ public class DateRangePicker : TemplatedControl
     private IDisposable? _displayForeground;
     private Flyout? _flyout;
 
-    /// <summary>The range start (two-way). Mirrors MudBlazor's <c>DateRange.Start</c>.</summary>
+    /// <summary>The range start (two-way). Mirrors the reference API's <c>DateRange.Start</c>.</summary>
     public DateTime? Start
     {
         get => GetValue(StartProperty);
         set => SetValue(StartProperty, value);
     }
 
-    /// <summary>The range end (two-way). Mirrors MudBlazor's <c>DateRange.End</c>.</summary>
+    /// <summary>The range end (two-way). Mirrors the reference API's <c>DateRange.End</c>.</summary>
     public DateTime? End
     {
         get => GetValue(EndProperty);

@@ -4,10 +4,10 @@ using static Loam.Theming.LoamColors;
 namespace Loam.Theming;
 
 /// <summary>
-/// A semantic color palette mirroring MudBlazor's <c>Palette</c> (all default values verified
-/// against MudBlazor v9.5.0). The record's property defaults are the <b>light</b> palette;
+/// A semantic color palette mirroring the reference API's <c>Palette</c> (all default values verified
+/// against Material Design v9.5.0). The record's property defaults are the <b>light</b> palette;
 /// <see cref="Dark"/> is derived with <c>with</c> overriding only what differs — exactly how
-/// MudBlazor's <c>PaletteDark</c> extends the base.
+/// the reference API's <c>PaletteDark</c> extends the base.
 /// </summary>
 public sealed record LoamPalette
 {

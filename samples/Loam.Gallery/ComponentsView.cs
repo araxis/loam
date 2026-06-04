@@ -892,7 +892,7 @@ public sealed class ComponentsView : UserControl
                     new CardMedia { MediaHeight = 160 },
                     new CardContent
                     {
-                        Child = new Text { Text = "MudBlazor components, mapped to Avalonia in pure C#. This card composes header, media, content, and actions." },
+                        Child = new Text { Text = "reference components, mapped to Avalonia in pure C#. This card composes header, media, content, and actions." },
                     },
                     actions,
                 },

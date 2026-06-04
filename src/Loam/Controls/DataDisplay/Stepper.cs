@@ -11,9 +11,9 @@ using Loam.Theming;
 
 namespace Loam.Controls;
 
-/// <summary>One step in a <see cref="Stepper"/>, mirroring MudBlazor's <c>MudStep</c>.</summary>
+/// <summary>One step in a <see cref="Stepper"/>, mirroring the reference API's <c>Step</c>.</summary>
 [SuppressMessage("Naming", "CA1716:Identifiers should not match keywords",
-    Justification = "Mirrors MudBlazor's MudStep with the Loam convention of dropping the Mud prefix.")]
+    Justification = "Mirrors the reference API's Step with the Loam convention of dropping the legacy prefix.")]
 public sealed class Step
 {
     /// <summary>Creates an empty step.</summary>
@@ -39,7 +39,7 @@ public sealed class Step
 }
 
 /// <summary>
-/// A linear step wizard, mirroring MudBlazor's <c>MudStepper</c>. Shows numbered <see cref="Steps"/>
+/// A linear step wizard, mirroring the reference API's <c>Stepper</c>. Shows numbered <see cref="Steps"/>
 /// with connectors, the active step's content, and Back/Next (Finish) navigation. The active step is
 /// <see cref="ActiveIndex"/>; <see cref="OnCompleted"/> fires when the last step is finished.
 /// </summary>

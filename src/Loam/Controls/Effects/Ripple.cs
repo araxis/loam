@@ -11,7 +11,7 @@ using Avalonia.Styling;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material click-ripple effect, mirroring MudBlazor's ripple. Wraps a <see cref="Decorator.Child"/>
+/// A Material click-ripple effect, mirroring the reference API's ripple. Wraps a <see cref="Decorator.Child"/>
 /// and, on pointer-press, animates a translucent circle expanding from the press point and fading out.
 /// </summary>
 [SuppressMessage("Design", "CA1001:Types that own disposable fields should be disposable",

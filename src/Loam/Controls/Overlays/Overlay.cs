@@ -6,7 +6,7 @@ using Avalonia.Input;
 namespace Loam.Controls;
 
 /// <summary>
-/// A full-area scrim, mirroring MudBlazor's <c>MudOverlay</c>. Fills its parent with a translucent
+/// A full-area scrim, mirroring the reference API's <c>Overlay</c>. Fills its parent with a translucent
 /// backdrop (darker when <see cref="DarkBackground"/>) behind centered content; toggled by
 /// <see cref="Visible"/>. When <see cref="AutoClose"/>, clicking the scrim hides it and invokes
 /// <see cref="OnClick"/>.
@@ -31,28 +31,28 @@ public class Overlay : ContentControl
     /// <summary>Creates the overlay (hidden until <see cref="Visible"/>).</summary>
     public Overlay() => IsVisible = Visible;
 
-    /// <summary>Whether the scrim is shown (two-way). Mirrors MudBlazor's <c>Visible</c>.</summary>
+    /// <summary>Whether the scrim is shown (two-way). Mirrors the reference API's <c>Visible</c>.</summary>
     public bool Visible
     {
         get => GetValue(VisibleProperty);
         set => SetValue(VisibleProperty, value);
     }
 
-    /// <summary>Whether the scrim is darker. Mirrors MudBlazor's <c>DarkBackground</c>.</summary>
+    /// <summary>Whether the scrim is darker. Mirrors the reference API's <c>DarkBackground</c>.</summary>
     public bool DarkBackground
     {
         get => GetValue(DarkBackgroundProperty);
         set => SetValue(DarkBackgroundProperty, value);
     }
 
-    /// <summary>Whether clicking the scrim hides it. Mirrors MudBlazor's <c>AutoClose</c>.</summary>
+    /// <summary>Whether clicking the scrim hides it. Mirrors the reference API's <c>AutoClose</c>.</summary>
     public bool AutoClose
     {
         get => GetValue(AutoCloseProperty);
         set => SetValue(AutoCloseProperty, value);
     }
 
-    /// <summary>Invoked when the scrim is clicked. Mirrors MudBlazor's <c>OnClick</c>.</summary>
+    /// <summary>Invoked when the scrim is clicked. Mirrors the reference API's <c>OnClick</c>.</summary>
     public Action? OnClick { get; set; }
 
     /// <inheritdoc />

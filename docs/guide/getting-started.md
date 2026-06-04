@@ -11,14 +11,14 @@ title: Getting Started
 
 ## 1. Reference Loam
 
-Loam is built from source in this repository (not yet published to NuGet). Reference the project, or
-pack it locally:
+Install the package after a release is published, or reference the project while developing from this
+repository:
 
 ```bash
-dotnet pack src/Loam        # produces artifacts/Loam.1.0.0.nupkg
+dotnet add package Loam
 ```
 
-then add the package (from a local feed) or a project reference:
+For source-based development, add a project reference:
 
 ```xml
 <ItemGroup>

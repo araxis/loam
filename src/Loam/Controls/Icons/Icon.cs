@@ -7,7 +7,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A vector icon, mirroring MudBlazor's <c>MudIcon</c>. Renders an SVG path (e.g. from
+/// A vector icon, mirroring the reference API's <c>Icon</c>. Renders an SVG path (e.g. from
 /// <see cref="Loam.Icons"/>) scaled from its <see cref="ViewBox"/> to a size-driven box and filled
 /// with a token color. <see cref="LoamColor.Inherit"/> uses the ambient <see cref="Foreground"/>,
 /// so icons inside a <see cref="Button"/> automatically pick up the button's text color.
@@ -47,28 +47,28 @@ public class Icon : Control
     /// <summary>Creates the icon.</summary>
     public Icon() => ApplyColor();
 
-    /// <summary>SVG path data (MudBlazor's <c>MudIcon.Icon</c>; renamed to avoid the type/member clash).</summary>
+    /// <summary>SVG path data (the reference API's <c>Icon.Icon</c>; renamed to avoid the type/member clash).</summary>
     public string? Data
     {
         get => GetValue(DataProperty);
         set => SetValue(DataProperty, value);
     }
 
-    /// <summary>Semantic color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Semantic color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Icon size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Icon size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Path coordinate space. Mirrors MudBlazor's <c>ViewBox</c> (default <c>0 0 24 24</c>).</summary>
+    /// <summary>Path coordinate space. Mirrors the reference API's <c>ViewBox</c> (default <c>0 0 24 24</c>).</summary>
     public string ViewBox
     {
         get => GetValue(ViewBoxProperty);

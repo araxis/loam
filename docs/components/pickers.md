@@ -4,13 +4,13 @@ title: Pickers
 
 # Pickers
 
-Loam provides five picker controls that mirror the MudBlazor picker family. All controls are self-contained `TemplatedControl` or `Decorator` subclasses that open Material-style `Flyout` popups — there is no dependency on Avalonia's built-in FluentTheme `Calendar`. Controls live in `Loam.Controls`; when both `Avalonia.Controls` and `Loam.Controls` are imported, qualify the Loam types as `Loam.Controls.DatePicker`, `Loam.Controls.TimePicker`, and `Loam.Controls.ColorPicker` to avoid ambiguity with Avalonia's own types of the same name.
+Loam provides five picker controls that mirror the Material Design picker family. All controls are self-contained `TemplatedControl` or `Decorator` subclasses that open Material Design `Flyout` popups — there is no dependency on Avalonia's built-in FluentTheme `Calendar`. Controls live in `Loam.Controls`; when both `Avalonia.Controls` and `Loam.Controls` are imported, qualify the Loam types as `Loam.Controls.DatePicker`, `Loam.Controls.TimePicker`, and `Loam.Controls.ColorPicker` to avoid ambiguity with Avalonia's own types of the same name.
 
 ---
 
 ## DatePicker
 
-Mirrors MudBlazor's `MudDatePicker`. An outlined box displays the selected date formatted by `DateFormat`; clicking opens a `MonthCalendar` flyout. `Date` is two-way by default.
+Mirrors the reference API's `DatePicker`. An outlined box displays the selected date formatted by `DateFormat`; clicking opens a `MonthCalendar` flyout. `Date` is two-way by default.
 
 ### Properties
 
@@ -40,7 +40,7 @@ picker.Bind(Loam.Controls.DatePicker.DateProperty, viewModel.GetObservable(vm =>
 
 ## TimePicker
 
-Mirrors MudBlazor's `MudTimePicker`. An outlined box displays the selected `TimeSpan` formatted by `TimeFormat`; clicking opens a flyout with scrollable hour and minute columns. `Time` is two-way by default.
+Mirrors the reference API's `TimePicker`. An outlined box displays the selected `TimeSpan` formatted by `TimeFormat`; clicking opens a flyout with scrollable hour and minute columns. `Time` is two-way by default.
 
 ### Properties
 
@@ -50,7 +50,7 @@ Mirrors MudBlazor's `MudTimePicker`. An outlined box displays the selected `Time
 | `Label` | `string?` | `null` | Field label rendered above the box. |
 | `Placeholder` | `string?` | `"Select a time"` | Text shown when `Time` is `null`. |
 | `TimeFormat` | `string` | `"t"` | .NET time format string used to render `Time`. |
-| `MinuteStep` | `int` | `5` | Granularity of the minute column (1–30). Mirrors MudBlazor's `MinuteSelectionStep`. |
+| `MinuteStep` | `int` | `5` | Granularity of the minute column (1–30). Mirrors the reference API's `MinuteSelectionStep`. |
 
 ### Example
 
@@ -72,7 +72,7 @@ picker.Bind(Loam.Controls.TimePicker.TimeProperty, viewModel.GetObservable(vm =>
 
 ## ColorPicker
 
-Mirrors MudBlazor's `MudColorPicker` (palette mode). An outlined box displays a color swatch and the current hex value; clicking opens a flyout of preset Material swatches. `Value` is two-way by default.
+Mirrors the reference API's `ColorPicker` (palette mode). An outlined box displays a color swatch and the current hex value; clicking opens a flyout of preset Material swatches. `Value` is two-way by default.
 
 ### Properties
 
@@ -105,14 +105,14 @@ string hex = Loam.Controls.ColorPicker.ToHex(picker.Value); // e.g. "#2196F3"
 
 ## DateRangePicker
 
-Mirrors MudBlazor's `MudDateRangePicker`. An outlined box displays the selected range; clicking opens a `MonthCalendar` flyout where the first click sets `Start` and the second click sets `End` (dates are auto-ordered). Both `Start` and `End` are two-way by default.
+Mirrors the reference API's `DateRangePicker`. An outlined box displays the selected range; clicking opens a `MonthCalendar` flyout where the first click sets `Start` and the second click sets `End` (dates are auto-ordered). Both `Start` and `End` are two-way by default.
 
 ### Properties
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `Start` | `DateTime?` | `null` | Range start. Two-way binding. Mirrors MudBlazor's `DateRange.Start`. |
-| `End` | `DateTime?` | `null` | Range end. Two-way binding. Mirrors MudBlazor's `DateRange.End`. |
+| `Start` | `DateTime?` | `null` | Range start. Two-way binding. Mirrors the reference API's `DateRange.Start`. |
+| `End` | `DateTime?` | `null` | Range end. Two-way binding. Mirrors the reference API's `DateRange.End`. |
 | `Label` | `string?` | `null` | Field label rendered above the box. |
 | `Placeholder` | `string?` | `"Select a range"` | Text shown when no range is set. |
 | `DateFormat` | `string` | `"d"` | .NET date format string used to render start and end dates. |

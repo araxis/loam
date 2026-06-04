@@ -5,7 +5,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// Typography-aware text, mirroring MudBlazor's <c>MudText</c>. A <see cref="TextBlock"/> whose
+/// Typography-aware text, mirroring the reference API's <c>Text</c>. A <see cref="TextBlock"/> whose
 /// font and color are driven by theme tokens via <see cref="Typo"/> and <see cref="Color"/>, so it
 /// re-styles automatically on theme/variant changes. Set text via the inherited
 /// <see cref="TextBlock.Text"/> (or <see cref="TextBlock.Inlines"/>).
@@ -36,21 +36,21 @@ public class Text : TextBlock
         ApplyColor();
     }
 
-    /// <summary>The typographic role. Mirrors MudBlazor's <c>Typo</c>.</summary>
+    /// <summary>The typographic role. Mirrors the reference API's <c>Typo</c>.</summary>
     public Typo Typo
     {
         get => GetValue(TypoProperty);
         set => SetValue(TypoProperty, value);
     }
 
-    /// <summary>The semantic text color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>The semantic text color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Adds bottom spacing after the text. Mirrors MudBlazor's <c>GutterBottom</c>.</summary>
+    /// <summary>Adds bottom spacing after the text. Mirrors the reference API's <c>GutterBottom</c>.</summary>
     public bool GutterBottom
     {
         get => GetValue(GutterBottomProperty);

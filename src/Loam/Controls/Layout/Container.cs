@@ -6,8 +6,8 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// Centers and width-caps its content, mirroring MudBlazor's <c>MudContainer</c>. The cap is a
-/// breakpoint (MudBlazor's <c>MaxWidth</c> enum); <see cref="Gutters"/> adds horizontal padding.
+/// Centers and width-caps its content, mirroring the reference API's <c>Container</c>. The cap is a
+/// breakpoint (the reference API's <c>MaxWidth</c> enum); <see cref="Gutters"/> adds horizontal padding.
 /// </summary>
 public class Container : Decorator
 {
@@ -24,14 +24,14 @@ public class Container : Decorator
     static Container() =>
         AffectsMeasure<Container>(MaxWidthBreakpointProperty, GuttersProperty);
 
-    /// <summary>The breakpoint the content width is capped at. Mirrors MudBlazor's <c>MaxWidth</c>.</summary>
+    /// <summary>The breakpoint the content width is capped at. Mirrors the reference API's <c>MaxWidth</c>.</summary>
     public Breakpoint MaxWidthBreakpoint
     {
         get => GetValue(MaxWidthBreakpointProperty);
         set => SetValue(MaxWidthBreakpointProperty, value);
     }
 
-    /// <summary>Adds horizontal padding around the content. Mirrors MudBlazor's <c>Gutters</c>.</summary>
+    /// <summary>Adds horizontal padding around the content. Mirrors the reference API's <c>Gutters</c>.</summary>
     public bool Gutters
     {
         get => GetValue(GuttersProperty);

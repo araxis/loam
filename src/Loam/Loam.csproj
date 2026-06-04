@@ -9,10 +9,14 @@
     <!-- Packaging -->
     <IsPackable>true</IsPackable>
     <PackageId>Loam</PackageId>
-    <Description>Material-Design Avalonia controls with a MudBlazor-flavored API, authored in pure C#.</Description>
-    <PackageTags>avalonia;ui;material-design;mudblazor;controls;theme</PackageTags>
+    <Version>1.0.0</Version>
+    <Description>Pure C# Material Design controls for Avalonia applications.</Description>
+    <PackageTags>avalonia;ui;material-design;controls;theme;csharp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://araxis.github.io/loam/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/araxis/loam</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>

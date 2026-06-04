@@ -3,7 +3,7 @@ using Avalonia.Layout;
 namespace Loam.Controls;
 
 /// <summary>
-/// A column definition for <see cref="DataGrid{T}"/>, mirroring MudBlazor's <c>Column</c>/template column.
+/// A column definition for <see cref="DataGrid{T}"/>, mirroring the reference API's <c>Column</c>/template column.
 /// Projects each row to a cell value via <see cref="Value"/>; sortable by that value unless
 /// <see cref="Sortable"/> is cleared.
 /// </summary>
@@ -28,10 +28,10 @@ public sealed class DataGridColumn<T>
     /// <summary>An optional .NET format string applied to the cell value.</summary>
     public string? Format { get; init; }
 
-    /// <summary>Whether clicking the header sorts by this column. Mirrors MudBlazor's <c>Sortable</c>.</summary>
+    /// <summary>Whether clicking the header sorts by this column. Mirrors the reference API's <c>Sortable</c>.</summary>
     public bool Sortable { get; init; } = true;
 
-    /// <summary>Horizontal alignment of the cell content. Mirrors MudBlazor's <c>CellStyle</c> alignment.</summary>
+    /// <summary>Horizontal alignment of the cell content. Mirrors the reference API's <c>CellStyle</c> alignment.</summary>
     public HorizontalAlignment Align { get; init; } = HorizontalAlignment.Left;
 
     /// <summary>Formats a row's cell value to display text.</summary>

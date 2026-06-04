@@ -5,7 +5,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A responsive 12-column layout, mirroring MudBlazor's <c>MudGrid</c>. Arranges <see cref="Item"/>
+/// A responsive 12-column layout, mirroring the reference API's <c>Grid</c>. Arranges <see cref="Item"/>
 /// children (or other controls, treated as full-width) into rows, sizing each by its column span at
 /// the current breakpoint — derived from the grid's own available width (container-query style).
 /// </summary>
@@ -21,7 +21,7 @@ public class Grid : Panel
         AffectsArrange<Grid>(SpacingProperty);
     }
 
-    /// <summary>The gutter (px) between columns and rows. Mirrors MudBlazor's <c>Spacing</c>.</summary>
+    /// <summary>The gutter (px) between columns and rows. Mirrors the reference API's <c>Spacing</c>.</summary>
     public double Spacing
     {
         get => GetValue(SpacingProperty);
