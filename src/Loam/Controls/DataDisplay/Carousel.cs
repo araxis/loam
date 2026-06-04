@@ -9,7 +9,7 @@ using Loam.Theming;
 
 namespace Loam.Controls;
 
-/// <summary>One slide in a <see cref="Carousel"/>, mirroring MudBlazor's <c>MudCarouselItem</c>.</summary>
+/// <summary>One slide in a <see cref="Carousel"/>, mirroring the reference API's <c>CarouselItem</c>.</summary>
 public sealed class CarouselItem
 {
     /// <summary>Creates an empty slide.</summary>
@@ -25,7 +25,7 @@ public sealed class CarouselItem
 }
 
 /// <summary>
-/// A slideshow, mirroring MudBlazor's <c>MudCarousel</c>. Shows one of the <see cref="Items"/> at a time
+/// A slideshow, mirroring the reference API's <c>Carousel</c>. Shows one of the <see cref="Items"/> at a time
 /// (<see cref="SelectedIndex"/>, two-way) with optional prev/next arrows (<see cref="ShowArrows"/>) and
 /// clickable bullet indicators (<see cref="ShowBullets"/>); navigation wraps around.
 /// </summary>
@@ -63,14 +63,14 @@ public class Carousel : TemplatedControl
         set => SetValue(SelectedIndexProperty, value);
     }
 
-    /// <summary>Whether prev/next arrows are shown. Mirrors MudBlazor's <c>ShowArrows</c>.</summary>
+    /// <summary>Whether prev/next arrows are shown. Mirrors the reference API's <c>ShowArrows</c>.</summary>
     public bool ShowArrows
     {
         get => GetValue(ShowArrowsProperty);
         set => SetValue(ShowArrowsProperty, value);
     }
 
-    /// <summary>Whether bullet indicators are shown. Mirrors MudBlazor's <c>ShowBullets</c>.</summary>
+    /// <summary>Whether bullet indicators are shown. Mirrors the reference API's <c>ShowBullets</c>.</summary>
     public bool ShowBullets
     {
         get => GetValue(ShowBulletsProperty);

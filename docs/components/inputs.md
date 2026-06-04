@@ -4,7 +4,7 @@ title: Form inputs
 
 # Form inputs
 
-Loam's input controls map the MudBlazor form surface to Avalonia-native `TemplatedControl` and control
+Loam's input controls map the Material Design form surface to Avalonia-native `TemplatedControl` and control
 subclasses. Shared enums (`LoamColor`, `Variant`, `LoamSize`) live in the `Loam` namespace; all controls
 are in `Loam.Controls`.
 
@@ -12,7 +12,7 @@ are in `Loam.Controls`.
 
 ## TextField
 
-Material text input equivalent to MudBlazor's `MudTextField`. Wraps an Avalonia `TextBox` with an
+Material text input equivalent to the reference API's `TextField`. Wraps an Avalonia `TextBox` with an
 optional label, helper/error text, and Text/Filled/Outlined variant chrome that highlights in `Color`
 on focus and switches to the error color when `Error` is set. Validates automatically on blur when
 `Required` or `Validation` is set.
@@ -53,7 +53,7 @@ var field = new TextField
 
 ## NumericField
 
-Numeric text input with spinner buttons, equivalent to MudBlazor's `MudNumericField`. Shares the
+Numeric text input with spinner buttons, equivalent to the reference API's `NumericField`. Shares the
 `TextField` Material chrome and adds `Minimum`/`Maximum` clamping, a `Step` increment/decrement,
 and optional .NET format-string display.
 
@@ -94,7 +94,7 @@ var field = new NumericField
 ## MaskedTextField
 
 A `TextField` subclass that reformats its `Text` through a `Mask` pattern as the user types, equivalent
-to MudBlazor's masked `MudTextField`/`MudMask`. Inherits all `TextField` properties.
+to the reference API's masked `TextField`/`Mask`. Inherits all `TextField` properties.
 
 ### Properties
 
@@ -139,7 +139,7 @@ string formatted = Mask.Apply("5551234567", "(###) ###-####"); // → "(555) 123
 
 ## Select
 
-Dropdown single-select control equivalent to MudBlazor's `MudSelect`/`MudSelectItem`. An outlined field
+Dropdown single-select control equivalent to the reference API's `Select`/`SelectItem`. An outlined field
 shows the chosen option's display text; clicking opens a flyout list built from the `Items` collection.
 
 ### SelectItem
@@ -182,7 +182,7 @@ select.Items.Add(new SelectItem("Brazil", "br"));
 
 ## Autocomplete
 
-Free-text input with a filtered suggestion flyout, equivalent to MudBlazor's `MudAutocomplete`. Wraps
+Free-text input with a filtered suggestion flyout, equivalent to the reference API's `Autocomplete`. Wraps
 a `TextField` for Material chrome and opens a `Flyout` listing `Items` entries that contain the typed
 text (case-insensitive); choosing one fills the field.
 
@@ -216,7 +216,7 @@ var ac = new Autocomplete
 
 ## CheckBox
 
-Material checkbox equivalent to MudBlazor's `MudCheckBox`. Subclasses Avalonia's `CheckBox` (inheriting
+Material checkbox equivalent to the reference API's `CheckBox`. Subclasses Avalonia's `CheckBox` (inheriting
 tri-state, keyboard toggle, and `IsChecked`) and renders a token-colored box and checkmark scaled by
 `Size`.
 
@@ -246,7 +246,7 @@ var cb = new CheckBox
 
 ## Switch
 
-Material toggle switch equivalent to MudBlazor's `MudSwitch`. Subclasses Avalonia's `ToggleButton`
+Material toggle switch equivalent to the reference API's `Switch`. Subclasses Avalonia's `ToggleButton`
 (toggle behavior, `:checked` pseudo-class) and renders a tinted sliding track and thumb.
 
 ### Properties
@@ -275,10 +275,10 @@ var sw = new Switch
 
 ## Radio and RadioGroup
 
-`Radio` is a Material radio button equivalent to MudBlazor's `MudRadio`. It subclasses Avalonia's
+`Radio` is a Material radio button equivalent to the reference API's `Radio`. It subclasses Avalonia's
 `RadioButton` and renders a token-colored ring and dot. `RadioGroup` is a `Decorator` that coordinates
 child `Radio` controls and exposes the chosen option's value as a two-way `Value` property, mirroring
-MudBlazor's `MudRadioGroup`.
+the reference API's `RadioGroup`.
 
 ### Radio properties
 
@@ -321,7 +321,7 @@ var group = new RadioGroup
 
 ## Slider
 
-Horizontal drag slider equivalent to MudBlazor's `MudSlider`. Renders a custom track, fill, and
+Horizontal drag slider equivalent to the reference API's `Slider`. Renders a custom track, fill, and
 draggable thumb; pointer drag and click both set `Value` within `Minimum`/`Maximum`.
 
 ### Properties
@@ -351,7 +351,7 @@ var slider = new Slider
 
 ## Rating
 
-Star rating control equivalent to MudBlazor's `MudRating`. Shows `MaxValue` stars filled up to
+Star rating control equivalent to the reference API's `Rating`. Shows `MaxValue` stars filled up to
 `SelectedValue` (with hover preview); set `ReadOnly` to display a fixed score without interaction.
 
 ### Properties
@@ -381,7 +381,7 @@ var rating = new Rating
 
 ## ToggleGroup and ToggleItem
 
-Segmented single-select control equivalent to MudBlazor's `MudToggleGroup`/`MudToggleItem`. Renders
+Segmented single-select control equivalent to the reference API's `ToggleGroup`/`ToggleItem`. Renders
 `Items` as connected border segments; the segment whose value equals `SelectedValue` is filled with
 `Color`.
 
@@ -422,7 +422,7 @@ var toggle = new ToggleGroup
 
 ## FileUpload
 
-File picker control equivalent to MudBlazor's `MudFileUpload`. A button opens the platform file picker
+File picker control equivalent to the reference API's `FileUpload`. A button opens the platform file picker
 via Avalonia's `IStorageProvider`; chosen files are exposed as `Files` and their names rendered as
 chips. The `FilesSelected` event fires after each successful pick.
 
@@ -457,7 +457,7 @@ upload.FilesSelected += files =>
 
 ## Form
 
-Lightweight form container equivalent to MudBlazor's `MudForm`. Wraps any layout panel in a `Decorator`
+Lightweight form container equivalent to the reference API's `Form`. Wraps any layout panel in a `Decorator`
 and provides a single `Validate()` call that walks visual descendants, triggers each `TextField`'s
 validation, and sets `IsValid`.
 

@@ -4,19 +4,16 @@ title: Introduction
 
 # Introduction
 
-**Loam** maps the [MudBlazor](https://mudblazor.com) component library onto
-[Avalonia](https://avaloniaui.net), so MudBlazor / Blazor developers can build polished,
-cross-platform Avalonia apps using a familiar API and the Material Design look — written entirely in
-C#, with **no XAML**.
+**Loam** gives [Avalonia](https://avaloniaui.net) applications a complete Material Design control
+set with a familiar, compact API — written entirely in C#, with **no XAML**.
 
 ## Why Loam?
 
-Avalonia is a superb cross-platform UI framework, but its default Fluent controls don't carry the
-MudBlazor vocabulary (`Variant`, `Color`, `Dense`, `Elevation`, …) that Blazor teams know. Loam
-closes that gap:
+Avalonia is a superb cross-platform UI framework. Loam adds a Material Design component layer with
+the compact vocabulary teams expect in application UI: `Variant`, `Color`, `Dense`, `Elevation`, and
+similar knobs.
 
-- **Familiar API.** Component parameters mirror MudBlazor names and semantics, so the mental model
-  carries straight over.
+- **Familiar API.** Component parameters use predictable names and consistent semantics.
 - **Material look.** Colors, elevation/shadows, ripple, and typography all resolve from a central
   theme, matching Material Design.
 - **Pure C# authoring.** Controls, `ControlTheme`s, templates and bindings are built with Avalonia's
@@ -28,12 +25,11 @@ closes that gap:
 
 - **Not a drop-in Razor port.** You still build Avalonia views and use Avalonia layout. Loam shrinks
   the *mental* gap, not the framework gap.
-- **Not affiliated with MudBlazor.** Loam is an independent, MudBlazor-inspired library. "MudBlazor"
-  is a trademark of its respective owners.
+- **Not a framework wrapper.** Loam is an independent control library built directly on Avalonia.
 
 ## Status
 
-Loam is **v1 component-complete**: every component on the MudBlazor master inventory is mapped — built,
+Loam is **v1 component-complete**: every component on the v1 component catalog is mapped — built,
 themed, registered, tested, and demonstrated in the gallery. A handful of per-component enhancements
 (e.g. DataGrid filtering/grouping, picker clock-face/HSV editing, stacked/time-series charts, and some
 animations) are documented as deliberate post-v1 follow-ups.

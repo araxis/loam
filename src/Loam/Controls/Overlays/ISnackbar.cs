@@ -3,7 +3,7 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// Shows transient toast notifications, mirroring MudBlazor's <c>ISnackbar</c>. Create one with
+/// Shows transient toast notifications, mirroring the reference API's <c>ISnackbar</c>. Create one with
 /// <see cref="SnackbarService.For"/>; it stacks toasts in the window's overlay layer and auto-dismisses them.
 /// </summary>
 public interface ISnackbar

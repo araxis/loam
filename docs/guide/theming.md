@@ -4,7 +4,7 @@ title: Theming
 
 # Theming
 
-Loam's theme engine mirrors MudBlazor's `MudTheme`. A **`LoamTheme`** (an Avalonia `Styles`) projects a
+Loam's theme engine centers on **`LoamTheme`** (an Avalonia `Styles`) and projects a
 **`LoamThemeData`** — palette, typography, shadows, layout metrics and z-indices — into Avalonia
 resources, with separate **light** and **dark** dictionaries. Every control resolves its colors, fonts
 and elevations from these tokens, so theme and variant changes restyle the whole tree automatically.
@@ -55,7 +55,7 @@ theme.SetPrimary(Colors.Indigo);
 
 ## Semantic colors & variants
 
-Loam controls take the same MudBlazor knobs:
+Loam controls use the same theme-aware knobs:
 
 - **`Color` (`LoamColor`)** — semantic roles: `Primary`, `Secondary`, `Tertiary`, `Info`, `Success`,
   `Warning`, `Error`, `Dark`, plus `Default`/`Inherit`/`Transparent`.

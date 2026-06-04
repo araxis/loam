@@ -10,7 +10,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material text input, mirroring MudBlazor's <c>MudTextField</c>. Wraps an Avalonia
+/// A Material text input, mirroring the reference API's <c>TextField</c>. Wraps an Avalonia
 /// <see cref="TextBox"/> with an optional <see cref="Label"/>, <see cref="HelperText"/>/error text,
 /// and Text/Filled/Outlined variant chrome that highlights in <see cref="Color"/> on focus and in
 /// the error color when <see cref="Error"/> is set.
@@ -71,70 +71,70 @@ public class TextField : TemplatedControl
     private IDisposable? _labelForeground;
     private IDisposable? _helperForeground;
 
-    /// <summary>The text value (two-way). Mirrors MudBlazor's <c>Text</c>.</summary>
+    /// <summary>The text value (two-way). Mirrors the reference API's <c>Text</c>.</summary>
     public string? Text
     {
         get => GetValue(TextProperty);
         set => SetValue(TextProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Helper text shown below the field. Mirrors MudBlazor's <c>HelperText</c>.</summary>
+    /// <summary>Helper text shown below the field. Mirrors the reference API's <c>HelperText</c>.</summary>
     public string? HelperText
     {
         get => GetValue(HelperTextProperty);
         set => SetValue(HelperTextProperty, value);
     }
 
-    /// <summary>Placeholder shown when empty. Mirrors MudBlazor's <c>Placeholder</c>.</summary>
+    /// <summary>Placeholder shown when empty. Mirrors the reference API's <c>Placeholder</c>.</summary>
     public string? Placeholder
     {
         get => GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
     }
 
-    /// <summary>Error message shown instead of helper text when <see cref="Error"/>. Mirrors MudBlazor's <c>ErrorText</c>.</summary>
+    /// <summary>Error message shown instead of helper text when <see cref="Error"/>. Mirrors the reference API's <c>ErrorText</c>.</summary>
     public string? ErrorText
     {
         get => GetValue(ErrorTextProperty);
         set => SetValue(ErrorTextProperty, value);
     }
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Focus accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Focus accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Whether the field is in an error state. Mirrors MudBlazor's <c>Error</c>.</summary>
+    /// <summary>Whether the field is in an error state. Mirrors the reference API's <c>Error</c>.</summary>
     public bool Error
     {
         get => GetValue(ErrorProperty);
         set => SetValue(ErrorProperty, value);
     }
 
-    /// <summary>Whether the field is read-only. Mirrors MudBlazor's <c>ReadOnly</c>.</summary>
+    /// <summary>Whether the field is read-only. Mirrors the reference API's <c>ReadOnly</c>.</summary>
     public bool ReadOnly
     {
         get => GetValue(ReadOnlyProperty);
         set => SetValue(ReadOnlyProperty, value);
     }
 
-    /// <summary>Marks the field required (non-empty). Mirrors MudBlazor's <c>Required</c>.</summary>
+    /// <summary>Marks the field required (non-empty). Mirrors the reference API's <c>Required</c>.</summary>
     public bool Required
     {
         get => GetValue(RequiredProperty);

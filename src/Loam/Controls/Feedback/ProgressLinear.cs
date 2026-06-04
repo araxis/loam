@@ -7,7 +7,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A horizontal progress bar, mirroring MudBlazor's <c>MudProgressLinear</c>. Determinate fill from
+/// A horizontal progress bar, mirroring the reference API's <c>ProgressLinear</c>. Determinate fill from
 /// <see cref="Value"/> within <see cref="Minimum"/>/<see cref="Maximum"/>, tinted by <see cref="Color"/>.
 /// </summary>
 public class ProgressLinear : TemplatedControl
@@ -32,28 +32,28 @@ public class ProgressLinear : TemplatedControl
     private Border? _fill;
     private IDisposable? _fillBackground;
 
-    /// <summary>Current value. Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>Current value. Mirrors the reference API's <c>Value</c>.</summary>
     public double Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>Minimum value. Mirrors MudBlazor's <c>Min</c>.</summary>
+    /// <summary>Minimum value. Mirrors the reference API's <c>Min</c>.</summary>
     public double Minimum
     {
         get => GetValue(MinimumProperty);
         set => SetValue(MinimumProperty, value);
     }
 
-    /// <summary>Maximum value. Mirrors MudBlazor's <c>Max</c>.</summary>
+    /// <summary>Maximum value. Mirrors the reference API's <c>Max</c>.</summary>
     public double Maximum
     {
         get => GetValue(MaximumProperty);
         set => SetValue(MaximumProperty, value);
     }
 
-    /// <summary>Accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);

@@ -5,9 +5,9 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material button, mirroring MudBlazor's <c>MudButton</c>. Subclasses Avalonia's
+/// A Material button, mirroring the reference API's <c>Button</c>. Subclasses Avalonia's
 /// <see cref="Avalonia.Controls.Button"/> (for click/command/keyboard/pseudo-class states) and adds
-/// the MudBlazor-style <see cref="Variant"/>, <see cref="Color"/>, <see cref="Size"/> and
+/// the Material Design-style <see cref="Variant"/>, <see cref="Color"/>, <see cref="Size"/> and
 /// <see cref="FullWidth"/> parameters. All visuals come from theme tokens via its control theme.
 /// </summary>
 public class Button : global::Avalonia.Controls.Button
@@ -28,28 +28,28 @@ public class Button : global::Avalonia.Controls.Button
     public static readonly StyledProperty<bool> FullWidthProperty =
         AvaloniaProperty.Register<Button, bool>(nameof(FullWidth));
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Semantic color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Semantic color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Button size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Button size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Stretches to fill the available width. Mirrors MudBlazor's <c>FullWidth</c>.</summary>
+    /// <summary>Stretches to fill the available width. Mirrors the reference API's <c>FullWidth</c>.</summary>
     public bool FullWidth
     {
         get => GetValue(FullWidthProperty);
@@ -67,14 +67,14 @@ public class Button : global::Avalonia.Controls.Button
     private Icon? _startIcon;
     private Icon? _endIcon;
 
-    /// <summary>Leading icon path data. Mirrors MudBlazor's <c>StartIcon</c>.</summary>
+    /// <summary>Leading icon path data. Mirrors the reference API's <c>StartIcon</c>.</summary>
     public string? StartIcon
     {
         get => GetValue(StartIconProperty);
         set => SetValue(StartIconProperty, value);
     }
 
-    /// <summary>Trailing icon path data. Mirrors MudBlazor's <c>EndIcon</c>.</summary>
+    /// <summary>Trailing icon path data. Mirrors the reference API's <c>EndIcon</c>.</summary>
     public string? EndIcon
     {
         get => GetValue(EndIconProperty);

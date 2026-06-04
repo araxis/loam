@@ -9,7 +9,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A palette color picker, mirroring MudBlazor's <c>MudColorPicker</c> (palette mode). An outlined box
+/// A palette color picker, mirroring the reference API's <c>ColorPicker</c> (palette mode). An outlined box
 /// shows the current <see cref="Value"/> as a swatch + hex string; clicking opens a flyout of preset
 /// swatches (a curated Material palette) that set <see cref="Value"/>.
 /// </summary>
@@ -42,14 +42,14 @@ public class ColorPicker : TemplatedControl
     private Text? _label;
     private Flyout? _flyout;
 
-    /// <summary>The selected color (two-way). Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>The selected color (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public Color Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);

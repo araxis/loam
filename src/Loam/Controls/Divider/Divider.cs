@@ -6,7 +6,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A thin separating line, mirroring MudBlazor's <c>MudDivider</c>. Renders as a token-colored
+/// A thin separating line, mirroring the reference API's <c>Divider</c>. Renders as a token-colored
 /// 1px line; supports horizontal/vertical orientation, a lighter shade, and inset/middle insets.
 /// </summary>
 public class Divider : Border
@@ -28,21 +28,21 @@ public class Divider : Border
     /// <summary>Creates the divider.</summary>
     public Divider() => Apply();
 
-    /// <summary>Renders vertically instead of horizontally. Mirrors MudBlazor's <c>Vertical</c>.</summary>
+    /// <summary>Renders vertically instead of horizontally. Mirrors the reference API's <c>Vertical</c>.</summary>
     public bool Vertical
     {
         get => GetValue(VerticalProperty);
         set => SetValue(VerticalProperty, value);
     }
 
-    /// <summary>Uses the lighter divider color. Mirrors MudBlazor's <c>Light</c>.</summary>
+    /// <summary>Uses the lighter divider color. Mirrors the reference API's <c>Light</c>.</summary>
     public bool Light
     {
         get => GetValue(LightProperty);
         set => SetValue(LightProperty, value);
     }
 
-    /// <summary>Inset style. Mirrors MudBlazor's <c>DividerType</c>.</summary>
+    /// <summary>Inset style. Mirrors the reference API's <c>DividerType</c>.</summary>
     public DividerType DividerType
     {
         get => GetValue(DividerTypeProperty);

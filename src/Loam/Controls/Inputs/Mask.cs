@@ -3,7 +3,7 @@ using System.Text;
 namespace Loam.Controls;
 
 /// <summary>
-/// Input-mask formatting, mirroring MudBlazor's <c>MudMask</c>. <see cref="Apply"/> projects raw input
+/// Input-mask formatting, mirroring the reference API's <c>Mask</c>. <see cref="Apply"/> projects raw input
 /// onto a pattern whose placeholders are <c>#</c> (digit), <c>A</c> (letter), <c>*</c> (letter or digit);
 /// any other character is a literal inserted automatically (e.g. <c>(###) ###-####</c>).
 /// </summary>

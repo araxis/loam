@@ -4,7 +4,7 @@ using Avalonia.Controls;
 namespace Loam.Controls;
 
 /// <summary>
-/// The app-shell root, mirroring MudBlazor's <c>MudLayout</c>. Docks an <see cref="AppBar"/> at the
+/// The app-shell root, mirroring the reference API's <c>Layout</c>. Docks an <see cref="AppBar"/> at the
 /// top (full width), a <see cref="Drawer"/> on the left below it, and fills the rest with its
 /// <see cref="ContentControl.Content"/> (typically a <see cref="MainContent"/>).
 /// </summary>

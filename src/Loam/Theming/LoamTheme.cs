@@ -9,7 +9,7 @@ using Loam.Controls;
 namespace Loam.Theming;
 
 /// <summary>
-/// The Loam theming backbone — the Avalonia analogue of MudBlazor's <c>MudThemeProvider</c>
+/// The Loam theming backbone — the Avalonia analogue of the reference API's <c>ThemeProvider</c>
 /// (ADR-0005). Add a single instance to <see cref="Application.Styles"/>:
 /// <code>Styles.Add(new LoamTheme());</code>
 /// It projects a <see cref="LoamThemeData"/> into Avalonia resources: the palette into Light/Dark

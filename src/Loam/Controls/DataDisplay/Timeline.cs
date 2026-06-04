@@ -11,7 +11,7 @@ using AvaGrid = Avalonia.Controls.Grid;
 
 namespace Loam.Controls;
 
-/// <summary>One entry in a <see cref="Timeline"/>, mirroring MudBlazor's <c>MudTimelineItem</c>.</summary>
+/// <summary>One entry in a <see cref="Timeline"/>, mirroring the reference API's <c>TimelineItem</c>.</summary>
 public sealed class TimelineItem
 {
     /// <summary>Creates an empty entry.</summary>
@@ -29,12 +29,12 @@ public sealed class TimelineItem
     /// <summary>The entry's content (string or any <see cref="Control"/>).</summary>
     public object? Content { get; set; }
 
-    /// <summary>The dot color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>The dot color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color { get; set; } = LoamColor.Primary;
 }
 
 /// <summary>
-/// A vertical timeline, mirroring MudBlazor's <c>MudTimeline</c>. Renders <see cref="Items"/> down a
+/// A vertical timeline, mirroring the reference API's <c>Timeline</c>. Renders <see cref="Items"/> down a
 /// connector line, each with a colored dot beside its content card.
 /// </summary>
 public class Timeline : Decorator

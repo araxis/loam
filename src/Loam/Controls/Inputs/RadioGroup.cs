@@ -7,7 +7,7 @@ namespace Loam.Controls;
 
 /// <summary>
 /// Coordinates a set of <see cref="Radio"/> options and binds the selected one's
-/// <see cref="Radio.Value"/>, mirroring MudBlazor's <c>MudRadioGroup</c>. Put the radios inside its
+/// <see cref="Radio.Value"/>, mirroring the reference API's <c>RadioGroup</c>. Put the radios inside its
 /// <see cref="Avalonia.Controls.Decorator.Child"/>; <see cref="Value"/> tracks the chosen option.
 /// </summary>
 public class RadioGroup : Decorator

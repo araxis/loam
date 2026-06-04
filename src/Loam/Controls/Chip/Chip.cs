@@ -8,8 +8,8 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// A compact element representing an input, attribute or action, mirroring MudBlazor's
-/// <c>MudChip</c>. Shows optional leading <see cref="Icon"/>, a <see cref="Text"/> label, and an
+/// A compact element representing an input, attribute or action, mirroring the reference API's
+/// <c>Chip</c>. Shows optional leading <see cref="Icon"/>, a <see cref="Text"/> label, and an
 /// optional close button (<see cref="Closeable"/>) that raises <see cref="Closed"/>.
 /// </summary>
 public class Chip : TemplatedControl
@@ -57,56 +57,56 @@ public class Chip : TemplatedControl
     /// <summary>Raised when the close button is clicked.</summary>
     public event EventHandler? Closed;
 
-    /// <summary>The chip label. Mirrors MudBlazor's <c>Text</c>.</summary>
+    /// <summary>The chip label. Mirrors the reference API's <c>Text</c>.</summary>
     public string? Text
     {
         get => GetValue(TextProperty);
         set => SetValue(TextProperty, value);
     }
 
-    /// <summary>Leading icon path. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
 
-    /// <summary>Close-button icon path. Mirrors MudBlazor's <c>CloseIcon</c>.</summary>
+    /// <summary>Close-button icon path. Mirrors the reference API's <c>CloseIcon</c>.</summary>
     public string? CloseIcon
     {
         get => GetValue(CloseIconProperty);
         set => SetValue(CloseIconProperty, value);
     }
 
-    /// <summary>Shows the close button. (MudBlazor shows it when <c>OnClose</c> is set.)</summary>
+    /// <summary>Shows the close button. (Material Design shows it when <c>OnClose</c> is set.)</summary>
     public bool Closeable
     {
         get => GetValue(CloseableProperty);
         set => SetValue(CloseableProperty, value);
     }
 
-    /// <summary>Rounded-rectangle (label) shape instead of a pill. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>Rounded-rectangle (label) shape instead of a pill. Mirrors the reference API's <c>Label</c>.</summary>
     public bool Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Visual style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Semantic color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Semantic color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Chip size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Chip size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);

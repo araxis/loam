@@ -8,7 +8,7 @@ using Avalonia.Media;
 namespace Loam.Controls;
 
 /// <summary>
-/// A collapsible group of navigation entries, mirroring MudBlazor's <c>MudNavGroup</c>. A clickable
+/// A collapsible group of navigation entries, mirroring the reference API's <c>NavGroup</c>. A clickable
 /// header (<see cref="Title"/> + optional <see cref="Icon"/> + chevron) reveals the nested
 /// <see cref="Items"/> when <see cref="Expanded"/>.
 /// </summary>
@@ -39,21 +39,21 @@ public class NavGroup : TemplatedControl
     /// <summary>The nested navigation entries.</summary>
     public ObservableCollection<Control> Items { get; } = new();
 
-    /// <summary>The group header text. Mirrors MudBlazor's <c>Title</c>.</summary>
+    /// <summary>The group header text. Mirrors the reference API's <c>Title</c>.</summary>
     public string? Title
     {
         get => GetValue(TitleProperty);
         set => SetValue(TitleProperty, value);
     }
 
-    /// <summary>Leading icon path. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
 
-    /// <summary>Whether the group is open. Mirrors MudBlazor's <c>Expanded</c>.</summary>
+    /// <summary>Whether the group is open. Mirrors the reference API's <c>Expanded</c>.</summary>
     public bool Expanded
     {
         get => GetValue(ExpandedProperty);

@@ -1,4 +1,4 @@
-# ADR-0007 — API naming & MudBlazor mapping convention
+# ADR-0007 — API naming & reference mapping convention
 
 - **Status:** Accepted
 - **Date:** 2026-06-02
@@ -6,22 +6,22 @@
 
 ## Context
 
-MudBlazor prefixes every component with `Mud` (`MudButton`, `MudTextField`). Loam is an
+The reference API prefixes every component name. Loam is an
 independent brand (ADR-0001) but targets balanced fidelity (ADR-0003) so the API should feel
 familiar without copying the brand.
 
 ## Decision
 
-- **Control type names:** drop the `Mud` prefix; use the clean Material/control noun in the
-  `Loam.Controls` namespace. `MudButton → Loam.Controls.Button`, `MudTextField → TextField`,
-  `MudDataGrid → DataGrid`, `MudDialog → Dialog`. (Where a name clashes with a built-in Avalonia
+- **Control type names:** drop the legacy prefix; use the clean Material/control noun in the
+  `Loam.Controls` namespace. `Button → Loam.Controls.Button`, `TextField → TextField`,
+  `DataGrid → DataGrid`, `Dialog → Dialog`. (Where a name clashes with a built-in Avalonia
   control the namespace disambiguates; consumers alias if needed.)
-- **Parameter names:** **keep MudBlazor's** where they translate (`Variant`, `Color`, `Size`,
+- **Parameter names:** **keep the reference API's** where they translate (`Variant`, `Color`, `Size`,
   `Dense`, `Elevation`, `Disabled`, `Outlined`, `Square`, `Ripple`, `Class`, `Style`, …) so muscle
   memory transfers. Implement these as Avalonia `StyledProperty<T>` for binding/styling.
-- **Enums:** mirror MudBlazor enums (`Variant.Filled/Outlined/Text`, `Color.Primary/Secondary/…`,
+- **Enums:** mirror reference enums (`Variant.Filled/Outlined/Text`, `Color.Primary/Secondary/…`,
   `Size.Small/Medium/Large`) under `Loam` namespaces.
-- **Services:** mirror MudBlazor service surfaces — `IDialogService.ShowAsync<TDialog>()`,
+- **Services:** mirror reference service surfaces — `IDialogService.ShowAsync<TDialog>()`,
   `ISnackbar.Add(...)` — adapted to Avalonia's overlay/window model.
 - **Divergences are documented**, never silent: every component row in `component-inventory.md`
   notes any param it omits, renames, or adds, plus the reason.

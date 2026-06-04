@@ -3,8 +3,8 @@ using Avalonia.Controls;
 namespace Loam.Controls;
 
 /// <summary>
-/// A handle passed to dialog content so it can close itself with a result, mirroring MudBlazor's
-/// dialog instance / <c>MudDialog.Close</c>.
+/// A handle passed to dialog content so it can close itself with a result, mirroring the reference API's
+/// dialog instance / <c>Dialog.Close</c>.
 /// </summary>
 public sealed class DialogInstance
 {
@@ -32,7 +32,7 @@ public sealed class DialogInstance
 }
 
 /// <summary>
-/// Shows modal dialogs over the current window, mirroring MudBlazor's <c>IDialogService</c>. Create
+/// Shows modal dialogs over the current window, mirroring the reference API's <c>IDialogService</c>. Create
 /// one with <see cref="DialogService.For"/> (no provider component required — it uses the window's
 /// overlay layer).
 /// </summary>
@@ -45,7 +45,7 @@ public interface IDialogService
     Task<bool> ConfirmAsync(string title, string message, string okText = "OK", string cancelText = "Cancel");
 
     /// <summary>
-    /// Shows a message box with up to three buttons, mirroring MudBlazor's <c>ShowMessageBox</c>. Resolves
+    /// Shows a message box with up to three buttons, mirroring the reference API's <c>ShowMessageBox</c>. Resolves
     /// <c>true</c> (yes), <c>false</c> (no), or <c>null</c> (cancel/dismiss). Omit <paramref name="noText"/>/
     /// <paramref name="cancelText"/> to hide those buttons.
     /// </summary>

@@ -6,7 +6,7 @@ using Avalonia.Controls;
 namespace Loam.Controls;
 
 /// <summary>
-/// A side navigation panel, mirroring MudBlazor's <c>MudDrawer</c>. Left-anchored; toggling
+/// A side navigation panel, mirroring the reference API's <c>Drawer</c>. Left-anchored; toggling
 /// <see cref="Open"/> slides it between <see cref="DrawerWidth"/> and 0, and <see cref="Mini"/>
 /// collapses it to <see cref="MiniWidth"/>. Place it in a <see cref="Layout"/>'s drawer slot.
 /// </summary>
@@ -39,28 +39,28 @@ public class Drawer : ContentControl
         };
     }
 
-    /// <summary>Whether the drawer is open. Mirrors MudBlazor's <c>Open</c>.</summary>
+    /// <summary>Whether the drawer is open. Mirrors the reference API's <c>Open</c>.</summary>
     public bool Open
     {
         get => GetValue(OpenProperty);
         set => SetValue(OpenProperty, value);
     }
 
-    /// <summary>Collapse to <see cref="MiniWidth"/> instead of hiding. Mirrors MudBlazor's mini variant.</summary>
+    /// <summary>Collapse to <see cref="MiniWidth"/> instead of hiding. Mirrors the reference API's mini variant.</summary>
     public bool Mini
     {
         get => GetValue(MiniProperty);
         set => SetValue(MiniProperty, value);
     }
 
-    /// <summary>Expanded width. Mirrors MudBlazor's <c>Width</c>.</summary>
+    /// <summary>Expanded width. Mirrors the reference API's <c>Width</c>.</summary>
     public double DrawerWidth
     {
         get => GetValue(DrawerWidthProperty);
         set => SetValue(DrawerWidthProperty, value);
     }
 
-    /// <summary>Collapsed (mini) width. Mirrors MudBlazor's <c>MiniWidth</c>.</summary>
+    /// <summary>Collapsed (mini) width. Mirrors the reference API's <c>MiniWidth</c>.</summary>
     public double MiniWidth
     {
         get => GetValue(MiniWidthProperty);

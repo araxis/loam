@@ -12,13 +12,13 @@ Controls for presenting structured information: lists, tables, grids, trees, tab
 
 ## List / ListItem / ListSubheader
 
-`List` is a vertical container (`StackPanel` subclass) that holds `ListItem` rows, mirroring MudBlazor's `MudList` / `MudListItem`. Each `ListItem` is a `ContentControl` that optionally shows a leading icon and highlights on hover. `ListSubheader` (a `Text` subclass) provides a muted, semibold section label with list-aligned padding.
+`List` is a vertical container (`StackPanel` subclass) that holds `ListItem` rows, mirroring the reference API's `List` / `ListItem`. Each `ListItem` is a `ContentControl` that optionally shows a leading icon and highlights on hover. `ListSubheader` (a `Text` subclass) provides a muted, semibold section label with list-aligned padding.
 
 ### ListItem properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Icon` | `string?` | `null` | SVG path for the leading icon. Set to `null` or empty to hide the icon. Mirrors MudBlazor's `Icon`. |
+| `Icon` | `string?` | `null` | SVG path for the leading icon. Set to `null` or empty to hide the icon. Mirrors the reference API's `Icon`. |
 | `Content` | `object?` | `null` | Row content (inherited from `ContentControl`). |
 
 ### ListSubheader
@@ -43,7 +43,7 @@ var list = new List
 
 ## SimpleTable
 
-A lightweight data table hosted on an elevated `Paper` surface, mirroring MudBlazor's `MudSimpleTable`. Populate `Headers` with column labels and `Rows` with `TableRow` instances. Cell values may be plain strings or any `Control`.
+A lightweight data table hosted on an elevated `Paper` surface, mirroring the reference API's `SimpleTable`. Populate `Headers` with column labels and `Rows` with `TableRow` instances. Cell values may be plain strings or any `Control`.
 
 ### TableRow
 
@@ -58,11 +58,11 @@ A lightweight data table hosted on an elevated `Paper` surface, mirroring MudBla
 |----------|------|---------|-------------|
 | `Headers` | `ObservableCollection<string>` | empty | Column header labels. |
 | `Rows` | `ObservableCollection<TableRow>` | empty | Data rows. |
-| `Striped` | `bool` | `false` | Alternating row shading. Mirrors MudBlazor's `Striped`. |
-| `Hover` | `bool` | `false` | Row highlight on pointer-over. Mirrors MudBlazor's `Hover`. |
-| `Bordered` | `bool` | `false` | Cell grid lines. Mirrors MudBlazor's `Bordered`. |
-| `Dense` | `bool` | `false` | Compact cell padding. Mirrors MudBlazor's `Dense`. |
-| `Elevation` | `int` | `1` | Paper surface elevation. Mirrors MudBlazor's `Elevation`. |
+| `Striped` | `bool` | `false` | Alternating row shading. Mirrors the reference API's `Striped`. |
+| `Hover` | `bool` | `false` | Row highlight on pointer-over. Mirrors the reference API's `Hover`. |
+| `Bordered` | `bool` | `false` | Cell grid lines. Mirrors the reference API's `Bordered`. |
+| `Dense` | `bool` | `false` | Compact cell padding. Mirrors the reference API's `Dense`. |
+| `Elevation` | `int` | `1` | Paper surface elevation. Mirrors the reference API's `Elevation`. |
 
 ```csharp
 var table = new SimpleTable
@@ -88,21 +88,21 @@ table.Rows.Add(new TableRow("Carol", "Editor", new Chip { Text = "Pending", Colo
 
 ## DataGrid&lt;T&gt;
 
-A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>` definitions with clickable sort headers, optional paging, row striping/hover, and single-row selection. Mirrors MudBlazor's `MudDataGrid`. Because `DataGrid<T>` is generic it is implemented as a `Decorator`; sort/paging statics live on the companion `DataGrids` class.
+A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>` definitions with clickable sort headers, optional paging, row striping/hover, and single-row selection. Mirrors the reference API's `DataGrid`. Because `DataGrid<T>` is generic it is implemented as a `Decorator`; sort/paging statics live on the companion `DataGrids` class.
 
 ### DataGrid&lt;T&gt; properties
 
 | Property / Member | Type | Default | Description |
 |-------------------|------|---------|-------------|
 | `Columns` | `ObservableCollection<DataGridColumn<T>>` | empty | Column definitions. |
-| `Items` | `IEnumerable<T>?` | `null` | Source rows. Mirrors MudBlazor's `Items`. |
-| `PageSize` | `int` | `0` | Rows per page; `0` disables paging. Mirrors MudBlazor's `RowsPerPage`. |
+| `Items` | `IEnumerable<T>?` | `null` | Source rows. Mirrors the reference API's `Items`. |
+| `PageSize` | `int` | `0` | Rows per page; `0` disables paging. Mirrors the reference API's `RowsPerPage`. |
 | `Page` | `int` | `1` | Current 1-based page. |
-| `SelectedItem` | `T?` | `default` | Selected row; row click updates this. Mirrors MudBlazor's `SelectedItem`. |
-| `Striped` | `bool` | `true` | Alternating row shading. Mirrors MudBlazor's `Striped`. |
-| `Hover` | `bool` | `true` | Row hover highlight. Mirrors MudBlazor's `Hover`. |
-| `Dense` | `bool` | `false` | Compact cell padding. Mirrors MudBlazor's `Dense`. |
-| `Elevation` | `int` | `1` | Host paper elevation. Mirrors MudBlazor's `Elevation`. |
+| `SelectedItem` | `T?` | `default` | Selected row; row click updates this. Mirrors the reference API's `SelectedItem`. |
+| `Striped` | `bool` | `true` | Alternating row shading. Mirrors the reference API's `Striped`. |
+| `Hover` | `bool` | `true` | Row hover highlight. Mirrors the reference API's `Hover`. |
+| `Dense` | `bool` | `false` | Compact cell padding. Mirrors the reference API's `Dense`. |
+| `Elevation` | `int` | `1` | Host paper elevation. Mirrors the reference API's `Elevation`. |
 | `SelectionChanged` | `event Action<T?>?` | — | Raised when a row is clicked and `SelectedItem` changes. |
 
 ### DataGridColumn&lt;T&gt; properties
@@ -150,7 +150,7 @@ grid.Items = employees; // IEnumerable<Employee>
 
 ## Loam.Controls.TreeView / Loam.Controls.TreeViewItem
 
-A hierarchical tree that mirrors MudBlazor's `MudTreeView` / `MudTreeViewItem`. Root nodes are added to `TreeView.Items`; each `TreeViewItem` may have its own `Items` collection for nested children. Clicking a node selects it and updates `TreeView.SelectedItem`. Nodes with children show a chevron that toggles `Expanded`.
+A hierarchical tree that mirrors the reference API's `TreeView` / `TreeViewItem`. Root nodes are added to `TreeView.Items`; each `TreeViewItem` may have its own `Items` collection for nested children. Clicking a node selects it and updates `TreeView.SelectedItem`. Nodes with children show a chevron that toggles `Expanded`.
 
 ### Loam.Controls.TreeView properties
 
@@ -163,8 +163,8 @@ A hierarchical tree that mirrors MudBlazor's `MudTreeView` / `MudTreeViewItem`. 
 
 | Property / Member | Type | Default | Description |
 |-------------------|------|---------|-------------|
-| `Text` | `string?` | `null` | Node label. Mirrors MudBlazor's `Text`. |
-| `Icon` | `string?` | `null` | Leading icon path. Mirrors MudBlazor's `Icon`. |
+| `Text` | `string?` | `null` | Node label. Mirrors the reference API's `Text`. |
+| `Icon` | `string?` | `null` | Leading icon path. Mirrors the reference API's `Icon`. |
 | `Expanded` | `bool` | `false` | Whether children are shown (two-way). |
 | `IsSelected` | `bool` | `false` | Whether this node is the selected node. |
 | `Items` | `ObservableCollection<Loam.Controls.TreeViewItem>` | empty | Child nodes. |
@@ -190,13 +190,13 @@ tree.Items.Add(new Loam.Controls.TreeViewItem { Text = "Downloads", Icon = Icons
 
 ## Tabs
 
-A tab strip with switchable content, mirroring MudBlazor's `MudTabs`. Add `TabItem` instances to `Items`; the active header is underlined in the accent `Color`.
+A tab strip with switchable content, mirroring the reference API's `Tabs`. Add `TabItem` instances to `Items`; the active header is underlined in the accent `Color`.
 
 ### TabItem properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Header` | `string?` | `null` | Tab header text. Mirrors MudBlazor's `MudTabPanel` label. |
+| `Header` | `string?` | `null` | Tab header text. Mirrors the reference API's `TabPanel` label. |
 | `Content` | `Control?` | `null` | Content shown when the tab is selected. |
 
 ### Tabs properties
@@ -205,7 +205,7 @@ A tab strip with switchable content, mirroring MudBlazor's `MudTabs`. Add `TabIt
 |----------|------|---------|-------------|
 | `Items` | `ObservableCollection<TabItem>` | empty | The tabs. |
 | `SelectedIndex` | `int` | `0` | Index of the active tab. |
-| `Color` | `LoamColor` | `LoamColor.Primary` | Underline accent color for the active tab. Mirrors MudBlazor's `Color`. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Underline accent color for the active tab. Mirrors the reference API's `Color`. |
 
 ```csharp
 var tabs = new Tabs
@@ -223,7 +223,7 @@ tabs.Items.Add(new TabItem("Settings",  new Text { Text = "Settings content" }))
 
 ## ExpansionPanels / ExpansionPanel
 
-A stacked accordion of collapsible sections, mirroring MudBlazor's `MudExpansionPanels` / `MudExpansionPanel`. By default, expanding one panel collapses the others (accordion mode); set `MultiExpansion` to allow several open at once.
+A stacked accordion of collapsible sections, mirroring the reference API's `ExpansionPanels` / `ExpansionPanel`. By default, expanding one panel collapses the others (accordion mode); set `MultiExpansion` to allow several open at once.
 
 ### ExpansionPanel properties
 
@@ -233,14 +233,14 @@ A stacked accordion of collapsible sections, mirroring MudBlazor's `MudExpansion
 |----------|------|---------|-------------|
 | `Header` | `object?` | `null` | Panel header (inherited from `HeaderedContentControl`). |
 | `Content` | `object?` | `null` | Revealed body content (inherited from `ContentControl`). |
-| `IsExpanded` | `bool` | `false` | Whether the panel is open (two-way). Mirrors MudBlazor's `IsExpanded`. |
+| `IsExpanded` | `bool` | `false` | Whether the panel is open (two-way). Mirrors the reference API's `IsExpanded`. |
 
 ### ExpansionPanels properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Panels` | `ObservableCollection<ExpansionPanel>` | empty | The contained panels. |
-| `MultiExpansion` | `bool` | `false` | Allow multiple panels open simultaneously. Mirrors MudBlazor's `MultiExpansion`. |
+| `MultiExpansion` | `bool` | `false` | Allow multiple panels open simultaneously. Mirrors the reference API's `MultiExpansion`. |
 
 ```csharp
 var accordion = new ExpansionPanels { MultiExpansion = false };
@@ -267,14 +267,14 @@ accordion.Panels.Add(new ExpansionPanel
 
 ## Timeline
 
-A vertical timeline that renders `TimelineItem` entries down a connector line, each with a colored dot beside a `Paper` content card. Mirrors MudBlazor's `MudTimeline` / `MudTimelineItem`. Implemented as a `Decorator` (no `ControlTheme` required).
+A vertical timeline that renders `TimelineItem` entries down a connector line, each with a colored dot beside a `Paper` content card. Mirrors the reference API's `Timeline` / `TimelineItem`. Implemented as a `Decorator` (no `ControlTheme` required).
 
 ### TimelineItem properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Content` | `object?` | `null` | Entry content (string or any `Control`). |
-| `Color` | `LoamColor` | `LoamColor.Primary` | Dot color. Mirrors MudBlazor's `Color`. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Dot color. Mirrors the reference API's `Color`. |
 
 ### Timeline properties
 
@@ -295,7 +295,7 @@ timeline.Items.Add(new TimelineItem("Out for delivery", LoamColor.Warning));
 
 ## Loam.Controls.Carousel
 
-A slideshow that displays one `CarouselItem` at a time with optional prev/next arrows and clickable bullet indicators. Mirrors MudBlazor's `MudCarousel` / `MudCarouselItem`. Navigation wraps around.
+A slideshow that displays one `CarouselItem` at a time with optional prev/next arrows and clickable bullet indicators. Mirrors the reference API's `Carousel` / `CarouselItem`. Navigation wraps around.
 
 ### CarouselItem properties
 
@@ -309,8 +309,8 @@ A slideshow that displays one `CarouselItem` at a time with optional prev/next a
 |-------------------|------|---------|-------------|
 | `Items` | `ObservableCollection<CarouselItem>` | empty | The slides. |
 | `SelectedIndex` | `int` | `0` | Visible slide index (two-way). |
-| `ShowArrows` | `bool` | `true` | Whether prev/next arrow buttons are shown. Mirrors MudBlazor's `ShowArrows`. |
-| `ShowBullets` | `bool` | `true` | Whether bullet indicators are shown. Mirrors MudBlazor's `ShowBullets`. |
+| `ShowArrows` | `bool` | `true` | Whether prev/next arrow buttons are shown. Mirrors the reference API's `ShowArrows`. |
+| `ShowBullets` | `bool` | `true` | Whether bullet indicators are shown. Mirrors the reference API's `ShowBullets`. |
 | `Next()` | `void` | — | Advances to the next slide, wrapping to the first. |
 | `Previous()` | `void` | — | Returns to the previous slide, wrapping to the last. |
 
@@ -330,17 +330,17 @@ carousel.Items.Add(new CarouselItem(new Text  { Text = "Coming soon" }));
 
 ## Pagination
 
-A page navigator that renders boundary pages, a configurable window of pages around the selection, ellipsis gaps, and prev/next arrows. Mirrors MudBlazor's `MudPagination`. Also used internally by `DataGrid<T>` when `PageSize > 0`.
+A page navigator that renders boundary pages, a configurable window of pages around the selection, ellipsis gaps, and prev/next arrows. Mirrors the reference API's `Pagination`. Also used internally by `DataGrid<T>` when `PageSize > 0`.
 
 ### Pagination properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Count` | `int` | `1` | Total number of pages. Mirrors MudBlazor's `Count`. |
-| `Selected` | `int` | `1` | Current 1-based page (two-way). Mirrors MudBlazor's `Selected`. |
-| `Color` | `LoamColor` | `LoamColor.Primary` | Selected page button color. Mirrors MudBlazor's `Color`. |
-| `BoundaryCount` | `int` | `1` | Pages shown at each end. Mirrors MudBlazor's `BoundaryCount`. |
-| `MiddleCount` | `int` | `3` | Pages shown around the selection. Mirrors MudBlazor's `MiddleCount`. |
+| `Count` | `int` | `1` | Total number of pages. Mirrors the reference API's `Count`. |
+| `Selected` | `int` | `1` | Current 1-based page (two-way). Mirrors the reference API's `Selected`. |
+| `Color` | `LoamColor` | `LoamColor.Primary` | Selected page button color. Mirrors the reference API's `Color`. |
+| `BoundaryCount` | `int` | `1` | Pages shown at each end. Mirrors the reference API's `BoundaryCount`. |
+| `MiddleCount` | `int` | `3` | Pages shown around the selection. Mirrors the reference API's `MiddleCount`. |
 
 ### Static helper
 
@@ -368,7 +368,7 @@ pager.GetObservable(Pagination.SelectedProperty).Subscribe(page =>
 
 ## Stepper
 
-A linear step wizard that displays numbered `Step` entries with connector lines, the active step's content, and Back / Next (Finish) navigation. Mirrors MudBlazor's `MudStepper` / `MudStep`. Advancing through the last step marks it complete and fires `OnCompleted`.
+A linear step wizard that displays numbered `Step` entries with connector lines, the active step's content, and Back / Next (Finish) navigation. Mirrors the reference API's `Stepper` / `Step`. Advancing through the last step marks it complete and fires `OnCompleted`.
 
 ### Step properties
 

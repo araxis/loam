@@ -10,7 +10,7 @@ This page covers all overlay and feedback controls in Loam: modal dialogs, snack
 
 ## DialogService / IDialogService
 
-Mirrors MudBlazor's `IDialogService`. Renders a scrim and a centered `Paper` dialog directly into the window's `OverlayLayer` — no provider component is required. Create an instance with the `DialogService.For(visual)` factory from any attached control.
+Mirrors the reference API's `IDialogService`. Renders a scrim and a centered `Paper` dialog directly into the window's `OverlayLayer` — no provider component is required. Create an instance with the `DialogService.For(visual)` factory from any attached control.
 
 ### Factory
 
@@ -99,7 +99,7 @@ if (!result.Canceled)
 
 ## SnackbarService / ISnackbar
 
-Mirrors MudBlazor's `ISnackbar`. Stacks auto-dismissing `Alert` toasts at the bottom-right of the window's overlay layer. Create an instance with `SnackbarService.For(visual)`.
+Mirrors the reference API's `ISnackbar`. Stacks auto-dismissing `Alert` toasts at the bottom-right of the window's overlay layer. Create an instance with `SnackbarService.For(visual)`.
 
 ### Factory
 
@@ -133,7 +133,7 @@ snackbar.Add("Processing…", LoamColor.Warning, TimeSpan.FromSeconds(8));
 
 ## Overlay
 
-Mirrors MudBlazor's `MudOverlay`. A `ContentControl` that fills its parent with a translucent scrim and centers its content over it. Toggled by the two-way `Visible` property.
+Mirrors the reference API's `Overlay`. A `ContentControl` that fills its parent with a translucent scrim and centers its content over it. Toggled by the two-way `Visible` property.
 
 ### Properties
 
@@ -163,7 +163,7 @@ overlay.Bind(Overlay.VisibleProperty, viewModel.GetObservable(vm => vm.IsLoading
 
 ## Popover
 
-Mirrors MudBlazor's `MudPopover`. A `Decorator` wrapping an Avalonia `Popup`. Set `Content`, optionally `Target` and `Placement`, then toggle the two-way `Open` property. Light-dismiss automatically sets `Open = false`.
+Mirrors the reference API's `Popover`. A `Decorator` wrapping an Avalonia `Popup`. Set `Content`, optionally `Target` and `Placement`, then toggle the two-way `Open` property. Light-dismiss automatically sets `Open = false`.
 
 ### Properties
 
@@ -194,7 +194,7 @@ button.Click += (_, _) => popover.Open = !popover.Open;
 
 ## Tooltip
 
-Mirrors MudBlazor's `MudTooltip`. A static helper that attaches a Loam-styled tooltip (small elevated `Paper` with `Caption` typography) to any `Control`, wrapping Avalonia's built-in `ToolTip`.
+Mirrors the reference API's `Tooltip`. A static helper that attaches a Loam-styled tooltip (small elevated `Paper` with `Caption` typography) to any `Control`, wrapping Avalonia's built-in `ToolTip`.
 
 ### Methods
 
@@ -215,13 +215,13 @@ Tooltip.Set(icon, "More information");
 
 ## Alert
 
-Mirrors MudBlazor's `MudAlert`. A `ContentControl` that renders a contextual message banner colored by severity (`Color`) and styled by `Variant`.
+Mirrors the reference API's `Alert`. A `ContentControl` that renders a contextual message banner colored by severity (`Color`) and styled by `Variant`.
 
 ### Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Color` | `LoamColor` | `LoamColor.Info` | Severity color (mirrors MudBlazor's `Severity`). |
+| `Color` | `LoamColor` | `LoamColor.Info` | Severity color (mirrors the reference API's `Severity`). |
 | `Variant` | `Variant` | `Variant.Text` | Visual style: `Filled`, `Outlined`, or `Text` (tinted background). |
 | `Icon` | `string?` | `null` | Optional leading icon path. |
 | `Content` | `object?` | — | The message content (inherited from `ContentControl`). |
@@ -244,15 +244,15 @@ var alert = new Alert
 
 ## ProgressLinear
 
-Mirrors MudBlazor's `MudProgressLinear`. A horizontal determinate progress bar tinted by `Color`.
+Mirrors the reference API's `ProgressLinear`. A horizontal determinate progress bar tinted by `Color`.
 
 ### Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Value` | `double` | `0` | Current progress value (mirrors MudBlazor's `Value`). |
-| `Minimum` | `double` | `0` | Lower bound (mirrors MudBlazor's `Min`). |
-| `Maximum` | `double` | `100` | Upper bound (mirrors MudBlazor's `Max`). |
+| `Value` | `double` | `0` | Current progress value (mirrors the reference API's `Value`). |
+| `Minimum` | `double` | `0` | Lower bound (mirrors the reference API's `Min`). |
+| `Maximum` | `double` | `100` | Upper bound (mirrors the reference API's `Max`). |
 | `Color` | `LoamColor` | `LoamColor.Primary` | Accent color of the fill bar. |
 
 ### Example
@@ -269,7 +269,7 @@ progress.Bind(ProgressLinear.ValueProperty, viewModel.GetObservable(vm => vm.Upl
 
 ## ProgressCircular
 
-Mirrors MudBlazor's `MudProgressCircular`. Draws an arc tinted by `Color`: a determinate sweep from `Value`, or a continuously spinning arc when `Indeterminate` (the default).
+Mirrors the reference API's `ProgressCircular`. Draws an arc tinted by `Color`: a determinate sweep from `Value`, or a continuously spinning arc when `Indeterminate` (the default).
 
 ### Properties
 
@@ -305,7 +305,7 @@ var bar = new ProgressCircular
 
 ## Skeleton
 
-Mirrors MudBlazor's `MudSkeleton`. A themed placeholder block shown while content is loading. Extends `Border` with a skeleton palette color and rounded corners. Set `Circle = true` for round avatar placeholders.
+Mirrors the reference API's `Skeleton`. A themed placeholder block shown while content is loading. Extends `Border` with a skeleton palette color and rounded corners. Set `Circle = true` for round avatar placeholders.
 
 ### Properties
 
@@ -331,7 +331,7 @@ var avatar = new Skeleton { Circle = true, Width = 40, Height = 40 };
 
 ## Collapse
 
-Mirrors MudBlazor's `MudCollapse`. A `Decorator` that reveals its single `Child` when `Expanded`, clipping it to zero height when collapsed.
+Mirrors the reference API's `Collapse`. A `Decorator` that reveals its single `Child` when `Expanded`, clipping it to zero height when collapsed.
 
 ### Properties
 

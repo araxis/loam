@@ -4,13 +4,13 @@ title: Charts & effects
 
 # Charts & effects
 
-Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a Material-style click-ripple effect (`Ripple`). All chart controls mirror the MudBlazor `MudChart` component and are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
+Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a Material Design click-ripple effect (`Ripple`). All chart controls mirror the Material Design `Chart` component and are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
 
 ---
 
 ## PieChart
 
-Draws one filled slice per value, sized by its share of the total. Mirrors the MudBlazor `MudChart` Pie/Donut variant. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`.
+Draws one filled slice per value, sized by its share of the total. Mirrors the Material Design `Chart` Pie/Donut variant. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`.
 
 ### Properties
 
@@ -46,7 +46,7 @@ new PieChart
 
 ## BarChart
 
-Renders a vertical bar per value, scaled against the largest value in the series. Mirrors the MudBlazor `MudChart` Bar variant. The default measured size is 320 × 180. Bars are drawn with 2 px rounded corners and an 8 px gap between slots.
+Renders a vertical bar per value, scaled against the largest value in the series. Mirrors the Material Design `Chart` Bar variant. The default measured size is 320 × 180. Bars are drawn with 2 px rounded corners and an 8 px gap between slots.
 
 ### Properties
 
@@ -70,7 +70,7 @@ new BarChart
 
 ## LineChart
 
-Plots values as a connected polyline with a dot at each data point, scaled against the maximum value. Mirrors the MudBlazor `MudChart` Line variant. Set `Area = true` to fill the region beneath the line with a translucent wash (18 % opacity). Requires at least two values to render.
+Plots values as a connected polyline with a dot at each data point, scaled against the maximum value. Mirrors the Material Design `Chart` Line variant. Set `Area = true` to fill the region beneath the line with a translucent wash (18 % opacity). Requires at least two values to render.
 
 ### Properties
 
@@ -96,7 +96,7 @@ new LineChart
 
 ## Charts (static helper)
 
-Static class containing the default series color palette and math helpers shared by all chart controls. Mirrors the helper utilities from MudBlazor's `MudChart`.
+Static class containing the default series color palette and math helpers shared by all chart controls. Mirrors the helper utilities from the reference API's `Chart`.
 
 ### Members
 
@@ -125,7 +125,7 @@ Color first = Charts.Palette[0]; // #2196F3
 
 ## Ripple
 
-A Material Design click-ripple `Decorator`. Wraps a child control and, on each pointer press, animates a translucent dark circle that expands from the press point to the farthest corner and fades out over 450 ms. Mirrors MudBlazor's ripple effect. `ClipToBounds` is enabled automatically.
+A Material Design click-ripple `Decorator`. Wraps a child control and, on each pointer press, animates a translucent dark circle that expands from the press point to the farthest corner and fades out over 450 ms. Mirrors the reference API's ripple effect. `ClipToBounds` is enabled automatically.
 
 ### Properties / Members
 

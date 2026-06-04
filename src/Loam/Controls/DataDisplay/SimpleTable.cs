@@ -29,7 +29,7 @@ public sealed class TableRow
 }
 
 /// <summary>
-/// A lightweight data table, mirroring MudBlazor's <c>MudSimpleTable</c>. Set <see cref="Headers"/>
+/// A lightweight data table, mirroring the reference API's <c>SimpleTable</c>. Set <see cref="Headers"/>
 /// and <see cref="Rows"/>; toggle <see cref="Striped"/>, <see cref="Hover"/>, <see cref="Bordered"/>,
 /// and <see cref="Dense"/>. The grid is hosted in an elevated <see cref="Paper"/> surface.
 /// </summary>
@@ -70,35 +70,35 @@ public class SimpleTable : TemplatedControl
     /// <summary>The data rows.</summary>
     public ObservableCollection<TableRow> Rows { get; } = new();
 
-    /// <summary>Whether alternating rows are shaded. Mirrors MudBlazor's <c>Striped</c>.</summary>
+    /// <summary>Whether alternating rows are shaded. Mirrors the reference API's <c>Striped</c>.</summary>
     public bool Striped
     {
         get => GetValue(StripedProperty);
         set => SetValue(StripedProperty, value);
     }
 
-    /// <summary>Whether rows highlight on pointer-over. Mirrors MudBlazor's <c>Hover</c>.</summary>
+    /// <summary>Whether rows highlight on pointer-over. Mirrors the reference API's <c>Hover</c>.</summary>
     public bool Hover
     {
         get => GetValue(HoverProperty);
         set => SetValue(HoverProperty, value);
     }
 
-    /// <summary>Whether cells are gridlined. Mirrors MudBlazor's <c>Bordered</c>.</summary>
+    /// <summary>Whether cells are gridlined. Mirrors the reference API's <c>Bordered</c>.</summary>
     public bool Bordered
     {
         get => GetValue(BorderedProperty);
         set => SetValue(BorderedProperty, value);
     }
 
-    /// <summary>Whether rows use compact padding. Mirrors MudBlazor's <c>Dense</c>.</summary>
+    /// <summary>Whether rows use compact padding. Mirrors the reference API's <c>Dense</c>.</summary>
     public bool Dense
     {
         get => GetValue(DenseProperty);
         set => SetValue(DenseProperty, value);
     }
 
-    /// <summary>Surface elevation of the hosting paper. Mirrors MudBlazor's <c>Elevation</c>.</summary>
+    /// <summary>Surface elevation of the hosting paper. Mirrors the reference API's <c>Elevation</c>.</summary>
     public int Elevation
     {
         get => GetValue(ElevationProperty);

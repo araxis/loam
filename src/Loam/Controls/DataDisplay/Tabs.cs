@@ -10,7 +10,7 @@ using Loam.Theming;
 
 namespace Loam.Controls;
 
-/// <summary>One tab: a header label and its content, mirroring MudBlazor's <c>MudTabPanel</c>.</summary>
+/// <summary>One tab: a header label and its content, mirroring the reference API's <c>TabPanel</c>.</summary>
 public sealed class TabItem
 {
     /// <summary>Creates an empty tab.</summary>
@@ -33,7 +33,7 @@ public sealed class TabItem
 }
 
 /// <summary>
-/// A tab strip with switchable content, mirroring MudBlazor's <c>MudTabs</c>. Add <see cref="TabItem"/>s
+/// A tab strip with switchable content, mirroring the reference API's <c>Tabs</c>. Add <see cref="TabItem"/>s
 /// to <see cref="Items"/>; the active header is underlined in <see cref="Color"/>.
 /// </summary>
 public class Tabs : TemplatedControl
@@ -63,7 +63,7 @@ public class Tabs : TemplatedControl
         set => SetValue(SelectedIndexProperty, value);
     }
 
-    /// <summary>Active-tab accent color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Active-tab accent color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);

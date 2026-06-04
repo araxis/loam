@@ -4,7 +4,7 @@ using Avalonia.Controls;
 namespace Loam.Controls;
 
 /// <summary>
-/// A height-clipping container, mirroring MudBlazor's <c>MudCollapse</c>. Hosts a single
+/// A height-clipping container, mirroring the reference API's <c>Collapse</c>. Hosts a single
 /// <see cref="Decorator.Child"/> and reveals it when <see cref="Expanded"/>, clipping it away
 /// (height 0) when collapsed. (Slide animation is a future enhancement.)
 /// </summary>
@@ -22,7 +22,7 @@ public class Collapse : Decorator
         UpdateState();
     }
 
-    /// <summary>Whether the content is shown. Mirrors MudBlazor's <c>Expanded</c>.</summary>
+    /// <summary>Whether the content is shown. Mirrors the reference API's <c>Expanded</c>.</summary>
     public bool Expanded
     {
         get => GetValue(ExpandedProperty);

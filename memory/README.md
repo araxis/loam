@@ -4,15 +4,15 @@ This folder is the **single source of truth** for *why* Loam is built the way it
 has been done, *what was learned*, and *what is still open*. It is written for maintainers
 picking the project up cold. Read this file first.
 
-> Loam is a Material-Design **Avalonia** control library that mirrors the **MudBlazor** component
-> API and look-and-feel, authored **entirely in C#** (no XAML). It lets MudBlazor/Blazor
+> Loam is a Material-Design **Avalonia** control library that mirrors the **reference** component
+> API and look-and-feel, authored **entirely in C#** (no XAML). It lets reference/Blazor
 > developers build cross-platform Avalonia apps with a familiar API.
 
 ## How to use this memory
 
 - **Before making a decision**, check `decisions/` for an existing ADR. If you reverse one, add a
   new ADR that supersedes it (don't silently edit history).
-- **When you learn something non-obvious** (an Avalonia/MudBlazor gotcha, a perf trap, a working
+- **When you learn something non-obvious** (an Avalonia/reference gotcha, a perf trap, a working
   pattern), append it to `learnings/learnings.md`.
 - **When you research and verify a fact** (version, API shape, behavior), record it under
   `findings/` with the date and source URL. We are *source-first*: never guess when exact
@@ -29,7 +29,7 @@ picking the project up cold. Read this file first.
 | `findings/` | Dated, source-cited research results and verified facts. |
 | `learnings/` | Running log of gotchas, patterns, and experiences. |
 | `progress/` | Chronological progress log + phase status board. |
-| `component-inventory.md` | The full MudBlazor→Loam component catalog with target phase + status. The master tracker. |
+| `component-inventory.md` | The full reference→Loam component catalog with target phase + status. The master tracker. |
 | `../DEVELOPMENT_PLAN.md` | The phased roadmap with per-phase Definition of Done. |
 
 ## Index of decisions
@@ -40,7 +40,7 @@ picking the project up cold. Read this file first.
 - [ADR-0004 — Target frameworks & Avalonia 12](decisions/0004-target-frameworks.md)
 - [ADR-0005 — Theming engine: LoamTheme](decisions/0005-theming-engine-loamtheme.md)
 - [ADR-0006 — Icon system](decisions/0006-icon-system.md)
-- [ADR-0007 — API naming & MudBlazor mapping convention](decisions/0007-api-naming-mapping.md)
+- [ADR-0007 — API naming & reference mapping convention](decisions/0007-api-naming-mapping.md)
 
 ## Current status (update me)
 

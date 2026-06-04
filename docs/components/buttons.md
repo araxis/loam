@@ -4,13 +4,13 @@ title: Buttons & menus
 
 # Buttons & menus
 
-Loam's button family maps the MudBlazor button suite to Avalonia, using the shared `Variant`, `LoamColor`, and `LoamSize` enums from the `Loam` namespace to keep the API intentionally familiar. All controls are in `Loam.Controls` and driven entirely by their control themes.
+Loam's button family maps the Material Design button suite to Avalonia, using the shared `Variant`, `LoamColor`, and `LoamSize` enums from the `Loam` namespace to keep the API intentionally familiar. All controls are in `Loam.Controls` and driven entirely by their control themes.
 
 ---
 
 ## Button
 
-Mirrors MudBlazor's `MudButton`. Subclasses Avalonia's `Button` and adds `Variant`, `Color`, `Size`, `FullWidth`, and optional leading/trailing icons via `StartIcon` and `EndIcon`.
+Mirrors the reference API's `Button`. Subclasses Avalonia's `Button` and adds `Variant`, `Color`, `Size`, `FullWidth`, and optional leading/trailing icons via `StartIcon` and `EndIcon`.
 
 ### Properties
 
@@ -45,7 +45,7 @@ var saveButton = new Button
 
 ## IconButton
 
-Mirrors MudBlazor's `MudIconButton`. Inherits `Button` and renders a single centered glyph via the `Icon` property; the `Variant`, `Color`, and `Size` properties are inherited.
+Mirrors the reference API's `IconButton`. Inherits `Button` and renders a single centered glyph via the `Icon` property; the `Variant`, `Color`, and `Size` properties are inherited.
 
 ### Properties
 
@@ -75,7 +75,7 @@ var deleteButton = new IconButton
 
 ## ToggleIconButton
 
-Mirrors MudBlazor's `MudToggleIconButton`. Inherits `IconButton`; clicking flips the two-way `Toggled` state and swaps the displayed glyph between `Icon` (off) and `ToggledIcon` (on).
+Mirrors the reference API's `ToggleIconButton`. Inherits `IconButton`; clicking flips the two-way `Toggled` state and swaps the displayed glyph between `Icon` (off) and `ToggledIcon` (on).
 
 ### Properties
 
@@ -106,7 +106,7 @@ bookmark.Bind(ToggleIconButton.ToggledProperty,
 
 ## ButtonGroup
 
-Mirrors MudBlazor's `MudButtonGroup`. Lays a collection of `Button` instances adjacently with merged borders and shared outer corners. When `OverrideChildStyles` is `true` (the default), the group's `Variant`, `Color`, and `Size` are pushed onto every child.
+Mirrors the reference API's `ButtonGroup`. Lays a collection of `Button` instances adjacently with merged borders and shared outer corners. When `OverrideChildStyles` is `true` (the default), the group's `Variant`, `Color`, and `Size` are pushed onto every child.
 
 ### Properties
 
@@ -138,7 +138,7 @@ group.Items.Add(new Button { Content = "Month" });
 
 ## Fab
 
-Mirrors MudBlazor's `MudFab`. Inherits `Button` and renders as a pill-shaped, elevated, filled floating action button. An optional `Label` sets the button's text; `StartIcon` and `EndIcon` are inherited.
+Mirrors the reference API's `Fab`. Inherits `Button` and renders as a pill-shaped, elevated, filled floating action button. An optional `Label` sets the button's text; `StartIcon` and `EndIcon` are inherited.
 
 ### Properties
 
@@ -168,7 +168,7 @@ var fab = new Fab
 
 ## Menu
 
-Mirrors MudBlazor's `MudMenu`. Inherits `Button` for its trigger appearance; clicking opens an Avalonia `Flyout` containing the `Items` list. Each row is represented by a `MenuItem` plain-object.
+Mirrors the reference API's `Menu`. Inherits `Button` for its trigger appearance; clicking opens an Avalonia `Flyout` containing the `Items` list. Each row is represented by a `MenuItem` plain-object.
 
 ### Menu properties
 

@@ -10,7 +10,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A time input with a Material popup, mirroring MudBlazor's <c>MudTimePicker</c>. An outlined box shows
+/// A time input with a Material popup, mirroring the reference API's <c>TimePicker</c>. An outlined box shows
 /// the two-way <see cref="Time"/> formatted by <see cref="TimeFormat"/>; clicking it opens a flyout with
 /// scrollable hour and minute columns (no FluentTheme dependency).
 /// </summary>
@@ -46,35 +46,35 @@ public class TimePicker : TemplatedControl
     private IDisposable? _displayForeground;
     private Flyout? _flyout;
 
-    /// <summary>The selected time (two-way). Mirrors MudBlazor's <c>Time</c>.</summary>
+    /// <summary>The selected time (two-way). Mirrors the reference API's <c>Time</c>.</summary>
     public TimeSpan? Time
     {
         get => GetValue(TimeProperty);
         set => SetValue(TimeProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Text shown when no time is set. Mirrors MudBlazor's <c>Placeholder</c>.</summary>
+    /// <summary>Text shown when no time is set. Mirrors the reference API's <c>Placeholder</c>.</summary>
     public string? Placeholder
     {
         get => GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
     }
 
-    /// <summary>A .NET time format string for the display. Mirrors MudBlazor's <c>TimeFormat</c>.</summary>
+    /// <summary>A .NET time format string for the display. Mirrors the reference API's <c>TimeFormat</c>.</summary>
     public string TimeFormat
     {
         get => GetValue(TimeFormatProperty);
         set => SetValue(TimeFormatProperty, value);
     }
 
-    /// <summary>Granularity of the minute column. Mirrors MudBlazor's <c>MinuteSelectionStep</c>.</summary>
+    /// <summary>Granularity of the minute column. Mirrors the reference API's <c>MinuteSelectionStep</c>.</summary>
     public int MinuteStep
     {
         get => GetValue(MinuteStepProperty);

@@ -68,7 +68,7 @@ public static class DataGrids
 }
 
 /// <summary>
-/// A typed data grid, mirroring MudBlazor's <c>MudDataGrid</c>. Renders <see cref="Items"/> across the
+/// A typed data grid, mirroring the reference API's <c>DataGrid</c>. Renders <see cref="Items"/> across the
 /// typed <see cref="Columns"/> with clickable sort headers, optional paging (<see cref="PageSize"/>),
 /// row striping/hover, and single-row selection (<see cref="SelectedItem"/>). Built as a self-rendering
 /// <see cref="Decorator"/> so the generic type needs no per-closed-type <c>ControlTheme</c> or
@@ -99,14 +99,14 @@ public class DataGrid<T> : Decorator
     /// <summary>The column definitions.</summary>
     public ObservableCollection<DataGridColumn<T>> Columns { get; } = new();
 
-    /// <summary>The source rows. Mirrors MudBlazor's <c>Items</c>.</summary>
+    /// <summary>The source rows. Mirrors the reference API's <c>Items</c>.</summary>
     public IEnumerable<T>? Items
     {
         get => _items;
         set { _items = value; Rebuild(); }
     }
 
-    /// <summary>Rows per page (0 = no paging). Mirrors MudBlazor's <c>RowsPerPage</c>.</summary>
+    /// <summary>Rows per page (0 = no paging). Mirrors the reference API's <c>RowsPerPage</c>.</summary>
     public int PageSize
     {
         get => _pageSize;
@@ -120,35 +120,35 @@ public class DataGrid<T> : Decorator
         set { _page = value; Rebuild(); }
     }
 
-    /// <summary>The selected row, or default. Mirrors MudBlazor's <c>SelectedItem</c>.</summary>
+    /// <summary>The selected row, or default. Mirrors the reference API's <c>SelectedItem</c>.</summary>
     public T? SelectedItem
     {
         get => _selectedItem;
         set { _selectedItem = value; Rebuild(); }
     }
 
-    /// <summary>Whether alternating rows are shaded. Mirrors MudBlazor's <c>Striped</c>.</summary>
+    /// <summary>Whether alternating rows are shaded. Mirrors the reference API's <c>Striped</c>.</summary>
     public bool Striped
     {
         get => _striped;
         set { _striped = value; Rebuild(); }
     }
 
-    /// <summary>Whether rows highlight on pointer-over. Mirrors MudBlazor's <c>Hover</c>.</summary>
+    /// <summary>Whether rows highlight on pointer-over. Mirrors the reference API's <c>Hover</c>.</summary>
     public bool Hover
     {
         get => _hover;
         set { _hover = value; Rebuild(); }
     }
 
-    /// <summary>Whether rows use compact padding. Mirrors MudBlazor's <c>Dense</c>.</summary>
+    /// <summary>Whether rows use compact padding. Mirrors the reference API's <c>Dense</c>.</summary>
     public bool Dense
     {
         get => _dense;
         set { _dense = value; Rebuild(); }
     }
 
-    /// <summary>Surface elevation of the host paper. Mirrors MudBlazor's <c>Elevation</c>.</summary>
+    /// <summary>Surface elevation of the host paper. Mirrors the reference API's <c>Elevation</c>.</summary>
     public int Elevation
     {
         get => _elevation;

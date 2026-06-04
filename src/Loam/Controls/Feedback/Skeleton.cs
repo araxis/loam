@@ -5,7 +5,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A placeholder shimmer block shown while content loads, mirroring MudBlazor's <c>MudSkeleton</c>.
+/// A placeholder shimmer block shown while content loads, mirroring the reference API's <c>Skeleton</c>.
 /// A skeleton-colored box; set <see cref="Circle"/> for a round avatar placeholder.
 /// </summary>
 public class Skeleton : Border
@@ -22,7 +22,7 @@ public class Skeleton : Border
         Apply();
     }
 
-    /// <summary>Renders as a circle (for avatar placeholders). Mirrors MudBlazor's circle skeleton type.</summary>
+    /// <summary>Renders as a circle (for avatar placeholders). Mirrors the reference API's circle skeleton type.</summary>
     public bool Circle
     {
         get => GetValue(CircleProperty);

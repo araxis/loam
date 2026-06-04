@@ -1,13 +1,11 @@
 # Loam
 
-**Material-Design Avalonia controls with a MudBlazor-flavored API — written entirely in C#.**
+**Pure C# Material Design controls for Avalonia applications.**
 
-Loam maps the [MudBlazor](https://mudblazor.com) component library onto
-[Avalonia](https://avaloniaui.net), so MudBlazor/Blazor developers can build polished,
-cross-platform Avalonia apps (desktop · mobile · browser) using a familiar API and the Material
-Design look — with **no XAML**.
+Loam gives Avalonia apps a complete Material Design control set with a familiar, compact API,
+runtime theming, and no XAML.
 
-> **Status:** ✅ **v1 component-complete.** Every component on the MudBlazor master inventory is
+> **Status:** ✅ **v1 component-complete.** Every component on the v1 component catalog is
 > mapped — built, themed, registered, tested, and demonstrated in the gallery. Full solution builds
 > clean (Debug + Release, 0 warnings) with **111 headless/unit tests passing**.
 > See the **[Development Plan](DEVELOPMENT_PLAN.md)** and the project **[memory](memory/README.md)**
@@ -19,7 +17,7 @@ A full documentation site (built with [VitePress](https://vitepress.dev)) lives 
 — guides (getting started, theming, C# authoring) plus a documented, example-rich page for every
 component group. It is published to **GitHub Pages** automatically via
 [`.github/workflows/docs.yml`](.github/workflows/docs.yml) (set repository *Settings → Pages → Source*
-to *GitHub Actions*; the published URL is `https://<user>.github.io/<repo>/`).
+to *GitHub Actions*; the site publishes to **https://araxis.github.io/loam/**).
 
 Run the docs locally:
 
@@ -32,7 +30,7 @@ npm run docs:build    # static build → docs/.vitepress/dist
 
 ## What Loam is
 
-- **Familiar API.** Component parameters mirror MudBlazor (`Variant`, `Color`, `Size`, `Dense`,
+- **Familiar API.** Component parameters use predictable names (`Variant`, `Color`, `Size`, `Dense`,
   `Elevation`, …); types live in `Loam.Controls` (e.g. `Button`, `TextField`, `DataGrid<T>`, the
   `DialogService`).
 - **Material look.** Palette-driven colors, elevation/shadows, a click ripple, and a full typography
@@ -40,20 +38,23 @@ npm run docs:build    # static build → docs/.vitepress/dist
 - **Pure C#.** Controls, `ControlTheme`s, and templates are authored in C# — no `.axaml`.
 - **Self-contained.** Pickers (date/time/color) and the calendar are custom-built, so a LoamTheme-only
   app needs no extra control packages.
-- **Highly themeable.** A `LoamTheme` (mirroring `MudTheme`) with light/dark variants and runtime
+- **Highly themeable.** A `LoamTheme` data model with light/dark variants and runtime
   palette swapping.
 - **Cross-platform.** One library targeting Avalonia 12 everywhere it runs.
 
 ## What Loam is not
 
 - Not a drop-in Razor port — you still build Avalonia views; Loam shrinks the *mental* gap.
-- **Not affiliated with the MudBlazor project.** Loam is an independent, MudBlazor-*inspired*
-  library. "MudBlazor" is the trademark of its respective owners.
+- **Not a framework wrapper.** Loam is an independent control library built directly on Avalonia.
 
 ## Quick start
 
-Loam is built from source in this repo (not yet published to NuGet). Reference `src/Loam/Loam.csproj`
-or pack it (`dotnet pack src/Loam`).
+Install the package after a release is published, or reference `src/Loam/Loam.csproj` while developing
+from this repository.
+
+```bash
+dotnet add package Loam
+```
 
 **1. Register the theme** in your `Application` (add Avalonia's `FluentTheme` for the base controls
 Loam composes, then `LoamTheme` on top):
@@ -114,7 +115,7 @@ Application.Current!.RequestedThemeVariant = ThemeVariant.Dark; // flip light/da
 ```
 
 All control colors resolve from tokens (`LoamTokens`), so theme/variant changes restyle the tree
-automatically. Per-control overrides use the same MudBlazor knobs: `Variant`, `Color`, `Size`,
+automatically. Per-control overrides use the same Loam knobs: `Variant`, `Color`, `Size`,
 `Dense`, `Elevation`, `Outlined`, `Square`, etc.
 
 ## Component catalog
@@ -131,8 +132,8 @@ automatically. Per-control overrides use the same MudBlazor knobs: `Variant`, `C
 | **Charts** | `PieChart`, `BarChart`, `LineChart` (+ donut mode) |
 | **Effects** | `Ripple` |
 
-See **[`memory/component-inventory.md`](memory/component-inventory.md)** for the full MudBlazor →
-Loam mapping and the live status of each control, including the documented v1 scope cuts (e.g.
+See **[`memory/component-inventory.md`](memory/component-inventory.md)** for the full component catalog
+and the live status of each control, including the documented v1 scope cuts (e.g.
 DataGrid filter/group/edit, picker clock-face/HSV, stacked/time-series charts) earmarked for follow-up.
 
 ## Run the gallery

@@ -18,7 +18,7 @@ public enum HiddenMode
 }
 
 /// <summary>
-/// Conditionally hides its content by viewport breakpoint, mirroring MudBlazor's <c>MudHidden</c>.
+/// Conditionally hides its content by viewport breakpoint, mirroring the reference API's <c>Hidden</c>.
 /// Tracks the host window width and hides the <see cref="Decorator.Child"/> when the current
 /// <see cref="Breakpoints"/> bucket satisfies the <see cref="Mode"/> rule against <see cref="Breakpoint"/>.
 /// </summary>
@@ -34,7 +34,7 @@ public class Hidden : Decorator
 
     private IDisposable? _widthSubscription;
 
-    /// <summary>The breakpoint the rule is relative to. Mirrors MudBlazor's <c>Breakpoint</c>.</summary>
+    /// <summary>The breakpoint the rule is relative to. Mirrors the reference API's <c>Breakpoint</c>.</summary>
     public Breakpoint Breakpoint
     {
         get => GetValue(BreakpointProperty);

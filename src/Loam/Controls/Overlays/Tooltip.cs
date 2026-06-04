@@ -5,7 +5,7 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// Attaches a Loam-styled tooltip to a control, mirroring MudBlazor's <c>MudTooltip</c>. Wraps
+/// Attaches a Loam-styled tooltip to a control, mirroring the reference API's <c>Tooltip</c>. Wraps
 /// Avalonia's <see cref="ToolTip"/> with a small elevated <see cref="Paper"/>.
 /// </summary>
 public static class Tooltip

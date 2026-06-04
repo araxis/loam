@@ -6,22 +6,22 @@
 
 ## Context
 
-MudBlazor's theming centers on a `MudTheme` object: `PaletteLight`, `PaletteDark`, `Typography`,
-`Shadows`, `LayoutProperties`, `ZIndex`, consumed app-wide via `MudThemeProvider`. Avalonia themes
+the reference API's theming centers on a `Theme` object: `PaletteLight`, `PaletteDark`, `Typography`,
+`Shadows`, `LayoutProperties`, `ZIndex`, consumed app-wide via `ThemeProvider`. Avalonia themes
 its controls through `Styles`/`ControlTheme`, `ThemeVariant` (Light/Dark), resource dictionaries,
-and `ThemeDictionaries`. We must bridge these so MudBlazor devs feel at home while staying
+and `ThemeDictionaries`. We must bridge these so reference devs feel at home while staying
 idiomatic and runtime-customizable in Avalonia.
 
 ## Decision
 
-Ship a **`LoamTheme`** as the theming backbone, mirroring MudBlazor's model:
+Ship a **`LoamTheme`** as the theming backbone, mirroring the reference API's model:
 
 - `LoamTheme` is a `Styles`-derived object the consumer adds to `Application.Styles` (one line of
-  setup, the Loam analogue of `MudThemeProvider`). It carries the control themes for all Loam
+  setup, the Loam analogue of `ThemeProvider`). It carries the control themes for all Loam
   controls plus the design-token resources.
 - It exposes a strongly-typed **theme model**: `Palette` (Light + Dark), `Typography`, `Shadows`
   (elevation 0–24), `LayoutProperties` (default border radius, drawer width, app-bar height, …),
-  `ZIndex`. Property names track MudBlazor's where reasonable.
+  `ZIndex`. Property names track the reference API's where reasonable.
 - The model is **projected into Avalonia resources** under a stable key namespace
   (e.g., `Loam.Palette.Primary`, `Loam.Typography.H6`, `Loam.Elevation.4`) and split across
   `ThemeDictionaries[ThemeVariant.Light/Dark]` so light/dark switch natively.
@@ -32,7 +32,7 @@ Ship a **`LoamTheme`** as the theming backbone, mirroring MudBlazor's model:
 
 ## Consequences
 
-- ✅ Familiar `MudTheme`-shaped customization + native Avalonia light/dark + runtime swap.
+- ✅ Familiar `Theme`-shaped customization + native Avalonia light/dark + runtime swap.
 - ✅ Controls reference tokens, not literals — consistent, themeable, single source of truth.
 - ⚠️ Must confirm the exact C# API for `ThemeDictionaries` population and dynamic-resource binding
   in code (Phase 2 spike; record in `findings/`).
@@ -40,5 +40,5 @@ Ship a **`LoamTheme`** as the theming backbone, mirroring MudBlazor's model:
 
 ## Alternatives considered
 
-- **Avalonia-native only (`ThemeVariant` + raw resources, no Mud-shaped model)** — idiomatic but
-  unfamiliar to MudBlazor devs; loses the `MudTheme` mental model. Rejected for the balanced goal.
+- **Avalonia-native only (`ThemeVariant` + raw resources, no reference-shaped model)** — idiomatic but
+  unfamiliar to reference devs; loses the `Theme` mental model. Rejected for the balanced goal.

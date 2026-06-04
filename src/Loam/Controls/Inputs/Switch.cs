@@ -9,7 +9,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material toggle switch, mirroring MudBlazor's <c>MudSwitch</c>. Subclasses Avalonia's
+/// A Material toggle switch, mirroring the reference API's <c>Switch</c>. Subclasses Avalonia's
 /// <see cref="ToggleButton"/> (toggle behavior, <c>:checked</c> state) and renders a token-colored
 /// track + thumb that slides on <see cref="ToggleButton.IsChecked"/>, tinted by <see cref="Color"/>.
 /// </summary>
@@ -28,14 +28,14 @@ public class Switch : ToggleButton
     private IDisposable? _trackBackground;
     private IDisposable? _thumbBackground;
 
-    /// <summary>Checked color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Checked color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Switch size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Switch size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);

@@ -10,7 +10,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A navigation entry, mirroring MudBlazor's <c>MudNavLink</c>. A clickable row with an optional
+/// A navigation entry, mirroring the reference API's <c>NavLink</c>. A clickable row with an optional
 /// leading <see cref="Icon"/> and content label that highlights in <see cref="Color"/> when
 /// <see cref="IsActive"/>, tints on hover otherwise. Clicking invokes <see cref="OnClick"/> and
 /// launches <see cref="Href"/> if set.
@@ -36,31 +36,31 @@ public class NavLink : ContentControl
     private IDisposable? _background;
     private IDisposable? _foreground;
 
-    /// <summary>Leading icon path. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
 
-    /// <summary>Whether this is the current entry. Mirrors MudBlazor's active state.</summary>
+    /// <summary>Whether this is the current entry. Mirrors the reference API's active state.</summary>
     public bool IsActive
     {
         get => GetValue(IsActiveProperty);
         set => SetValue(IsActiveProperty, value);
     }
 
-    /// <summary>Active accent color. Mirrors MudBlazor's <c>IconColor</c>/active color.</summary>
+    /// <summary>Active accent color. Mirrors the reference API's <c>IconColor</c>/active color.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Invoked when the entry is clicked. Mirrors MudBlazor's <c>OnClick</c>.</summary>
+    /// <summary>Invoked when the entry is clicked. Mirrors the reference API's <c>OnClick</c>.</summary>
     public Action? OnClick { get; set; }
 
-    /// <summary>An optional URL launched on click. Mirrors MudBlazor's <c>Href</c>.</summary>
+    /// <summary>An optional URL launched on click. Mirrors the reference API's <c>Href</c>.</summary>
     public string? Href { get; set; }
 
     /// <inheritdoc />
@@ -174,7 +174,7 @@ public class NavLink : ContentControl
     }
 }
 
-/// <summary>A vertical container of <see cref="NavLink"/>s, mirroring MudBlazor's <c>MudNavMenu</c>.</summary>
+/// <summary>A vertical container of <see cref="NavLink"/>s, mirroring the reference API's <c>NavMenu</c>.</summary>
 public class NavMenu : StackPanel
 {
 }

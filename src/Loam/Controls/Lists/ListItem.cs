@@ -4,7 +4,7 @@ using Avalonia.Controls.Primitives;
 
 namespace Loam.Controls;
 
-/// <summary>A row in a <see cref="List"/>, mirroring MudBlazor's <c>MudListItem</c>. Shows an optional leading <see cref="Icon"/> + content, highlights on hover.</summary>
+/// <summary>A row in a <see cref="List"/>, mirroring the reference API's <c>ListItem</c>. Shows an optional leading <see cref="Icon"/> + content, highlights on hover.</summary>
 public class ListItem : ContentControl
 {
     /// <summary>Identifies the <see cref="Icon"/> property.</summary>
@@ -13,7 +13,7 @@ public class ListItem : ContentControl
 
     private Loam.Controls.Icon? _iconPart;
 
-    /// <summary>Leading icon path. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);
@@ -51,7 +51,7 @@ public class ListItem : ContentControl
     }
 }
 
-/// <summary>A vertical container of <see cref="ListItem"/>s, mirroring MudBlazor's <c>MudList</c>.</summary>
+/// <summary>A vertical container of <see cref="ListItem"/>s, mirroring the reference API's <c>List</c>.</summary>
 public class List : StackPanel
 {
 }

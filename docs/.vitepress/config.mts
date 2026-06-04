@@ -8,14 +8,14 @@ export default defineConfig({
   base,
   lang: 'en-US',
   title: 'Loam',
-  description: 'Material-Design Avalonia controls with a MudBlazor-flavored API — authored in pure C#.',
+  description: 'Pure C# Material Design controls for Avalonia applications.',
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: true,
 
   head: [
     ['meta', { name: 'theme-color', content: '#594AE2' }],
-    ['meta', { name: 'keywords', content: 'avalonia, mudblazor, material design, ui, controls, csharp, dotnet' }],
+    ['meta', { name: 'keywords', content: 'avalonia, material design, ui, controls, csharp, dotnet' }],
   ],
 
   markdown: {
@@ -80,7 +80,7 @@ export default defineConfig({
     outline: { level: [2, 3], label: 'On this page' },
 
     footer: {
-      message: 'MIT Licensed · An independent, MudBlazor-inspired library (not affiliated with MudBlazor).',
+      message: 'MIT Licensed · Independent Avalonia controls.',
       copyright: 'Built with Avalonia in pure C#.',
     },
   },

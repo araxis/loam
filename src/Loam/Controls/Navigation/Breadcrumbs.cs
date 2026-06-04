@@ -7,7 +7,7 @@ using Avalonia.Layout;
 
 namespace Loam.Controls;
 
-/// <summary>One entry in a <see cref="Breadcrumbs"/> trail, mirroring MudBlazor's <c>BreadcrumbItem</c>.</summary>
+/// <summary>One entry in a <see cref="Breadcrumbs"/> trail, mirroring the reference API's <c>BreadcrumbItem</c>.</summary>
 public sealed class BreadcrumbItem
 {
     /// <summary>Creates an empty entry.</summary>
@@ -36,7 +36,7 @@ public sealed class BreadcrumbItem
 }
 
 /// <summary>
-/// A breadcrumb navigation trail, mirroring MudBlazor's <c>MudBreadcrumbs</c>. Renders <see cref="Items"/>
+/// A breadcrumb navigation trail, mirroring the reference API's <c>Breadcrumbs</c>. Renders <see cref="Items"/>
 /// separated by <see cref="Separator"/>; every entry but the last is a clickable <see cref="Link"/>,
 /// and the last is shown as the current (muted) page.
 /// </summary>
@@ -54,7 +54,7 @@ public class Breadcrumbs : TemplatedControl
     /// <summary>The breadcrumb entries, root first.</summary>
     public ObservableCollection<BreadcrumbItem> Items { get; } = new();
 
-    /// <summary>The text drawn between entries. Mirrors MudBlazor's <c>Separator</c>.</summary>
+    /// <summary>The text drawn between entries. Mirrors the reference API's <c>Separator</c>.</summary>
     public string Separator
     {
         get => GetValue(SeparatorProperty);

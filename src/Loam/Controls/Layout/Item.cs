@@ -6,7 +6,7 @@ namespace Loam.Controls;
 
 /// <summary>
 /// A child of <see cref="Grid"/> that spans a number of the 12 columns per breakpoint, mirroring
-/// MudBlazor's <c>MudItem</c> (PascalCase span props here vs MudBlazor's lowercase). Holds a single
+/// the reference API's <c>Item</c> (PascalCase span props here vs the reference API's lowercase). Holds a single
 /// <see cref="Avalonia.Controls.Decorator.Child"/>. A span resolves to the value at the current
 /// breakpoint or the nearest smaller one that is set; unset defaults to a full row (12).
 /// </summary>

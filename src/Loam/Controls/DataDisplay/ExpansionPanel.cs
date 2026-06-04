@@ -6,7 +6,7 @@ using Avalonia.Media;
 namespace Loam.Controls;
 
 /// <summary>
-/// A single collapsible panel, mirroring MudBlazor's <c>MudExpansionPanel</c>. Shows its
+/// A single collapsible panel, mirroring the reference API's <c>ExpansionPanel</c>. Shows its
 /// <see cref="HeaderedContentControl.Header"/> with a chevron; clicking the header toggles
 /// <see cref="IsExpanded"/>, which reveals the <see cref="ContentControl.Content"/>.
 /// </summary>
@@ -21,7 +21,7 @@ public class ExpansionPanel : HeaderedContentControl
     private Icon? _chevron;
     private Control? _content;
 
-    /// <summary>Whether the panel is open. Mirrors MudBlazor's <c>IsExpanded</c>.</summary>
+    /// <summary>Whether the panel is open. Mirrors the reference API's <c>IsExpanded</c>.</summary>
     public bool IsExpanded
     {
         get => GetValue(IsExpandedProperty);

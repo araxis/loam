@@ -11,7 +11,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A node in a <see cref="TreeView"/>, mirroring MudBlazor's <c>MudTreeViewItem</c>. Shows an optional
+/// A node in a <see cref="TreeView"/>, mirroring the reference API's <c>TreeViewItem</c>. Shows an optional
 /// <see cref="Icon"/> + <see cref="Text"/>; nodes with <see cref="Items"/> get an expander chevron that
 /// toggles <see cref="Expanded"/>. Clicking the row selects it (<see cref="IsSelected"/>).
 /// </summary>
@@ -59,21 +59,21 @@ public class TreeViewItem : TemplatedControl
     /// <summary>The child nodes.</summary>
     public ObservableCollection<TreeViewItem> Items { get; } = new();
 
-    /// <summary>The node label. Mirrors MudBlazor's <c>Text</c>.</summary>
+    /// <summary>The node label. Mirrors the reference API's <c>Text</c>.</summary>
     public string? Text
     {
         get => GetValue(TextProperty);
         set => SetValue(TextProperty, value);
     }
 
-    /// <summary>Leading icon path. Mirrors MudBlazor's <c>Icon</c>.</summary>
+    /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
 
-    /// <summary>Whether children are shown. Mirrors MudBlazor's <c>Expanded</c>.</summary>
+    /// <summary>Whether children are shown. Mirrors the reference API's <c>Expanded</c>.</summary>
     public bool Expanded
     {
         get => GetValue(ExpandedProperty);

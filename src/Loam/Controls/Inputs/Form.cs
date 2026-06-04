@@ -5,7 +5,7 @@ using Avalonia.VisualTree;
 namespace Loam.Controls;
 
 /// <summary>
-/// A lightweight form container, mirroring MudBlazor's <c>MudForm</c>. Put your inputs inside its
+/// A lightweight form container, mirroring the reference API's <c>Form</c>. Put your inputs inside its
 /// <see cref="Avalonia.Controls.Decorator.Child"/>; <see cref="Validate"/> runs each
 /// <see cref="TextField"/>'s validation (Required + custom validator) and updates <see cref="IsValid"/>.
 /// </summary>

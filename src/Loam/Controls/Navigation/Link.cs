@@ -6,7 +6,7 @@ using Avalonia.Media;
 namespace Loam.Controls;
 
 /// <summary>
-/// A clickable hyperlink, mirroring MudBlazor's <c>MudLink</c>. A <see cref="Text"/> tinted by
+/// A clickable hyperlink, mirroring the reference API's <c>Link</c>. A <see cref="Text"/> tinted by
 /// <see cref="Text.Color"/> (default <see cref="LoamColor.Primary"/>) that underlines on pointer-over
 /// (always when <see cref="Underline"/> is set). Clicking invokes <see cref="OnClick"/> and, if set,
 /// launches <see cref="Href"/> in the default browser.
@@ -29,17 +29,17 @@ public class Link : Text
         UpdateDecorations(hovered: false);
     }
 
-    /// <summary>Invoked when the link is clicked. Mirrors MudBlazor's <c>OnClick</c>.</summary>
+    /// <summary>Invoked when the link is clicked. Mirrors the reference API's <c>OnClick</c>.</summary>
     public Action? OnClick { get; set; }
 
-    /// <summary>Whether the link is always underlined (otherwise only on hover). Mirrors MudBlazor's <c>Underline</c>.</summary>
+    /// <summary>Whether the link is always underlined (otherwise only on hover). Mirrors the reference API's <c>Underline</c>.</summary>
     public bool Underline
     {
         get => GetValue(UnderlineProperty);
         set => SetValue(UnderlineProperty, value);
     }
 
-    /// <summary>An optional URL launched on click. Mirrors MudBlazor's <c>Href</c>.</summary>
+    /// <summary>An optional URL launched on click. Mirrors the reference API's <c>Href</c>.</summary>
     public string? Href
     {
         get => GetValue(HrefProperty);

@@ -11,7 +11,7 @@ using Loam.Theming;
 
 namespace Loam.Controls;
 
-/// <summary>One option in a <see cref="ToggleGroup"/>, mirroring MudBlazor's <c>MudToggleItem</c>.</summary>
+/// <summary>One option in a <see cref="ToggleGroup"/>, mirroring the reference API's <c>ToggleItem</c>.</summary>
 public sealed class ToggleItem
 {
     /// <summary>Creates an empty option.</summary>
@@ -34,7 +34,7 @@ public sealed class ToggleItem
 }
 
 /// <summary>
-/// A segmented single-select control, mirroring MudBlazor's <c>MudToggleGroup</c>. Renders <see cref="Items"/>
+/// A segmented single-select control, mirroring the reference API's <c>ToggleGroup</c>. Renders <see cref="Items"/>
 /// as connected segments; the one whose value equals the two-way <see cref="SelectedValue"/> is filled
 /// with <see cref="Color"/>.
 /// </summary>
@@ -58,14 +58,14 @@ public class ToggleGroup : TemplatedControl
     /// <summary>The selectable options.</summary>
     public ObservableCollection<ToggleItem> Items { get; } = new();
 
-    /// <summary>The selected value (two-way). Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>The selected value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public object? SelectedValue
     {
         get => GetValue(SelectedValueProperty);
         set => SetValue(SelectedValueProperty, value);
     }
 
-    /// <summary>Selected-segment color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Selected-segment color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);

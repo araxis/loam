@@ -7,7 +7,7 @@ using Avalonia.Layout;
 namespace Loam.Controls;
 
 /// <summary>
-/// A star rating, mirroring MudBlazor's <c>MudRating</c>. Shows <see cref="MaxValue"/> stars filled up
+/// A star rating, mirroring the reference API's <c>Rating</c>. Shows <see cref="MaxValue"/> stars filled up
 /// to the two-way <see cref="SelectedValue"/> (or the hovered star as a live preview), tinted by
 /// <see cref="Color"/>. Set <see cref="ReadOnly"/> to display a fixed score.
 /// </summary>
@@ -38,35 +38,35 @@ public class Rating : TemplatedControl
     private StackPanel? _panel;
     private int _hover;
 
-    /// <summary>The selected score (two-way). Mirrors MudBlazor's <c>SelectedValue</c>.</summary>
+    /// <summary>The selected score (two-way). Mirrors the reference API's <c>SelectedValue</c>.</summary>
     public int SelectedValue
     {
         get => GetValue(SelectedValueProperty);
         set => SetValue(SelectedValueProperty, value);
     }
 
-    /// <summary>The number of stars. Mirrors MudBlazor's <c>MaxValue</c>.</summary>
+    /// <summary>The number of stars. Mirrors the reference API's <c>MaxValue</c>.</summary>
     public int MaxValue
     {
         get => GetValue(MaxValueProperty);
         set => SetValue(MaxValueProperty, value);
     }
 
-    /// <summary>Filled-star color. Mirrors MudBlazor's <c>Color</c> (defaults to a star-gold Warning).</summary>
+    /// <summary>Filled-star color. Mirrors the reference API's <c>Color</c> (defaults to a star-gold Warning).</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Star size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Star size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Whether the rating is display-only. Mirrors MudBlazor's <c>ReadOnly</c>.</summary>
+    /// <summary>Whether the rating is display-only. Mirrors the reference API's <c>ReadOnly</c>.</summary>
     public bool ReadOnly
     {
         get => GetValue(ReadOnlyProperty);

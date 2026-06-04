@@ -7,7 +7,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A top application bar, mirroring MudBlazor's <c>MudAppBar</c>. A full-width, elevated, colored
+/// A top application bar, mirroring the reference API's <c>AppBar</c>. A full-width, elevated, colored
 /// toolbar surface. Default color uses the theme's app-bar palette; a semantic <see cref="Color"/>
 /// overrides it. Host a horizontal toolbar (menu button, title, actions) as its content.
 /// </summary>
@@ -30,21 +30,21 @@ public class AppBar : ContentControl
     private IDisposable? _foregroundBinding;
     private IDisposable? _shadowBinding;
 
-    /// <summary>App-bar color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>App-bar color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Shadow depth. Mirrors MudBlazor's <c>Elevation</c>.</summary>
+    /// <summary>Shadow depth. Mirrors the reference API's <c>Elevation</c>.</summary>
     public int Elevation
     {
         get => GetValue(ElevationProperty);
         set => SetValue(ElevationProperty, value);
     }
 
-    /// <summary>Reduced height. Mirrors MudBlazor's <c>Dense</c>.</summary>
+    /// <summary>Reduced height. Mirrors the reference API's <c>Dense</c>.</summary>
     public bool Dense
     {
         get => GetValue(DenseProperty);

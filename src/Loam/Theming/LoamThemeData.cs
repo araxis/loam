@@ -1,7 +1,7 @@
 namespace Loam.Theming;
 
 /// <summary>
-/// The complete Loam design specification — the Avalonia analogue of MudBlazor's <c>MudTheme</c>.
+/// The complete Loam design specification — the Avalonia analogue of the reference API's <c>Theme</c>.
 /// Pure data (no Avalonia <c>Styles</c>), so it is trivially constructed, customized with
 /// <c>with</c>, and unit-tested. <see cref="LoamTheme"/> projects it into Avalonia resources.
 /// </summary>

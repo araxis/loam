@@ -10,7 +10,7 @@ using AvaPath = Avalonia.Controls.Shapes.Path;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material checkbox, mirroring MudBlazor's <c>MudCheckBox</c>. Subclasses Avalonia's
+/// A Material checkbox, mirroring the reference API's <c>CheckBox</c>. Subclasses Avalonia's
 /// <see cref="Avalonia.Controls.CheckBox"/> (for tri-state, keyboard, toggle behavior) and renders a
 /// token-colored box + checkmark sized by <see cref="Size"/>, filled with <see cref="Color"/> when checked.
 /// </summary>
@@ -30,14 +30,14 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
     private IDisposable? _boxBorder;
     private IDisposable? _checkFill;
 
-    /// <summary>Checked color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Checked color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Checkbox size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Checkbox size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);

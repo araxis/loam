@@ -5,7 +5,7 @@ using Avalonia.Controls.Primitives;
 namespace Loam.Controls;
 
 /// <summary>
-/// A floating panel anchored to a target, mirroring MudBlazor's <c>MudPopover</c>. Wraps an Avalonia
+/// A floating panel anchored to a target, mirroring the reference API's <c>Popover</c>. Wraps an Avalonia
 /// <see cref="Popup"/>: set <see cref="Content"/>, anchor it to a <see cref="Target"/> with
 /// <see cref="Placement"/>, and toggle the two-way <see cref="Open"/>. Light-dismiss closes it.
 /// </summary>
@@ -50,14 +50,14 @@ public class Popover : Decorator
         set => SetValue(ContentProperty, value);
     }
 
-    /// <summary>Whether the popover is shown (two-way). Mirrors MudBlazor's <c>Open</c>.</summary>
+    /// <summary>Whether the popover is shown (two-way). Mirrors the reference API's <c>Open</c>.</summary>
     public bool Open
     {
         get => GetValue(OpenProperty);
         set => SetValue(OpenProperty, value);
     }
 
-    /// <summary>Where the popover sits relative to the target. Mirrors MudBlazor's anchor/transform origin.</summary>
+    /// <summary>Where the popover sits relative to the target. Mirrors the reference API's anchor/transform origin.</summary>
     public PlacementMode Placement
     {
         get => GetValue(PlacementProperty);

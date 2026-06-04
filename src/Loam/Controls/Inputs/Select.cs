@@ -9,7 +9,7 @@ using Loam.Theming;
 
 namespace Loam.Controls;
 
-/// <summary>An option in a <see cref="Select"/>, mirroring MudBlazor's <c>MudSelectItem</c>.</summary>
+/// <summary>An option in a <see cref="Select"/>, mirroring the reference API's <c>SelectItem</c>.</summary>
 public sealed class SelectItem
 {
     /// <summary>Creates an empty option.</summary>
@@ -32,11 +32,11 @@ public sealed class SelectItem
 }
 
 /// <summary>
-/// A dropdown selector, mirroring MudBlazor's <c>MudSelect</c>. An outlined field showing the chosen
+/// A dropdown selector, mirroring the reference API's <c>Select</c>. An outlined field showing the chosen
 /// option that opens a flyout list of <see cref="Items"/>; the chosen value is <see cref="Value"/> (two-way).
 /// </summary>
 [SuppressMessage("Naming", "CA1716:Identifiers should not match keywords",
-    Justification = "Mirrors MudBlazor's MudSelect with the Loam convention of dropping the Mud prefix.")]
+    Justification = "Mirrors the reference API's Select with the Loam convention of dropping the legacy prefix.")]
 public class Select : TemplatedControl
 {
     /// <summary>Identifies the <see cref="Value"/> property.</summary>
@@ -63,21 +63,21 @@ public class Select : TemplatedControl
     /// <summary>The selectable options.</summary>
     public ObservableCollection<SelectItem> Items { get; } = new();
 
-    /// <summary>The selected value (two-way). Mirrors MudBlazor's <c>Value</c>.</summary>
+    /// <summary>The selected value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public object? Value
     {
         get => GetValue(ValueProperty);
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>The field label. Mirrors MudBlazor's <c>Label</c>.</summary>
+    /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
     public string? Label
     {
         get => GetValue(LabelProperty);
         set => SetValue(LabelProperty, value);
     }
 
-    /// <summary>Text shown when nothing is selected. Mirrors MudBlazor's <c>Placeholder</c>.</summary>
+    /// <summary>Text shown when nothing is selected. Mirrors the reference API's <c>Placeholder</c>.</summary>
     public string? Placeholder
     {
         get => GetValue(PlaceholderProperty);

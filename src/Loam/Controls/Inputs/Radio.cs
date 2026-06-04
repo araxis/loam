@@ -8,7 +8,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A Material radio button, mirroring MudBlazor's <c>MudRadio</c>. Subclasses Avalonia's
+/// A Material radio button, mirroring the reference API's <c>Radio</c>. Subclasses Avalonia's
 /// <see cref="RadioButton"/> (mutual exclusion, keyboard) and renders a token-colored ring + dot.
 /// Carries a <see cref="Value"/> for use with <see cref="RadioGroup"/>.
 /// </summary>
@@ -31,14 +31,14 @@ public class Radio : RadioButton
     private IDisposable? _ringBorder;
     private IDisposable? _dotBackground;
 
-    /// <summary>Selected color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Selected color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Radio size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Radio size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);

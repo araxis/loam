@@ -9,7 +9,7 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// A connected row (or column) of <see cref="Button"/>s, mirroring MudBlazor's <c>MudButtonGroup</c>.
+/// A connected row (or column) of <see cref="Button"/>s, mirroring the reference API's <c>ButtonGroup</c>.
 /// Lays the <see cref="Items"/> out adjacently with merged borders and shared outer corners, and
 /// (when <see cref="OverrideChildStyles"/>) pushes the group's <see cref="Variant"/>/<see cref="Color"/>/
 /// <see cref="Size"/> onto every child so they read as one control.
@@ -46,28 +46,28 @@ public class ButtonGroup : TemplatedControl
     /// <summary>The grouped buttons.</summary>
     public ObservableCollection<Button> Items { get; } = new();
 
-    /// <summary>Shared button style. Mirrors MudBlazor's <c>Variant</c>.</summary>
+    /// <summary>Shared button style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
     {
         get => GetValue(VariantProperty);
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>Shared button color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Shared button color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Shared button size. Mirrors MudBlazor's <c>Size</c>.</summary>
+    /// <summary>Shared button size. Mirrors the reference API's <c>Size</c>.</summary>
     public LoamSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Stacks the buttons vertically. Mirrors MudBlazor's <c>VerticalAlign</c>.</summary>
+    /// <summary>Stacks the buttons vertically. Mirrors the reference API's <c>VerticalAlign</c>.</summary>
     public bool Vertical
     {
         get => GetValue(VerticalProperty);

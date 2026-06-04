@@ -26,6 +26,16 @@ jobs:
       - name: Test (headless)
         run: dotnet test Loam.slnx -c Release --no-build --logger "trx;LogFileName=test-results.trx"
 
+      - name: Pack
+        run: dotnet pack src/Loam/Loam.csproj -c Release --no-build -o artifacts/packages /p:ContinuousIntegrationBuild=true
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4

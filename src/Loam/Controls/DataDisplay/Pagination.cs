@@ -7,7 +7,7 @@ using Loam;
 namespace Loam.Controls;
 
 /// <summary>
-/// A page navigator, mirroring MudBlazor's <c>MudPagination</c>. Renders first/last boundary pages,
+/// A page navigator, mirroring the reference API's <c>Pagination</c>. Renders first/last boundary pages,
 /// a window of <see cref="MiddleCount"/> pages around the two-way <see cref="Selected"/> page, ellipses
 /// for gaps, and previous/next arrows. The selected page button is filled with <see cref="Color"/>.
 /// </summary>
@@ -36,35 +36,35 @@ public class Pagination : TemplatedControl
 
     private StackPanel? _items;
 
-    /// <summary>The total number of pages. Mirrors MudBlazor's <c>Count</c>.</summary>
+    /// <summary>The total number of pages. Mirrors the reference API's <c>Count</c>.</summary>
     public int Count
     {
         get => GetValue(CountProperty);
         set => SetValue(CountProperty, value);
     }
 
-    /// <summary>The selected page (1-based, two-way). Mirrors MudBlazor's <c>Selected</c>.</summary>
+    /// <summary>The selected page (1-based, two-way). Mirrors the reference API's <c>Selected</c>.</summary>
     public int Selected
     {
         get => GetValue(SelectedProperty);
         set => SetValue(SelectedProperty, value);
     }
 
-    /// <summary>Selected-page color. Mirrors MudBlazor's <c>Color</c>.</summary>
+    /// <summary>Selected-page color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
 
-    /// <summary>Pages shown at each end. Mirrors MudBlazor's <c>BoundaryCount</c>.</summary>
+    /// <summary>Pages shown at each end. Mirrors the reference API's <c>BoundaryCount</c>.</summary>
     public int BoundaryCount
     {
         get => GetValue(BoundaryCountProperty);
         set => SetValue(BoundaryCountProperty, value);
     }
 
-    /// <summary>Pages shown around the selection. Mirrors MudBlazor's <c>MiddleCount</c>.</summary>
+    /// <summary>Pages shown around the selection. Mirrors the reference API's <c>MiddleCount</c>.</summary>
     public int MiddleCount
     {
         get => GetValue(MiddleCountProperty);

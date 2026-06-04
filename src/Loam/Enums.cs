@@ -1,6 +1,6 @@
 namespace Loam;
 
-/// <summary>Visual style of a control, mirroring MudBlazor's <c>Variant</c>.</summary>
+/// <summary>Visual style of a control, mirroring the reference API's <c>Variant</c>.</summary>
 public enum Variant
 {
     /// <summary>No fill or border; text/icon only.</summary>
@@ -14,7 +14,7 @@ public enum Variant
 }
 
 /// <summary>
-/// Semantic color role, mirroring MudBlazor's <c>Color</c>. Named <c>LoamColor</c> to avoid
+/// Semantic color role, mirroring the reference API's <c>Color</c>. Named <c>LoamColor</c> to avoid
 /// clashing with <see cref="Avalonia.Media.Color"/>; controls still expose it via a <c>Color</c>
 /// property (ADR-0007).
 /// </summary>
@@ -45,7 +45,7 @@ public enum LoamColor
 }
 
 /// <summary>
-/// Control size, mirroring MudBlazor's <c>Size</c>. Named <c>LoamSize</c> to avoid clashing with
+/// Control size, mirroring the reference API's <c>Size</c>. Named <c>LoamSize</c> to avoid clashing with
 /// <see cref="Avalonia.Size"/>; controls expose it via a <c>Size</c> property (ADR-0007).
 /// </summary>
 public enum LoamSize
@@ -59,7 +59,7 @@ public enum LoamSize
 }
 
 /// <summary>
-/// Typographic role, mirroring MudBlazor's <c>Typo</c> (PascalCase here, vs MudBlazor's lowercase,
+/// Typographic role, mirroring the reference API's <c>Typo</c> (PascalCase here, vs the reference API's lowercase,
 /// to match C# conventions and the <see cref="Theming.LoamTypography"/> scale names).
 /// </summary>
 public enum Typo
@@ -94,7 +94,7 @@ public enum Typo
     Overline,
 }
 
-/// <summary>Text alignment, mirroring MudBlazor's <c>Align</c>.</summary>
+/// <summary>Text alignment, mirroring the reference API's <c>Align</c>.</summary>
 public enum Align
 {
     /// <summary>Inherit.</summary>
@@ -113,7 +113,7 @@ public enum Align
     End,
 }
 
-/// <summary>Divider style, mirroring MudBlazor's <c>DividerType</c>.</summary>
+/// <summary>Divider style, mirroring the reference API's <c>DividerType</c>.</summary>
 public enum DividerType
 {
     /// <summary>Spans the full length.</summary>
@@ -124,7 +124,7 @@ public enum DividerType
     Middle,
 }
 
-/// <summary>Responsive breakpoint, mirroring MudBlazor's <c>Breakpoint</c> (core values).</summary>
+/// <summary>Responsive breakpoint, mirroring the reference API's <c>Breakpoint</c> (core values).</summary>
 public enum Breakpoint
 {
     /// <summary>No breakpoint.</summary>
@@ -145,7 +145,7 @@ public enum Breakpoint
     Always,
 }
 
-/// <summary>Corner placement for a <see cref="Controls.Badge"/> (subset of MudBlazor's <c>Origin</c>).</summary>
+/// <summary>Corner placement for a <see cref="Controls.Badge"/> (subset of the reference API's <c>Origin</c>).</summary>
 public enum BadgeOrigin
 {
     /// <summary>Top-left corner.</summary>

@@ -5,7 +5,7 @@ using Avalonia.Input;
 namespace Loam.Controls;
 
 /// <summary>
-/// A "scroll to top" affordance, mirroring MudBlazor's <c>MudScrollToTop</c>. Watches a
+/// A "scroll to top" affordance, mirroring the reference API's <c>ScrollToTop</c>. Watches a
 /// <see cref="Target"/> <see cref="ScrollViewer"/> and shows its <see cref="Decorator.Child"/> (a FAB by
 /// default) once scrolled past <see cref="VisibleOffset"/>; clicking it scrolls the target home.
 /// </summary>
@@ -28,14 +28,14 @@ public class ScrollToTop : Decorator
         IsVisible = false;
     }
 
-    /// <summary>The scroll container to watch. Mirrors MudBlazor's <c>Selector</c> target.</summary>
+    /// <summary>The scroll container to watch. Mirrors the reference API's <c>Selector</c> target.</summary>
     public ScrollViewer? Target
     {
         get => GetValue(TargetProperty);
         set => SetValue(TargetProperty, value);
     }
 
-    /// <summary>The scroll distance (px) after which the control appears. Mirrors MudBlazor's <c>VisibleOffset</c>.</summary>
+    /// <summary>The scroll distance (px) after which the control appears. Mirrors the reference API's <c>VisibleOffset</c>.</summary>
     public double VisibleOffset
     {
         get => GetValue(VisibleOffsetProperty);

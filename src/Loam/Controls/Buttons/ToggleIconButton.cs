@@ -4,7 +4,7 @@ using Avalonia.Controls.Primitives;
 namespace Loam.Controls;
 
 /// <summary>
-/// An icon button that switches between two glyphs, mirroring MudBlazor's <c>MudToggleIconButton</c>.
+/// An icon button that switches between two glyphs, mirroring the reference API's <c>ToggleIconButton</c>.
 /// The inherited <see cref="IconButton.Icon"/> is the off glyph; <see cref="ToggledIcon"/> is shown
 /// when the two-way <see cref="Toggled"/> state is on. Clicking flips <see cref="Toggled"/>.
 /// </summary>
@@ -21,14 +21,14 @@ public class ToggleIconButton : IconButton
 
     private Icon? _icon;
 
-    /// <summary>Whether the button is in the toggled (on) state. Mirrors MudBlazor's <c>Toggled</c>.</summary>
+    /// <summary>Whether the button is in the toggled (on) state. Mirrors the reference API's <c>Toggled</c>.</summary>
     public bool Toggled
     {
         get => GetValue(ToggledProperty);
         set => SetValue(ToggledProperty, value);
     }
 
-    /// <summary>The glyph shown when <see cref="Toggled"/>. Mirrors MudBlazor's <c>ToggledIcon</c>.</summary>
+    /// <summary>The glyph shown when <see cref="Toggled"/>. Mirrors the reference API's <c>ToggledIcon</c>.</summary>
     public string? ToggledIcon
     {
         get => GetValue(ToggledIconProperty);

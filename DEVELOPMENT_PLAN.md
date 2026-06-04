@@ -1,8 +1,8 @@
 # Loam — Development Plan
 
-> **Loam** is a Material-Design **Avalonia** control library that mirrors the **MudBlazor**
-> component API and look-and-feel, authored **entirely in C#** (no XAML). It lets MudBlazor/Blazor
-> developers build cross-platform Avalonia apps (desktop, mobile, browser) with a familiar API.
+> **Loam** is a Material-Design **Avalonia** control library that mirrors the **reference**
+> component API and look-and-feel, authored **entirely in C#** (no XAML). It helps Blazor and
+> Avalonia developers build cross-platform apps (desktop, mobile, browser) with a familiar API.
 
 This is the master roadmap. It is **phased**, **vertical-slice**, and each phase has an explicit
 **Definition of Done (DoD)** and **exit gate**. Decisions live in [`memory/decisions`](memory/decisions);
@@ -17,11 +17,11 @@ progress is logged in [`memory/progress/progress-log.md`](memory/progress/progre
 | --- | --- | --- |
 | Name | **Loam** (original, brand-safe) | [0001](memory/decisions/0001-project-name-loam.md) |
 | Authoring | **Pure C#**, no XAML; thin fluent template helpers allowed | [0002](memory/decisions/0002-pure-csharp-no-xaml.md) |
-| Fidelity | **Balanced**: MudBlazor API params + approximate Material look | [0003](memory/decisions/0003-balanced-fidelity.md) |
+| Fidelity | **Balanced**: reference API params + approximate Material look | [0003](memory/decisions/0003-balanced-fidelity.md) |
 | Targets | Avalonia **12.x**; lib `net8.0`; cross-platform | [0004](memory/decisions/0004-target-frameworks.md) |
-| Theming | **`LoamTheme`** mirroring `MudTheme`, projected to Avalonia resources | [0005](memory/decisions/0005-theming-engine-loamtheme.md) |
+| Theming | **`LoamTheme`** mirroring `Theme`, projected to Avalonia resources | [0005](memory/decisions/0005-theming-engine-loamtheme.md) |
 | Icons | `Icon` core + generated `Loam.Icons` package (decide Phase 3) | [0006](memory/decisions/0006-icon-system.md) |
-| Naming | `Loam.Controls.*` (drop `Mud`), keep MudBlazor param names | [0007](memory/decisions/0007-api-naming-mapping.md) |
+| Naming | `Loam.Controls.*` (drop legacy prefixes), keep reference param names | [0007](memory/decisions/0007-api-naming-mapping.md) |
 
 ## 2. Engineering principles (apply to every slice)
 
@@ -31,7 +31,7 @@ progress is logged in [`memory/progress/progress-log.md`](memory/progress/progre
 - **SOLID / KISS / SRP.** Small, composable, single-purpose types. Behavior in the control;
   visuals in the theme; tokens in the theme model. No god-classes, no service-locator, no
   reflection magic.
-- **Source-first.** Verify MudBlazor params (GitHub source, v8/v9 tag) and Avalonia APIs (v12
+- **Source-first.** Verify reference params (GitHub source, v8/v9 tag) and Avalonia APIs (v12
   docs/source) before coding. Record non-obvious findings in `memory/`.
 - **Pure C#, readable.** Official Avalonia code-only APIs first; thin fluent helpers only to remove
   real repetition, never to hide concepts. No third-party fluent-markup dependency.
@@ -47,7 +47,7 @@ progress is logged in [`memory/progress/progress-log.md`](memory/progress/progre
 ## 3. Repository / solution structure (target)
 
 ```
-MudAvalonia/                      # repo root (folder name legacy; product = Loam)
+Avalonia/                      # repo root (folder name legacy; product = Loam)
   Loam.sln
   Directory.Build.props           # shared MSBuild: nullable, langversion, analyzers, warnings-as-errors
   Directory.Packages.props        # central package versions (Avalonia 12.0.x pinned)
@@ -75,7 +75,7 @@ A component is **Done** only when ALL hold:
 
 1. **Control** inherits the right base (`TemplatedControl`/`ContentControl`/`ItemsControl`/…); UI
    state in the control, none in view models.
-2. **Properties** mirror MudBlazor params (verified against source) as `StyledProperty<T>` /
+2. **Properties** mirror reference params (verified against source) as `StyledProperty<T>` /
    `DirectProperty<T>`; sensible defaults; XML-doc each public member.
 3. **ControlTheme (C#)** covers every `Variant` × `Color` × `Size` and every interactive state
    (`:pointerover`, `:pressed`, `:disabled`, `:focus-visible`, `:checked`/`:selected`, error) in
@@ -129,11 +129,11 @@ can be parallelized as independent slices.
 - **Scope:** `Palette` (light/dark), `Typography`, `Shadows` (elevation 0–24), `LayoutProperties`,
   `ZIndex`, token→resource projection, `ThemeVariant` integration, runtime swap, `LoamColor`
   derivations, spacing scale.
-- **Key tasks:** model types mirroring `MudTheme`; project tokens into
+- **Key tasks:** model types mirroring `Theme`; project tokens into
   `ResourceDictionary.ThemeDictionaries[Light/Dark]` under a stable key namespace
   (`Loam.Palette.*`, `Loam.Typography.*`, `Loam.Elevation.*`); dynamic-resource consumption so
   runtime palette/variant swaps re-style live; typography as reusable text styles; default theme
-  matching MudBlazor's default palette.
+  matching the reference API's default palette.
 - **DoD / exit gate:** gallery "Theme" page toggles light/dark and edits the primary color at
   runtime with the whole app re-theming; all tokens resolve; headless tests for palette resolution
   + variant switching + runtime swap; documented token catalog.
@@ -158,14 +158,14 @@ can be parallelized as independent slices.
 ### Phase 5 — Forms & Inputs
 - **Goal:** Complete, validated data entry.
 - **Scope:** `Form` + validation engine (`INotifyDataErrorInfo`, sync/async rules mirroring
-  `MudForm`), `Field` base (adornments/label/helper/error), `TextField`, `NumericField`, `Select`/
+  `Form`), `Field` base (adornments/label/helper/error), `TextField`, `NumericField`, `Select`/
   `SelectItem`, `Autocomplete`, `CheckBox` (tri-state), `Switch`, `RadioGroup`/`Radio`, `Slider`,
   `Rating`, `ToggleGroup`/`ToggleItem`, `FileUpload` (via Avalonia `StorageProvider`).
 - **DoD / exit gate:** a validated form demo (required/regex/async, Text/Filled/Outlined variants,
   all states) works; two-way binding + validation covered by headless/unit tests; §4 met.
 
 ### Phase 6 — Overlays & Feedback
-- **Goal:** Modal & transient UX with MudBlazor-shaped services.
+- **Goal:** Modal & transient UX with reference-shaped services.
 - **Scope:** overlay layer foundation, `Popover`, `Overlay`, `Tooltip`, `Menu`/`MenuItem`,
   `Dialog` + `IDialogService` (`ShowAsync<TDialog>()`, typed `DialogResult`) + provider,
   `MessageBox`, `ISnackbar` (queue/severity/action) + provider, `Alert`, `ProgressCircular`,
@@ -191,7 +191,7 @@ can be parallelized as independent slices.
   linear/non-linear flow; tests for value logic + keyboard; §4 met.
 
 ### Phase 9 — Charts (stretch / optional `Loam.Charts`)
-- **Goal:** `MudChart` parity (Line/Bar/Pie/Donut/StackedBar/TimeSeries), custom-drawn in C#.
+- **Goal:** `Chart` parity (Line/Bar/Pie/Donut/StackedBar/TimeSeries), custom-drawn in C#.
 - **Scope/DoD:** separate package; deferred to post-1.0 unless pulled forward. Marked ⏸️ in the
   inventory.
 
@@ -201,7 +201,7 @@ can be parallelized as independent slices.
   motion); theme-variant + token audit; performance pass (allocation/render budgets, profiling);
   **public API review & freeze**; complete XML docs; NuGet packaging (`Loam`, `Loam.Icons`, optional
   `Loam.Charts`) with SourceLink, symbols, README, license, **SemVer**; gallery polished to cover
-  every component; **MudBlazor→Loam migration guide** + mapping table; release CI pipeline.
+  every component; **reference→Loam migration guide** + mapping table; release CI pipeline.
 - **DoD / exit gate:** `1.0.0` packages built (and published or release-ready); gallery covers all
   shipped components; docs + migration guide complete; CI builds, tests, and packs on tag.
 
@@ -211,7 +211,7 @@ can be parallelized as independent slices.
 
 - **Theming & tokens** — owned in Phase 2, extended as components need new tokens; never hard-code.
 - **Icons** — `Loam.Icons` generation + licensing (ADR-0006).
-- **CSS-utility mapping** — MudBlazor utility classes (`pa-4`, `d-flex`, `mud-elevation-N`, gutters)
+- **CSS-utility mapping** — reference utility classes (`pa-4`, `d-flex`, `elevation-N`, gutters)
   → small C# layout/utility helper extensions (documented), not literal CSS classes.
 - **Accessibility** — part of every slice's DoD; final audit in Phase 10.
 - **Performance** — budgets enforced per slice; profiling pass for data controls (Phase 7) and
@@ -228,14 +228,14 @@ can be parallelized as independent slices.
 | Pure-C# templates verbose | Slows authoring, hurts readability | Fluent template helpers (Phase 1); standard `PART_*`; review for clarity per slice. |
 | Scope (huge component set) | Never "done" | Strict vertical slices + phase gates; charts deferred; ship value each phase. |
 | Avalonia 12 API drift / unknowns | Rework | Source-first against pinned 12.0.x; spikes in Phase 1; record in `findings/`. |
-| MudBlazor API edge cases | Surprise divergences | Verify each component vs v8/v9 source; document every divergence in the inventory. |
+| reference API edge cases | Surprise divergences | Verify each component vs v8/v9 source; document every divergence in the inventory. |
 | Runtime theming complexity | Re-theme bugs | Dynamic resources + Phase 2 runtime-swap tests before building dependent controls. |
 | Perf of data controls / custom drawing | Janky tables/charts | Virtualization-aware; profile in Phase 7/10; record numbers. |
 | Icon data size / licensing | Bloated/unsafe package | Keep icons in `Loam.Icons`; confirm license before shipping. |
 
 ## 8. Definition of "project success" (1.0)
 
-A MudBlazor developer can build a polished, accessible, cross-platform Avalonia app using Loam with
+A reference developer can build a polished, accessible, cross-platform Avalonia app using Loam with
 a familiar API; the library is **pure C#**, **highly themeable** (`LoamTheme`, light/dark, runtime
 swap), **SOLID**, **performant**, **tested**, **documented**, and shipped as versioned NuGet
-packages — with every MudBlazor→Loam mapping decision traceable in `memory/`.
+packages — with every reference→Loam mapping decision traceable in `memory/`.
