@@ -4,7 +4,6 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Loam;
 using Loam.Theming;
 
@@ -309,41 +308,7 @@ public class TextField : TemplatedControl
             return;
         }
 
-        var accent = Color is LoamColor.Default or LoamColor.Inherit
-            ? LoamTokens.Primary
-            : LoamTokens.Palette(Color.ToPaletteName()!);
-        var brushKey = Error ? LoamTokens.Error
-            : _focused ? accent
-            : LoamTokens.Palette(nameof(LoamPalette.LinesInputs));
-        var emphasized = _focused || Error;
-
-        _borderBrush?.Dispose();
-        _borderBrush = _inputBorder.Bind(Border.BorderBrushProperty, this.GetResourceObservable(brushKey));
-
-        _background?.Dispose();
-        _background = null;
-
-        switch (Variant)
-        {
-            case Loam.Variant.Filled:
-                _inputBorder.CornerRadius = new CornerRadius(4, 4, 0, 0);
-                _inputBorder.BorderThickness = new Thickness(0, 0, 0, emphasized ? 2 : 1);
-                _inputBorder.Padding = new Thickness(12, 8);
-                _background = _inputBorder.Bind(Border.BackgroundProperty,
-                    this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.ActionDisabledBackground))));
-                break;
-            case Loam.Variant.Text:
-                _inputBorder.CornerRadius = default;
-                _inputBorder.BorderThickness = new Thickness(0, 0, 0, emphasized ? 2 : 1);
-                _inputBorder.Padding = new Thickness(0, 6);
-                _inputBorder.Background = Brushes.Transparent;
-                break;
-            default: // Outlined
-                _inputBorder.CornerRadius = new CornerRadius(4);
-                _inputBorder.BorderThickness = new Thickness(emphasized ? 2 : 1);
-                _inputBorder.Padding = new Thickness(12, 8);
-                _inputBorder.Background = Brushes.Transparent;
-                break;
-        }
+        FieldChrome.Apply(this, _inputBorder, Variant, Color, Error, _focused, IsEnabled,
+            ref _borderBrush, ref _background);
     }
 }

@@ -158,7 +158,7 @@ can be parallelized as independent slices.
 ### Phase 5 — Forms & Inputs
 - **Goal:** Complete, validated data entry.
 - **Scope:** `Form` + validation engine (`INotifyDataErrorInfo`, sync/async rules mirroring
-  `Form`), `Field` base (adornments/label/helper/error), `TextField`, `NumericField`, `Select`/
+  `Form`), `Field` shell (adornments/label/helper/error), `TextField`, `NumericField`, `Select`/
   `SelectItem`, `Autocomplete`, `CheckBox` (tri-state), `Switch`, `RadioGroup`/`Radio`, `Slider`,
   `Rating`, `ToggleGroup`/`ToggleItem`, `FileUpload` (via Avalonia `StorageProvider`).
 - **DoD / exit gate:** a validated form demo (required/regex/async, Text/Filled/Outlined variants,

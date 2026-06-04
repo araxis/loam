@@ -4,23 +4,21 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
-using Avalonia.Media;
 using Avalonia.Styling;
-using Loam;
 using Loam.Internal.Templating;
 
 namespace Loam.Controls;
 
-/// <summary>Builds the <see cref="TextField"/> theme: label + a chrome border (<c>PART_InputBorder</c>) wrapping a borderless <see cref="TextBox"/> + helper/error text; chrome applied by the control.</summary>
-internal static class TextFieldTheme
+/// <summary>Builds the <see cref="Field"/> theme: label, variant chrome, custom content, adornments, and helper/error text.</summary>
+internal static class FieldTheme
 {
     public static ControlTheme Create() =>
-        new(typeof(TextField))
+        new(typeof(Field))
         {
             Setters = { new Setter(TemplatedControl.TemplateProperty, BuildTemplate()) },
         };
 
-    private static FuncControlTemplate<TextField> BuildTemplate() =>
+    private static FuncControlTemplate<Field> BuildTemplate() =>
         new((field, scope) =>
         {
             var label = new Text
@@ -30,17 +28,6 @@ internal static class TextFieldTheme
                 IsVisible = false,
                 Margin = new Thickness(0, 0, 0, 3),
             }.Named("PART_Label", scope);
-
-            var textBox = new TextBox
-            {
-                BorderThickness = default,
-                BorderBrush = Brushes.Transparent,
-                Background = Brushes.Transparent,
-                Padding = default,
-                MinHeight = 24,
-                VerticalContentAlignment = VerticalAlignment.Center,
-            }.Named("PART_TextBox", scope);
-            FieldChrome.ResetInnerTextBox(textBox);
 
             var startAdornment = new ContentPresenter
             {
@@ -58,9 +45,16 @@ internal static class TextFieldTheme
             }.Named("PART_EndAdornment", scope);
             DockPanel.SetDock(endAdornment, Dock.Right);
 
+            var content = new ContentPresenter
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            content.Bind(ContentPresenter.ContentProperty, field.GetObservable(ContentControl.ContentProperty));
+
             var inputBorder = new Border
             {
-                Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, textBox } },
+                Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, content } },
             }.Named("PART_InputBorder", scope);
 
             var helper = new Text

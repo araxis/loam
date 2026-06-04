@@ -124,7 +124,7 @@ automatically. Per-control overrides use the same Loam knobs: `Variant`, `Color`
 | --- | --- |
 | **Primitives** | `Text`, `Icon`, `Button`, `IconButton`, `ToggleIconButton`, `ButtonGroup`, `Fab`, `Paper`, `Card` (+`CardHeader`/`CardMedia`/`CardContent`/`CardActions`), `Divider`, `Chip`/`ChipSet`, `Badge`, `Avatar`/`AvatarGroup` |
 | **Layout & shell** | `Container`, `Grid`/`Item`, `Stack`, `Spacer`, `Hidden`, `ScrollToTop`, `Layout`, `AppBar`, `Drawer`, `MainContent` |
-| **Inputs** | `TextField`, `NumericField`, `MaskedTextField` (+`Mask`), `Select`, `Autocomplete`, `CheckBox`, `Switch`, `Radio`/`RadioGroup`, `Slider`, `Rating`, `ToggleGroup`, `FileUpload`, `Form` |
+| **Inputs** | `Field`, `TextField`, `NumericField`, `MaskedTextField` (+`Mask`), `Select`, `Autocomplete`, `CheckBox`, `Switch`, `Radio`/`RadioGroup`, `Slider`, `Rating`, `ToggleGroup`, `FileUpload`, `Form` |
 | **Pickers** | `DatePicker`, `TimePicker`, `ColorPicker`, `DateRangePicker` (+ self-contained `MonthCalendar`) |
 | **Overlays & feedback** | `DialogService`/`MessageBoxAsync`, `SnackbarService`, `Overlay`, `Popover`, `Tooltip`, `Menu`, `Alert`, `ProgressLinear`, `ProgressCircular`, `Skeleton`, `Collapse` |
 | **Data display** | `List`/`ListItem`/`ListSubheader`, `SimpleTable`, `DataGrid<T>`, `TreeView`, `Tabs`, `ExpansionPanels`, `Timeline`, `Carousel`, `Pagination`, `Stepper` |
@@ -142,7 +142,7 @@ DataGrid filter/group/edit, picker clock-face/HSV, stacked/time-series charts) e
 dotnet run --project samples/Loam.Gallery
 ```
 
-The gallery is a single live page demonstrating every component group.
+The gallery has a side menu and focused pages for the component catalog.
 
 ## Repository layout
 

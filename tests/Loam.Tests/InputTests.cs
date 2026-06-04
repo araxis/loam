@@ -136,6 +136,20 @@ public class InputTests
     }
 
     [AvaloniaFact]
+    public void TextField_inner_text_box_is_borderless_and_transparent()
+    {
+        var field = new TextField { Label = "Phone", Text = "(555) 123-4567" };
+        Show(field);
+        field.ApplyTemplate();
+
+        var box = field.GetVisualDescendants().OfType<TextBox>().First();
+        box.BorderThickness.ShouldBe(default);
+        ((ISolidColorBrush)box.BorderBrush!).Color.A.ShouldBe((byte)0);
+        ((ISolidColorBrush)box.Background!).Color.A.ShouldBe((byte)0);
+        box.Padding.ShouldBe(default);
+    }
+
+    [AvaloniaFact]
     public void TextField_error_colors_border_and_shows_error_text()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
@@ -170,6 +184,68 @@ public class InputTests
         custom.Validate().ShouldBe("bad");
         custom.Text = "ok";
         custom.Validate().ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void Field_renders_custom_content_label_helper_and_adornments()
+    {
+        var start = new TextBlock { Text = "$" };
+        var end = new TextBlock { Text = "USD" };
+        var content = new TextBlock { Text = "Custom amount editor" };
+        var field = new Field
+        {
+            Label = "Amount",
+            HelperText = "Before tax",
+            StartAdornment = start,
+            EndAdornment = end,
+            Content = content,
+        };
+        Show(field);
+        field.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Part(field, "PART_InputBorder").BorderThickness.ShouldBe(new Thickness(1));
+        var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
+        label.Text.ShouldBe("Amount");
+        label.IsVisible.ShouldBeTrue();
+        field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_HelperText").Text
+            .ShouldBe("Before tax");
+
+        var startPresenter = field.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_StartAdornment");
+        startPresenter.IsVisible.ShouldBeTrue();
+        startPresenter.Content.ShouldBeSameAs(start);
+
+        var endPresenter = field.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_EndAdornment");
+        endPresenter.IsVisible.ShouldBeTrue();
+        endPresenter.Content.ShouldBeSameAs(end);
+
+        field.GetVisualDescendants().OfType<TextBlock>().ShouldContain(content);
+        AutomationProperties.GetName(field).ShouldBe("Amount");
+    }
+
+    [AvaloniaFact]
+    public void Field_error_state_and_inner_padding_are_applied()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var field = new Field
+        {
+            Label = "Custom",
+            Content = new TextBlock { Text = "Body" },
+            Error = true,
+            ErrorText = "Required",
+            HelperText = "Hint",
+            InnerPadding = false,
+        };
+        Show(field);
+        field.ApplyTemplate();
+
+        var border = Part(field, "PART_InputBorder");
+        border.Padding.ShouldBe(default);
+        ((ISolidColorBrush)border.BorderBrush!).Color.ShouldBe(Color.Parse("#F44336"));
+        field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_HelperText").Text
+            .ShouldBe("Required");
     }
 
     [AvaloniaFact]

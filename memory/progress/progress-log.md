@@ -7,6 +7,26 @@ Next.
 
 ---
 
+## 2026-06-04 — Unreleased — Field and gallery navigation
+
+**Done**
+- Added standalone `Field` for custom input-like content with label, helper/error text, variants,
+  semantic focus color, start/end adornments, `InnerPadding`, and automation names.
+- Extracted shared field chrome so `Field`, `TextField`, and `NumericField` use consistent border,
+  focus, error, filled, outlined, and text-variant behavior.
+- Explicitly reset inner `TextBox` chrome in field-style input templates so wrapped inputs do not
+  draw a second native border/background inside Loam chrome.
+- Reworked the gallery components tab into a side-menu catalog with focused pages, including a
+  dedicated `Field` page and direct pages for form validation and the month calendar.
+
+**Verified**
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-restore` passed: 142 tests.
+- `dotnet build Loam.slnx -c Release --no-restore` passed.
+
+**Next:** update docs build output, run final hygiene scans, and publish the implementation branch.
+
+---
+
 ## 2026-06-04 — v1.2 — Polish release
 
 **Done**
