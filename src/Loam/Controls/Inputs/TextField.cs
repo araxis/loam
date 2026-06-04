@@ -73,10 +73,15 @@ public class TextField : TemplatedControl
     public static readonly StyledProperty<bool> FloatingLabelProperty =
         AvaloniaProperty.Register<TextField, bool>(nameof(FloatingLabel));
 
+    /// <summary>Identifies the <see cref="ShrinkLabel"/> property.</summary>
+    public static readonly StyledProperty<bool> ShrinkLabelProperty =
+        AvaloniaProperty.Register<TextField, bool>(nameof(ShrinkLabel));
+
     private TextBox? _textBox;
     private Border? _inputBorder;
     private Border? _labelHost;
     private Text? _label;
+    private Text? _restingLabel;
     private Text? _helper;
     private ContentPresenter? _startAdornment;
     private ContentPresenter? _endAdornment;
@@ -84,6 +89,7 @@ public class TextField : TemplatedControl
     private IDisposable? _borderBrush;
     private IDisposable? _background;
     private IDisposable? _labelForeground;
+    private IDisposable? _restingLabelForeground;
     private IDisposable? _helperForeground;
 
     /// <summary>The text value (two-way). Mirrors the reference API's <c>Text</c>.</summary>
@@ -184,6 +190,13 @@ public class TextField : TemplatedControl
         set => SetValue(FloatingLabelProperty, value);
     }
 
+    /// <summary>When true, the label stays floated above the field even when empty and unfocused.</summary>
+    public bool ShrinkLabel
+    {
+        get => GetValue(ShrinkLabelProperty);
+        set => SetValue(ShrinkLabelProperty, value);
+    }
+
     /// <summary>Runs validation, updates <see cref="Error"/>/<see cref="ErrorText"/>, and returns the error (or null).</summary>
     public string? Validate()
     {
@@ -213,6 +226,7 @@ public class TextField : TemplatedControl
         _inputBorder = e.NameScope.Find("PART_InputBorder") as Border;
         _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _label = e.NameScope.Find("PART_Label") as Text;
+        _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _startAdornment = e.NameScope.Find("PART_StartAdornment") as ContentPresenter;
         _endAdornment = e.NameScope.Find("PART_EndAdornment") as ContentPresenter;
@@ -221,7 +235,6 @@ public class TextField : TemplatedControl
         {
             FieldChrome.ResetInnerTextBox(_textBox);
             _textBox.Bind(TextBox.TextProperty, new Binding(nameof(Text)) { Source = this, Mode = BindingMode.TwoWay });
-            _textBox.Bind(TextBox.PlaceholderTextProperty, new Binding(nameof(Placeholder)) { Source = this });
             _textBox.Bind(TextBox.IsReadOnlyProperty, new Binding(nameof(ReadOnly)) { Source = this });
             _textBox.GotFocus += OnFocusChanged;
             _textBox.LostFocus += OnFocusChanged;
@@ -244,7 +257,9 @@ public class TextField : TemplatedControl
 
         if (change.Property == LabelProperty || change.Property == HelperTextProperty ||
             change.Property == ErrorTextProperty || change.Property == ErrorProperty ||
-            change.Property == FloatingLabelProperty || change.Property == TextProperty)
+            change.Property == FloatingLabelProperty || change.Property == ShrinkLabelProperty ||
+            change.Property == PlaceholderProperty || change.Property == TextProperty ||
+            change.Property == ColorProperty)
         {
             ApplyLabels();
         }
@@ -269,20 +284,40 @@ public class TextField : TemplatedControl
         }
 
         ApplyChrome();
+        ApplyLabels();
     }
 
     private void ApplyLabels()
     {
-        var muted = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
+        var labelForeground = LabelForegroundKey();
+        var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
+        var hasLabel = !string.IsNullOrEmpty(Label);
+        var hasText = !string.IsNullOrEmpty(Text);
+        var floating = hasLabel && (ShrinkLabel || _focused || hasText);
+        var resting = hasLabel && !floating && !FloatingLabel;
 
         if (_label is not null)
         {
             _label.Text = Label;
-            _label.IsVisible = !string.IsNullOrEmpty(Label) && (!FloatingLabel || _focused || !string.IsNullOrEmpty(Text));
+            _label.IsVisible = floating;
             _labelForeground?.Dispose();
-            _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
+            _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
         }
-        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, _label?.IsVisible == true);
+
+        if (_restingLabel is not null)
+        {
+            _restingLabel.Text = Label;
+            _restingLabel.IsVisible = resting;
+            _restingLabelForeground?.Dispose();
+            _restingLabelForeground = _restingLabel.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
+        }
+
+        if (_textBox is not null)
+        {
+            _textBox.PlaceholderText = resting ? null : Placeholder;
+        }
+
+        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, floating);
 
         if (_helper is not null)
         {
@@ -290,8 +325,24 @@ public class TextField : TemplatedControl
             _helper.Text = text;
             _helper.IsVisible = !string.IsNullOrEmpty(text);
             _helperForeground?.Dispose();
-            _helperForeground = _helper.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
+            _helperForeground = _helper.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(helperForeground));
         }
+    }
+
+    private string LabelForegroundKey()
+    {
+        if (Error)
+        {
+            return LoamTokens.Error;
+        }
+
+        if (_focused)
+        {
+            var paletteName = Color.ToPaletteName();
+            return paletteName is null ? LoamTokens.Primary : LoamTokens.Palette(paletteName);
+        }
+
+        return LoamTokens.TextSecondary;
     }
 
     private void ApplyAdornments()

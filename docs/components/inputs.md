@@ -88,11 +88,12 @@ on focus and switches to the error color when `Error` is set. Validates automati
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `Text` | `string?` | `null` | The text value (two-way). |
-| `Label` | `string?` | `null` | Floating label above the field. |
-| `Placeholder` | `string?` | `null` | Placeholder text shown when the field is empty. |
+| `Label` | `string?` | `null` | Label shown inside the empty field, then floated when focused or filled. |
+| `Placeholder` | `string?` | `null` | Hint shown when the field is empty and the label is not resting inside the field. |
 | `StartAdornment` | `object?` | `null` | Content shown before the text box inside the field chrome. |
 | `EndAdornment` | `object?` | `null` | Content shown after the text box inside the field chrome. |
 | `FloatingLabel` | `bool` | `false` | Keeps the label hidden until the field has focus or text. |
+| `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when the field is empty and unfocused. |
 | `HelperText` | `string?` | `null` | Hint shown below the field. |
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `Variant` | `Variant` | `Variant.Outlined` | Visual chrome style (`Text`, `Filled`, `Outlined`). |
@@ -122,7 +123,7 @@ var amount = new TextField
     Label = "Amount",
     StartAdornment = new TextBlock { Text = "$" },
     EndAdornment = new TextBlock { Text = "USD" },
-    FloatingLabel = true,
+    ShrinkLabel = true,
 };
 ```
 

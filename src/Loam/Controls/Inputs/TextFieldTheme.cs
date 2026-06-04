@@ -30,11 +30,21 @@ internal static class TextFieldTheme
                 IsVisible = false,
             }.Named("PART_Label", scope);
 
+            var restingLabel = new Text
+            {
+                Typo = Typo.Body1,
+                Color = LoamColor.Inherit,
+                IsHitTestVisible = false,
+                IsVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+            }.Named("PART_RestingLabel", scope);
+
             var textBox = new TextBox
             {
                 BorderThickness = default,
                 BorderBrush = Brushes.Transparent,
                 Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Padding = default,
                 MinHeight = 24,
                 VerticalContentAlignment = VerticalAlignment.Center,
@@ -57,10 +67,11 @@ internal static class TextFieldTheme
             }.Named("PART_EndAdornment", scope);
             DockPanel.SetDock(endAdornment, Dock.Right);
 
+            var textLayer = new Avalonia.Controls.Grid { Children = { textBox, restingLabel } };
             var inputBorder = new Border
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, textBox } },
+                Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, textLayer } },
             }.Named("PART_InputBorder", scope);
             var labelHost = FieldChrome.BuildLabelHost(label, field, scope);
             var fieldSurface = new Panel
