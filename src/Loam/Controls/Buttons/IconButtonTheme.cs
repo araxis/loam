@@ -56,7 +56,9 @@ internal static class IconButtonTheme
             }.Named("PART_Icon", scope);
             icon.Bind(Icon.SizeProperty, button.GetObservable(Button.SizeProperty));
 
-            var border = new AC.Border { Child = icon }.Named("PART_Root", scope);
+            var ripple = new Ripple { Child = icon }.Named("PART_Ripple", scope);
+
+            var border = new AC.Border { Child = ripple }.Named("PART_Root", scope);
             border.Bind(AC.Border.BackgroundProperty, button.GetObservable(TemplatedControl.BackgroundProperty));
             border.Bind(AC.Border.BorderBrushProperty, button.GetObservable(TemplatedControl.BorderBrushProperty));
             border.Bind(AC.Border.BorderThicknessProperty, button.GetObservable(TemplatedControl.BorderThicknessProperty));

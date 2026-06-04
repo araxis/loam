@@ -15,7 +15,7 @@ public sealed class ShellView : UserControl
 
     public ShellView()
     {
-        _drawer = new Drawer { Content = BuildNav() };
+        _drawer = new Drawer { Mode = DrawerMode.Temporary, Content = BuildNav() };
         Content = new Layout
         {
             AppBar = new AppBar { Color = LoamColor.Primary, Content = BuildToolbar() },

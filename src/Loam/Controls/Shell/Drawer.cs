@@ -5,6 +5,16 @@ using Avalonia.Controls;
 
 namespace Loam.Controls;
 
+/// <summary>The layout behavior for a <see cref="Drawer"/>.</summary>
+public enum DrawerMode
+{
+    /// <summary>The drawer reserves horizontal layout space.</summary>
+    Docked,
+
+    /// <summary>The drawer floats over the main content and may show a scrim.</summary>
+    Temporary,
+}
+
 /// <summary>
 /// A side navigation panel, mirroring the reference API's <c>Drawer</c>. Left-anchored; toggling
 /// <see cref="Open"/> slides it between <see cref="DrawerWidth"/> and 0, and <see cref="Mini"/>
@@ -27,6 +37,18 @@ public class Drawer : ContentControl
     /// <summary>Identifies the <see cref="MiniWidth"/> property.</summary>
     public static readonly StyledProperty<double> MiniWidthProperty =
         AvaloniaProperty.Register<Drawer, double>(nameof(MiniWidth), 56);
+
+    /// <summary>Identifies the <see cref="Mode"/> property.</summary>
+    public static readonly StyledProperty<DrawerMode> ModeProperty =
+        AvaloniaProperty.Register<Drawer, DrawerMode>(nameof(Mode), DrawerMode.Docked);
+
+    /// <summary>Identifies the <see cref="ShowScrim"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowScrimProperty =
+        AvaloniaProperty.Register<Drawer, bool>(nameof(ShowScrim), true);
+
+    /// <summary>Identifies the <see cref="CloseOnScrimClick"/> property.</summary>
+    public static readonly StyledProperty<bool> CloseOnScrimClickProperty =
+        AvaloniaProperty.Register<Drawer, bool>(nameof(CloseOnScrimClick), true);
 
     /// <summary>Creates the drawer.</summary>
     public Drawer()
@@ -67,6 +89,27 @@ public class Drawer : ContentControl
         set => SetValue(MiniWidthProperty, value);
     }
 
+    /// <summary>Whether the drawer is docked in layout or temporary over content.</summary>
+    public DrawerMode Mode
+    {
+        get => GetValue(ModeProperty);
+        set => SetValue(ModeProperty, value);
+    }
+
+    /// <summary>Whether a temporary drawer displays a scrim over content when open.</summary>
+    public bool ShowScrim
+    {
+        get => GetValue(ShowScrimProperty);
+        set => SetValue(ShowScrimProperty, value);
+    }
+
+    /// <summary>Whether clicking a temporary drawer scrim closes the drawer.</summary>
+    public bool CloseOnScrimClick
+    {
+        get => GetValue(CloseOnScrimClickProperty);
+        set => SetValue(CloseOnScrimClickProperty, value);
+    }
+
     /// <summary>The target width for the given open/mini state.</summary>
     public static double ResolveWidth(bool open, bool mini, double width, double miniWidth) =>
         !open ? 0 : mini ? miniWidth : width;
@@ -79,9 +122,11 @@ public class Drawer : ContentControl
     {
         base.OnPropertyChanged(change);
         if (change.Property == OpenProperty || change.Property == MiniProperty ||
-            change.Property == DrawerWidthProperty || change.Property == MiniWidthProperty)
+            change.Property == DrawerWidthProperty || change.Property == MiniWidthProperty ||
+            change.Property == ModeProperty)
         {
             Width = ResolveWidth(Open, Mini, DrawerWidth, MiniWidth);
+            InvalidateMeasure();
         }
     }
 }

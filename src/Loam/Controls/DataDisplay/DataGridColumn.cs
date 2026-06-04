@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Avalonia.Layout;
 
 namespace Loam.Controls;
@@ -33,6 +34,15 @@ public sealed class DataGridColumn<T>
 
     /// <summary>Horizontal alignment of the cell content. Mirrors the reference API's <c>CellStyle</c> alignment.</summary>
     public HorizontalAlignment Align { get; init; } = HorizontalAlignment.Left;
+
+    /// <summary>Optional custom cell content factory.</summary>
+    public Func<T, Control>? CellTemplate { get; init; }
+
+    /// <summary>Whether the cell renders as an editable text box.</summary>
+    public bool Editable { get; init; }
+
+    /// <summary>Receives edited text for editable cells.</summary>
+    public Action<T, string?>? SetText { get; init; }
 
     /// <summary>Formats a row's cell value to display text.</summary>
     public string Display(T item)

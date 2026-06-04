@@ -127,6 +127,24 @@ public class PrimitivesTests
     }
 
     [AvaloniaFact]
+    public void Button_templates_include_ripple_hosts()
+    {
+        var button = new Loam.Controls.Button { Content = "Save" };
+        Show(button);
+        button.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        button.GetVisualDescendants().OfType<Ripple>().ShouldNotBeEmpty();
+
+        var iconButton = new IconButton { Icon = Icons.Material.Filled.Settings };
+        Show(iconButton);
+        iconButton.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        iconButton.GetVisualDescendants().OfType<Ripple>().ShouldNotBeEmpty();
+    }
+
+    [AvaloniaFact]
     public void IconButton_colors_icon_via_inherited_foreground()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;

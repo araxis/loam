@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -93,6 +94,40 @@ public class InputTests
     }
 
     [AvaloniaFact]
+    public void TextField_supports_adornments_and_floating_label()
+    {
+        var start = new TextBlock { Text = "$" };
+        var end = new TextBlock { Text = "USD" };
+        var field = new TextField
+        {
+            Label = "Amount",
+            FloatingLabel = true,
+            StartAdornment = start,
+            EndAdornment = end,
+        };
+        Show(field);
+        field.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
+        label.IsVisible.ShouldBeFalse();
+
+        var startPresenter = field.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_StartAdornment");
+        startPresenter.IsVisible.ShouldBeTrue();
+        startPresenter.Content.ShouldBeSameAs(start);
+
+        var endPresenter = field.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_EndAdornment");
+        endPresenter.IsVisible.ShouldBeTrue();
+        endPresenter.Content.ShouldBeSameAs(end);
+
+        field.Text = "20";
+        Dispatcher.UIThread.RunJobs();
+        label.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
     public void TextField_error_colors_border_and_shows_error_text()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
@@ -174,6 +209,38 @@ public class InputTests
         select.Value = 2;
         Dispatcher.UIThread.RunJobs();
         display.Text.ShouldBe("Two");
+    }
+
+    [AvaloniaFact]
+    public void Select_multiselect_display_uses_selected_values()
+    {
+        var select = new Select { MultiSelect = true, Placeholder = "Pick many" };
+        select.Items.Add(new SelectItem("One", 1));
+        select.Items.Add(new SelectItem("Two", 2));
+        select.Items.Add(new SelectItem("Three", 3));
+        select.SelectedValues.Add(1);
+        select.SelectedValues.Add(3);
+        Show(select);
+        select.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var display = select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Display");
+        display.Text.ShouldBe("One, Three");
+    }
+
+    [AvaloniaFact]
+    public void Select_display_formatter_overrides_item_text()
+    {
+        var select = new Select { DisplayTextFunc = item => $"#{item.Value}" };
+        select.Items.Add(new SelectItem("One", 1));
+        select.Items.Add(new SelectItem("Two", 2));
+        select.Value = 2;
+        Show(select);
+        select.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var display = select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Display");
+        display.Text.ShouldBe("#2");
     }
 
     [Fact]

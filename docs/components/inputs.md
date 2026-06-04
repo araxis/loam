@@ -24,6 +24,9 @@ on focus and switches to the error color when `Error` is set. Validates automati
 | `Text` | `string?` | `null` | The text value (two-way). |
 | `Label` | `string?` | `null` | Floating label above the field. |
 | `Placeholder` | `string?` | `null` | Placeholder text shown when the field is empty. |
+| `StartAdornment` | `object?` | `null` | Content shown before the text box inside the field chrome. |
+| `EndAdornment` | `object?` | `null` | Content shown after the text box inside the field chrome. |
+| `FloatingLabel` | `bool` | `false` | Keeps the label hidden until the field has focus or text. |
 | `HelperText` | `string?` | `null` | Hint shown below the field. |
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `Variant` | `Variant` | `Variant.Outlined` | Visual chrome style (`Text`, `Filled`, `Outlined`). |
@@ -46,6 +49,14 @@ var field = new TextField
     Color       = LoamColor.Primary,
     Required    = true,
     Validation  = v => v?.Contains('@') == true ? null : "Must be a valid email",
+};
+
+var amount = new TextField
+{
+    Label = "Amount",
+    StartAdornment = new TextBlock { Text = "$" },
+    EndAdornment = new TextBlock { Text = "USD" },
+    FloatingLabel = true,
 };
 ```
 
@@ -159,6 +170,10 @@ Plain data class representing one option.
 | `Label` | `string?` | `null` | Field label. |
 | `Placeholder` | `string?` | `null` | Text shown when nothing is selected. |
 | `Items` | `ObservableCollection<SelectItem>` | empty | The available options. |
+| `MultiSelect` | `bool` | `false` | Enables toggling several option values without closing the flyout. |
+| `SelectedValues` | `ObservableCollection<object?>` | empty | Selected values used when `MultiSelect` is enabled. |
+| `DisplayTextFunc` | `Func<SelectItem, string>?` | `null` | Custom text formatter for the field and default rows. |
+| `ItemTemplate` | `Func<SelectItem, Control>?` | `null` | Custom row content for the flyout. |
 
 ```csharp
 using Loam;
@@ -176,6 +191,21 @@ var select = new Select
     },
 };
 select.Items.Add(new SelectItem("Brazil", "br"));
+
+var tags = new Select
+{
+    Label = "Tags",
+    MultiSelect = true,
+    DisplayTextFunc = item => item.Text?.ToUpperInvariant() ?? "",
+    Items =
+    {
+        new SelectItem("Design", "design"),
+        new SelectItem("Build", "build"),
+        new SelectItem("Review", "review"),
+    },
+};
+tags.SelectedValues.Add("design");
+tags.SelectedValues.Add("review");
 ```
 
 ---
@@ -197,6 +227,9 @@ text (case-insensitive); choosing one fills the field.
 | `Color` | `LoamColor` | `LoamColor.Primary` | Focus accent color. |
 | `MaxItems` | `int` | `10` | Maximum suggestions shown in the flyout. |
 | `Items` | `ObservableCollection<string>` | empty | The full candidate list. |
+| `SearchFunc` | `Func<string?, IEnumerable<string>>?` | `null` | Synchronous search source used instead of `Items` filtering. |
+| `SearchAsync` | `Func<string?, CancellationToken, Task<IEnumerable<string>>>?` | `null` | Async search source; takes precedence over `SearchFunc`. |
+| `ItemTemplate` | `Func<string, Control>?` | `null` | Custom row content for suggestions. |
 | **Static** `Filter(items, text, max)` | `IReadOnlyList<string>` | — | Returns up to `max` entries that contain `text` (case-insensitive). |
 
 ```csharp
@@ -209,6 +242,16 @@ var ac = new Autocomplete
     MaxItems = 5,
     Variant  = Variant.Outlined,
     Items    = { "Avalonia", "WPF", "WinUI", "MAUI", "Uno Platform" },
+};
+
+var remote = new Autocomplete
+{
+    Label = "Customer",
+    SearchAsync = async (text, cancellationToken) =>
+    {
+        await Task.Delay(50, cancellationToken);
+        return Customers.Where(c => c.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
+    },
 };
 ```
 

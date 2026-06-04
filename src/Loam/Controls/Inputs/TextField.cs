@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
@@ -61,10 +62,24 @@ public class TextField : TemplatedControl
     public static readonly StyledProperty<Func<string?, string?>?> ValidationProperty =
         AvaloniaProperty.Register<TextField, Func<string?, string?>?>(nameof(Validation));
 
+    /// <summary>Identifies the <see cref="StartAdornment"/> property.</summary>
+    public static readonly StyledProperty<object?> StartAdornmentProperty =
+        AvaloniaProperty.Register<TextField, object?>(nameof(StartAdornment));
+
+    /// <summary>Identifies the <see cref="EndAdornment"/> property.</summary>
+    public static readonly StyledProperty<object?> EndAdornmentProperty =
+        AvaloniaProperty.Register<TextField, object?>(nameof(EndAdornment));
+
+    /// <summary>Identifies the <see cref="FloatingLabel"/> property.</summary>
+    public static readonly StyledProperty<bool> FloatingLabelProperty =
+        AvaloniaProperty.Register<TextField, bool>(nameof(FloatingLabel));
+
     private TextBox? _textBox;
     private Border? _inputBorder;
     private Text? _label;
     private Text? _helper;
+    private ContentPresenter? _startAdornment;
+    private ContentPresenter? _endAdornment;
     private bool _focused;
     private IDisposable? _borderBrush;
     private IDisposable? _background;
@@ -148,6 +163,27 @@ public class TextField : TemplatedControl
         set => SetValue(ValidationProperty, value);
     }
 
+    /// <summary>Optional content shown before the editable text.</summary>
+    public object? StartAdornment
+    {
+        get => GetValue(StartAdornmentProperty);
+        set => SetValue(StartAdornmentProperty, value);
+    }
+
+    /// <summary>Optional content shown after the editable text.</summary>
+    public object? EndAdornment
+    {
+        get => GetValue(EndAdornmentProperty);
+        set => SetValue(EndAdornmentProperty, value);
+    }
+
+    /// <summary>When true, the label is only shown once the field is focused or has a value.</summary>
+    public bool FloatingLabel
+    {
+        get => GetValue(FloatingLabelProperty);
+        set => SetValue(FloatingLabelProperty, value);
+    }
+
     /// <summary>Runs validation, updates <see cref="Error"/>/<see cref="ErrorText"/>, and returns the error (or null).</summary>
     public string? Validate()
     {
@@ -177,6 +213,8 @@ public class TextField : TemplatedControl
         _inputBorder = e.NameScope.Find("PART_InputBorder") as Border;
         _label = e.NameScope.Find("PART_Label") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
+        _startAdornment = e.NameScope.Find("PART_StartAdornment") as ContentPresenter;
+        _endAdornment = e.NameScope.Find("PART_EndAdornment") as ContentPresenter;
 
         if (_textBox is not null)
         {
@@ -188,6 +226,7 @@ public class TextField : TemplatedControl
         }
 
         ApplyLabels();
+        ApplyAdornments();
         ApplyChrome();
     }
 
@@ -202,9 +241,15 @@ public class TextField : TemplatedControl
         }
 
         if (change.Property == LabelProperty || change.Property == HelperTextProperty ||
-            change.Property == ErrorTextProperty || change.Property == ErrorProperty)
+            change.Property == ErrorTextProperty || change.Property == ErrorProperty ||
+            change.Property == FloatingLabelProperty || change.Property == TextProperty)
         {
             ApplyLabels();
+        }
+
+        if (change.Property == StartAdornmentProperty || change.Property == EndAdornmentProperty)
+        {
+            ApplyAdornments();
         }
     }
 
@@ -226,7 +271,7 @@ public class TextField : TemplatedControl
         if (_label is not null)
         {
             _label.Text = Label;
-            _label.IsVisible = !string.IsNullOrEmpty(Label);
+            _label.IsVisible = !string.IsNullOrEmpty(Label) && (!FloatingLabel || _focused || !string.IsNullOrEmpty(Text));
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
@@ -238,6 +283,21 @@ public class TextField : TemplatedControl
             _helper.IsVisible = !string.IsNullOrEmpty(text);
             _helperForeground?.Dispose();
             _helperForeground = _helper.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
+        }
+    }
+
+    private void ApplyAdornments()
+    {
+        if (_startAdornment is not null)
+        {
+            _startAdornment.Content = StartAdornment;
+            _startAdornment.IsVisible = StartAdornment is not null;
+        }
+
+        if (_endAdornment is not null)
+        {
+            _endAdornment.Content = EndAdornment;
+            _endAdornment.IsVisible = EndAdornment is not null;
         }
     }
 

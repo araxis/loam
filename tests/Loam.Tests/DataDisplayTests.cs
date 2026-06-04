@@ -14,6 +14,11 @@ public class DataDisplayTests
 {
     private sealed record Person(string Name, int Age);
 
+    private sealed class EditablePerson
+    {
+        public string Name { get; set; } = "";
+    }
+
     private static void Show(Control content)
     {
         new Window { Width = 500, Height = 400, Content = content }.Show();
@@ -35,6 +40,17 @@ public class DataDisplayTests
         DataGrids.Sort(people, ageColumn, true).Select(p => p.Age).ShouldBe(descending);
     }
 
+    [Fact]
+    public void DataGrids_filter_uses_supplied_predicate()
+    {
+        var people = new List<Person> { new("Alice", 25), new("Bob", 30), new("Alicia", 40) };
+        var result = DataGrids.Filter(people, "ali",
+            (person, text) => person.Name.Contains(text, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        result.Select(p => p.Name).ShouldBe(["Alice", "Alicia"]);
+        DataGrids.Filter(people, "", (_, _) => false).ShouldBe(people);
+    }
+
     [AvaloniaFact]
     public void DataGrid_renders_headers_and_body_cells()
     {
@@ -49,6 +65,59 @@ public class DataDisplayTests
         texts.ShouldContain("Name");
         texts.ShouldContain("Alice");
         texts.ShouldContain("30");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_filter_text_limits_rendered_rows()
+    {
+        var grid = new DataGrid<Person>
+        {
+            FilterText = "ali",
+            Filter = (person, text) => person.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25), new("Bob", 30), new("Alicia", 40) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("Alice");
+        texts.ShouldContain("Alicia");
+        texts.ShouldNotContain("Bob");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_virtualize_limits_unpaged_rows()
+    {
+        var grid = new DataGrid<Person> { Virtualize = true, MaxRenderedRows = 3 };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = Enumerable.Range(1, 10).Select(i => new Person($"Person {i}", i)).ToList();
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var rendered = grid.GetVisualDescendants().OfType<Text>()
+            .Count(t => t.Text?.StartsWith("Person ", StringComparison.Ordinal) == true);
+        rendered.ShouldBe(3);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_editable_column_updates_item()
+    {
+        var person = new EditablePerson { Name = "Alice" };
+        var grid = new DataGrid<EditablePerson>();
+        grid.Columns.Add(new DataGridColumn<EditablePerson>("Name", p => p.Name)
+        {
+            Editable = true,
+            SetText = (item, text) => item.Name = text ?? "",
+        });
+        grid.Items = new List<EditablePerson> { person };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = grid.GetVisualDescendants().OfType<TextBox>().First();
+        editor.Text = "Alicia";
+        Dispatcher.UIThread.RunJobs();
+        person.Name.ShouldBe("Alicia");
     }
 
     [AvaloniaFact]

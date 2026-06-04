@@ -26,6 +26,22 @@ public class MonthCalendar : Decorator
     public static readonly StyledProperty<DateTime> DisplayMonthProperty =
         AvaloniaProperty.Register<MonthCalendar, DateTime>(nameof(DisplayMonth));
 
+    /// <summary>Identifies the <see cref="MinDate"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> MinDateProperty =
+        AvaloniaProperty.Register<MonthCalendar, DateTime?>(nameof(MinDate));
+
+    /// <summary>Identifies the <see cref="MaxDate"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> MaxDateProperty =
+        AvaloniaProperty.Register<MonthCalendar, DateTime?>(nameof(MaxDate));
+
+    /// <summary>Identifies the <see cref="RangeStart"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> RangeStartProperty =
+        AvaloniaProperty.Register<MonthCalendar, DateTime?>(nameof(RangeStart));
+
+    /// <summary>Identifies the <see cref="RangeEnd"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> RangeEndProperty =
+        AvaloniaProperty.Register<MonthCalendar, DateTime?>(nameof(RangeEnd));
+
     /// <summary>Creates the calendar showing the current month.</summary>
     public MonthCalendar()
     {
@@ -51,11 +67,41 @@ public class MonthCalendar : Decorator
         set => SetValue(DisplayMonthProperty, value);
     }
 
+    /// <summary>First selectable date.</summary>
+    public DateTime? MinDate
+    {
+        get => GetValue(MinDateProperty);
+        set => SetValue(MinDateProperty, value);
+    }
+
+    /// <summary>Last selectable date.</summary>
+    public DateTime? MaxDate
+    {
+        get => GetValue(MaxDateProperty);
+        set => SetValue(MaxDateProperty, value);
+    }
+
+    /// <summary>Range highlight start.</summary>
+    public DateTime? RangeStart
+    {
+        get => GetValue(RangeStartProperty);
+        set => SetValue(RangeStartProperty, value);
+    }
+
+    /// <summary>Range highlight end.</summary>
+    public DateTime? RangeEnd
+    {
+        get => GetValue(RangeEndProperty);
+        set => SetValue(RangeEndProperty, value);
+    }
+
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == SelectedDateProperty || change.Property == DisplayMonthProperty)
+        if (change.Property == SelectedDateProperty || change.Property == DisplayMonthProperty ||
+            change.Property == MinDateProperty || change.Property == MaxDateProperty ||
+            change.Property == RangeStartProperty || change.Property == RangeEndProperty)
         {
             Build();
         }
@@ -121,6 +167,8 @@ public class MonthCalendar : Decorator
     {
         var isSelected = SelectedDate?.Date == date;
         var isToday = date == today;
+        var inRange = IsInRange(date, RangeStart, RangeEnd);
+        var disabled = IsDisabled(date, MinDate, MaxDate);
 
         var label = new Text
         {
@@ -137,8 +185,9 @@ public class MonthCalendar : Decorator
             Margin = new Thickness(2),
             CornerRadius = new CornerRadius(16),
             Child = label,
-            Cursor = HandCursor,
+            Cursor = disabled ? null : HandCursor,
             Background = Brushes.Transparent,
+            Opacity = disabled ? 0.35 : 1,
         };
 
         if (isSelected)
@@ -146,13 +195,39 @@ public class MonthCalendar : Decorator
             cell.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Primary));
             label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.PrimaryContrastText));
         }
+        else if (inRange)
+        {
+            cell.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteHover(nameof(LoamPalette.Primary))));
+            label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.Primary));
+        }
         else if (isToday)
         {
             cell.BorderThickness = new Thickness(1);
             cell.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.Primary));
         }
 
-        cell.PointerPressed += (_, _) => DateSelected?.Invoke(date);
+        if (!disabled)
+        {
+            cell.PointerPressed += (_, _) => DateSelected?.Invoke(date);
+        }
+
         return cell;
+    }
+
+    /// <summary>Whether <paramref name="date"/> is outside the selectable bounds.</summary>
+    public static bool IsDisabled(DateTime date, DateTime? min, DateTime? max) =>
+        (min is not null && date.Date < min.Value.Date) || (max is not null && date.Date > max.Value.Date);
+
+    /// <summary>Whether <paramref name="date"/> is inside the given range.</summary>
+    public static bool IsInRange(DateTime date, DateTime? start, DateTime? end)
+    {
+        if (start is null || end is null)
+        {
+            return false;
+        }
+
+        var min = start.Value.Date <= end.Value.Date ? start.Value.Date : end.Value.Date;
+        var max = start.Value.Date <= end.Value.Date ? end.Value.Date : start.Value.Date;
+        return date.Date >= min && date.Date <= max;
     }
 }

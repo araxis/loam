@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Loam;
@@ -37,7 +39,26 @@ internal static class TextFieldTheme
                 MinHeight = 24,
             }.Named("PART_TextBox", scope);
 
-            var inputBorder = new Border { Child = textBox }.Named("PART_InputBorder", scope);
+            var startAdornment = new ContentPresenter
+            {
+                IsVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0),
+            }.Named("PART_StartAdornment", scope);
+            DockPanel.SetDock(startAdornment, Dock.Left);
+
+            var endAdornment = new ContentPresenter
+            {
+                IsVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 0, 0),
+            }.Named("PART_EndAdornment", scope);
+            DockPanel.SetDock(endAdornment, Dock.Right);
+
+            var inputBorder = new Border
+            {
+                Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, textBox } },
+            }.Named("PART_InputBorder", scope);
 
             var helper = new Text
             {

@@ -30,6 +30,14 @@ public class DatePicker : TemplatedControl
     public static readonly StyledProperty<string> DateFormatProperty =
         AvaloniaProperty.Register<DatePicker, string>(nameof(DateFormat), "d");
 
+    /// <summary>Identifies the <see cref="MinDate"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> MinDateProperty =
+        AvaloniaProperty.Register<DatePicker, DateTime?>(nameof(MinDate));
+
+    /// <summary>Identifies the <see cref="MaxDate"/> property.</summary>
+    public static readonly StyledProperty<DateTime?> MaxDateProperty =
+        AvaloniaProperty.Register<DatePicker, DateTime?>(nameof(MaxDate));
+
     private Border? _box;
     private Text? _display;
     private Text? _label;
@@ -62,6 +70,20 @@ public class DatePicker : TemplatedControl
     {
         get => GetValue(DateFormatProperty);
         set => SetValue(DateFormatProperty, value);
+    }
+
+    /// <summary>First selectable date.</summary>
+    public DateTime? MinDate
+    {
+        get => GetValue(MinDateProperty);
+        set => SetValue(MinDateProperty, value);
+    }
+
+    /// <summary>Last selectable date.</summary>
+    public DateTime? MaxDate
+    {
+        get => GetValue(MaxDateProperty);
+        set => SetValue(MaxDateProperty, value);
     }
 
     /// <inheritdoc />
@@ -99,7 +121,7 @@ public class DatePicker : TemplatedControl
 
     private void Open()
     {
-        var calendar = new MonthCalendar { SelectedDate = Date };
+        var calendar = new MonthCalendar { SelectedDate = Date, MinDate = MinDate, MaxDate = MaxDate };
         if (Date is { } date)
         {
             calendar.DisplayMonth = new DateTime(date.Year, date.Month, 1);
@@ -107,8 +129,11 @@ public class DatePicker : TemplatedControl
 
         calendar.DateSelected += picked =>
         {
-            Date = picked;
-            _flyout?.Hide();
+            if (!MonthCalendar.IsDisabled(picked, MinDate, MaxDate))
+            {
+                Date = picked;
+                _flyout?.Hide();
+            }
         };
 
         _flyout = new Flyout

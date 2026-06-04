@@ -20,6 +20,8 @@ Mirrors the reference API's `DatePicker`. An outlined box displays the selected 
 | `Label` | `string?` | `null` | Field label rendered above the box. |
 | `Placeholder` | `string?` | `"Select a date"` | Text shown when `Date` is `null`. |
 | `DateFormat` | `string` | `"d"` | .NET date format string used to render `Date`. |
+| `MinDate` | `DateTime?` | `null` | First selectable date. |
+| `MaxDate` | `DateTime?` | `null` | Last selectable date. |
 
 ### Example
 
@@ -31,6 +33,8 @@ var picker = new Loam.Controls.DatePicker
 {
     Label = "Start date",
     DateFormat = "MMM d, yyyy",
+    MinDate = DateTime.Today,
+    MaxDate = DateTime.Today.AddMonths(6),
 };
 
 picker.Bind(Loam.Controls.DatePicker.DateProperty, viewModel.GetObservable(vm => vm.StartDate));
@@ -80,8 +84,12 @@ Mirrors the reference API's `ColorPicker` (palette mode). An outlined box displa
 |---|---|---|---|
 | `Value` | `Color` | `#594AE2` | The selected color. Two-way binding. |
 | `Label` | `string?` | `null` | Field label rendered above the box. |
+| `ShowAlpha` | `bool` | `false` | Shows an alpha slider in the flyout and displays `#AARRGGBB`. |
 | `DefaultPalette` _(static)_ | `IReadOnlyList<Color>` | 20 Material 500-ish hues + neutrals | The curated palette shown in the flyout. |
 | `ToHex(Color)` _(static)_ | `string` | — | Formats a `Color` as an upper-case `#RRGGBB` string. |
+| `ToHexWithAlpha(Color)` _(static)_ | `string` | — | Formats a `Color` as an upper-case `#AARRGGBB` string. |
+| `FromHsv(h, s, v, alpha)` _(static)_ | `Color` | — | Converts hue degrees and unit saturation/value to `Color`. |
+| `ToHsv(Color)` _(static)_ | `HsvColor` | — | Converts a `Color` to hue/saturation/value. |
 
 ### Example
 
@@ -93,12 +101,15 @@ var picker = new Loam.Controls.ColorPicker
 {
     Label = "Accent color",
     Value = Color.Parse("#2196F3"),
+    ShowAlpha = true,
 };
 
 picker.Bind(Loam.Controls.ColorPicker.ValueProperty, viewModel.GetObservable(vm => vm.AccentColor));
 
 // Convert programmatically
 string hex = Loam.Controls.ColorPicker.ToHex(picker.Value); // e.g. "#2196F3"
+string argb = Loam.Controls.ColorPicker.ToHexWithAlpha(picker.Value); // e.g. "#FF2196F3"
+Color vividGreen = Loam.Controls.ColorPicker.FromHsv(120, 1, 1);
 ```
 
 ---
@@ -116,6 +127,8 @@ Mirrors the reference API's `DateRangePicker`. An outlined box displays the sele
 | `Label` | `string?` | `null` | Field label rendered above the box. |
 | `Placeholder` | `string?` | `"Select a range"` | Text shown when no range is set. |
 | `DateFormat` | `string` | `"d"` | .NET date format string used to render start and end dates. |
+| `MinDate` | `DateTime?` | `null` | First selectable date. |
+| `MaxDate` | `DateTime?` | `null` | Last selectable date. |
 | `Format(start, end, fmt)` _(static)_ | `string?` | — | Returns a formatted `"start – end"` string, or just the start if `end` is `null`, or `null` when `start` is `null`. |
 
 ### Example
@@ -127,6 +140,8 @@ var picker = new DateRangePicker
 {
     Label = "Booking period",
     DateFormat = "MMM d",
+    MinDate = DateTime.Today,
+    MaxDate = DateTime.Today.AddMonths(3),
 };
 
 picker.Bind(DateRangePicker.StartProperty, viewModel.GetObservable(vm => vm.BookingStart));
@@ -148,7 +163,13 @@ A reusable Material month-grid control used internally by `DatePicker` and `Date
 |---|---|---|---|
 | `SelectedDate` | `DateTime?` | `null` | The highlighted day. |
 | `DisplayMonth` | `DateTime` | First day of the current month | The month currently rendered. |
+| `MinDate` | `DateTime?` | `null` | First selectable date. |
+| `MaxDate` | `DateTime?` | `null` | Last selectable date. |
+| `RangeStart` | `DateTime?` | `null` | Start of the highlighted range. |
+| `RangeEnd` | `DateTime?` | `null` | End of the highlighted range. |
 | `DateSelected` | `event Action<DateTime>?` | — | Raised when the user clicks a day cell. |
+| `IsDisabled(date, min, max)` _(static)_ | `bool` | — | Returns whether a date is outside the selectable bounds. |
+| `IsInRange(date, start, end)` _(static)_ | `bool` | — | Returns whether a date falls within a highlighted range. |
 
 ### Example
 
@@ -159,6 +180,10 @@ var calendar = new MonthCalendar
 {
     SelectedDate = DateTime.Today,
     DisplayMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1),
+    MinDate = DateTime.Today.AddDays(-7),
+    MaxDate = DateTime.Today.AddDays(30),
+    RangeStart = DateTime.Today,
+    RangeEnd = DateTime.Today.AddDays(5),
 };
 
 calendar.DateSelected += date =>

@@ -369,7 +369,7 @@ Equivalent of the reference API's `Layout`. A `ContentControl` that forms the ap
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `AppBar` | `object?` | `null` | The top app bar slot (typically an `AppBar`). |
-| `Drawer` | `object?` | `null` | The side drawer slot (typically a `Drawer`). |
+| `Drawer` | `object?` | `null` | The side drawer slot (typically a `Drawer`). Docked drawers reserve space; temporary drawers overlay content. |
 | `Content` | `object?` | `null` | The main content slot (inherited from `ContentControl`). |
 
 ---
@@ -400,6 +400,16 @@ Equivalent of the reference API's `Drawer`. A left-anchored `ContentControl` tha
 | `Mini` | `bool` | `false` | Collapses to `MiniWidth` when closed instead of hiding. |
 | `DrawerWidth` | `double` | `240` | Expanded width in pixels. |
 | `MiniWidth` | `double` | `56` | Collapsed (mini) width in pixels. |
+| `Mode` | `DrawerMode` | `DrawerMode.Docked` | `Docked` reserves layout space; `Temporary` overlays the main content. |
+| `ShowScrim` | `bool` | `true` | Shows a scrim behind a temporary drawer while open. |
+| `CloseOnScrimClick` | `bool` | `true` | Closes a temporary drawer when its scrim is clicked. |
+
+### DrawerMode
+
+| Value | Description |
+|---|---|
+| `Docked` | Drawer participates in layout and shifts `MainContent` to the right. |
+| `Temporary` | Drawer overlays `MainContent`; `Layout` shows the scrim between content and drawer. |
 
 ---
 
@@ -437,6 +447,20 @@ var drawer = new Drawer
         {
             new Button { Content = "Dashboard" },
             new Button { Content = "Settings" },
+        },
+    },
+};
+
+var temporaryDrawer = new Drawer
+{
+    Mode = DrawerMode.Temporary,
+    DrawerWidth = 280,
+    Content = new StackPanel
+    {
+        Children =
+        {
+            new Button { Content = "Inbox" },
+            new Button { Content = "Archive" },
         },
     },
 };

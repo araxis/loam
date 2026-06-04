@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-04 — v1.1 — Full component hardening pass
+
+**Done**
+- Inputs: `TextField` gained start/end adornments and optional floating-label behavior; `Select`
+  gained multi-select, selected-values display, formatter, and item-template hooks; `Autocomplete`
+  gained sync/async search delegates and templated suggestion rows.
+- Pickers: `DatePicker`, `DateRangePicker`, and `MonthCalendar` gained min/max constraints; range
+  calendars now highlight the selected span; `ColorPicker` gained alpha display plus HSV conversion
+  helpers.
+- Data display: `DataGrid<T>` gained filtering, custom filter predicates, unpaged render limiting,
+  custom cell templates, and editable text cells.
+- Shell/primitives: `Drawer` gained docked/temporary modes with scrim support in `Layout`; button and
+  icon-button templates now include ripple hosts automatically.
+- Docs, gallery examples, component inventory, and tests were updated for the new surface.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release -p:UseSharedCompilation=false /nodeReuse:false` passed with
+  isolated NuGet caches.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 60s` passed: 127 tests.
+
+**Next:** publish v1.1.0 through the repository pipeline once the branch is merged.
+
+---
+
 ## 2026-06-04 — v1.1 — Snackbar actions and limits
 
 **Done**
