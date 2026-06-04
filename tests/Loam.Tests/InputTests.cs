@@ -91,18 +91,69 @@ public class InputTests
     }
 
     [AvaloniaFact]
-    public void TextField_outlined_shows_label_and_border()
+    public void TextField_outlined_resting_label_sits_inside_when_empty()
     {
         var field = new TextField { Label = "Name", Variant = Variant.Outlined };
         Show(field);
         field.ApplyTemplate();
 
         Part(field, "PART_InputBorder").BorderThickness.ShouldBe(new Thickness(1));
+        Part(field, "PART_InputBorder").Margin.ShouldBe(default);
+        Part(field, "PART_LabelHost").IsVisible.ShouldBeFalse();
+        var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
+        label.Text.ShouldBe("Name");
+        label.IsVisible.ShouldBeFalse();
+
+        var restingLabel = field.GetVisualDescendants().OfType<Loam.Controls.Text>()
+            .First(t => t.Name == "PART_RestingLabel");
+        restingLabel.Text.ShouldBe("Name");
+        restingLabel.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void TextField_outlined_floats_label_when_focused_or_filled()
+    {
+        var field = new TextField { Label = "Name", Variant = Variant.Outlined };
+        Show(field);
+        field.ApplyTemplate();
+        var box = field.GetVisualDescendants().OfType<TextBox>().First();
+
+        box.Focus();
+        Dispatcher.UIThread.RunJobs();
+
         Part(field, "PART_InputBorder").Margin.Top.ShouldBe(7);
         Part(field, "PART_LabelHost").IsVisible.ShouldBeTrue();
         var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
         label.Text.ShouldBe("Name");
         label.IsVisible.ShouldBeTrue();
+        field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_RestingLabel")
+            .IsVisible.ShouldBeFalse();
+
+        box.Focusable.ShouldBeTrue();
+
+        var filled = new TextField { Label = "Email", Text = "a@b.com", Variant = Variant.Outlined };
+        Show(filled);
+        filled.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Part(filled, "PART_LabelHost").IsVisible.ShouldBeTrue();
+        filled.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_RestingLabel")
+            .IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void TextField_shrink_label_keeps_label_notched_when_empty()
+    {
+        var field = new TextField { Label = "Name", ShrinkLabel = true };
+        Show(field);
+        field.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Part(field, "PART_LabelHost").IsVisible.ShouldBeTrue();
+        field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label")
+            .IsVisible.ShouldBeTrue();
+        field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_RestingLabel")
+            .IsVisible.ShouldBeFalse();
     }
 
     [AvaloniaFact]
