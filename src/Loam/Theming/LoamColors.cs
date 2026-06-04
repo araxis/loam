@@ -4,12 +4,12 @@ namespace Loam.Theming;
 
 /// <summary>
 /// Color math used to build palettes and derive interaction states (hover/ripple/disabled
-/// overlays, on-color contrast). Mirrors the kinds of derivations Material Design does with
+/// overlays, on-color contrast). Mirrors the reference derivations for
 /// <c>Color</c>, kept as small pure functions on Avalonia's <see cref="Color"/>.
 /// </summary>
 public static class LoamColors
 {
-    /// <summary>Black at the given alpha (0–1). Material Design uses this for light-theme text/lines.</summary>
+    /// <summary>Black at the given alpha (0–1), useful for light-theme text and lines.</summary>
     public static Color BlackAlpha(double alpha) => Color.FromArgb(ToByte(alpha), 0, 0, 0);
 
     /// <summary>White at the given alpha (0–1). Used for dark-theme text/lines.</summary>

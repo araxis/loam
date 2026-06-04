@@ -1,16 +1,16 @@
 namespace Loam;
 
 /// <summary>
-/// A curated set of Material Design icon path strings (24×24 view box), mirroring the reference API's
+/// A curated set of icon path strings (24×24 view box), mirroring the reference API's
 /// <c>Icons.Material.Filled.*</c> structure (ADR-0006). This core set covers common needs; a full
 /// generated icon pack ships later as the separate <c>Loam.Icons</c> package.
 /// </summary>
 public static class Icons
 {
-    /// <summary>Material Design icons.</summary>
+    /// <summary>Built-in icon catalog.</summary>
     public static class Material
     {
-        /// <summary>Filled (solid) Material icons.</summary>
+        /// <summary>Filled (solid) icons.</summary>
         public static class Filled
         {
             /// <summary>Home.</summary>

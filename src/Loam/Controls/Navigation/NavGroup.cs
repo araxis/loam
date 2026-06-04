@@ -3,7 +3,9 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -32,9 +34,14 @@ public class NavGroup : TemplatedControl
     private Text? _titlePart;
     private Icon? _chevron;
     private StackPanel? _items;
+    private Collapse? _itemsCollapse;
 
     /// <summary>Creates the group.</summary>
-    public NavGroup() => Items.CollectionChanged += OnItemsChanged;
+    public NavGroup()
+    {
+        Focusable = true;
+        Items.CollectionChanged += OnItemsChanged;
+    }
 
     /// <summary>The nested navigation entries.</summary>
     public ObservableCollection<Control> Items { get; } = new();
@@ -72,9 +79,14 @@ public class NavGroup : TemplatedControl
         _titlePart = e.NameScope.Find("PART_Title") as Text;
         _chevron = e.NameScope.Find("PART_Chevron") as Icon;
         _items = e.NameScope.Find("PART_Items") as StackPanel;
+        _itemsCollapse = e.NameScope.Find("PART_ItemsCollapse") as Collapse;
         if (_header is not null)
         {
-            _header.PointerPressed += (_, _) => Expanded = !Expanded;
+            _header.PointerPressed += (_, _) =>
+            {
+                Focus();
+                Toggle();
+            };
         }
 
         UpdateHeader();
@@ -96,7 +108,20 @@ public class NavGroup : TemplatedControl
         }
     }
 
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            Toggle();
+            e.Handled = true;
+        }
+    }
+
     private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => RebuildItems();
+
+    private void Toggle() => Expanded = !Expanded;
 
     private void UpdateHeader()
     {
@@ -110,6 +135,8 @@ public class NavGroup : TemplatedControl
             _iconPart.Data = Icon;
             _iconPart.IsVisible = !string.IsNullOrEmpty(Icon);
         }
+
+        InteractionAssist.SetAutomationName(this, Title);
     }
 
     private void RebuildItems()
@@ -132,6 +159,11 @@ public class NavGroup : TemplatedControl
         if (_items is not null)
         {
             _items.IsVisible = Expanded;
+        }
+
+        if (_itemsCollapse is not null)
+        {
+            _itemsCollapse.Expanded = Expanded;
         }
 
         if (_chevron is not null)

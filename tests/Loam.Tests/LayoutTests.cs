@@ -82,6 +82,25 @@ public class LayoutTests
         var collapse = new Collapse { Child = new Border { Height = 40, Width = 100 } };
         Show(collapse);
 
+        collapse.Animated.ShouldBeTrue();
+        collapse.Duration.ShouldBe(TimeSpan.FromMilliseconds(180));
+        collapse.MaxHeight.ShouldBe(0);
+
+        collapse.Expanded = true;
+        Dispatcher.UIThread.RunJobs();
+        collapse.Expanded.ShouldBeTrue();
+
+        collapse.Expanded = false;
+        Dispatcher.UIThread.RunJobs();
+        collapse.Expanded.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Collapse_static_mode_uses_immediate_final_states()
+    {
+        var collapse = new Collapse { Animated = false, Child = new Border { Height = 40, Width = 100 } };
+        Show(collapse);
+
         collapse.MaxHeight.ShouldBe(0);
 
         collapse.Expanded = true;

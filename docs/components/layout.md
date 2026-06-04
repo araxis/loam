@@ -4,7 +4,7 @@ title: Surfaces & layout
 
 # Surfaces & layout
 
-This page documents Loam's surface and layout controls. Surface controls (`Paper`, `Card` family) host content on token-driven Material backgrounds. Layout controls (`Container`, `Grid`, `Stack`, `Spacer`, `Hidden`, `ScrollToTop`) handle spacing, responsive columns, and visibility. Shell controls (`Layout`, `AppBar`, `Drawer`, `MainContent`) compose the application frame.
+This page documents Loam's surface and layout controls. Surface controls (`Paper`, `Card` family) host content on token-driven backgrounds. Layout controls (`Container`, `Grid`, `Stack`, `Spacer`, `Hidden`, `ScrollToTop`) handle spacing, responsive columns, and visibility. Shell controls (`Layout`, `AppBar`, `Drawer`, `MainContent`) compose the application frame.
 
 All controls live in `Loam.Controls`. Enums such as `Breakpoint`, `LoamColor`, and `HiddenMode` live in the `Loam` namespace. Because `Loam.Controls.Grid` shares a name with `Avalonia.Controls.Grid`, always qualify it with its full name in files that also reference Avalonia layout.
 

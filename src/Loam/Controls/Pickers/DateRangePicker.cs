@@ -2,7 +2,9 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -47,6 +49,9 @@ public class DateRangePicker : TemplatedControl
     private Text? _label;
     private IDisposable? _displayForeground;
     private Flyout? _flyout;
+
+    /// <summary>Creates the picker.</summary>
+    public DateRangePicker() => Focusable = true;
 
     /// <summary>The range start (two-way). Mirrors the reference API's <c>DateRange.Start</c>.</summary>
     public DateTime? Start
@@ -121,7 +126,11 @@ public class DateRangePicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         if (_box is not null)
         {
-            _box.PointerPressed += (_, _) => Open();
+            _box.PointerPressed += (_, _) =>
+            {
+                Focus();
+                Open();
+            };
         }
 
         UpdateLabel();
@@ -132,13 +141,30 @@ public class DateRangePicker : TemplatedControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == StartProperty || change.Property == EndProperty || change.Property == DateFormatProperty)
+        if (change.Property == StartProperty || change.Property == EndProperty ||
+            change.Property == DateFormatProperty || change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
         }
         else if (change.Property == LabelProperty)
         {
             UpdateLabel();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            Open();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            _flyout?.Hide();
+            e.Handled = true;
         }
     }
 
@@ -204,6 +230,8 @@ public class DateRangePicker : TemplatedControl
             _label.Text = Label;
             _label.IsVisible = !string.IsNullOrEmpty(Label);
         }
+
+        InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
     }
 
     private void UpdateDisplay()
@@ -219,5 +247,6 @@ public class DateRangePicker : TemplatedControl
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasValue ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+        InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
     }
 }

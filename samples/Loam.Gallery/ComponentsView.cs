@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Loam;
 using Loam.Controls;
 using Loam.Theming;
@@ -113,6 +114,7 @@ public sealed class ComponentsView : UserControl
 
         stack.Children.Add(new Text { Text = "Primary colored body text", Typo = Typo.Body1, Color = LoamColor.Primary });
         stack.Children.Add(new Text { Text = "Error colored body text", Typo = Typo.Body1, Color = LoamColor.Error });
+        stack.Children.Add(new Text { Text = "Centered text alignment", Typo = Typo.Body2, Align = TextAlignment.Center, Width = 320 });
         return stack;
     }
 
@@ -138,7 +140,8 @@ public sealed class ComponentsView : UserControl
         {
             Icon = Icons.Material.Filled.FavoriteBorder,
             ToggledIcon = Icons.Material.Filled.Favorite,
-            Color = LoamColor.Error,
+            Color = LoamColor.Default,
+            ToggledColor = LoamColor.Error,
         });
         stack.Children.Add(favorites);
 
@@ -293,7 +296,7 @@ public sealed class ComponentsView : UserControl
         return wrap;
     }
 
-    private static ChipSet BuildChipSet()
+    private static StackPanel BuildChipSet()
     {
         var set = new ChipSet { Selectable = true, Mandatory = true, SelectedIndex = 0, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var label in new[] { "All", "Active", "Archived", "Draft" })
@@ -301,7 +304,24 @@ public sealed class ComponentsView : UserControl
             set.Items.Add(new Chip { Text = label, Color = LoamColor.Primary });
         }
 
-        return set;
+        var multi = new ChipSet { Selectable = true, MultiSelect = true, HorizontalAlignment = HorizontalAlignment.Left };
+        foreach (var label in new[] { "Open", "Assigned", "Overdue" })
+        {
+            multi.Items.Add(new Chip { Text = label, Color = LoamColor.Secondary });
+        }
+
+        multi.SelectedIndexes.Add(0);
+        multi.SelectedIndexes.Add(2);
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                Labeled("Single", set),
+                Labeled("Multi", multi),
+            },
+        };
     }
 
     private static WrapPanel BuildBadges()
@@ -537,6 +557,13 @@ public sealed class ComponentsView : UserControl
 
         stack.Children.Add(new ProgressLinear { Value = 60, Width = 320 });
         stack.Children.Add(new ProgressLinear { Value = 30, Width = 320, Color = LoamColor.Warning });
+        stack.Children.Add(new ProgressLinear { Indeterminate = true, Width = 320, Color = LoamColor.Info });
+
+        var skeletons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        skeletons.Children.Add(new Skeleton { Width = 140 });
+        skeletons.Children.Add(new Skeleton { Width = 80, Animate = false });
+        skeletons.Children.Add(new Skeleton { Circle = true, Width = 32, Height = 32 });
+        stack.Children.Add(Labeled("Skeletons", skeletons));
 
         return stack;
     }
@@ -604,6 +631,7 @@ public sealed class ComponentsView : UserControl
     {
         var collapse = new Collapse
         {
+            Duration = TimeSpan.FromMilliseconds(220),
             Child = new Paper
             {
                 Elevation = 1,
@@ -615,7 +643,20 @@ public sealed class ComponentsView : UserControl
         var toggle = new Loam.Controls.Button { Content = "Toggle details", Variant = Variant.Outlined, Color = LoamColor.Primary };
         toggle.Click += (_, _) => collapse.Expanded = !collapse.Expanded;
 
-        return new StackPanel { Spacing = 12, MaxWidth = 420, HorizontalAlignment = HorizontalAlignment.Left, Children = { toggle, collapse } };
+        var staticCollapse = new Collapse
+        {
+            Animated = false,
+            Expanded = true,
+            Child = new Text { Text = "Static reveal mode is available for reduced motion needs.", Color = LoamColor.Secondary },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            MaxWidth = 420,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { toggle, collapse, staticCollapse },
+        };
     }
 
     private static Timeline BuildTimeline()

@@ -265,7 +265,7 @@ var alert = new Alert
 
 ## ProgressLinear
 
-Mirrors the reference API's `ProgressLinear`. A horizontal determinate progress bar tinted by `Color`.
+Mirrors the reference API's `ProgressLinear`. A horizontal progress bar tinted by `Color`; use `Indeterminate = true` for a moving fill when no value is available.
 
 ### Properties
 
@@ -275,6 +275,7 @@ Mirrors the reference API's `ProgressLinear`. A horizontal determinate progress 
 | `Minimum` | `double` | `0` | Lower bound (mirrors the reference API's `Min`). |
 | `Maximum` | `double` | `100` | Upper bound (mirrors the reference API's `Max`). |
 | `Color` | `LoamColor` | `LoamColor.Primary` | Accent color of the fill bar. |
+| `Indeterminate` | `bool` | `false` | Shows an animated moving fill instead of the fixed value. |
 
 ### Example
 
@@ -284,6 +285,8 @@ using Loam.Controls;
 
 var progress = new ProgressLinear { Color = LoamColor.Success };
 progress.Bind(ProgressLinear.ValueProperty, viewModel.GetObservable(vm => vm.UploadPercent));
+
+var loading = new ProgressLinear { Indeterminate = true, Width = 240 };
 ```
 
 ---
@@ -333,6 +336,7 @@ Mirrors the reference API's `Skeleton`. A themed placeholder block shown while c
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Circle` | `bool` | `false` | Renders as a fully rounded circle (avatar placeholder). |
+| `Animate` | `bool` | `true` | Enables the subtle loading shimmer. Set `false` for a static placeholder. |
 | `Height` | `double` | `16` | Block height (inherited from `Border`). |
 | `Width` | `double` | — | Block width (inherited from `Border`). |
 
@@ -346,6 +350,9 @@ var line = new Skeleton { Width = 200 };
 
 // Avatar placeholder
 var avatar = new Skeleton { Circle = true, Width = 40, Height = 40 };
+
+// Static placeholder
+var staticLine = new Skeleton { Width = 160, Animate = false };
 ```
 
 ---
@@ -359,6 +366,8 @@ Mirrors the reference API's `Collapse`. A `Decorator` that reveals its single `C
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Expanded` | `bool` | `false` | Whether the child is visible (two-way). `false` clips content to zero height. |
+| `Animated` | `bool` | `true` | Enables a short height reveal/collapse animation. |
+| `Duration` | `TimeSpan` | `180 ms` | Reveal/collapse duration. |
 | `Child` | `Control?` | — | The content to show/hide (inherited from `Decorator`). |
 
 ### Example
@@ -369,6 +378,7 @@ using Loam.Controls;
 var toggle = new Button { Content = "Toggle details" };
 var collapse = new Collapse
 {
+    Duration = TimeSpan.FromMilliseconds(220),
     Child = new TextBlock { Text = "Hidden details shown when expanded." },
 };
 toggle.Click += (_, _) => collapse.Expanded = !collapse.Expanded;

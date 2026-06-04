@@ -171,7 +171,7 @@ grid.Items = employees; // IEnumerable<Employee>
 
 ## Loam.Controls.TreeView / Loam.Controls.TreeViewItem
 
-A hierarchical tree that mirrors the reference API's `TreeView` / `TreeViewItem`. Root nodes are added to `TreeView.Items`; each `TreeViewItem` may have its own `Items` collection for nested children. Clicking a node selects it and updates `TreeView.SelectedItem`. Nodes with children show a chevron that toggles `Expanded`.
+A hierarchical tree that mirrors the reference API's `TreeView` / `TreeViewItem`. Root nodes are added to `TreeView.Items`; each `TreeViewItem` may have its own `Items` collection for nested children. Clicking a node selects it and updates `TreeView.SelectedItem`. Nodes with children show a chevron that toggles `Expanded`. Tree rows are focusable; Enter selects a row and Space toggles expandable rows.
 
 ### Loam.Controls.TreeView properties
 
@@ -244,7 +244,7 @@ tabs.Items.Add(new TabItem("Settings",  new Text { Text = "Settings content" }))
 
 ## ExpansionPanels / ExpansionPanel
 
-A stacked accordion of collapsible sections, mirroring the reference API's `ExpansionPanels` / `ExpansionPanel`. By default, expanding one panel collapses the others (accordion mode); set `MultiExpansion` to allow several open at once.
+A stacked accordion of collapsible sections, mirroring the reference API's `ExpansionPanels` / `ExpansionPanel`. By default, expanding one panel collapses the others (accordion mode); set `MultiExpansion` to allow several open at once. Headers are focusable, expose an automation name from `Header`, and toggle with Enter or Space.
 
 ### ExpansionPanel properties
 

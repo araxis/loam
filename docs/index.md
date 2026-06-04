@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: Loam
-  text: Material Design controls for Avalonia
+  text: Themed controls for Avalonia
   tagline: Pure C# controls with runtime theming and no XAML.
   actions:
     - theme: brand
@@ -21,7 +21,7 @@ features:
     title: Familiar API
     details: Predictable names for variant, color, size, density, and elevation.
   - icon: 🎨
-    title: Material look
+    title: Polished look
     details: Palette-driven colors, elevation shadows, a click ripple and a full typography scale — all token-driven.
   - icon: 💜
     title: Pure C#
@@ -54,7 +54,7 @@ var card = new Card
             new CardHeader { Title = "Project Loam", Subtitle = "Updated today" },
             new CardContent
             {
-                Child = new Text { Text = "Material Design components, mapped to Avalonia in pure C#." },
+                Child = new Text { Text = "Reference-style components, mapped to Avalonia in pure C#." },
             },
             new CardActions
             {

@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -11,13 +12,13 @@ namespace Loam.Controls;
 /// <summary>
 /// A palette color picker, mirroring the reference API's <c>ColorPicker</c> (palette mode). An outlined box
 /// shows the current <see cref="Value"/> as a swatch + hex string; clicking opens a flyout of preset
-/// swatches (a curated Material palette) that set <see cref="Value"/>.
+/// swatches from the built-in palette that set <see cref="Value"/>.
 /// </summary>
 public class ColorPicker : TemplatedControl
 {
     private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
-    /// <summary>The default palette shown in the flyout (Material 500-ish hues + neutrals).</summary>
+    /// <summary>The default palette shown in the flyout.</summary>
     public static readonly IReadOnlyList<Color> DefaultPalette = new[]
     {
         Color.Parse("#F44336"), Color.Parse("#E91E63"), Color.Parse("#9C27B0"), Color.Parse("#673AB7"),
@@ -45,6 +46,9 @@ public class ColorPicker : TemplatedControl
     private Text? _hex;
     private Text? _label;
     private Flyout? _flyout;
+
+    /// <summary>Creates the picker.</summary>
+    public ColorPicker() => Focusable = true;
 
     /// <summary>The selected color (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public Color Value
@@ -130,7 +134,11 @@ public class ColorPicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         if (_box is not null)
         {
-            _box.PointerPressed += (_, _) => Open();
+            _box.PointerPressed += (_, _) =>
+            {
+                Focus();
+                Open();
+            };
         }
 
         UpdateLabel();
@@ -148,6 +156,22 @@ public class ColorPicker : TemplatedControl
         else if (change.Property == LabelProperty)
         {
             UpdateLabel();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            Open();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            _flyout?.Hide();
+            e.Handled = true;
         }
     }
 
@@ -214,6 +238,8 @@ public class ColorPicker : TemplatedControl
             _label.Text = Label;
             _label.IsVisible = !string.IsNullOrEmpty(Label);
         }
+
+        InteractionAssist.SetAutomationName(this, Label, _hex?.Text);
     }
 
     private void UpdateDisplay()
@@ -227,6 +253,8 @@ public class ColorPicker : TemplatedControl
         {
             _hex.Text = ShowAlpha ? ToHexWithAlpha(Value) : ToHex(Value);
         }
+
+        InteractionAssist.SetAutomationName(this, Label, _hex?.Text);
     }
 
     private static double NormalizeHue(double hue)

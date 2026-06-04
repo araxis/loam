@@ -55,6 +55,7 @@ internal static class TreeViewItemTheme
                 CornerRadius = new CornerRadius(4),
                 Background = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.Hand),
+                Focusable = true,
             }.Named("PART_Row", scope);
 
             var children = new StackPanel { Margin = new Thickness(20, 0, 0, 0), IsVisible = false }

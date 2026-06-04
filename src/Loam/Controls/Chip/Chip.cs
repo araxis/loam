@@ -78,7 +78,7 @@ public class Chip : TemplatedControl
         set => SetValue(CloseIconProperty, value);
     }
 
-    /// <summary>Shows the close button. (Material Design shows it when <c>OnClose</c> is set.)</summary>
+    /// <summary>Shows the close button.</summary>
     public bool Closeable
     {
         get => GetValue(CloseableProperty);

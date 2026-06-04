@@ -1,5 +1,7 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -17,6 +19,12 @@ public class NavigationTests
         new Window { Width = 400, Height = 300, Content = content }.Show();
         Dispatcher.UIThread.RunJobs();
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
 
     [AvaloniaFact]
     public void Link_defaults_to_primary_and_underline_follows_property()
@@ -95,5 +103,23 @@ public class NavigationTests
         group.Expanded = true;
         Dispatcher.UIThread.RunJobs();
         items.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void NavGroup_is_focusable_named_and_toggles_from_keyboard()
+    {
+        var group = new NavGroup { Title = "Admin" };
+        Show(group);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        group.Focusable.ShouldBeTrue();
+        group.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Header").Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(group).ShouldBe("Admin");
+
+        var key = KeyArgs(Key.Enter);
+        group.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        group.Expanded.ShouldBeTrue();
     }
 }

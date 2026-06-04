@@ -1,5 +1,7 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -24,6 +26,12 @@ public class DataDisplayTests
         new Window { Width = 500, Height = 400, Content = content }.Show();
         Dispatcher.UIThread.RunJobs();
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
 
     [Fact]
     public void DataGrids_pagecount_and_sort_helpers()
@@ -277,6 +285,32 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void TreeViewItem_is_focusable_named_and_responds_to_keyboard()
+    {
+        var root = new Loam.Controls.TreeViewItem { Text = "Root" };
+        root.Items.Add(new Loam.Controls.TreeViewItem { Text = "Child" });
+        var selected = false;
+        root.ItemSelected += (_, _) => selected = true;
+        Show(root);
+        root.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        root.Focusable.ShouldBeTrue();
+        root.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Row").Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(root).ShouldBe("Root");
+
+        var toggle = KeyArgs(Key.Space);
+        root.RaiseEvent(toggle);
+        toggle.Handled.ShouldBeTrue();
+        root.Expanded.ShouldBeTrue();
+
+        var select = KeyArgs(Key.Enter);
+        root.RaiseEvent(select);
+        select.Handled.ShouldBeTrue();
+        selected.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
     public void Carousel_navigation_wraps_and_swaps_content()
     {
         var a = new TextBlock { Text = "A" };
@@ -339,6 +373,24 @@ public class DataDisplayTests
         panel.IsExpanded = true;
         Dispatcher.UIThread.RunJobs();
         content.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void ExpansionPanel_is_focusable_named_and_toggles_from_keyboard()
+    {
+        var panel = new ExpansionPanel { Header = "Filters", Content = new TextBlock { Text = "body" } };
+        Show(panel);
+        panel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        panel.Focusable.ShouldBeTrue();
+        panel.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Header").Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(panel).ShouldBe("Filters");
+
+        var key = KeyArgs(Key.Space);
+        panel.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        panel.IsExpanded.ShouldBeTrue();
     }
 
     [AvaloniaFact]

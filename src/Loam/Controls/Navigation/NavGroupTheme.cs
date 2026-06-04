@@ -49,10 +49,12 @@ internal static class NavGroupTheme
                 CornerRadius = new CornerRadius(4),
                 Background = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.Hand),
+                Focusable = true,
             }.Named("PART_Header", scope);
 
             var items = new StackPanel { IsVisible = false }.Named("PART_Items", scope);
+            var itemsCollapse = new Collapse { Child = items }.Named("PART_ItemsCollapse", scope);
 
-            return new StackPanel { Children = { header, items } };
+            return new StackPanel { Children = { header, itemsCollapse } };
         });
 }

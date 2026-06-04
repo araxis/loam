@@ -5,8 +5,7 @@ using Avalonia.Media;
 namespace Loam.Theming;
 
 /// <summary>
-/// Material elevation shadows, levels 0–25, mirroring the reference API's <c>Shadow</c> table (the MUI
-/// elevation set, verified against Material Design v9.5.0). The source values are CSS multi-layer
+/// Elevation shadows, levels 0–25, mirroring the reference API's <c>Shadow</c> table. The source values are CSS multi-layer
 /// box-shadows; <see cref="ParseCss"/> converts them to Avalonia <see cref="BoxShadows"/>.
 /// </summary>
 public sealed class LoamShadows
@@ -108,7 +107,7 @@ public sealed class LoamShadows
         return result;
     }
 
-    // Levels 0–25. Index 0 = none. Values verified against Material Design v9.5.0 Shadow.cs.
+    // Levels 0–25. Index 0 = none.
     private static readonly string[] Css =
     [
         string.Empty,

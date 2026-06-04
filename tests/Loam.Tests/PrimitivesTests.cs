@@ -69,6 +69,14 @@ public class PrimitivesTests
         ((ISolidColorBrush)text.Foreground!).Color.ShouldBe(Color.Parse("#594AE2"));
     }
 
+    [Fact]
+    public void Text_align_maps_to_text_alignment()
+    {
+        var text = new Text { Align = TextAlignment.Center };
+
+        text.TextAlignment.ShouldBe(TextAlignment.Center);
+    }
+
     [AvaloniaFact]
     public void Divider_orientation_sets_thickness()
     {
@@ -205,5 +213,30 @@ public class PrimitivesTests
         button.Toggled = true;
         Dispatcher.UIThread.RunJobs();
         icon.Data.ShouldBe(Icons.Material.Filled.Favorite);
+    }
+
+    [AvaloniaFact]
+    public void ToggleIconButton_toggled_color_applies_to_glyph_only_while_on()
+    {
+        var button = new ToggleIconButton
+        {
+            Icon = Icons.Material.Filled.FavoriteBorder,
+            ToggledIcon = Icons.Material.Filled.Favorite,
+            ToggledColor = LoamColor.Primary,
+        };
+        Show(button);
+        button.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var icon = button.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Icon");
+        icon.Color.ShouldBe(LoamColor.Inherit);
+
+        button.Toggled = true;
+        Dispatcher.UIThread.RunJobs();
+        icon.Color.ShouldBe(LoamColor.Primary);
+
+        button.Toggled = false;
+        Dispatcher.UIThread.RunJobs();
+        icon.Color.ShouldBe(LoamColor.Inherit);
     }
 }

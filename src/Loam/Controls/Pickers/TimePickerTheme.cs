@@ -44,6 +44,7 @@ internal static class TimePickerTheme
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(12, 8),
                 Cursor = new Cursor(StandardCursorType.Hand),
+                Focusable = true,
             }.Named("PART_Box", scope);
             box.Bind(Border.BorderBrushProperty,
                 picker.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.LinesInputs))));

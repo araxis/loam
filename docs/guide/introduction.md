@@ -4,18 +4,18 @@ title: Introduction
 
 # Introduction
 
-**Loam** gives [Avalonia](https://avaloniaui.net) applications a complete Material Design control
+**Loam** gives [Avalonia](https://avaloniaui.net) applications a complete themed control
 set with a familiar, compact API — written entirely in C#, with **no XAML**.
 
 ## Why Loam?
 
-Avalonia is a superb cross-platform UI framework. Loam adds a Material Design component layer with
+Avalonia is a superb cross-platform UI framework. Loam adds a component layer with
 the compact vocabulary teams expect in application UI: `Variant`, `Color`, `Dense`, `Elevation`, and
 similar knobs.
 
 - **Familiar API.** Component parameters use predictable names and consistent semantics.
-- **Material look.** Colors, elevation/shadows, ripple, and typography all resolve from a central
-  theme, matching Material Design.
+- **Polished look.** Colors, elevation/shadows, ripple, and typography all resolve from a central
+  theme.
 - **Pure C# authoring.** Controls, `ControlTheme`s, templates and bindings are built with Avalonia's
   code-only APIs — no `.axaml`. This keeps the whole UI in one language and one toolchain.
 - **Self-contained.** The pickers (date / time / color) and the month calendar are custom-built, so a

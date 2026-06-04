@@ -19,6 +19,7 @@ Typography-aware text label that mirrors the reference API's `Text`. Extends `Te
 | `Typo` | `Typo` | `Typo.Body1` | Typographic role (`H1`–`H6`, `Subtitle1/2`, `Body1/2`, `Button`, `Caption`, `Overline`, `Inherit`). |
 | `Color` | `LoamColor` | `LoamColor.Default` | Semantic text color; `Default` and `Inherit` both resolve to the theme primary text token. |
 | `GutterBottom` | `bool` | `false` | Adds 8 px bottom margin, matching the reference API's gutter spacing. |
+| `Align` | `TextAlignment` | `TextAlignment.Left` | Horizontal alignment, forwarded to the underlying `TextBlock.TextAlignment`. |
 
 ### Example
 
@@ -37,6 +38,7 @@ var heading = new Text
 var body = new Text
 {
     Typo = Typo.Body2,
+    Align = TextAlignment.Center,
     Text = "Review the items below before confirming.",
 };
 ```
@@ -49,7 +51,7 @@ SVG vector icon that mirrors the reference API's `Icon`. Renders an SVG path str
 
 ### Icon path catalog
 
-`Icons.Material.Filled` (namespace `Loam`) is a static class containing `const string` SVG path fields for the built-in Material Design icon set (24 × 24 view box). Use them directly as `Data`:
+`Icons.Material.Filled` (namespace `Loam`) is a static class containing `const string` SVG path fields for the built-in icon catalog (24 × 24 view box). Use them directly as `Data`:
 
 ```csharp
 Data = Icons.Material.Filled.Search
@@ -179,7 +181,9 @@ A wrap-layout container of `Chip` items that mirrors the reference API's `ChipSe
 | `Items` | `ObservableCollection<Chip>` | — | The chips in the set. Mutations are observed and re-rendered automatically. |
 | `Selectable` | `bool` | `false` | Enables click-to-select behavior. |
 | `Mandatory` | `bool` | `false` | When `true`, clicking the already-selected chip does not clear the selection. |
-| `SelectedIndex` | `int` | `-1` | Index of the selected chip, or -1 for none. Two-way bindable. |
+| `MultiSelect` | `bool` | `false` | Allows more than one selected chip. |
+| `SelectedIndex` | `int` | `-1` | Index of the selected chip, or -1 for none. Preserved for single-select mode and mirrors the first selected chip in multi-select mode. Two-way bindable. |
+| `SelectedIndexes` | `ObservableCollection<int>` | empty | Selected chip indexes when `MultiSelect` is `true`. |
 
 ### Example
 
@@ -199,6 +203,13 @@ var chipSet = new ChipSet
         new Chip { Text = "Archived" },
     },
 };
+
+var filters = new ChipSet { Selectable = true, MultiSelect = true };
+filters.Items.Add(new Chip { Text = "Open" });
+filters.Items.Add(new Chip { Text = "Assigned" });
+filters.Items.Add(new Chip { Text = "Overdue" });
+filters.SelectedIndexes.Add(0);
+filters.SelectedIndexes.Add(2);
 ```
 
 ---
