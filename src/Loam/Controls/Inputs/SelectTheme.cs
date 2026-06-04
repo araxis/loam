@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
 using Loam.Theming;
@@ -27,7 +28,6 @@ internal static class SelectTheme
                 Typo = Typo.Caption,
                 Color = LoamColor.Inherit,
                 IsVisible = false,
-                Margin = new Thickness(0, 0, 0, 3),
             }.Named("PART_Label", scope);
             label.Bind(TextBlock.ForegroundProperty, select.GetResourceObservable(LoamTokens.TextSecondary));
 
@@ -39,16 +39,33 @@ internal static class SelectTheme
 
             var box = new Border
             {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = new DockPanel { LastChildFill = true, Children = { chevron, display } },
+                Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)),
                 CornerRadius = new CornerRadius(4),
                 BorderThickness = new Thickness(1),
-                Padding = new Thickness(12, 8),
+                MinHeight = 52,
+                Padding = new Thickness(12, 14),
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
-            box.Bind(Border.BorderBrushProperty,
-                select.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.LinesInputs))));
 
-            return new StackPanel { Children = { label, box } };
+            var labelHost = FieldChrome.BuildLabelHost(label, select, scope);
+            var fieldSurface = new Panel
+            {
+                ClipToBounds = false,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Children = { box, labelHost },
+            };
+
+            var popup = new Popup
+            {
+                IsLightDismissEnabled = true,
+                OverlayDismissEventPassThrough = true,
+                Placement = PlacementMode.BottomEdgeAlignedLeft,
+                PlacementTarget = box,
+            }.Named("PART_Popup", scope);
+
+            return new StackPanel { Children = { fieldSurface, popup } };
         });
 }

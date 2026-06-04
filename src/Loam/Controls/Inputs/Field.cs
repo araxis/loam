@@ -55,6 +55,7 @@ public class Field : ContentControl
         AvaloniaProperty.Register<Field, bool>(nameof(InnerPadding), true);
 
     private Border? _inputBorder;
+    private Border? _labelHost;
     private Text? _label;
     private Text? _helper;
     private ContentPresenter? _startAdornment;
@@ -144,6 +145,7 @@ public class Field : ContentControl
     {
         base.OnApplyTemplate(e);
         _inputBorder = e.NameScope.Find("PART_InputBorder") as Border;
+        _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _label = e.NameScope.Find("PART_Label") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _startAdornment = e.NameScope.Find("PART_StartAdornment") as ContentPresenter;
@@ -201,6 +203,7 @@ public class Field : ContentControl
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
+        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, _label?.IsVisible == true);
 
         if (_helper is not null)
         {

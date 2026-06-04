@@ -58,15 +58,19 @@ public class Select : TemplatedControl
         AvaloniaProperty.Register<Select, bool>(nameof(MultiSelect));
 
     private Border? _box;
+    private Border? _labelHost;
     private Text? _display;
     private Text? _label;
     private IDisposable? _displayForeground;
-    private Flyout? _flyout;
+    private IDisposable? _boxBorderBrush;
+    private Popup? _popup;
 
     /// <summary>Creates the select.</summary>
     public Select()
     {
         Focusable = true;
+        GotFocus += (_, _) => ApplyBoxChrome();
+        LostFocus += (_, _) => ApplyBoxChrome();
         Items.CollectionChanged += (_, _) => UpdateDisplay();
         SelectedValues.CollectionChanged += (_, _) => UpdateDisplay();
     }
@@ -119,19 +123,30 @@ public class Select : TemplatedControl
     {
         base.OnApplyTemplate(e);
         _box = e.NameScope.Find("PART_Box") as Border;
+        _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
+        _popup = e.NameScope.Find("PART_Popup") as Popup;
         _display = e.NameScope.Find("PART_Display") as Text;
         _label = e.NameScope.Find("PART_Label") as Text;
+        if (_popup is not null)
+        {
+            _popup.Closed += (_, _) => ApplyBoxChrome();
+        }
+
         if (_box is not null)
         {
-            _box.PointerPressed += (_, _) =>
+            _box.GotFocus += (_, _) => ApplyBoxChrome();
+            _box.LostFocus += (_, _) => ApplyBoxChrome();
+            _box.PointerPressed += (_, args) =>
             {
                 Focus();
                 Open();
+                args.Handled = true;
             };
         }
 
         UpdateLabel();
         UpdateDisplay();
+        ApplyBoxChrome();
     }
 
     /// <inheritdoc />
@@ -160,13 +175,18 @@ public class Select : TemplatedControl
         }
         else if (e.Key == Key.Escape)
         {
-            _flyout?.Hide();
+            Close();
             e.Handled = true;
         }
     }
 
     private void Open()
     {
+        if (!IsEnabled || _popup is null)
+        {
+            return;
+        }
+
         var list = new StackPanel();
         foreach (var item in Items)
         {
@@ -182,18 +202,31 @@ public class Select : TemplatedControl
                 else
                 {
                     Value = captured.Value;
-                    _flyout?.Hide();
+                    Close();
                 }
             };
             list.Children.Add(row);
         }
 
-        _flyout = new Flyout
+        _popup.Child = new Paper
         {
-            Content = new Paper { Elevation = 8, Padding = new Thickness(0, 8), Content = list },
-            Placement = PlacementMode.BottomEdgeAlignedLeft,
+            Elevation = 8,
+            Padding = new Thickness(0, 8),
+            MinWidth = Math.Max(180, _box?.Bounds.Width ?? 0),
+            ClipToBounds = true,
+            Content = list,
         };
-        _flyout.ShowAt(_box ?? (Control)this);
+        _popup.IsOpen = true;
+        ApplyBoxChrome();
+    }
+
+    private void Close()
+    {
+        if (_popup is not null)
+        {
+            _popup.IsOpen = false;
+        }
+        ApplyBoxChrome();
     }
 
     private void UpdateLabel()
@@ -203,8 +236,24 @@ public class Select : TemplatedControl
             _label.Text = Label;
             _label.IsVisible = !string.IsNullOrEmpty(Label);
         }
+        FieldChrome.ApplyLabelLayout(_box, _labelHost, _label?.IsVisible == true);
 
         InteractionAssist.SetAutomationName(this, Label, _display?.Text, Placeholder);
+    }
+
+    private void ApplyBoxChrome()
+    {
+        if (_box is null)
+        {
+            return;
+        }
+
+        var active = IsFocused || _box.IsFocused || _popup?.IsOpen == true;
+        var brush = active ? LoamTokens.Primary : LoamTokens.Palette(nameof(LoamPalette.LinesInputs));
+        _box.BorderThickness = new Thickness(active ? 2 : 1);
+        _boxBorderBrush?.Dispose();
+        _boxBorderBrush = _box.Bind(Border.BorderBrushProperty, this.GetResourceObservable(brush));
+        FieldChrome.ApplyLabelLayout(_box, _labelHost, _label?.IsVisible == true);
     }
 
     private void UpdateDisplay()
