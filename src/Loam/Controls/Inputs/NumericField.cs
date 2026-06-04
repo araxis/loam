@@ -64,6 +64,7 @@ public class NumericField : TemplatedControl
 
     private TextBox? _textBox;
     private Border? _inputBorder;
+    private Border? _labelHost;
     private Text? _label;
     private Text? _helper;
     private Control? _up;
@@ -165,6 +166,7 @@ public class NumericField : TemplatedControl
         base.OnApplyTemplate(e);
         _textBox = e.NameScope.Find("PART_TextBox") as TextBox;
         _inputBorder = e.NameScope.Find("PART_InputBorder") as Border;
+        _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _label = e.NameScope.Find("PART_Label") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _up = e.NameScope.Find("PART_Up") as Control;
@@ -172,6 +174,7 @@ public class NumericField : TemplatedControl
 
         if (_textBox is not null)
         {
+            FieldChrome.ResetInnerTextBox(_textBox);
             _textBox.GotFocus += OnFocusChanged;
             _textBox.LostFocus += OnFocusChanged;
             _textBox.TextChanged += OnTextChanged;
@@ -252,6 +255,11 @@ public class NumericField : TemplatedControl
     private void OnFocusChanged(object? sender, RoutedEventArgs e)
     {
         _focused = _textBox?.IsFocused == true;
+        if (_textBox is not null)
+        {
+            FieldChrome.ResetInnerTextBox(_textBox);
+        }
+
         if (!_focused)
         {
             UpdateText();
@@ -283,6 +291,7 @@ public class NumericField : TemplatedControl
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
+        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, _label?.IsVisible == true);
 
         if (_helper is not null)
         {
@@ -304,6 +313,6 @@ public class NumericField : TemplatedControl
 
         FieldChrome.Apply(this, _inputBorder, Variant, Color, Error, _focused, IsEnabled,
             ref _borderBrush, ref _background,
-            outlinedPadding: new Thickness(12, 4, 4, 4));
+            outlinedPadding: new Thickness(12, 10, 4, 10));
     }
 }

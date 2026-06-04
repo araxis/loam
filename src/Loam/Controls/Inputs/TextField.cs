@@ -75,6 +75,7 @@ public class TextField : TemplatedControl
 
     private TextBox? _textBox;
     private Border? _inputBorder;
+    private Border? _labelHost;
     private Text? _label;
     private Text? _helper;
     private ContentPresenter? _startAdornment;
@@ -210,6 +211,7 @@ public class TextField : TemplatedControl
         base.OnApplyTemplate(e);
         _textBox = e.NameScope.Find("PART_TextBox") as TextBox;
         _inputBorder = e.NameScope.Find("PART_InputBorder") as Border;
+        _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _label = e.NameScope.Find("PART_Label") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _startAdornment = e.NameScope.Find("PART_StartAdornment") as ContentPresenter;
@@ -217,6 +219,7 @@ public class TextField : TemplatedControl
 
         if (_textBox is not null)
         {
+            FieldChrome.ResetInnerTextBox(_textBox);
             _textBox.Bind(TextBox.TextProperty, new Binding(nameof(Text)) { Source = this, Mode = BindingMode.TwoWay });
             _textBox.Bind(TextBox.PlaceholderTextProperty, new Binding(nameof(Placeholder)) { Source = this });
             _textBox.Bind(TextBox.IsReadOnlyProperty, new Binding(nameof(ReadOnly)) { Source = this });
@@ -255,6 +258,11 @@ public class TextField : TemplatedControl
     private void OnFocusChanged(object? sender, RoutedEventArgs e)
     {
         _focused = _textBox?.IsFocused == true;
+        if (_textBox is not null)
+        {
+            FieldChrome.ResetInnerTextBox(_textBox);
+        }
+
         if (!_focused && (Required || Validation is not null))
         {
             Validate();
@@ -274,6 +282,7 @@ public class TextField : TemplatedControl
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
+        FieldChrome.ApplyLabelLayout(_inputBorder, _labelHost, _label?.IsVisible == true);
 
         if (_helper is not null)
         {

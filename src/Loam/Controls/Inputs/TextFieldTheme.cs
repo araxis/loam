@@ -28,7 +28,6 @@ internal static class TextFieldTheme
                 Typo = Typo.Caption,
                 Color = LoamColor.Inherit,
                 IsVisible = false,
-                Margin = new Thickness(0, 0, 0, 3),
             }.Named("PART_Label", scope);
 
             var textBox = new TextBox
@@ -60,8 +59,16 @@ internal static class TextFieldTheme
 
             var inputBorder = new Border
             {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, textBox } },
             }.Named("PART_InputBorder", scope);
+            var labelHost = FieldChrome.BuildLabelHost(label, field, scope);
+            var fieldSurface = new Panel
+            {
+                ClipToBounds = false,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Children = { inputBorder, labelHost },
+            };
 
             var helper = new Text
             {
@@ -71,6 +78,6 @@ internal static class TextFieldTheme
                 Margin = new Thickness(0, 3, 0, 0),
             }.Named("PART_HelperText", scope);
 
-            return new StackPanel { Children = { label, inputBorder, helper } };
+            return new StackPanel { Children = { fieldSurface, helper } };
         });
 }

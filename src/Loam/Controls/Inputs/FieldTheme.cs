@@ -26,7 +26,6 @@ internal static class FieldTheme
                 Typo = Typo.Caption,
                 Color = LoamColor.Inherit,
                 IsVisible = false,
-                Margin = new Thickness(0, 0, 0, 3),
             }.Named("PART_Label", scope);
 
             var startAdornment = new ContentPresenter
@@ -54,8 +53,16 @@ internal static class FieldTheme
 
             var inputBorder = new Border
             {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = new DockPanel { LastChildFill = true, Children = { startAdornment, endAdornment, content } },
             }.Named("PART_InputBorder", scope);
+            var labelHost = FieldChrome.BuildLabelHost(label, field, scope);
+            var fieldSurface = new Panel
+            {
+                ClipToBounds = false,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Children = { inputBorder, labelHost },
+            };
 
             var helper = new Text
             {
@@ -65,6 +72,6 @@ internal static class FieldTheme
                 Margin = new Thickness(0, 3, 0, 0),
             }.Named("PART_HelperText", scope);
 
-            return new StackPanel { Children = { label, inputBorder, helper } };
+            return new StackPanel { Children = { fieldSurface, helper } };
         });
 }

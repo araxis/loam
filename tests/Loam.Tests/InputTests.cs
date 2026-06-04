@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -96,6 +98,8 @@ public class InputTests
         field.ApplyTemplate();
 
         Part(field, "PART_InputBorder").BorderThickness.ShouldBe(new Thickness(1));
+        Part(field, "PART_InputBorder").Margin.Top.ShouldBe(7);
+        Part(field, "PART_LabelHost").IsVisible.ShouldBeTrue();
         var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
         label.Text.ShouldBe("Name");
         label.IsVisible.ShouldBeTrue();
@@ -144,9 +148,20 @@ public class InputTests
 
         var box = field.GetVisualDescendants().OfType<TextBox>().First();
         box.BorderThickness.ShouldBe(default);
+        box.FocusAdorner.ShouldBeNull();
         ((ISolidColorBrush)box.BorderBrush!).Color.A.ShouldBe((byte)0);
         ((ISolidColorBrush)box.Background!).Color.A.ShouldBe((byte)0);
         box.Padding.ShouldBe(default);
+        var innerBorder = box.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_BorderElement");
+        innerBorder.BorderThickness.ShouldBe(default);
+        ((ISolidColorBrush)innerBorder.BorderBrush!).Color.A.ShouldBe((byte)0);
+
+        box.Focus();
+        Dispatcher.UIThread.RunJobs();
+
+        box.BorderThickness.ShouldBe(default);
+        box.FocusAdorner.ShouldBeNull();
+        innerBorder.BorderThickness.ShouldBe(default);
     }
 
     [AvaloniaFact]
@@ -205,6 +220,7 @@ public class InputTests
         Dispatcher.UIThread.RunJobs();
 
         Part(field, "PART_InputBorder").BorderThickness.ShouldBe(new Thickness(1));
+        Part(field, "PART_LabelHost").IsVisible.ShouldBeTrue();
         var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
         label.Text.ShouldBe("Amount");
         label.IsVisible.ShouldBeTrue();
@@ -336,16 +352,48 @@ public class InputTests
         Dispatcher.UIThread.RunJobs();
 
         select.Focusable.ShouldBeTrue();
-        Part(select, "PART_Box").Focusable.ShouldBeTrue();
+        var box = Part(select, "PART_Box");
+        box.Focusable.ShouldBeTrue();
+        ((ISolidColorBrush)box.Background!).Color.A.ShouldBeLessThanOrEqualTo((byte)1);
         AutomationProperties.GetName(select).ShouldBe("Fruit");
 
+        var popup = select.GetVisualDescendants().OfType<Popup>().First(p => p.Name == "PART_Popup");
         var open = KeyArgs(Key.Enter);
         select.RaiseEvent(open);
         open.Handled.ShouldBeTrue();
+        popup.IsOpen.ShouldBeTrue();
+        popup.Child.ShouldBeOfType<Paper>();
+        box.BorderThickness.ShouldBe(new Thickness(2));
 
         var close = KeyArgs(Key.Escape);
         select.RaiseEvent(close);
         close.Handled.ShouldBeTrue();
+        popup.IsOpen.ShouldBeFalse();
+        box.BorderThickness.ShouldBe(new Thickness(1));
+    }
+
+    [AvaloniaFact]
+    public void Select_opens_from_empty_box_surface()
+    {
+        var select = new Select { Label = "Priority", Width = 360, Value = "high" };
+        select.Items.Add(new SelectItem("Normal", "normal"));
+        select.Items.Add(new SelectItem("High", "high"));
+        select.Items.Add(new SelectItem("Urgent", "urgent"));
+        var window = new Window { Width = 500, Height = 220, Content = select };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        select.ApplyTemplate();
+
+        var box = Part(select, "PART_Box");
+        var popup = select.GetVisualDescendants().OfType<Popup>().First(p => p.Name == "PART_Popup");
+        var point = box.TranslatePoint(new Point(box.Bounds.Width / 2, box.Bounds.Height / 2), window);
+        point.ShouldNotBeNull();
+
+        window.MouseDown(point.Value, MouseButton.Left);
+        window.MouseUp(point.Value, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        popup.IsOpen.ShouldBeTrue();
     }
 
     [Fact]
