@@ -7,6 +7,48 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Gallery source-linked samples
+
+**Done**
+- Replaced the gallery's hand-written title-to-snippet table with source-linked samples that read the
+  actual preview builder method used by each component page.
+- Added source extraction with brace matching so the code panel stays related to the live preview when
+  the gallery sample implementation changes.
+- Cached loaded source and extracted snippets to keep gallery startup and page switching responsive.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 159 tests.
+- Visual QA confirmed representative pages display source-linked builder methods for Badge, Button,
+  ButtonGroup, TextField, and AvatarGroup.
+
+**Next:** commit and push the stabilization batch.
+
+---
+
+## 2026-06-05 — v2.0 — Filled button focus state correction
+
+**Done**
+- Changed filled button focus styling from an inner 2px border to the filled state-layer background,
+  avoiding the false underline artifact when a child button in a connected group receives focus.
+- Applied the same filled focus treatment to filled icon/FAB-style buttons through the shared button
+  style matrix.
+- Added focused coverage for filled `ButtonGroup` child focus behavior.
+
+**Verified**
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --filter "FullyQualifiedName~PrimitivesTests"`
+  passed: 19 tests.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 159 tests.
+- Visual QA confirmed a clicked/focused filled `ButtonGroup` child uses the state-layer background
+  without drawing a selected-looking underline.
+
+**Next:** commit and push the stabilization batch.
+
+---
+
 ## 2026-06-05 — v2.0 — Badge overlay layout fix
 
 **Done**

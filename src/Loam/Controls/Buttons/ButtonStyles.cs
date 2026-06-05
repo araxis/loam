@@ -46,8 +46,7 @@ internal static class ButtonStyles
             theme.Add(VariantStateStyle(Variant.Filled, color, ":pressed",
                 Dyn(TemplatedControl.BackgroundProperty, c.FillHover)));
             theme.Add(VariantStateStyle(Variant.Filled, color, ":focus",
-                Dyn(TemplatedControl.BorderBrushProperty, c.Accent),
-                new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(2))));
+                Dyn(TemplatedControl.BackgroundProperty, c.FillHover)));
 
             theme.Add(VariantStyle(Variant.Outlined, color,
                 new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent),
@@ -95,11 +94,7 @@ internal static class ButtonStyles
             });
             theme.Add(new Style(x => x.Nesting().PropertyEquals(Button.ColorProperty, color).Class(":focus"))
             {
-                Setters =
-                {
-                    Dyn(TemplatedControl.BorderBrushProperty, c.Accent),
-                    new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(2)),
-                },
+                Setters = { Dyn(TemplatedControl.BackgroundProperty, c.FillHover) },
             });
         }
     }

@@ -211,6 +211,23 @@ public class PrimitivesTests
     }
 
     [AvaloniaFact]
+    public void ButtonGroup_filled_child_focus_does_not_draw_inner_border()
+    {
+        var group = new ButtonGroup { Variant = Variant.Filled, Color = LoamColor.Secondary };
+        group.Items.Add(new Loam.Controls.Button { Content = "Day" });
+        group.Items.Add(new Loam.Controls.Button { Content = "Week" });
+        group.Items.Add(new Loam.Controls.Button { Content = "Month" });
+        Show(group);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        group.Items[2].Focus();
+        Dispatcher.UIThread.RunJobs();
+
+        Root(group.Items[2]).BorderThickness.ShouldBe(new Thickness(0));
+    }
+
+    [AvaloniaFact]
     public void ToggleIconButton_toggled_state_swaps_the_glyph()
     {
         var button = new ToggleIconButton
