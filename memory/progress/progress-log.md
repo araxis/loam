@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Gallery acceptance audit
+
+**Done**
+- Added internal gallery catalog metadata for routes, builder methods, expected component names, and
+  single-component versus family samples.
+- Exposed the catalog and article builder internally for headless acceptance coverage without changing
+  the Loam public component API.
+- Added gallery acceptance tests for route uniqueness, source-linked non-fallback code, shared-family
+  coverage, light/dark article rendering, and expected component surface coverage.
+- Split the `ScrollToTop` page from the `Hidden` sample so its preview and source now use a dedicated
+  live `BuildScrollToTop` builder.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 164 tests.
+- Release gallery visual QA covered Overview, Badge, ButtonGroup, TextField, DatePicker, Alert,
+  DataGrid, ScrollToTop, and LineChart.
+
+**Next:** commit and push the acceptance-audit batch.
+
+---
+
 ## 2026-06-05 — v2.0 — Gallery source-linked samples
 
 **Done**

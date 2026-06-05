@@ -26,7 +26,7 @@ public sealed class ComponentsView : UserControl
 
     public ComponentsView()
     {
-        _pages = BuildPageCatalog();
+        _pages = PageCatalog;
 
         var nav = BuildSideMenu();
         var navSurface = new Border
@@ -127,14 +127,68 @@ public sealed class ComponentsView : UserControl
             app.ActualThemeVariant == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
     }
 
-    private sealed record GalleryPage(string Group, string Title, string Description, Func<Control> Build, string Code);
+    internal enum GallerySampleKind
+    {
+        SingleComponent,
+        Family,
+    }
 
-    private static GalleryPage Page(string group, string title, string description, Func<Control> build) =>
-        new(group, title, description, build, GallerySourceCode.ForMethod(build.Method.Name));
+    internal sealed record GalleryPage(
+        string Group,
+        string Title,
+        string Description,
+        Func<Control> Build,
+        string Code,
+        string BuilderMethod,
+        GallerySampleKind SampleKind,
+        IReadOnlyList<string> ExpectedComponentNames)
+    {
+        internal string Route => $"{Group}/{Title}";
+    }
+
+    internal static IReadOnlyList<GalleryPage> PageCatalog { get; } = BuildPageCatalog();
+
+    private static GalleryPage Page(
+        string group,
+        string title,
+        string description,
+        Func<Control> build,
+        params string[] expectedComponentNames) =>
+        CreatePage(group, title, description, build, GallerySampleKind.SingleComponent, expectedComponentNames);
+
+    private static GalleryPage Family(
+        string group,
+        string title,
+        string description,
+        Func<Control> build,
+        params string[] expectedComponentNames) =>
+        CreatePage(group, title, description, build, GallerySampleKind.Family, expectedComponentNames);
+
+    private static GalleryPage CreatePage(
+        string group,
+        string title,
+        string description,
+        Func<Control> build,
+        GallerySampleKind sampleKind,
+        string[] expectedComponentNames)
+    {
+        var builderMethod = build.Method.Name;
+        var expected = expectedComponentNames.Length > 0 ? expectedComponentNames : [title];
+
+        return new(
+            group,
+            title,
+            description,
+            build,
+            GallerySourceCode.ForMethod(builderMethod),
+            builderMethod,
+            sampleKind,
+            expected);
+    }
 
     private static IReadOnlyList<GalleryPage> BuildPageCatalog() =>
     [
-        Page("Start", "Overview", "A composed screen built from the same public controls used on the component pages.", BuildOverview),
+        Family("Start", "Overview", "A composed screen built from the same public controls used on the component pages.", BuildOverview, "Alert", "Button", "IconButton", "TextField", "Select", "ProgressLinear", "Timeline", "PieChart", "LineChart"),
 
         Page("Display", "Text", "Typography, color, spacing, and alignment.", BuildText),
         Page("Display", "Icon", "Vector icon rendering with semantic colors and sizes.", BuildIcons),
@@ -142,51 +196,51 @@ public sealed class ComponentsView : UserControl
         Page("Display", "Chip", "Compact labels, icons, close affordances, and variants.", BuildChips),
         Page("Display", "ChipSet", "Selectable single and multi-select chip groups.", BuildChipSet),
         Page("Display", "Badge", "Numeric and dot badges positioned around child content.", BuildBadges),
-        Page("Display", "Avatar", "Initials, icon avatars, sizes, colors, and shapes.", BuildAvatars),
-        Page("Display", "AvatarGroup", "Grouped avatars with overflow count behavior.", BuildAvatars),
+        Family("Display", "Avatar", "Initials, icon avatars, sizes, colors, and shapes.", BuildAvatars, "Avatar", "AvatarGroup"),
+        Family("Display", "AvatarGroup", "Grouped avatars with overflow count behavior.", BuildAvatars, "Avatar", "AvatarGroup"),
 
         Page("Buttons", "Button", "Filled, outlined, text, color, size, disabled, and icon buttons.", BuildButtons),
         Page("Buttons", "IconButton", "Icon-only actions in default, filled, and outlined variants.", BuildIconButtons),
         Page("Buttons", "ToggleIconButton", "Two-state icon action with a separate toggled color.", BuildToggleIconButton),
         Page("Buttons", "ButtonGroup", "Connected button segments with shared variant and color.", BuildButtonGroup),
         Page("Buttons", "Fab", "Floating action buttons with icon-only and label modes.", BuildFabs),
-        Page("Buttons", "Menu", "Button-anchored menu rows.", BuildTabsMenu),
+        Family("Buttons", "Menu", "Button-anchored menu rows.", BuildTabsMenu, "Menu", "MenuItem", "Tabs", "Tooltip", "Button"),
 
         Page("Inputs", "Field", "A reusable field shell for custom input-like content.", BuildField),
-        Page("Inputs", "TextField", "Text, numeric, masked, and autocomplete field examples.", BuildTextFields),
-        Page("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.", BuildTextFields),
-        Page("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.", BuildTextFields),
-        Page("Inputs", "Autocomplete", "Text entry with filtered suggestions.", BuildTextFields),
+        Family("Inputs", "TextField", "Text, numeric, masked, and autocomplete field examples.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
+        Family("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
+        Family("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
+        Family("Inputs", "Autocomplete", "Text entry with filtered suggestions.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
         Page("Inputs", "Select", "Single and multi-select dropdowns.", BuildSelect),
-        Page("Inputs", "CheckBox", "Checkbox states, colors, and disabled rendering.", BuildInputs),
-        Page("Inputs", "Switch", "On/off switch states and colors.", BuildInputs),
-        Page("Inputs", "Radio", "Radio choices coordinated by a radio group.", BuildRadioSlider),
-        Page("Inputs", "RadioGroup", "Grouped single-choice selection.", BuildRadioSlider),
-        Page("Inputs", "Slider", "Pointer-driven range selection.", BuildRadioSlider),
+        Family("Inputs", "CheckBox", "Checkbox states, colors, and disabled rendering.", BuildInputs, "CheckBox", "Switch"),
+        Family("Inputs", "Switch", "On/off switch states and colors.", BuildInputs, "CheckBox", "Switch"),
+        Family("Inputs", "Radio", "Radio choices coordinated by a radio group.", BuildRadioSlider, "Radio", "RadioGroup", "Slider"),
+        Family("Inputs", "RadioGroup", "Grouped single-choice selection.", BuildRadioSlider, "Radio", "RadioGroup", "Slider"),
+        Family("Inputs", "Slider", "Pointer-driven range selection.", BuildRadioSlider, "Radio", "RadioGroup", "Slider"),
         Page("Inputs", "Rating", "Interactive and read-only star ratings.", BuildRating),
         Page("Inputs", "ToggleGroup", "Segmented single selection.", BuildToggleGroup),
         Page("Inputs", "FileUpload", "Platform file picking and selected-name chips.", BuildFileUpload),
         Page("Inputs", "Form", "Lightweight validation over text-field descendants.", BuildFormDemo),
 
-        Page("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDateTimePickers),
-        Page("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildDateTimePickers),
+        Family("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDateTimePickers, "DatePicker", "TimePicker"),
+        Family("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildDateTimePickers, "DatePicker", "TimePicker"),
         Page("Pickers", "DateRangePicker", "Two-click date range selection.", BuildDateRangePicker),
         Page("Pickers", "ColorPicker", "Swatch picker with hex display.", BuildColorPicker),
         Page("Pickers", "MonthCalendar", "Standalone month grid used by date pickers.", BuildMonthCalendar),
 
         Page("Feedback", "Alert", "Contextual message banners across variants and severities.", BuildAlert),
-        Page("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.", BuildProgress),
-        Page("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.", BuildProgress),
-        Page("Feedback", "Skeleton", "Animated and static loading placeholders.", BuildProgress),
+        Family("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.", BuildProgress, "ProgressCircular", "ProgressLinear", "Skeleton"),
+        Family("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.", BuildProgress, "ProgressCircular", "ProgressLinear", "Skeleton"),
+        Family("Feedback", "Skeleton", "Animated and static loading placeholders.", BuildProgress, "ProgressCircular", "ProgressLinear", "Skeleton"),
         Page("Feedback", "Overlay", "Auto-closing scrim over local content.", BuildOverlayScrim),
         Page("Feedback", "Popover", "Anchored floating content.", BuildPopover),
-        Page("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildOverlays),
-        Page("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildOverlays),
+        Family("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildOverlays, "DialogService", "SnackbarService", "Button"),
+        Family("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildOverlays, "DialogService", "SnackbarService", "Button"),
 
         Page("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.", BuildTable),
         Page("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.", BuildDataGrid),
         Page("Data", "TreeView", "Nested rows with selection and expansion.", BuildTreeView),
-        Page("Data", "Tabs", "Header strip and selected content region.", BuildTabsMenu),
+        Family("Data", "Tabs", "Header strip and selected content region.", BuildTabsMenu, "Tabs", "Menu", "Tooltip", "Button"),
         Page("Data", "ExpansionPanels", "Accordion-style expandable content.", BuildExpansionPanels),
         Page("Data", "Collapse", "Animated and static content reveal.", BuildCollapse),
         Page("Data", "Timeline", "Vertical event sequence.", BuildTimeline),
@@ -194,33 +248,33 @@ public sealed class ComponentsView : UserControl
         Page("Data", "Stepper", "Multi-step workflow navigation.", BuildStepper),
         Page("Data", "Pagination", "Page buttons with boundary and ellipsis behavior.", BuildPagination),
 
-        Page("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildNavigation),
-        Page("Navigation", "Link", "Clickable text link variants.", BuildNavigation),
-        Page("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavigation),
-        Page("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavigation),
-        Page("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavigation),
+        Family("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
+        Family("Navigation", "Link", "Clickable text link variants.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
+        Family("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
+        Family("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
+        Family("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
 
-        Page("Layout", "Container", "Centered and width-capped content regions.", BuildLayoutSamples),
-        Page("Layout", "Grid", "Responsive 12-column layout with item spans.", BuildLayoutSamples),
-        Page("Layout", "Item", "Grid child span settings across breakpoints.", BuildLayoutSamples),
-        Page("Layout", "Stack", "Spaced row and column layout.", BuildLayoutSamples),
-        Page("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildList),
+        Family("Layout", "Container", "Centered and width-capped content regions.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
+        Family("Layout", "Grid", "Responsive 12-column layout with item spans.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
+        Family("Layout", "Item", "Grid child span settings across breakpoints.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
+        Family("Layout", "Stack", "Spaced row and column layout.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
+        Family("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildList, "List", "ListSubheader", "ListItem", "Spacer"),
         Page("Layout", "Hidden", "Breakpoint-based visibility.", BuildHidden),
-        Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildHidden),
+        Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildScrollToTop),
 
-        Page("Shell", "Layout", "App shell composition with bar, drawer, and content.", BuildShellPreview),
-        Page("Shell", "AppBar", "Elevated top application bar.", BuildShellPreview),
-        Page("Shell", "Drawer", "Docked or temporary side navigation.", BuildShellPreview),
-        Page("Shell", "MainContent", "Scrollable main content region.", BuildShellPreview),
+        Family("Shell", "Layout", "App shell composition with bar, drawer, and content.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
+        Family("Shell", "AppBar", "Elevated top application bar.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
+        Family("Shell", "Drawer", "Docked or temporary side navigation.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
+        Family("Shell", "MainContent", "Scrollable main content region.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
 
         Page("Surfaces", "Paper", "Elevation, outlined, square, and filled surfaces.", BuildPaper),
         Page("Surfaces", "Card", "Header, media, content, and actions.", BuildCard),
-        Page("Surfaces", "List", "List rows, subheaders, and spacer-driven toolbar layout.", BuildList),
+        Family("Surfaces", "List", "List rows, subheaders, and spacer-driven toolbar layout.", BuildList, "List", "ListSubheader", "ListItem", "Spacer"),
         Page("Surfaces", "Ripple", "Pointer feedback effect.", BuildRipple),
 
-        Page("Charts", "PieChart", "Pie and donut chart rendering.", BuildCharts),
-        Page("Charts", "BarChart", "Bar chart rendering from numeric values.", BuildCharts),
-        Page("Charts", "LineChart", "Line and area chart rendering.", BuildCharts),
+        Family("Charts", "PieChart", "Pie and donut chart rendering.", BuildCharts, "PieChart", "BarChart", "LineChart"),
+        Family("Charts", "BarChart", "Bar chart rendering from numeric values.", BuildCharts, "PieChart", "BarChart", "LineChart"),
+        Family("Charts", "LineChart", "Line and area chart rendering.", BuildCharts, "PieChart", "BarChart", "LineChart"),
     ];
 
     private NavMenu BuildSideMenu()
@@ -239,7 +293,7 @@ public sealed class ComponentsView : UserControl
             {
                 var link = new NavLink { Content = page.Title, Icon = IconForPage(page.Title) };
                 link.OnClick = () => ShowPage(page);
-                _links[page.Title] = link;
+                _links[page.Route] = link;
                 navGroup.Items.Add(link);
             }
 
@@ -255,11 +309,11 @@ public sealed class ComponentsView : UserControl
 
         foreach (var link in _links)
         {
-            link.Value.IsActive = string.Equals(link.Key, page.Title, StringComparison.Ordinal);
+            link.Value.IsActive = string.Equals(link.Key, page.Route, StringComparison.Ordinal);
         }
     }
 
-    private static StackPanel BuildArticle(GalleryPage page)
+    internal static StackPanel BuildArticle(GalleryPage page)
     {
         var breadcrumbs = new Breadcrumbs();
         breadcrumbs.Items.Add(new BreadcrumbItem("Components"));
@@ -1598,6 +1652,45 @@ public sealed class ComponentsView : UserControl
                     Child = new Chip { Text = "Visible on Md and wider", Color = LoamColor.Primary },
                 },
             },
+        };
+    }
+
+    private static Panel BuildScrollToTop()
+    {
+        var rows = new StackPanel { Spacing = 8, Margin = new Thickness(12) };
+        for (var i = 1; i <= 12; i++)
+        {
+            rows.Children.Add(new Paper
+            {
+                Elevation = 0,
+                Padding = new Thickness(12),
+                Content = new Text { Text = $"Section {i}", Typo = Typo.Body2 },
+            });
+        }
+
+        var scroller = new ScrollViewer
+        {
+            Width = 360,
+            Height = 230,
+            Content = rows,
+        };
+        scroller.Offset = new Vector(0, 120);
+
+        var scrollToTop = new ScrollToTop
+        {
+            Target = scroller,
+            VisibleOffset = 32,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 0, 18, 18),
+        };
+
+        return new Panel
+        {
+            Width = 380,
+            Height = 250,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { scroller, scrollToTop },
         };
     }
 

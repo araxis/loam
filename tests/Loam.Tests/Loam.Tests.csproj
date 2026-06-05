@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\Loam.Gallery\Loam.Gallery.csproj" />
     <ProjectReference Include="..\..\src\Loam\Loam.csproj" />
   </ItemGroup>
 
