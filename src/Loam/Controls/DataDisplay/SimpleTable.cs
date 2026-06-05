@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 using AvaGrid = Avalonia.Controls.Grid;
 
@@ -248,7 +249,11 @@ public class SimpleTable : TemplatedControl
         };
         content.VerticalAlignment = VerticalAlignment.Center;
 
-        var pad = Dense ? new Thickness(8, 6) : new Thickness(16, 12);
+        var paddingToken = header
+            ? Dense ? LoamTokens.DensityDataHeaderPaddingDense : LoamTokens.DensityDataHeaderPadding
+            : Dense ? LoamTokens.DensityDataCellPaddingDense : LoamTokens.DensityDataCellPadding;
+        var pad = InteractionAssist.ThicknessToken(this, paddingToken,
+            Dense ? new Thickness(8, 6) : header ? new Thickness(16, 12) : new Thickness(16, 10));
         var cell = new Border { Child = content, Padding = pad };
 
         var borderThickness = header

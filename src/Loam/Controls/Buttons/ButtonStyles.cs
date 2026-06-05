@@ -34,12 +34,20 @@ internal static class ButtonStyles
         foreach (var color in Colors)
         {
             var c = SemanticColor.Resolve(color);
+            var name = color.ToPaletteName();
+            var focusOverlay = name is null ? LoamTokens.ColorSurfaceContainerHighest : LoamTokens.PaletteFocus(name);
+            var pressedOverlay = name is null ? LoamTokens.ColorSurfaceContainerHighest : LoamTokens.PalettePressed(name);
 
             theme.Add(VariantStyle(Variant.Filled, color,
                 Dyn(TemplatedControl.BackgroundProperty, c.Fill),
                 Dyn(TemplatedControl.ForegroundProperty, c.FillText)));
             theme.Add(VariantStateStyle(Variant.Filled, color, ":pointerover",
                 Dyn(TemplatedControl.BackgroundProperty, c.FillHover)));
+            theme.Add(VariantStateStyle(Variant.Filled, color, ":pressed",
+                Dyn(TemplatedControl.BackgroundProperty, c.FillHover)));
+            theme.Add(VariantStateStyle(Variant.Filled, color, ":focus",
+                Dyn(TemplatedControl.BorderBrushProperty, c.Accent),
+                new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(2))));
 
             theme.Add(VariantStyle(Variant.Outlined, color,
                 new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent),
@@ -48,12 +56,22 @@ internal static class ButtonStyles
                 Dyn(TemplatedControl.BorderBrushProperty, c.Border)));
             theme.Add(VariantStateStyle(Variant.Outlined, color, ":pointerover",
                 Dyn(TemplatedControl.BackgroundProperty, c.Overlay)));
+            theme.Add(VariantStateStyle(Variant.Outlined, color, ":focus",
+                Dyn(TemplatedControl.BackgroundProperty, focusOverlay),
+                Dyn(TemplatedControl.BorderBrushProperty, c.Accent),
+                new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(2))));
+            theme.Add(VariantStateStyle(Variant.Outlined, color, ":pressed",
+                Dyn(TemplatedControl.BackgroundProperty, pressedOverlay)));
 
             theme.Add(VariantStyle(Variant.Text, color,
                 new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent),
                 Dyn(TemplatedControl.ForegroundProperty, c.Accent)));
             theme.Add(VariantStateStyle(Variant.Text, color, ":pointerover",
                 Dyn(TemplatedControl.BackgroundProperty, c.Overlay)));
+            theme.Add(VariantStateStyle(Variant.Text, color, ":focus",
+                Dyn(TemplatedControl.BackgroundProperty, focusOverlay)));
+            theme.Add(VariantStateStyle(Variant.Text, color, ":pressed",
+                Dyn(TemplatedControl.BackgroundProperty, pressedOverlay)));
         }
     }
 
@@ -70,6 +88,18 @@ internal static class ButtonStyles
             theme.Add(new Style(x => x.Nesting().PropertyEquals(Button.ColorProperty, color).Class(":pointerover"))
             {
                 Setters = { Dyn(TemplatedControl.BackgroundProperty, c.FillHover) },
+            });
+            theme.Add(new Style(x => x.Nesting().PropertyEquals(Button.ColorProperty, color).Class(":pressed"))
+            {
+                Setters = { Dyn(TemplatedControl.BackgroundProperty, c.FillHover) },
+            });
+            theme.Add(new Style(x => x.Nesting().PropertyEquals(Button.ColorProperty, color).Class(":focus"))
+            {
+                Setters =
+                {
+                    Dyn(TemplatedControl.BorderBrushProperty, c.Accent),
+                    new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(2)),
+                },
             });
         }
     }
@@ -126,6 +156,12 @@ internal static class ButtonStyles
             };
 
             var ripple = new Ripple { Child = panel }.Named("PART_Ripple", scope);
+            ripple.Bind(Ripple.RippleOpacityProperty,
+                AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.StatePressedOpacity));
+            ripple.Bind(Ripple.DurationProperty,
+                AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.MotionDurationShort3));
+            ripple.Bind(Ripple.RippleBrushProperty,
+                AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.ColorOnSurface));
 
             var border = new AC.Border { Child = ripple }.Named("PART_Root", scope);
             border.Bind(AC.Border.BackgroundProperty, button.GetObservable(TemplatedControl.BackgroundProperty));

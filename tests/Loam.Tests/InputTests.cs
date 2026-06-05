@@ -46,7 +46,7 @@ public class InputTests
         Show(checkBox);
 
         var box = Part(checkBox, "PART_Box");
-        ((ISolidColorBrush)box.Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)box.Background!).Color.ShouldBe(Color.Parse("#6750A4"));
         checkBox.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().First().IsVisible.ShouldBeTrue();
     }
 
@@ -113,6 +113,7 @@ public class InputTests
     [AvaloniaFact]
     public void TextField_outlined_floats_label_when_focused_or_filled()
     {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
         var field = new TextField { Label = "Name", Variant = Variant.Outlined };
         Show(field);
         field.ApplyTemplate();
@@ -122,7 +123,9 @@ public class InputTests
         Dispatcher.UIThread.RunJobs();
 
         Part(field, "PART_InputBorder").Margin.Top.ShouldBe(7);
-        Part(field, "PART_LabelHost").IsVisible.ShouldBeTrue();
+        var labelHost = Part(field, "PART_LabelHost");
+        labelHost.IsVisible.ShouldBeTrue();
+        ((ISolidColorBrush)labelHost.Background!).Color.ShouldBe(Color.Parse("#F3EDF7"));
         var label = field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_Label");
         label.Text.ShouldBe("Name");
         label.IsVisible.ShouldBeTrue();
@@ -216,6 +219,36 @@ public class InputTests
     }
 
     [AvaloniaFact]
+    public void TextField_inner_text_box_stays_transparent_on_hover_and_focus()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Dark;
+        var field = new TextField { Label = "Project", Text = "Component audit", Width = 360 };
+        var window = new Window { Width = 500, Height = 220, Content = field };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+        field.ApplyTemplate();
+
+        var box = field.GetVisualDescendants().OfType<TextBox>().First();
+        var innerBorder = box.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_BorderElement");
+        var point = box.TranslatePoint(new Point(box.Bounds.Width / 2, box.Bounds.Height / 2), window);
+        point.ShouldNotBeNull();
+
+        window.MouseMove(point.Value);
+        Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)box.Background!).Color.A.ShouldBe((byte)0);
+        ((ISolidColorBrush)innerBorder.Background!).Color.A.ShouldBe((byte)0);
+
+        box.Focus();
+        Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)box.Background!).Color.A.ShouldBe((byte)0);
+        ((ISolidColorBrush)innerBorder.Background!).Color.A.ShouldBe((byte)0);
+    }
+
+    [AvaloniaFact]
     public void TextField_error_colors_border_and_shows_error_text()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
@@ -223,7 +256,7 @@ public class InputTests
         Show(field);
         field.ApplyTemplate();
 
-        ((ISolidColorBrush)Part(field, "PART_InputBorder").BorderBrush!).Color.ShouldBe(Color.Parse("#F44336"));
+        ((ISolidColorBrush)Part(field, "PART_InputBorder").BorderBrush!).Color.ShouldBe(Color.Parse("#B3261E"));
         field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_HelperText").Text.ShouldBe("Required");
     }
 
@@ -310,7 +343,7 @@ public class InputTests
 
         var border = Part(field, "PART_InputBorder");
         border.Padding.ShouldBe(default);
-        ((ISolidColorBrush)border.BorderBrush!).Color.ShouldBe(Color.Parse("#F44336"));
+        ((ISolidColorBrush)border.BorderBrush!).Color.ShouldBe(Color.Parse("#B3261E"));
         field.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_HelperText").Text
             .ShouldBe("Required");
     }
@@ -404,7 +437,7 @@ public class InputTests
 
         var border = Part(select, "PART_Box");
         border.BorderThickness.ShouldBe(new Thickness(2));
-        ((ISolidColorBrush)border.BorderBrush!).Color.ShouldBe(Color.Parse("#F44336"));
+        ((ISolidColorBrush)border.BorderBrush!).Color.ShouldBe(Color.Parse("#B3261E"));
         select.GetVisualDescendants().OfType<Loam.Controls.Text>().First(t => t.Name == "PART_HelperText").Text
             .ShouldBe("Choose one");
     }
@@ -657,12 +690,12 @@ public class InputTests
         segments.Count.ShouldBe(3);
 
         var week = segments.First(s => ((Loam.Controls.Text)s.Child!).Text == "Week");
-        ((ISolidColorBrush)week.Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)week.Background!).Color.ShouldBe(Color.Parse("#6750A4"));
 
         group.SelectedValue = "day";
         Dispatcher.UIThread.RunJobs();
         ((ISolidColorBrush)week.Background!).Color.A.ShouldBe((byte)0);
         var day = segments.First(s => ((Loam.Controls.Text)s.Child!).Text == "Day");
-        ((ISolidColorBrush)day.Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)day.Background!).Color.ShouldBe(Color.Parse("#6750A4"));
     }
 }

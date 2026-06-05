@@ -44,6 +44,14 @@ public static class LoamColors
         return (0.2126 * Channel(color.R)) + (0.7152 * Channel(color.G)) + (0.0722 * Channel(color.B));
     }
 
+    /// <summary>WCAG contrast ratio between two colors.</summary>
+    public static double ContrastRatio(Color foreground, Color background)
+    {
+        var lighter = Math.Max(foreground.RelativeLuminance(), background.RelativeLuminance());
+        var darker = Math.Min(foreground.RelativeLuminance(), background.RelativeLuminance());
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
     private static Color Lerp(Color from, Color to, double t)
     {
         t = Math.Clamp(t, 0, 1);

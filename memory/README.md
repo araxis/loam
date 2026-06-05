@@ -4,9 +4,9 @@ This folder is the **single source of truth** for *why* Loam is built the way it
 has been done, *what was learned*, and *what is still open*. It is written for maintainers
 picking the project up cold. Read this file first.
 
-> Loam is a Material-Design **Avalonia** control library that mirrors the **reference** component
-> API and look-and-feel, authored **entirely in C#** (no XAML). It lets reference/Blazor
-> developers build cross-platform Avalonia apps with a familiar API.
+> Loam is an **Avalonia** control library with a familiar component API and a role-based visual
+> system, authored **entirely in C#** (no XAML). It lets developers build cross-platform Avalonia
+> apps with a compact, themeable API.
 
 ## How to use this memory
 
@@ -44,6 +44,9 @@ picking the project up cold. Read this file first.
 
 ## Current status (update me)
 
-- **Phase:** v1 catalog component-complete. Remaining work is polish, deeper feature variants, and release-by-release hardening.
-- **Latest:** `Field` is now a standalone custom-content field shell, field-style input chrome is shared, and the gallery uses side-menu component pages.
-- **Last updated:** 2026-06-04
+- **Phase:** v2.0 design-system rebaseline. Default visuals now use role-based schemes and expanded
+  foundation tokens while preserving the familiar component API.
+- **Latest:** `LoamColorScheme`, spacing, stroke, density, elevation, typography, shape, and motion
+  tokens are projected through `LoamTheme`; button/state feedback, fields, paper, tables, and the
+  design-system gallery were updated to consume the new baseline.
+- **Last updated:** 2026-06-05

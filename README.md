@@ -5,9 +5,9 @@
 Loam gives Avalonia apps a complete themed control set with a familiar, compact API, runtime
 theming, and no XAML.
 
-> **Status:** ✅ **v1.2 polish release.** Every component on the v1 component catalog is
-> mapped — built, themed, registered, tested, and demonstrated in the gallery. Full solution builds
-> clean with **139 headless/unit tests passing**.
+> **Status:** ✅ **v2.0 design-system rebaseline.** The default visual system now uses role-based
+> light/dark color schemes, expanded foundation tokens, tokenized state feedback, and updated gallery
+> design-system coverage. Full solution builds clean with **154 headless/unit tests passing**.
 > See the **[Development Plan](DEVELOPMENT_PLAN.md)** and the project **[memory](memory/README.md)**
 > (decisions, progress log, learnings, and the per-component status tracker).
 
@@ -33,13 +33,13 @@ npm run docs:build    # static build → docs/.vitepress/dist
 - **Familiar API.** Component parameters use predictable names (`Variant`, `Color`, `Size`, `Dense`,
   `Elevation`, …); types live in `Loam.Controls` (e.g. `Button`, `TextField`, `DataGrid<T>`, the
   `DialogService`).
-- **Polished look.** Palette-driven colors, elevation/shadows, a click ripple, and a full typography
-  scale, all token-driven.
+- **Polished look.** Role-based light/dark colors, tonal surfaces, elevation/shadows, click ripple,
+  state layers, and a full typography scale, all token-driven.
 - **Pure C#.** Controls, `ControlTheme`s, and templates are authored in C# — no `.axaml`.
 - **Self-contained.** Pickers (date/time/color) and the calendar are custom-built, so a LoamTheme-only
   app needs no extra control packages.
-- **Highly themeable.** A `LoamTheme` data model with light/dark variants and runtime
-  palette swapping.
+- **Highly themeable.** A `LoamTheme` data model with light/dark color schemes, compatibility
+  palettes, and runtime token swapping.
 - **Cross-platform.** One library targeting Avalonia 12 everywhere it runs.
 
 ## What Loam is not
@@ -104,8 +104,9 @@ SnackbarService.For(this).Add(ok ? "Deleted" : "Cancelled", LoamColor.Info);
 
 ## Theming
 
-`LoamTheme` projects a `LoamThemeData` (palette, typography, shadows, layout, z-index) into Avalonia
-resources, with light/dark theme dictionaries.
+`LoamTheme` projects a `LoamThemeData` into Avalonia resources, with light/dark theme dictionaries.
+The default data includes role-based color schemes, compatibility palettes, typography, shadows,
+shape, spacing, stroke, density, field metrics, state layers, motion, layout, and z-index.
 
 ```csharp
 var theme = new LoamTheme();

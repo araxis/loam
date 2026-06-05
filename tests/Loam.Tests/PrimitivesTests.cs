@@ -35,7 +35,7 @@ public class PrimitivesTests
         var paper = new Paper { Content = new TextBlock { Text = "x" } };
         Show(paper);
 
-        ((ISolidColorBrush)Root(paper).Background!).Color.ShouldBe(Colors.White);
+        ((ISolidColorBrush)Root(paper).Background!).Color.ShouldBe(Color.Parse("#F7F2FA"));
     }
 
     [AvaloniaFact]
@@ -55,8 +55,8 @@ public class PrimitivesTests
         var text = new Text { Text = "hi", Typo = Typo.H6 };
         Show(text);
 
-        text.FontSize.ShouldBe(20d);
-        text.FontWeight.ShouldBe(FontWeight.Medium);
+        text.FontSize.ShouldBe(24d);
+        text.FontWeight.ShouldBe(FontWeight.Normal);
     }
 
     [AvaloniaFact]
@@ -66,7 +66,7 @@ public class PrimitivesTests
         var text = new Text { Text = "hi", Color = LoamColor.Primary };
         Show(text);
 
-        ((ISolidColorBrush)text.Foreground!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)text.Foreground!).Color.ShouldBe(Color.Parse("#6750A4"));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class PrimitivesTests
         var button = new Loam.Controls.Button { Content = "Go", Variant = Variant.Filled, Color = LoamColor.Primary };
         Show(button);
 
-        ((ISolidColorBrush)Root(button).Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)Root(button).Background!).Color.ShouldBe(Color.Parse("#6750A4"));
         ((ISolidColorBrush)button.Foreground!).Color.ShouldBe(Colors.White);
     }
 
@@ -113,13 +113,28 @@ public class PrimitivesTests
     }
 
     [AvaloniaFact]
+    public void Built_in_icon_paths_parse_as_geometry()
+    {
+        var fields = typeof(Icons.Material.Filled)
+            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+        foreach (var field in fields)
+        {
+            var data = (string)field.GetValue(null)!;
+            var exception = Record.Exception(() => Geometry.Parse(data));
+
+            exception.ShouldBeNull(field.Name);
+        }
+    }
+
+    [AvaloniaFact]
     public void Icon_color_resolves_to_token()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
         var icon = new Icon { Data = Icons.Material.Filled.Home, Color = LoamColor.Primary };
         Show(icon);
 
-        ((ISolidColorBrush)icon.Foreground!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)icon.Foreground!).Color.ShouldBe(Color.Parse("#6750A4"));
     }
 
     [AvaloniaFact]
@@ -160,7 +175,7 @@ public class PrimitivesTests
         Show(iconButton);
         iconButton.ApplyTemplate();
 
-        ((ISolidColorBrush)iconButton.Foreground!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)iconButton.Foreground!).Color.ShouldBe(Color.Parse("#6750A4"));
         iconButton.GetVisualDescendants().OfType<Icon>().First().Data.ShouldBe(Icons.Material.Filled.Settings);
     }
 
@@ -172,7 +187,7 @@ public class PrimitivesTests
         Show(fab);
         fab.ApplyTemplate();
 
-        ((ISolidColorBrush)Root(fab).Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)Root(fab).Background!).Color.ShouldBe(Color.Parse("#6750A4"));
         fab.Content.ShouldBe("Add");
     }
 

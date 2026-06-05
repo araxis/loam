@@ -17,8 +17,9 @@ internal static class FabTheme
             Setters =
             {
                 new Setter(TemplatedControl.TemplateProperty, ButtonStyles.IconContentTemplate()),
-                new Setter(TemplatedControl.CornerRadiusProperty, new CornerRadius(999)),
-                new Setter(TemplatedControl.PaddingProperty, new Thickness(20, 12)),
+                ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, LoamTokens.ShapeLarge),
+                new Setter(TemplatedControl.PaddingProperty, new Thickness(24, 16)),
+                new Setter(Layoutable.MinHeightProperty, 56d),
                 ButtonStyles.Dyn(TemplatedControl.FontSizeProperty, LoamTokens.TypographyFontSize("Button")),
                 ButtonStyles.Dyn(TemplatedControl.FontWeightProperty, LoamTokens.TypographyFontWeight("Button")),
                 new Setter(AC.ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Center),

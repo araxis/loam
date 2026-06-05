@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -35,7 +36,7 @@ public class DisplayTests
         Show(avatar);
 
         avatar.Width.ShouldBe(40d);
-        ((ISolidColorBrush)Root(avatar).Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)Root(avatar).Background!).Color.ShouldBe(Color.Parse("#6750A4"));
         ((ISolidColorBrush)avatar.Foreground!).Color.ShouldBe(Colors.White);
     }
 
@@ -46,7 +47,7 @@ public class DisplayTests
         var chip = new Chip { Variant = Variant.Filled, Color = LoamColor.Primary, Text = "Tag", Closeable = true };
         Show(chip);
 
-        ((ISolidColorBrush)Root(chip).Background!).Color.ShouldBe(Color.Parse("#594AE2"));
+        ((ISolidColorBrush)Root(chip).Background!).Color.ShouldBe(Color.Parse("#6750A4"));
         chip.GetVisualDescendants().OfType<Text>().First().Text.ShouldBe("Tag");
         var close = chip.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Close");
         close.IsVisible.ShouldBeTrue();
@@ -63,7 +64,7 @@ public class DisplayTests
         var text = badge.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "PART_BadgeText");
         text.Text.ShouldBe("5");
         var border = badge.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Badge");
-        ((ISolidColorBrush)border.Background!).Color.ShouldBe(Color.Parse("#F44336"));
+        ((ISolidColorBrush)border.Background!).Color.ShouldBe(Color.Parse("#B3261E"));
     }
 
     [AvaloniaFact]
@@ -74,6 +75,27 @@ public class DisplayTests
         badge.ApplyTemplate();
 
         badge.GetVisualDescendants().OfType<TextBlock>().First(t => t.Name == "PART_BadgeText").Text.ShouldBe("99+");
+    }
+
+    [AvaloniaFact]
+    public void Badge_reserves_space_for_top_right_indicator()
+    {
+        var badge = new Badge
+        {
+            Value = 4,
+            Content = new Icon { Data = Icons.Material.Filled.Favorite, Size = LoamSize.Large },
+        };
+        Show(badge);
+        badge.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var presenter = badge.GetVisualDescendants().OfType<ContentPresenter>()
+            .First(p => p.Name == "PART_ContentPresenter");
+        var indicator = badge.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Badge");
+
+        presenter.Margin.ShouldBe(new Thickness(0, 9, 9, 0));
+        indicator.RenderTransform.ShouldBeNull();
+        indicator.Bounds.Y.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [AvaloniaFact]

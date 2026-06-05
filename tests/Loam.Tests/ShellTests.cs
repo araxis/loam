@@ -45,7 +45,7 @@ public class ShellTests
     }
 
     [AvaloniaFact]
-    public void AppBar_default_color_uses_appbar_palette()
+    public void AppBar_default_color_uses_surface_role()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
         var bar = new AppBar { Content = new TextBlock { Text = "Title" } };
@@ -54,7 +54,7 @@ public class ShellTests
 
         bar.Height.ShouldBe(64d);
         var border = bar.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Root");
-        ((ISolidColorBrush)border.Background!).Color.ShouldBe(Color.Parse("#594AE2")); // AppbarBackground (light)
+        ((ISolidColorBrush)border.Background!).Color.ShouldBe(Color.Parse("#FFFBFE"));
     }
 
     [AvaloniaFact]

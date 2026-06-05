@@ -29,7 +29,7 @@ public class FeedbackTests
         alert.ApplyTemplate();
 
         var root = alert.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Root");
-        ((ISolidColorBrush)root.Background!).Color.ShouldBe(Color.Parse("#F44336"));
+        ((ISolidColorBrush)root.Background!).Color.ShouldBe(Color.Parse("#B3261E"));
     }
 
     [AvaloniaFact]

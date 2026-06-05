@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Loam.Internal.Templating;
 using Loam.Theming;
@@ -10,7 +11,44 @@ namespace Loam.Controls;
 
 internal static class FieldChrome
 {
+    private static readonly string[] InnerTextBoxBrushKeys =
+    [
+        "TextControlBackground",
+        "TextControlBackgroundPointerOver",
+        "TextControlBackgroundFocused",
+        "TextControlBackgroundDisabled",
+        "TextControlBorderBrush",
+        "TextControlBorderBrushPointerOver",
+        "TextControlBorderBrushFocused",
+        "TextControlBorderBrushDisabled",
+        "TextBoxBackground",
+        "TextBoxBackgroundPointerOver",
+        "TextBoxBackgroundFocused",
+        "TextBoxBorderBrush",
+        "TextBoxBorderBrushPointerOver",
+        "TextBoxBorderBrushFocused",
+    ];
+
     public static void ResetInnerTextBox(TextBox textBox)
+    {
+        foreach (var key in InnerTextBoxBrushKeys)
+        {
+            textBox.Resources[key] = Brushes.Transparent;
+        }
+
+        textBox.PointerEntered -= OnInnerTextBoxVisualStateChanged;
+        textBox.PointerExited -= OnInnerTextBoxVisualStateChanged;
+        textBox.GotFocus -= OnInnerTextBoxVisualStateChanged;
+        textBox.LostFocus -= OnInnerTextBoxVisualStateChanged;
+        textBox.PointerEntered += OnInnerTextBoxVisualStateChanged;
+        textBox.PointerExited += OnInnerTextBoxVisualStateChanged;
+        textBox.GotFocus += OnInnerTextBoxVisualStateChanged;
+        textBox.LostFocus += OnInnerTextBoxVisualStateChanged;
+
+        ApplyInnerTextBoxChrome(textBox);
+    }
+
+    private static void ApplyInnerTextBoxChrome(TextBox textBox)
     {
         textBox.Background = Brushes.Transparent;
         textBox.BorderBrush = Brushes.Transparent;
@@ -26,6 +64,14 @@ internal static class FieldChrome
             border.BorderBrush = Brushes.Transparent;
             border.BorderThickness = default;
             border.Padding = default;
+        }
+    }
+
+    private static void OnInnerTextBoxVisualStateChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            Dispatcher.UIThread.Post(() => ApplyInnerTextBoxChrome(textBox), DispatcherPriority.Render);
         }
     }
 
@@ -45,7 +91,7 @@ internal static class FieldChrome
             Padding = new Thickness(metrics.FloatingLabelHorizontalPadding, 0),
         }.Named("PART_LabelHost", scope);
 
-        host.Bind(Border.BackgroundProperty, owner.GetResourceObservable(LoamTokens.Surface));
+        host.Bind(Border.BackgroundProperty, owner.GetResourceObservable(LoamTokens.ColorSurfaceContainer));
         return host;
     }
 
@@ -89,7 +135,7 @@ internal static class FieldChrome
         var accent = paletteName is null ? LoamTokens.Primary : LoamTokens.Palette(paletteName);
         var brushKey = error ? LoamTokens.Error
             : focused ? accent
-            : LoamTokens.Palette(nameof(LoamPalette.LinesInputs));
+            : LoamTokens.ColorOutline;
         var outlineWidth = focused || error ? metrics.ActiveOutlineWidth : metrics.OutlineWidth;
 
         borderBrush?.Dispose();
@@ -103,14 +149,14 @@ internal static class FieldChrome
             case Variant.Filled:
                 inputBorder.MinHeight = metrics.FilledHeight;
                 inputBorder.CornerRadius = new CornerRadius(
-                    shape.Small.TopLeft,
-                    shape.Small.TopRight,
+                    shape.ExtraSmall.TopLeft,
+                    shape.ExtraSmall.TopRight,
                     0,
                     0);
                 inputBorder.BorderThickness = new Thickness(0, 0, 0, outlineWidth);
                 inputBorder.Padding = filledPadding ?? metrics.FilledPadding;
                 background = inputBorder.Bind(Border.BackgroundProperty,
-                    host.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.ActionDisabledBackground))));
+                    host.GetResourceObservable(LoamTokens.ColorSurfaceContainerHighest));
                 break;
             case Variant.Text:
                 inputBorder.MinHeight = metrics.TextHeight;
@@ -121,7 +167,7 @@ internal static class FieldChrome
                 break;
             default:
                 inputBorder.MinHeight = metrics.OutlinedHeight;
-                inputBorder.CornerRadius = shape.Small;
+                inputBorder.CornerRadius = shape.ExtraSmall;
                 inputBorder.BorderThickness = new Thickness(outlineWidth);
                 inputBorder.Padding = outlinedPadding ?? metrics.OutlinedPadding;
                 inputBorder.Background = Brushes.Transparent;
@@ -158,6 +204,7 @@ internal static class FieldChrome
         var defaults = LoamShape.Default;
         return defaults with
         {
+            ExtraSmall = ResourceOrDefault(host, LoamTokens.ShapeExtraSmall, defaults.ExtraSmall),
             Small = ResourceOrDefault(host, LoamTokens.ShapeSmall, defaults.Small),
         };
     }

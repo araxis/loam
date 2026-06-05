@@ -51,6 +51,6 @@ internal static class BadgeTheme
             };
             scope.Register(badgeBorder.Name, badgeBorder);
 
-            return new Panel { Children = { presenter, badgeBorder } };
+            return new Panel { ClipToBounds = false, Children = { presenter, badgeBorder } };
         });
 }

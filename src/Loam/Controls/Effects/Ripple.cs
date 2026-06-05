@@ -22,11 +22,23 @@ public class Ripple : Decorator
     public static readonly StyledProperty<double> ProgressProperty =
         AvaloniaProperty.Register<Ripple, double>(nameof(Progress));
 
+    /// <summary>Identifies the <see cref="RippleOpacity"/> property.</summary>
+    public static readonly StyledProperty<double> RippleOpacityProperty =
+        AvaloniaProperty.Register<Ripple, double>(nameof(RippleOpacity), 0.12);
+
+    /// <summary>Identifies the <see cref="Duration"/> property.</summary>
+    public static readonly StyledProperty<TimeSpan> DurationProperty =
+        AvaloniaProperty.Register<Ripple, TimeSpan>(nameof(Duration), TimeSpan.FromMilliseconds(150));
+
+    /// <summary>Identifies the <see cref="RippleBrush"/> property.</summary>
+    public static readonly StyledProperty<IBrush?> RippleBrushProperty =
+        AvaloniaProperty.Register<Ripple, IBrush?>(nameof(RippleBrush));
+
     private Point _origin;
     private double _maxReach;
     private CancellationTokenSource? _animation;
 
-    static Ripple() => AffectsRender<Ripple>(ProgressProperty);
+    static Ripple() => AffectsRender<Ripple>(ProgressProperty, RippleOpacityProperty, RippleBrushProperty);
 
     /// <summary>Creates the ripple host.</summary>
     public Ripple() => ClipToBounds = true;
@@ -36,6 +48,27 @@ public class Ripple : Decorator
     {
         get => GetValue(ProgressProperty);
         set => SetValue(ProgressProperty, value);
+    }
+
+    /// <summary>Maximum ripple opacity.</summary>
+    public double RippleOpacity
+    {
+        get => GetValue(RippleOpacityProperty);
+        set => SetValue(RippleOpacityProperty, value);
+    }
+
+    /// <summary>Ripple animation duration.</summary>
+    public TimeSpan Duration
+    {
+        get => GetValue(DurationProperty);
+        set => SetValue(DurationProperty, value);
+    }
+
+    /// <summary>Brush used for the ripple. Defaults to black if unset.</summary>
+    public IBrush? RippleBrush
+    {
+        get => GetValue(RippleBrushProperty);
+        set => SetValue(RippleBrushProperty, value);
     }
 
     /// <summary>The distance from <paramref name="origin"/> to the farthest corner of <paramref name="size"/> (the ripple's full reach).</summary>
@@ -75,8 +108,9 @@ public class Ripple : Decorator
         }
 
         var radius = _maxReach * progress;
-        var alpha = (byte)(60 * (1 - progress));
-        var brush = new ImmutableSolidColorBrush(Color.FromArgb(alpha, 0, 0, 0));
+        var baseColor = RippleBrush is ISolidColorBrush solid ? solid.Color : Colors.Black;
+        var alpha = (byte)Math.Clamp(Math.Round(baseColor.A * RippleOpacity * (1 - progress)), 0, 255);
+        var brush = new ImmutableSolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
         context.DrawEllipse(brush, null, _origin, radius, radius);
     }
 
@@ -89,7 +123,7 @@ public class Ripple : Decorator
         SetCurrentValue(ProgressProperty, 0d);
         var animation = new Animation
         {
-            Duration = TimeSpan.FromMilliseconds(450),
+            Duration = Duration,
             Children =
             {
                 new KeyFrame { Cue = new Cue(0d), Setters = { new Setter(ProgressProperty, 0d) } },

@@ -6,13 +6,13 @@ namespace Loam.Theming;
 public sealed record LoamFieldMetrics
 {
     /// <summary>Minimum height for outlined field surfaces.</summary>
-    public double OutlinedHeight { get; init; } = 52;
+    public double OutlinedHeight { get; init; } = 56;
 
     /// <summary>Minimum height for filled field surfaces.</summary>
-    public double FilledHeight { get; init; } = 48;
+    public double FilledHeight { get; init; } = 56;
 
     /// <summary>Minimum height for text field surfaces.</summary>
-    public double TextHeight { get; init; } = 40;
+    public double TextHeight { get; init; } = 48;
 
     /// <summary>Resting outline width.</summary>
     public double OutlineWidth { get; init; } = 1;
@@ -21,16 +21,16 @@ public sealed record LoamFieldMetrics
     public double ActiveOutlineWidth { get; init; } = 2;
 
     /// <summary>Internal padding for outlined fields.</summary>
-    public Thickness OutlinedPadding { get; init; } = new(12, 14);
+    public Thickness OutlinedPadding { get; init; } = new(16, 16);
 
     /// <summary>Internal padding for filled fields.</summary>
-    public Thickness FilledPadding { get; init; } = new(12, 12);
+    public Thickness FilledPadding { get; init; } = new(16, 16);
 
     /// <summary>Internal padding for text fields.</summary>
-    public Thickness TextPadding { get; init; } = new(0, 9);
+    public Thickness TextPadding { get; init; } = new(0, 12);
 
     /// <summary>Horizontal label offset inside the outline notch.</summary>
-    public double LabelX { get; init; } = 10;
+    public double LabelX { get; init; } = 12;
 
     /// <summary>Top margin applied when a floating label creates a notch.</summary>
     public double FloatingLabelTopMargin { get; init; } = 7;

@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 namespace Loam.Controls;
 
@@ -24,6 +26,7 @@ public class ScrollToTop : Decorator
     /// <summary>Creates the control with a default up-arrow FAB, hidden until scrolled.</summary>
     public ScrollToTop()
     {
+        AddHandler(Avalonia.Controls.Button.ClickEvent, OnChildButtonClick);
         Child = new Fab { StartIcon = Icons.Material.Filled.ExpandLess, Color = LoamColor.Primary };
         IsVisible = false;
     }
@@ -71,10 +74,46 @@ public class ScrollToTop : Decorator
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        Target?.ScrollToHome();
+        if (e.Handled)
+        {
+            return;
+        }
+
+        ScrollTargetHome();
+        e.Handled = true;
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        if (_subscribed is not null)
+        {
+            _subscribed.ScrollChanged -= OnScrollChanged;
+            _subscribed = null;
+        }
+
+        base.OnDetachedFromVisualTree(e);
     }
 
     private void OnScrollChanged(object? sender, ScrollChangedEventArgs e) => Evaluate();
+
+    private void OnChildButtonClick(object? sender, RoutedEventArgs e)
+    {
+        ScrollTargetHome();
+        e.Handled = true;
+    }
+
+    private void ScrollTargetHome()
+    {
+        if (Target is null)
+        {
+            return;
+        }
+
+        Target.ScrollToHome();
+        Target.Offset = default;
+        Evaluate();
+    }
 
     private void Evaluate() => IsVisible = Target is not null && Target.Offset.Y > VisibleOffset;
 }

@@ -85,7 +85,7 @@ public sealed class ComponentsView : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                new Icon { Data = Icons.Material.Filled.Star, Color = LoamColor.Primary, Size = LoamSize.Medium },
+                new Icon { Data = Icons.Material.Filled.Widgets, Color = LoamColor.Primary, Size = LoamSize.Medium },
                 new Text { Text = "Loam Gallery", Typo = Typo.H6, VerticalAlignment = VerticalAlignment.Center },
                 new Chip { Text = "component lab", Variant = Variant.Outlined, Color = LoamColor.Primary, Size = LoamSize.Small },
             },
@@ -266,134 +266,176 @@ public sealed class ComponentsView : UserControl
         breadcrumbs.Items.Add(new BreadcrumbItem(page.Group));
         breadcrumbs.Items.Add(new BreadcrumbItem(page.Title));
 
-        var header = new StackPanel
+        var header = new Avalonia.Controls.Grid
         {
-            Spacing = 10,
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
             Children =
             {
-                breadcrumbs,
-                new Text { Text = page.Title, Typo = Typo.H4 },
-                new Text { Text = page.Description, Typo = Typo.Body1, Color = LoamColor.Default, Opacity = 0.72, TextWrapping = TextWrapping.Wrap, MaxWidth = 560 },
-                new WrapPanel
+                new StackPanel
                 {
+                    Spacing = 10,
                     Children =
                     {
-                        new Chip { Text = page.Group, Color = LoamColor.Primary, Margin = new Thickness(0, 0, 8, 8) },
-                        new Chip { Text = "Live preview", Variant = Variant.Outlined, Color = LoamColor.Success, Margin = new Thickness(0, 0, 8, 8) },
-                        new Chip { Text = "C# sample", Variant = Variant.Outlined, Color = LoamColor.Info, Margin = new Thickness(0, 0, 8, 8) },
+                        breadcrumbs,
+                        new Text { Text = page.Title, Typo = Typo.H4 },
+                        new Text { Text = page.Description, Typo = Typo.Body1, Color = LoamColor.Default, Opacity = 0.72, TextWrapping = TextWrapping.Wrap, MaxWidth = 620 },
                     },
                 },
+                PageBadges(page),
             },
         };
+        Avalonia.Controls.Grid.SetColumn(header.Children[1], 1);
 
         return new StackPanel
         {
             Margin = new Thickness(32, 28, 32, 40),
-            Spacing = 22,
-            Children = { header, BuildPreviewPanel(page), BuildCodePanel(page.Code) },
+            Spacing = 20,
+            Children = { header, BuildPreviewPanel(page), new CodeSampleView(page.Title, page.Code) },
         };
     }
+
+    private static WrapPanel PageBadges(GalleryPage page) =>
+        new()
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            MaxWidth = 320,
+            Children =
+            {
+                new Chip { Text = page.Group, Color = LoamColor.Primary, Margin = new Thickness(0, 0, 8, 8) },
+                new Chip { Text = "Tokenized", Variant = Variant.Outlined, Color = LoamColor.Success, Margin = new Thickness(0, 0, 8, 8) },
+                new Chip { Text = "Sample", Variant = Variant.Outlined, Color = LoamColor.Info, Margin = new Thickness(0, 0, 8, 8) },
+            },
+        };
 
     private static Paper BuildPreviewPanel(GalleryPage page) =>
         new()
         {
-            Elevation = 2,
-            Padding = new Thickness(28),
+            Elevation = 1,
+            Padding = new Thickness(0),
             Content = new StackPanel
             {
-                Spacing = 18,
                 Children =
                 {
-                    new Text { Text = "Preview", Typo = Typo.Subtitle1 },
-                    new Divider(),
-                    page.Build(),
-                },
-            },
-        };
-
-    private static Paper BuildCodePanel(string code)
-    {
-        var block = new TextBlock
-        {
-            Text = code,
-            FontFamily = new FontFamily("Cascadia Mono, Consolas, monospace"),
-            FontSize = 13,
-            LineHeight = 20,
-            TextWrapping = TextWrapping.NoWrap,
-        };
-        block.Bind(TextBlock.ForegroundProperty, block.GetResourceObservable(LoamTokens.TextPrimary));
-
-        return new Paper
-        {
-            Elevation = 1,
-            Outlined = true,
-            Padding = new Thickness(0),
-            Content = new DockPanel
-            {
-                LastChildFill = true,
-                Children =
-                {
-                    CodeHeader(),
-                    new ScrollViewer
+                    PanelHeader("Preview", "Live control surface"),
+                    new Border
                     {
-                        HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                        Padding = new Thickness(18),
-                        Content = block,
+                        Padding = new Thickness(28),
+                        Child = page.Build(),
                     },
                 },
             },
         };
-    }
 
-    private static Border CodeHeader()
+    private static Border PanelHeader(string title, string meta)
     {
         var header = new Border
         {
-            Padding = new Thickness(14, 10),
-            Child = new StackPanel
+            Padding = new Thickness(16, 12),
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Child = new Avalonia.Controls.Grid
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
+                ColumnDefinitions = new ColumnDefinitions("*,Auto"),
                 Children =
                 {
-                    new Icon { Data = Icons.Material.Filled.Edit, Size = LoamSize.Small, Color = LoamColor.Default },
-                    new Text { Text = "C# sample", Typo = Typo.Subtitle2, VerticalAlignment = VerticalAlignment.Center },
+                    new Text { Text = title, Typo = Typo.Subtitle1, VerticalAlignment = VerticalAlignment.Center },
+                    new Text { Text = meta, Typo = Typo.Caption, Color = LoamColor.Secondary, VerticalAlignment = VerticalAlignment.Center },
                 },
             },
         };
-        header.Bind(Border.BackgroundProperty, header.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.BackgroundGray))));
-        DockPanel.SetDock(header, Dock.Top);
+        Avalonia.Controls.Grid.SetColumn(((Avalonia.Controls.Grid)header.Child!).Children[1], 1);
+        header.Bind(Border.BackgroundProperty, header.GetResourceObservable(LoamTokens.ColorSurfaceContainer));
+        header.Bind(Border.BorderBrushProperty, header.GetResourceObservable(LoamTokens.ColorOutlineVariant));
         return header;
     }
 
     private static string IconForGroup(string group) => group switch
     {
-        "Start" => Icons.Material.Filled.Home,
-        "Buttons" => Icons.Material.Filled.Check,
+        "Start" => Icons.Material.Filled.Dashboard,
+        "Display" => Icons.Material.Filled.Widgets,
+        "Buttons" => Icons.Material.Filled.TouchApp,
         "Inputs" => Icons.Material.Filled.Edit,
         "Pickers" => Icons.Material.Filled.CalendarToday,
-        "Feedback" => Icons.Material.Filled.Settings,
-        "Data" => Icons.Material.Filled.Menu,
-        "Navigation" => Icons.Material.Filled.Menu,
-        "Layout" => Icons.Material.Filled.Star,
-        "Shell" => Icons.Material.Filled.Home,
-        "Surfaces" => Icons.Material.Filled.Home,
-        "Charts" => Icons.Material.Filled.Star,
-        _ => Icons.Material.Filled.Favorite,
+        "Feedback" => Icons.Material.Filled.Info,
+        "Data" => Icons.Material.Filled.Table,
+        "Navigation" => Icons.Material.Filled.AltRoute,
+        "Layout" => Icons.Material.Filled.GridView,
+        "Shell" => Icons.Material.Filled.WebAsset,
+        "Surfaces" => Icons.Material.Filled.Layers,
+        "Charts" => Icons.Material.Filled.ShowChart,
+        _ => Icons.Material.Filled.Widgets,
     };
 
     private static string IconForPage(string title) => title switch
     {
-        "Field" or "TextField" or "NumericField" or "MaskedTextField" or "Autocomplete" => Icons.Material.Filled.Edit,
-        "Select" or "Menu" or "NavGroup" => Icons.Material.Filled.ExpandMore,
-        "DatePicker" or "TimePicker" or "DateRangePicker" => Icons.Material.Filled.CalendarToday,
-        "ColorPicker" => Icons.Material.Filled.Favorite,
+        "Overview" => Icons.Material.Filled.Dashboard,
+
+        "Text" => Icons.Material.Filled.FormatSize,
+        "Icon" => Icons.Material.Filled.Widgets,
+        "Divider" => Icons.Material.Filled.HorizontalRule,
+        "Chip" or "ChipSet" => Icons.Material.Filled.Label,
+        "Badge" => Icons.Material.Filled.Notifications,
+        "Avatar" => Icons.Material.Filled.Person,
+        "AvatarGroup" => Icons.Material.Filled.Groups,
+
+        "Button" or "IconButton" => Icons.Material.Filled.TouchApp,
+        "ToggleIconButton" => Icons.Material.Filled.ToggleOn,
+        "ButtonGroup" or "ToggleGroup" => Icons.Material.Filled.ViewWeek,
+        "Fab" => Icons.Material.Filled.Add,
+        "Menu" or "NavMenu" => Icons.Material.Filled.Menu,
+
+        "Field" or "TextField" or "MaskedTextField" => Icons.Material.Filled.Edit,
+        "NumericField" => Icons.Material.Filled.FormatSize,
+        "Autocomplete" => Icons.Material.Filled.Search,
+        "Select" or "NavGroup" => Icons.Material.Filled.ExpandMore,
+        "CheckBox" => Icons.Material.Filled.CheckBox,
+        "Switch" => Icons.Material.Filled.ToggleOn,
+        "Radio" or "RadioGroup" => Icons.Material.Filled.RadioButtonChecked,
+        "Slider" => Icons.Material.Filled.Tune,
+        "Rating" => Icons.Material.Filled.Star,
         "FileUpload" => Icons.Material.Filled.CloudUpload,
-        "DialogService" or "SnackbarService" or "Overlay" or "Popover" => Icons.Material.Filled.Settings,
-        "DataGrid" or "SimpleTable" or "TreeView" => Icons.Material.Filled.Menu,
-        "Button" or "IconButton" or "ToggleIconButton" or "ButtonGroup" or "Fab" => Icons.Material.Filled.Check,
-        _ => Icons.Material.Filled.Star,
+        "Form" => Icons.Material.Filled.Article,
+
+        "DatePicker" or "DateRangePicker" or "MonthCalendar" => Icons.Material.Filled.CalendarToday,
+        "TimePicker" => Icons.Material.Filled.Schedule,
+        "ColorPicker" => Icons.Material.Filled.Palette,
+
+        "Alert" => Icons.Material.Filled.Info,
+        "ProgressCircular" or "ProgressLinear" => Icons.Material.Filled.ProgressActivity,
+        "Skeleton" => Icons.Material.Filled.ViewHeadline,
+        "Overlay" or "Popover" or "DialogService" => Icons.Material.Filled.Layers,
+        "SnackbarService" => Icons.Material.Filled.Chat,
+
+        "SimpleTable" => Icons.Material.Filled.Table,
+        "DataGrid" => Icons.Material.Filled.GridView,
+        "TreeView" => Icons.Material.Filled.AccountTree,
+        "Tabs" => Icons.Material.Filled.Tabs,
+        "ExpansionPanels" or "Collapse" => Icons.Material.Filled.ExpandMore,
+        "Timeline" => Icons.Material.Filled.Timeline,
+        "Carousel" => Icons.Material.Filled.ViewCarousel,
+        "Stepper" => Icons.Material.Filled.Checklist,
+        "Pagination" => Icons.Material.Filled.MoreHoriz,
+
+        "Breadcrumbs" => Icons.Material.Filled.AltRoute,
+        "Link" => Icons.Material.Filled.OpenInNew,
+        "NavLink" => Icons.Material.Filled.ArrowForward,
+
+        "Container" => Icons.Material.Filled.WebAsset,
+        "Grid" or "Item" => Icons.Material.Filled.GridView,
+        "Stack" => Icons.Material.Filled.ViewHeadline,
+        "Spacer" => Icons.Material.Filled.SwapHoriz,
+        "Hidden" => Icons.Material.Filled.VisibilityOff,
+        "ScrollToTop" => Icons.Material.Filled.ExpandLess,
+
+        "Layout" or "AppBar" or "Drawer" or "MainContent" => Icons.Material.Filled.WebAsset,
+        "Paper" or "Card" => Icons.Material.Filled.Article,
+        "List" => Icons.Material.Filled.ViewHeadline,
+        "Ripple" => Icons.Material.Filled.ProgressActivity,
+
+        "PieChart" => Icons.Material.Filled.PieChart,
+        "BarChart" => Icons.Material.Filled.BarChart,
+        "LineChart" => Icons.Material.Filled.ShowChart,
+        _ => Icons.Material.Filled.Widgets,
     };
 
     private static string SnippetFor(string title) => title switch

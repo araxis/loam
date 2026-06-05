@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -82,7 +83,8 @@ public class Paper : ContentControl
         }
 
         _backgroundBinding?.Dispose();
-        _backgroundBinding = _root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Surface));
+        _backgroundBinding = _root.Bind(Border.BackgroundProperty, this.GetResourceObservable(
+            InteractionAssist.TonalSurfaceToken(Elevation, Outlined)));
 
         _cornerBinding?.Dispose();
         if (Square)
@@ -92,7 +94,7 @@ public class Paper : ContentControl
         }
         else
         {
-            _cornerBinding = _root.Bind(Border.CornerRadiusProperty, this.GetResourceObservable(LoamTokens.DefaultCornerRadius));
+            _cornerBinding = _root.Bind(Border.CornerRadiusProperty, this.GetResourceObservable(LoamTokens.ShapeMedium));
         }
 
         _shadowBinding?.Dispose();
@@ -103,7 +105,7 @@ public class Paper : ContentControl
         if (Outlined)
         {
             _root.BorderThickness = new Thickness(1);
-            _borderBinding = _root.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.LinesDefault));
+            _borderBinding = _root.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.ColorOutlineVariant));
         }
         else
         {

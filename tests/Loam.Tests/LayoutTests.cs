@@ -129,7 +129,8 @@ public class LayoutTests
         Show(subheader);
 
         subheader.Typo.ShouldBe(Typo.Caption);
-        ((Avalonia.Media.ISolidColorBrush)subheader.Foreground!).Color.A.ShouldBe((byte)0x8A);
+        ((Avalonia.Media.ISolidColorBrush)subheader.Foreground!).Color.ShouldBe(
+            Avalonia.Media.Color.Parse("#49454F"));
     }
 
     [Fact]
@@ -162,5 +163,25 @@ public class LayoutTests
         scroll.Offset = new Avalonia.Vector(0, 300);
         Dispatcher.UIThread.RunJobs();
         scrollToTop.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void ScrollToTop_click_scrolls_target_home()
+    {
+        var scroll = new ScrollViewer { Width = 200, Height = 200, Content = new Border { Height = 2000 } };
+        var scrollToTop = new ScrollToTop { Target = scroll, VisibleOffset = 100 };
+        Show(new Panel { Children = { scroll, scrollToTop } });
+
+        scroll.Offset = new Avalonia.Vector(0, 300);
+        Dispatcher.UIThread.RunJobs();
+
+        scrollToTop.IsVisible.ShouldBeTrue();
+        var button = scrollToTop.Child.ShouldBeOfType<Fab>();
+
+        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        scroll.Offset.Y.ShouldBe(0);
+        scrollToTop.IsVisible.ShouldBeFalse();
     }
 }

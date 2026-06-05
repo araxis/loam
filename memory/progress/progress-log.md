@@ -7,6 +7,153 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Badge overlay layout fix
+
+**Done**
+- Changed `Badge` positioning so the indicator reserves overlay space inside the control's measured
+  layout slot instead of relying on a render transform outside bounds.
+- Kept the same corner/origin behavior while preventing top/right clipping in tight or clipped
+  parent surfaces.
+- Added headless coverage for top-right badge placement and the absence of out-of-bounds transform.
+
+**Verified**
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --filter "FullyQualifiedName~DisplayTests"`
+  passed: 32 tests.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 60s -p:UseSharedCompilation=false /nodeReuse:false` passed: 158 tests.
+
+**Next:** visually confirm the relaunched gallery badge preview no longer clips indicator content.
+
+---
+
+## 2026-06-05 — v2.0 — Field hover background fix
+
+**Done**
+- Neutralized the inner Avalonia `TextBox` hover/focus background resources used inside Loam field
+  chrome so outlined fields no longer show a too-dark inner rectangle in dark mode.
+- Re-applied the transparent inner chrome after pointer and focus state changes.
+- Added dark-theme headless coverage for hover and focus transparency on `TextField`.
+
+**Verified**
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --filter "FullyQualifiedName~InputTests"`
+  passed: 35 tests.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 60s -p:UseSharedCompilation=false /nodeReuse:false` passed: 157 tests.
+
+**Next:** visually confirm the relaunched gallery field hover/focus state in dark mode.
+
+---
+
+## 2026-06-05 — v2.0 — Gallery navigation icon polish
+
+**Done**
+- Expanded the curated built-in icon catalog with reusable glyphs for display, inputs, feedback,
+  data, navigation, layout, surfaces, and charts.
+- Replaced generic gallery sidebar fallbacks with group/page-specific icons so component rows no
+  longer repeat stars and checks.
+- Updated the gallery top-bar mark from a generic star to the component-grid glyph.
+- Added headless coverage that parses every built-in icon path as Avalonia geometry.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --filter "FullyQualifiedName~PrimitivesTests"`
+  passed: 18 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 60s -p:UseSharedCompilation=false /nodeReuse:false` passed: 156 tests.
+
+**Next:** visually review the relaunched gallery sidebar and tune any individual glyph choices that
+feel too close semantically.
+
+---
+
+## 2026-06-05 — v2.0 — Scroll-to-top activation fix
+
+**Done**
+- Wired `ScrollToTop` to handle routed button clicks from its default FAB, so pressing the visible
+  affordance scrolls the target viewer home.
+- Kept the pointer-release fallback for custom non-button children, forced the target offset to
+  zero, and re-evaluated visibility immediately after activation.
+- Unsubscribed from the watched `ScrollViewer` on visual-tree detach to avoid stale scroll handlers.
+- Added headless regression coverage for click activation and hide-after-scroll behavior.
+
+**Verified**
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --filter "FullyQualifiedName~LayoutTests"`
+  passed: 13 tests.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test Loam.slnx -c Release --no-build` passed: 155 tests.
+
+**Next:** visually confirm the gallery FAB scrolls the current page to the top after launch.
+
+---
+
+## 2026-06-05 — v2.0 — Gallery page and code sample polish
+
+**Done**
+- Added an editor-style `CodeSampleView` for every component page, with normalized indentation,
+  line numbers, a file header, and lightweight C# token coloring.
+- Reworked gallery component pages with a cleaner masthead, token/state chips, and a calmer preview
+  panel header so live controls and samples scan as one acceptance surface.
+- Kept the implementation C#-only and local to the gallery app.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release --no-restore` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 60s -p:UseSharedCompilation=false /nodeReuse:false` passed: 154 tests.
+- `git diff --check` passed.
+
+**Next:** visually review the gallery after launch and continue filling deeper per-component state
+examples where the sample page still shares a family preview.
+
+---
+
+## 2026-06-05 — v2.0 — Field label notch polish
+
+**Done**
+- Changed shared field floating-label host backgrounds from the base surface token to the surface
+  container token so outlined labels blend with tonal page/container backgrounds instead of showing a
+  white patch.
+- Added focused input coverage for the floating label host background.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release --no-restore` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter InputTests`
+  passed: 34 tests.
+
+**Next:** continue reviewing remaining field and picker states against tonal surfaces.
+
+---
+
+## 2026-06-05 — v2.0 — Design-system rebaseline foundation
+
+**Done**
+- Added role-based `LoamColorScheme` for light/dark defaults and kept `LoamPalette` as the
+  compatibility adapter, including a legacy migration preset.
+- Expanded foundations with typography role aliases, shape scale, spacing, stroke, density,
+  tonal elevation, and richer motion tokens.
+- Reprojected `LoamTheme` so color roles, compatibility palette keys, tonal surfaces, spacing,
+  stroke, density, elevation mapping, state, motion, and field metrics are live resources.
+- Updated high-impact component paths: semantic color resolution, button/fab/icon-button state
+  layers and ripple tokens, field metrics/chrome, paper tonal surfaces, table/grid density, and the
+  design-system gallery page.
+- Bumped package version to `2.0.0` and updated docs/memory for the new baseline.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release --no-restore` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 60s -p:UseSharedCompilation=false /nodeReuse:false` passed: 154 tests.
+- `dotnet pack src\Loam\Loam.csproj -c Release --no-build` created
+  `src\Loam\bin\Release\Loam.2.0.0.nupkg`.
+- Docs/gallery neutral-name scan only found historical entries and SVG path-command false positives;
+  the updated gallery launched and stayed alive as `Loam Gallery`.
+
+**Next:** continue the component-family audit for navigation, overlays, pickers, selection controls,
+and chart legend/readability polish.
+
+---
+
 ## 2026-06-04 — Unreleased — Component adaptation tokens and fields
 
 **Done**

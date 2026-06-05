@@ -19,8 +19,9 @@ internal static class ButtonTheme
             Setters =
             {
                 new Setter(TemplatedControl.TemplateProperty, ButtonStyles.IconContentTemplate()),
-                ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, LoamTokens.DefaultCornerRadius),
-                new Setter(TemplatedControl.PaddingProperty, new Thickness(16, 6)),
+                ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, LoamTokens.ShapeFull),
+                ButtonStyles.Dyn(TemplatedControl.PaddingProperty, LoamTokens.DensityButtonPaddingMedium),
+                ButtonStyles.Dyn(Layoutable.MinHeightProperty, LoamTokens.DensityInteractiveMedium),
                 new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent),
                 new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(0)),
                 ButtonStyles.Dyn(TemplatedControl.ForegroundProperty, LoamTokens.TextPrimary),
@@ -33,8 +34,8 @@ internal static class ButtonTheme
             },
         };
 
-        theme.Add(SizeStyle(LoamSize.Small, new Thickness(10, 4)));
-        theme.Add(SizeStyle(LoamSize.Large, new Thickness(22, 8)));
+        theme.Add(SizeStyle(LoamSize.Small, LoamTokens.DensityButtonPaddingSmall, LoamTokens.DensityInteractiveSmall));
+        theme.Add(SizeStyle(LoamSize.Large, LoamTokens.DensityButtonPaddingLarge, LoamTokens.DensityInteractiveLarge));
         theme.Add(new Style(x => x.Nesting().PropertyEquals(Button.FullWidthProperty, true))
         {
             Setters = { new Setter(Layoutable.HorizontalAlignmentProperty, HorizontalAlignment.Stretch) },
@@ -45,9 +46,13 @@ internal static class ButtonTheme
         return theme;
     }
 
-    private static Style SizeStyle(LoamSize size, Thickness padding) =>
+    private static Style SizeStyle(LoamSize size, string paddingToken, string minHeightToken) =>
         new(x => x.Nesting().PropertyEquals(Button.SizeProperty, size))
         {
-            Setters = { new Setter(TemplatedControl.PaddingProperty, padding) },
+            Setters =
+            {
+                ButtonStyles.Dyn(TemplatedControl.PaddingProperty, paddingToken),
+                ButtonStyles.Dyn(Layoutable.MinHeightProperty, minHeightToken),
+            },
         };
 }

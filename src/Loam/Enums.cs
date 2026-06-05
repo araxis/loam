@@ -66,6 +66,36 @@ public enum Typo
 {
     /// <summary>Inherit the ambient typography.</summary>
     Inherit,
+    /// <summary>Display large.</summary>
+    DisplayLarge,
+    /// <summary>Display medium.</summary>
+    DisplayMedium,
+    /// <summary>Display small.</summary>
+    DisplaySmall,
+    /// <summary>Headline large.</summary>
+    HeadlineLarge,
+    /// <summary>Headline medium.</summary>
+    HeadlineMedium,
+    /// <summary>Headline small.</summary>
+    HeadlineSmall,
+    /// <summary>Title large.</summary>
+    TitleLarge,
+    /// <summary>Title medium.</summary>
+    TitleMedium,
+    /// <summary>Title small.</summary>
+    TitleSmall,
+    /// <summary>Body large.</summary>
+    BodyLarge,
+    /// <summary>Body medium.</summary>
+    BodyMedium,
+    /// <summary>Body small.</summary>
+    BodySmall,
+    /// <summary>Label large.</summary>
+    LabelLarge,
+    /// <summary>Label medium.</summary>
+    LabelMedium,
+    /// <summary>Label small.</summary>
+    LabelSmall,
     /// <summary>Heading 1.</summary>
     H1,
     /// <summary>Heading 2.</summary>

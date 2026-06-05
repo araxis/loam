@@ -7,6 +7,12 @@ namespace Loam.Theming;
 /// </summary>
 public sealed record LoamThemeData
 {
+    /// <summary>Role-based color scheme used under <see cref="Avalonia.Styling.ThemeVariant.Light"/>.</summary>
+    public LoamColorScheme ColorSchemeLight { get; init; } = LoamColorScheme.DefaultLight;
+
+    /// <summary>Role-based color scheme used under <see cref="Avalonia.Styling.ThemeVariant.Dark"/>.</summary>
+    public LoamColorScheme ColorSchemeDark { get; init; } = LoamColorScheme.DefaultDark;
+
     /// <summary>Palette used under <see cref="Avalonia.Styling.ThemeVariant.Light"/>.</summary>
     public LoamPalette PaletteLight { get; init; } = LoamPalette.DefaultLight;
 
@@ -19,8 +25,20 @@ public sealed record LoamThemeData
     /// <summary>Elevation shadows (shared across variants).</summary>
     public LoamShadows Shadows { get; init; } = LoamShadows.Default;
 
+    /// <summary>Tonal and shadow elevation mapping.</summary>
+    public LoamElevation Elevation { get; init; } = LoamElevation.Default;
+
     /// <summary>Layout metrics.</summary>
     public LoamLayout Layout { get; init; } = LoamLayout.Default;
+
+    /// <summary>Spacing scale.</summary>
+    public LoamSpacing Spacing { get; init; } = LoamSpacing.Default;
+
+    /// <summary>Stroke widths.</summary>
+    public LoamStroke Stroke { get; init; } = LoamStroke.Default;
+
+    /// <summary>Shared component density metrics.</summary>
+    public LoamDensity Density { get; init; } = LoamDensity.Default;
 
     /// <summary>Overlay stacking order.</summary>
     public LoamZIndex ZIndex { get; init; } = LoamZIndex.Default;
@@ -39,4 +57,26 @@ public sealed record LoamThemeData
 
     /// <summary>The Loam defaults.</summary>
     public static LoamThemeData Default { get; } = new();
+
+    /// <summary>Legacy visual preset retained for migration.</summary>
+    public static LoamThemeData Legacy { get; } = new()
+    {
+        ColorSchemeLight = LoamColorScheme.FromPalette(LoamPalette.LegacyLight),
+        ColorSchemeDark = LoamColorScheme.FromPalette(LoamPalette.LegacyDark),
+        PaletteLight = LoamPalette.LegacyLight,
+        PaletteDark = LoamPalette.LegacyDark,
+        Shape = new LoamShape
+        {
+            ExtraSmall = new Avalonia.CornerRadius(4),
+            Small = new Avalonia.CornerRadius(4),
+            Medium = new Avalonia.CornerRadius(8),
+            Large = new Avalonia.CornerRadius(12),
+        },
+        Motion = new LoamMotion
+        {
+            DurationShort = TimeSpan.FromMilliseconds(120),
+            DurationMedium = TimeSpan.FromMilliseconds(180),
+            DurationLong = TimeSpan.FromMilliseconds(280),
+        },
+    };
 }

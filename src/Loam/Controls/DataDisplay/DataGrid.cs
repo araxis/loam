@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 using AvaGrid = Avalonia.Controls.Grid;
 
@@ -280,7 +281,9 @@ public class DataGrid<T> : Decorator
 
     private Border BuildHeaderCell(DataGridColumn<T> column)
     {
-        var pad = _dense ? new Thickness(8, 6) : new Thickness(16, 12);
+        var pad = InteractionAssist.ThicknessToken(this,
+            _dense ? LoamTokens.DensityDataHeaderPaddingDense : LoamTokens.DensityDataHeaderPadding,
+            _dense ? new Thickness(8, 6) : new Thickness(16, 12));
         var label = new Text { Text = column.Header, Typo = Typo.Subtitle2, Color = LoamColor.Default, VerticalAlignment = VerticalAlignment.Center };
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, HorizontalAlignment = column.Align, Children = { label } };
 
@@ -309,7 +312,9 @@ public class DataGrid<T> : Decorator
 
     private Border BuildBodyCell(DataGridColumn<T> column, T item)
     {
-        var pad = _dense ? new Thickness(8, 6) : new Thickness(16, 10);
+        var pad = InteractionAssist.ThicknessToken(this,
+            _dense ? LoamTokens.DensityDataCellPaddingDense : LoamTokens.DensityDataCellPadding,
+            _dense ? new Thickness(8, 6) : new Thickness(16, 10));
         if (column.CellTemplate is not null)
         {
             return new Border { Child = column.CellTemplate(item), Padding = pad };

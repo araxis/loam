@@ -13,11 +13,12 @@ source before implementation (source-first, ADR-0007).
 
 | reference | Loam | Status | Notes |
 | --- | --- | --- | --- |
-| `Theme` | `LoamTheme` + `LoamThemeData` | ✅ | Styles-derived; projects palette, typography, shadows, layout, shape, state, motion, field metrics, and z-index data → resources; `SetData`/`SetPalette`/`SetPrimary`. |
-| `Palette`/`PaletteLight`/`PaletteDark` | `LoamPalette` (Default Light/Dark) | ✅ | Full faithful palette, both variants; projected to `ThemeDictionaries` by reflection. |
-| `Typography` | `LoamTypography` | ✅ | 14-style Material scale (Default, H1–H6, Subtitle1/2, Body1/2, Button, Caption, Overline). |
+| `Theme` | `LoamTheme` + `LoamThemeData` | ✅ | Styles-derived; projects role color schemes, compatibility palettes, typography, shadows, layout, shape, spacing, stroke, density, elevation, state, motion, field metrics, and z-index data → resources; `SetData`/`SetPalette`/`SetPrimary`. |
+| `Palette`/`PaletteLight`/`PaletteDark` | `LoamPalette` (Default Light/Dark) + `LoamColorScheme` | ✅ | Role-based light/dark scheme is the source of default color roles; `LoamPalette` remains as a compatibility adapter and migration preset. |
+| `Typography` | `LoamTypography` | ✅ | Display/Headline/Title/Body/Label roles in Large/Medium/Small, with old H1–H6/Subtitle/Body/Button/Caption/Overline values retained as aliases. |
 | `Shadows` | `LoamShadows` (elevation 0–25) | ✅ | CSS→`BoxShadows` converter (`ParseCss`); faithful reference table. |
 | `LayoutProperties` | `LoamLayout` | ✅ | radius 4, drawer 240/56, appbar 64. |
+| `Spacing`/`Stroke`/`Density`/`Elevation` | `LoamSpacing`/`LoamStroke`/`LoamDensity`/`LoamElevation` | ✅ | Shared spacing scale, outline/focus widths, interactive/data density metrics, tonal surface levels, and elevation shadow mapping. |
 | `ZIndex` | `LoamZIndex` | ✅ | drawer/popover/appbar/dialog/snackbar/tooltip (1100–1600). |
 | `ThemeProvider` | `LoamTheme` setup + runtime API | ✅ | one-line `App.Styles` add; runtime variant + palette swap. |
 | (color math) | `LoamColors` | ✅ | alpha/lighten/darken/contrast/luminance derivations. |

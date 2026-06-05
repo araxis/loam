@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
-using Avalonia.Media;
 using Loam;
 using Loam.Theming;
 
@@ -47,6 +47,7 @@ public class Badge : ContentControl
     public static readonly StyledProperty<LoamColor> ColorProperty =
         AvaloniaProperty.Register<Badge, LoamColor>(nameof(Color), LoamColor.Primary);
 
+    private ContentPresenter? _contentPresenter;
     private Border? _badge;
     private TextBlock? _badgeText;
     private IDisposable? _backgroundBinding;
@@ -116,6 +117,7 @@ public class Badge : ContentControl
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
+        _contentPresenter = e.NameScope.Find("PART_ContentPresenter") as ContentPresenter;
         _badge = e.NameScope.Find("PART_Badge") as Border;
         _badgeText = e.NameScope.Find("PART_BadgeText") as TextBlock;
         ApplyBadge();
@@ -177,8 +179,23 @@ public class Badge : ContentControl
         var (h, v, sx, sy) = OriginParams(Origin);
         _badge.HorizontalAlignment = h;
         _badge.VerticalAlignment = v;
+        _badge.RenderTransform = null;
+        ReserveOverlaySpace(size, sx, sy);
+    }
+
+    private void ReserveOverlaySpace(double size, double sx, double sy)
+    {
+        if (_contentPresenter is null)
+        {
+            return;
+        }
+
         var offset = Overlap ? size * 0.25 : size * 0.5;
-        _badge.RenderTransform = new TranslateTransform(sx * offset, sy * offset);
+        _contentPresenter.Margin = new Thickness(
+            sx < 0 ? offset : 0,
+            sy < 0 ? offset : 0,
+            sx > 0 ? offset : 0,
+            sy > 0 ? offset : 0);
     }
 
     private string FormatValue()

@@ -1,4 +1,5 @@
 using Avalonia.Automation;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Loam.Theming;
@@ -14,6 +15,14 @@ internal static class InteractionAssist
         value is double opacity
             ? opacity
             : LoamStateLayer.Default.DisabledOpacity;
+
+    public static Thickness ThicknessToken(Control control, string token, Thickness fallback) =>
+        control.TryGetResource(token, control.ActualThemeVariant, out var value) && value is Thickness thickness
+            ? thickness
+            : fallback;
+
+    public static string TonalSurfaceToken(int elevation, bool outlined = false) =>
+        LoamTokens.TonalElevation(outlined ? 0 : Math.Clamp(elevation, 0, 5));
 
     public static void SetAutomationName(Control control, params object?[] candidates)
     {
