@@ -1,9 +1,11 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -18,5 +20,9 @@ internal static class RatingTheme
 
     private static FuncControlTemplate<Rating> BuildTemplate() =>
         new((rating, scope) =>
-            new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 }.Named("PART_Stars", scope));
+        {
+            var stars = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 }.Named("PART_Stars", scope);
+            stars.Bind(Layoutable.MinHeightProperty, rating.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
+            return stars;
+        });
 }

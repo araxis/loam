@@ -33,6 +33,7 @@ internal static class ToggleGroupTheme
             };
             root.Bind(Border.BorderBrushProperty,
                 group.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.LinesInputs))));
+            root.Bind(Layoutable.MinHeightProperty, group.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
             return root;
         });
 }

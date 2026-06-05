@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -87,6 +88,8 @@ public class NavGroup : TemplatedControl
                 Focus();
                 Toggle();
             };
+            _header.GotFocus += (_, _) => UpdateState();
+            _header.LostFocus += (_, _) => UpdateState();
         }
 
         UpdateHeader();
@@ -99,6 +102,10 @@ public class NavGroup : TemplatedControl
     {
         base.OnPropertyChanged(change);
         if (change.Property == ExpandedProperty)
+        {
+            UpdateState();
+        }
+        else if (change.Property == IsEnabledProperty)
         {
             UpdateState();
         }
@@ -170,5 +177,20 @@ public class NavGroup : TemplatedControl
         {
             _chevron.RenderTransform = new RotateTransform(Expanded ? 180 : 0);
         }
+
+        if (_header is not null)
+        {
+            if (_header.IsFocused || IsFocused)
+            {
+                _header.Bind(Border.BackgroundProperty,
+                    this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
+            }
+            else
+            {
+                _header.Background = Brushes.Transparent;
+            }
+        }
+
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
     }
 }

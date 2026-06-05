@@ -52,6 +52,8 @@ internal static class ChipTheme
                 Children = { icon, text, close },
             };
 
-            return new Border { Child = panel }.Named("PART_Root", scope);
+            var root = new Border { Child = panel }.Named("PART_Root", scope);
+            root.Bind(Layoutable.MinHeightProperty, chip.GetResourceObservable(LoamTokens.DensityInteractiveSmall));
+            return root;
         });
 }

@@ -49,10 +49,11 @@ internal static class SliderTheme
             }.Named("PART_Thumb", scope);
             thumb.Bind(Border.BoxShadowProperty, slider.GetResourceObservable(LoamTokens.Elevation1));
 
-            return new Panel
+            var area = new Panel
             {
-                Height = 20,
                 Children = { track, fill, thumb },
             }.Named("PART_Area", scope);
+            area.Bind(Layoutable.MinHeightProperty, slider.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
+            return area;
         });
 }

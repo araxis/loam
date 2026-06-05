@@ -5,6 +5,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -35,6 +36,15 @@ public class NavLink : ContentControl
     private bool _hover;
     private IDisposable? _background;
     private IDisposable? _foreground;
+
+    /// <summary>Creates the navigation link.</summary>
+    public NavLink()
+    {
+        Focusable = true;
+        Cursor = new Cursor(StandardCursorType.Hand);
+        GotFocus += (_, _) => ApplyState();
+        LostFocus += (_, _) => ApplyState();
+    }
 
     /// <summary>Leading icon path. Mirrors the reference API's <c>Icon</c>.</summary>
     public string? Icon
@@ -73,8 +83,16 @@ public class NavLink : ContentControl
         _root = e.NameScope.Find("PART_Root") as Border;
         _iconPart = e.NameScope.Find("PART_Icon") as Icon;
         _presenter = e.NameScope.Find("PART_ContentPresenter") as ContentPresenter;
+        if (_root is not null)
+        {
+            _root.Focusable = true;
+            _root.GotFocus += (_, _) => ApplyState();
+            _root.LostFocus += (_, _) => ApplyState();
+        }
+
         UpdateIcon();
         ApplyState();
+        UpdateAutomation();
     }
 
     /// <inheritdoc />
@@ -85,9 +103,13 @@ public class NavLink : ContentControl
         {
             UpdateIcon();
         }
-        else if (change.Property == IsActiveProperty || change.Property == ColorProperty)
+        else if (change.Property == IsActiveProperty || change.Property == ColorProperty || change.Property == IsEnabledProperty)
         {
             ApplyState();
+        }
+        else if (change.Property == ContentProperty)
+        {
+            UpdateAutomation();
         }
     }
 
@@ -116,6 +138,24 @@ public class NavLink : ContentControl
             return;
         }
 
+        Focus();
+        Activate();
+        e.Handled = true;
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (IsEnabled && InteractionAssist.IsActivationKey(e.Key))
+        {
+            Activate();
+            e.Handled = true;
+        }
+    }
+
+    private void Activate()
+    {
         OnClick?.Invoke();
         if (!string.IsNullOrWhiteSpace(Href) && Uri.TryCreate(Href, UriKind.Absolute, out var uri))
         {
@@ -134,7 +174,8 @@ public class NavLink : ContentControl
 
     private void ApplyState()
     {
-        if (_root is null)
+        var root = _root;
+        if (root is null)
         {
             return;
         }
@@ -142,13 +183,15 @@ public class NavLink : ContentControl
         var accentName = Color is LoamColor.Default or LoamColor.Inherit
             ? nameof(LoamPalette.Primary)
             : Color.ToPaletteName()!;
+        var focused = IsFocused || root.IsFocused;
 
         _background?.Dispose();
         _foreground?.Dispose();
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
 
         if (IsActive)
         {
-            _background = _root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteHover(accentName)));
+            _background = root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteHover(accentName)));
             _foreground = _presenter?.Bind(TextElement.ForegroundProperty, this.GetResourceObservable(LoamTokens.Palette(accentName)));
             if (_iconPart is not null)
             {
@@ -157,12 +200,14 @@ public class NavLink : ContentControl
         }
         else
         {
-            _background = _hover
-                ? _root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.LinesDefault))
+            _background = focused
+                ? root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteFocus(accentName)))
+                : _hover
+                ? root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteHover(accentName)))
                 : null;
-            if (!_hover)
+            if (!_hover && !focused)
             {
-                _root.Background = Brushes.Transparent;
+                root.Background = Brushes.Transparent;
             }
 
             _foreground = _presenter?.Bind(TextElement.ForegroundProperty, this.GetResourceObservable(LoamTokens.TextPrimary));
@@ -172,6 +217,8 @@ public class NavLink : ContentControl
             }
         }
     }
+
+    private void UpdateAutomation() => InteractionAssist.SetAutomationName(this, Content, Href);
 }
 
 /// <summary>A vertical container of <see cref="NavLink"/>s, mirroring the reference API's <c>NavMenu</c>.</summary>

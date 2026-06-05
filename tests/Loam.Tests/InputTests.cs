@@ -268,6 +268,36 @@ public class InputTests
         Loam.Controls.Slider.Fraction(200, 0, 100).ShouldBe(1);
     }
 
+    [AvaloniaFact]
+    public void Slider_is_focusable_named_and_keyboard_adjustable()
+    {
+        var slider = new Loam.Controls.Slider { Minimum = 0, Maximum = 10, Value = 5 };
+        Show(slider);
+        slider.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        slider.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(slider).ShouldBe("Slider");
+        var area = slider.GetVisualDescendants().OfType<Panel>().First(p => p.Name == "PART_Area");
+        area.Focusable.ShouldBeTrue();
+        area.MinHeight.ShouldBeGreaterThanOrEqualTo(40);
+
+        var right = KeyArgs(Key.Right);
+        slider.RaiseEvent(right);
+        right.Handled.ShouldBeTrue();
+        slider.Value.ShouldBe(6);
+
+        var home = KeyArgs(Key.Home);
+        slider.RaiseEvent(home);
+        home.Handled.ShouldBeTrue();
+        slider.Value.ShouldBe(0);
+
+        var end = KeyArgs(Key.End);
+        slider.RaiseEvent(end);
+        end.Handled.ShouldBeTrue();
+        slider.Value.ShouldBe(10);
+    }
+
     [Fact]
     public void TextField_required_and_custom_validation()
     {
@@ -582,6 +612,40 @@ public class InputTests
         stars[1].Color.ShouldBe(LoamColor.Default);
     }
 
+    [AvaloniaFact]
+    public void Rating_is_focusable_named_and_keyboard_adjustable()
+    {
+        var rating = new Rating { MaxValue = 5, SelectedValue = 2 };
+        Show(rating);
+        rating.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        rating.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(rating).ShouldBe("Rating");
+        rating.GetVisualDescendants().OfType<StackPanel>().First(p => p.Name == "PART_Stars")
+            .Focusable.ShouldBeTrue();
+
+        var right = KeyArgs(Key.Right);
+        rating.RaiseEvent(right);
+        right.Handled.ShouldBeTrue();
+        rating.SelectedValue.ShouldBe(3);
+
+        var left = KeyArgs(Key.Left);
+        rating.RaiseEvent(left);
+        left.Handled.ShouldBeTrue();
+        rating.SelectedValue.ShouldBe(2);
+
+        rating.RaiseEvent(KeyArgs(Key.Home));
+        rating.SelectedValue.ShouldBe(0);
+
+        rating.RaiseEvent(KeyArgs(Key.End));
+        rating.SelectedValue.ShouldBe(5);
+
+        rating.ReadOnly = true;
+        rating.RaiseEvent(KeyArgs(Key.Left));
+        rating.SelectedValue.ShouldBe(5);
+    }
+
     [Fact]
     public void Autocomplete_filter_matches_case_insensitive_contains_and_caps()
     {
@@ -697,5 +761,38 @@ public class InputTests
         ((ISolidColorBrush)week.Background!).Color.A.ShouldBe((byte)0);
         var day = segments.First(s => ((Loam.Controls.Text)s.Child!).Text == "Day");
         ((ISolidColorBrush)day.Background!).Color.ShouldBe(Color.Parse("#6750A4"));
+    }
+
+    [AvaloniaFact]
+    public void ToggleGroup_segments_are_focusable_named_and_keyboard_selectable()
+    {
+        var group = new ToggleGroup();
+        group.Items.Add(new ToggleItem("Day", "day"));
+        group.Items.Add(new ToggleItem("Week", "week"));
+        group.Items.Add(new ToggleItem("Month", "month"));
+        group.SelectedValue = "day";
+        Show(group);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        group.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(group).ShouldBe("Toggle group");
+        var segments = group.GetVisualDescendants().OfType<Border>()
+            .Where(b => b.Child is Loam.Controls.Text).ToList();
+        segments.Count.ShouldBe(3);
+        segments.All(segment => segment.Focusable).ShouldBeTrue();
+        segments.All(segment => segment.MinHeight >= 40).ShouldBeTrue();
+
+        var week = segments.First(segment => ((Loam.Controls.Text)segment.Child!).Text == "Week");
+        AutomationProperties.GetName(week).ShouldBe("Week");
+        var activate = KeyArgs(Key.Space);
+        week.RaiseEvent(activate);
+        activate.Handled.ShouldBeTrue();
+        group.SelectedValue.ShouldBe("week");
+
+        var next = KeyArgs(Key.Right);
+        week.RaiseEvent(next);
+        next.Handled.ShouldBeTrue();
+        group.SelectedValue.ShouldBe("month");
     }
 }

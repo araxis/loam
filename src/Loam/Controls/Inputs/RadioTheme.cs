@@ -6,6 +6,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -47,11 +48,13 @@ internal static class RadioTheme
             }.Named("PART_ContentPresenter", scope);
             presenter.Bind(ContentPresenter.ContentProperty, radio.GetObservable(ContentControl.ContentProperty));
 
-            return new StackPanel
+            var root = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
                 Children = { ring, presenter },
             };
+            root.Bind(Layoutable.MinHeightProperty, radio.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
+            return root;
         });
 }

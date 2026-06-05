@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -53,7 +54,12 @@ public class ToggleGroup : TemplatedControl
     private StackPanel? _items;
 
     /// <summary>Creates the group.</summary>
-    public ToggleGroup() => Items.CollectionChanged += OnItemsChanged;
+    public ToggleGroup()
+    {
+        Focusable = true;
+        Items.CollectionChanged += OnItemsChanged;
+        InteractionAssist.SetAutomationName(this, "Toggle group");
+    }
 
     /// <summary>The selectable options.</summary>
     public ObservableCollection<ToggleItem> Items { get; } = new();
@@ -91,8 +97,9 @@ public class ToggleGroup : TemplatedControl
         {
             UpdateSelection();
         }
-        else if (change.Property == ColorProperty)
+        else if (change.Property == ColorProperty || change.Property == IsEnabledProperty)
         {
+            ApplyEnabledState();
             UpdateSelection();
         }
     }
@@ -123,21 +130,50 @@ public class ToggleGroup : TemplatedControl
             var segment = new Border
             {
                 Child = label,
-                Padding = new Thickness(16, 8),
+                Padding = InteractionAssist.ThicknessToken(this, LoamTokens.DensityButtonPaddingMedium, new Thickness(16, 8)),
                 Background = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.Hand),
                 BorderThickness = new Thickness(i == 0 ? 0 : 1, 0, 0, 0),
+                Focusable = true,
             };
+            segment.Bind(Layoutable.MinHeightProperty, this.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
             segment.Bind(Border.BorderBrushProperty,
                 this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.LinesInputs))));
 
             var captured = item;
-            segment.PointerPressed += (_, _) => SelectedValue = captured.Value;
+            var index = i;
+            InteractionAssist.SetAutomationName(segment, captured.Text, captured.Value);
+            segment.PointerPressed += (_, _) =>
+            {
+                segment.Focus();
+                SelectedValue = captured.Value;
+            };
+            segment.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    SelectedValue = captured.Value;
+                    args.Handled = true;
+                }
+                else if (InteractionAssist.IsIncrementKey(args.Key))
+                {
+                    MoveSelection(index, 1);
+                    args.Handled = true;
+                }
+                else if (InteractionAssist.IsDecrementKey(args.Key))
+                {
+                    MoveSelection(index, -1);
+                    args.Handled = true;
+                }
+            };
+            segment.GotFocus += (_, _) => UpdateSelection();
+            segment.LostFocus += (_, _) => UpdateSelection();
 
             _items.Children.Add(segment);
             _segments.Add((segment, label, item));
         }
 
+        ApplyEnabledState();
         UpdateSelection();
     }
 
@@ -155,6 +191,11 @@ public class ToggleGroup : TemplatedControl
                 segment.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Palette(accentName)));
                 label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.PaletteContrast(accentName)));
             }
+            else if (segment.IsFocused)
+            {
+                segment.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteFocus(accentName)));
+                label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.TextPrimary));
+            }
             else
             {
                 segment.Background = Brushes.Transparent;
@@ -162,4 +203,20 @@ public class ToggleGroup : TemplatedControl
             }
         }
     }
+
+    private void MoveSelection(int currentIndex, int direction)
+    {
+        if (_segments.Count == 0)
+        {
+            return;
+        }
+
+        var selectedIndex = _segments.FindIndex(segment => Equals(segment.Item.Value, SelectedValue));
+        var origin = selectedIndex >= 0 ? selectedIndex : currentIndex;
+        var next = Math.Clamp(origin + direction, 0, _segments.Count - 1);
+        SelectedValue = _segments[next].Item.Value;
+        _segments[next].Segment.Focus();
+    }
+
+    private void ApplyEnabledState() => Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
 }

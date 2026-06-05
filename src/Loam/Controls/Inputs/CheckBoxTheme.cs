@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Loam;
 using Loam.Internal.Templating;
+using Loam.Theming;
 using AvaPath = Avalonia.Controls.Shapes.Path;
 
 namespace Loam.Controls;
@@ -52,11 +53,13 @@ internal static class CheckBoxTheme
             }.Named("PART_ContentPresenter", scope);
             presenter.Bind(ContentPresenter.ContentProperty, checkBox.GetObservable(ContentControl.ContentProperty));
 
-            return new StackPanel
+            var root = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
                 Children = { box, presenter },
             };
+            root.Bind(Layoutable.MinHeightProperty, checkBox.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
+            return root;
         });
 }

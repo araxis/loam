@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -35,6 +36,7 @@ public class Pagination : TemplatedControl
         AvaloniaProperty.Register<Pagination, int>(nameof(MiddleCount), 3);
 
     private StackPanel? _items;
+    private bool _coercing;
 
     /// <summary>The total number of pages. Mirrors the reference API's <c>Count</c>.</summary>
     public int Count
@@ -158,6 +160,11 @@ public class Pagination : TemplatedControl
             change.Property == ColorProperty || change.Property == BoundaryCountProperty ||
             change.Property == MiddleCountProperty)
         {
+            if (change.Property == CountProperty || change.Property == SelectedProperty)
+            {
+                CoerceSelected();
+            }
+
             Rebuild();
         }
     }
@@ -171,19 +178,20 @@ public class Pagination : TemplatedControl
 
         _items.Children.Clear();
 
-        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowBack, Selected > 1, () => Selected--));
+        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowBack, Selected > 1, () => Selected--, "Previous page"));
 
         foreach (var page in BuildPages(Count, Selected, BoundaryCount, MiddleCount))
         {
             _items.Children.Add(page == 0 ? Ellipsis() : PageButton(page));
         }
 
-        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowForward, Selected < Count, () => Selected++));
+        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowForward, Selected < Count, () => Selected++, "Next page"));
     }
 
-    private static IconButton Arrow(string icon, bool enabled, Action onClick)
+    private static IconButton Arrow(string icon, bool enabled, Action onClick, string automationName)
     {
         var button = new IconButton { Icon = icon, Size = LoamSize.Small, IsEnabled = enabled };
+        AutomationProperties.SetName(button, automationName);
         button.Click += (_, _) => onClick();
         return button;
     }
@@ -199,6 +207,7 @@ public class Pagination : TemplatedControl
             Size = LoamSize.Small,
             MinWidth = 36,
         };
+        AutomationProperties.SetName(button, $"Page {page}");
         var captured = page;
         button.Click += (_, _) => Selected = captured;
         return button;
@@ -211,4 +220,28 @@ public class Pagination : TemplatedControl
         VerticalAlignment = VerticalAlignment.Center,
         Margin = new Thickness(6, 0),
     };
+
+    private void CoerceSelected()
+    {
+        if (_coercing)
+        {
+            return;
+        }
+
+        var value = Count <= 0 ? 0 : Math.Clamp(Selected, 1, Count);
+        if (value == Selected)
+        {
+            return;
+        }
+
+        _coercing = true;
+        try
+        {
+            Selected = value;
+        }
+        finally
+        {
+            _coercing = false;
+        }
+    }
 }

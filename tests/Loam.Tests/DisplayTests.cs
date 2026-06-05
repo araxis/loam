@@ -1,7 +1,9 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -28,6 +30,12 @@ public class DisplayTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
+
     [AvaloniaFact]
     public void Avatar_filled_primary_sizes_and_colors()
     {
@@ -51,6 +59,26 @@ public class DisplayTests
         chip.GetVisualDescendants().OfType<Text>().First().Text.ShouldBe("Tag");
         var close = chip.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Close");
         close.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Chip_is_focusable_named_and_closeable_from_keyboard()
+    {
+        var closed = false;
+        var chip = new Chip { Text = "Tag", Closeable = true };
+        chip.Closed += (_, _) => closed = true;
+        Show(chip);
+        chip.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        chip.Focusable.ShouldBeTrue();
+        Root(chip).Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(chip).ShouldBe("Tag");
+
+        var key = KeyArgs(Key.Enter);
+        chip.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        closed.ShouldBeTrue();
     }
 
     [AvaloniaFact]
@@ -132,6 +160,24 @@ public class DisplayTests
         set.Items[1].Variant.ShouldBe(Variant.Filled);
         set.Items[0].Variant.ShouldBe(Variant.Outlined);
         set.Items[2].Variant.ShouldBe(Variant.Outlined);
+    }
+
+    [AvaloniaFact]
+    public void ChipSet_selects_chips_from_keyboard()
+    {
+        var set = new ChipSet { Selectable = true };
+        set.Items.Add(new Chip { Text = "A" });
+        set.Items.Add(new Chip { Text = "B" });
+        Show(set);
+        set.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        set.Items.All(chip => chip.Focusable).ShouldBeTrue();
+        var key = KeyArgs(Key.Space);
+        set.Items[1].RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        set.SelectedIndex.ShouldBe(1);
+        set.Items[1].Variant.ShouldBe(Variant.Filled);
     }
 
     [AvaloniaFact]

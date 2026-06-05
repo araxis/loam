@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -46,12 +47,14 @@ internal static class NavLinkTheme
                 Children = { icon, presenter },
             };
 
-            return new Border
+            var root = new Border
             {
                 Child = row,
                 CornerRadius = new CornerRadius(4),
                 Background = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.Hand),
             }.Named("PART_Root", scope);
+            root.Bind(Layoutable.MinHeightProperty, link.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
+            return root;
         });
 }

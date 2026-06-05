@@ -4,6 +4,8 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -56,6 +58,13 @@ public class Chip : TemplatedControl
 
     /// <summary>Raised when the close button is clicked.</summary>
     public event EventHandler? Closed;
+
+    /// <summary>Creates the chip.</summary>
+    public Chip()
+    {
+        Focusable = true;
+        Cursor = new Cursor(StandardCursorType.Hand);
+    }
 
     /// <summary>The chip label. Mirrors the reference API's <c>Text</c>.</summary>
     public string? Text
@@ -124,6 +133,12 @@ public class Chip : TemplatedControl
         _iconPart = e.NameScope.Find("PART_Icon") as Loam.Controls.Icon;
         _textPart = e.NameScope.Find("PART_Text") as Loam.Controls.Text;
         _closePart = e.NameScope.Find("PART_Close") as Loam.Controls.Icon;
+        if (_root is not null)
+        {
+            _root.Focusable = true;
+            _root.Cursor = Cursor;
+        }
+
         if (_closePart is not null)
         {
             _closePart.PointerPressed += OnClosePressed;
@@ -131,6 +146,7 @@ public class Chip : TemplatedControl
 
         ApplyVisual();
         ApplyContent();
+        ApplyEnabledState();
     }
 
     /// <inheritdoc />
@@ -142,10 +158,35 @@ public class Chip : TemplatedControl
         {
             ApplyVisual();
         }
+        else if (change.Property == IsEnabledProperty)
+        {
+            ApplyEnabledState();
+        }
         else if (change.Property == TextProperty || change.Property == IconProperty ||
                  change.Property == CloseIconProperty || change.Property == CloseableProperty)
         {
             ApplyContent();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        if (IsEnabled)
+        {
+            Focus();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (IsEnabled && Closeable && InteractionAssist.IsActivationKey(e.Key))
+        {
+            Closed?.Invoke(this, EventArgs.Empty);
+            e.Handled = true;
         }
     }
 
@@ -157,15 +198,16 @@ public class Chip : TemplatedControl
 
     private void ApplyVisual()
     {
-        var height = Size switch { LoamSize.Small => 24d, LoamSize.Large => 40d, _ => 32d };
+        var height = Size switch { LoamSize.Large => 40d, _ => 32d };
         Height = height;
+        MinHeight = height;
 
         if (_root is null)
         {
             return;
         }
 
-        _root.Padding = new Thickness(10, 0);
+        _root.Padding = InteractionAssist.ThicknessToken(this, LoamTokens.DensityButtonPaddingSmall, new Thickness(10, 0));
         _root.CornerRadius = Label ? new CornerRadius(4) : new CornerRadius(height / 2);
 
         var tokens = SemanticColor.Resolve(Color);
@@ -215,5 +257,9 @@ public class Chip : TemplatedControl
             _closePart.Data = CloseIcon ?? Icons.Material.Filled.Close;
             _closePart.IsVisible = Closeable;
         }
+
+        InteractionAssist.SetAutomationName(this, Text);
     }
+
+    private void ApplyEnabledState() => Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
 }

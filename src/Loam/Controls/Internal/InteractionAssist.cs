@@ -10,6 +10,10 @@ internal static class InteractionAssist
 {
     public static bool IsActivationKey(Key key) => key is Key.Enter or Key.Space;
 
+    public static bool IsIncrementKey(Key key) => key is Key.Right or Key.Up;
+
+    public static bool IsDecrementKey(Key key) => key is Key.Left or Key.Down;
+
     public static double DisabledOpacity(Control control) =>
         control.TryGetResource(LoamTokens.StateDisabledOpacity, control.ActualThemeVariant, out var value) &&
         value is double opacity

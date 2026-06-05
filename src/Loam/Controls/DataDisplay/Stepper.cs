@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -75,6 +76,11 @@ public class Stepper : TemplatedControl
     /// <summary>Advances to the next step, marking the current one complete; finishes on the last step.</summary>
     public void Next()
     {
+        if (Steps.Count == 0)
+        {
+            return;
+        }
+
         if (ActiveIndex >= Steps.Count - 1)
         {
             if (ActiveIndex >= 0 && ActiveIndex < Steps.Count)
@@ -113,11 +119,13 @@ public class Stepper : TemplatedControl
         _next = e.NameScope.Find("PART_Next") as Button;
         if (_back is not null)
         {
+            AutomationProperties.SetName(_back, "Previous step");
             _back.Click += (_, _) => Previous();
         }
 
         if (_next is not null)
         {
+            AutomationProperties.SetName(_next, "Next step");
             _next.Click += (_, _) => Next();
         }
 
@@ -176,6 +184,7 @@ public class Stepper : TemplatedControl
             var title = new Text { Text = Steps[i].Title, Typo = Typo.Body2, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
 
             var step = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Children = { circle, title } };
+            AutomationProperties.SetName(step, Steps[i].Title ?? $"Step {i + 1}");
             _header.Children.Add(step);
             _markers.Add((circle, number, check, title));
         }
@@ -223,6 +232,7 @@ public class Stepper : TemplatedControl
         if (_next is not null)
         {
             _next.Content = ActiveIndex >= Steps.Count - 1 ? "Finish" : "Next";
+            AutomationProperties.SetName(_next, ActiveIndex >= Steps.Count - 1 ? "Finish steps" : "Next step");
         }
     }
 }

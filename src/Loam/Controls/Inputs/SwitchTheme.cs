@@ -60,11 +60,13 @@ internal static class SwitchTheme
             }.Named("PART_ContentPresenter", scope);
             presenter.Bind(ContentPresenter.ContentProperty, toggle.GetObservable(ContentControl.ContentProperty));
 
-            return new StackPanel
+            var root = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
                 Children = { switchArea, presenter },
             };
+            root.Bind(Layoutable.MinHeightProperty, toggle.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
+            return root;
         });
 }

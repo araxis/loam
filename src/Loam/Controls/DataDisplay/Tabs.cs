@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -51,7 +52,12 @@ public class Tabs : TemplatedControl
     private ContentControl? _content;
 
     /// <summary>Creates the tabs.</summary>
-    public Tabs() => Items.CollectionChanged += OnItemsChanged;
+    public Tabs()
+    {
+        Focusable = true;
+        Items.CollectionChanged += OnItemsChanged;
+        InteractionAssist.SetAutomationName(this, "Tabs");
+    }
 
     /// <summary>The tabs.</summary>
     public ObservableCollection<TabItem> Items { get; } = new();
@@ -122,11 +128,38 @@ public class Tabs : TemplatedControl
             var root = new Border
             {
                 Child = new StackPanel { Children = { label, underline } },
-                Padding = new Thickness(16, 12, 16, 0),
+                Padding = InteractionAssist.ThicknessToken(this, LoamTokens.DensityButtonPaddingMedium, new Thickness(16, 12, 16, 0)),
                 Cursor = new Cursor(StandardCursorType.Hand),
+                Focusable = true,
             };
+            root.Bind(Layoutable.MinHeightProperty, this.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
             var index = i;
-            root.PointerPressed += (_, _) => SelectedIndex = index;
+            InteractionAssist.SetAutomationName(root, Items[i].Header);
+            root.PointerPressed += (_, _) =>
+            {
+                root.Focus();
+                SelectedIndex = index;
+            };
+            root.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    SelectedIndex = index;
+                    args.Handled = true;
+                }
+                else if (InteractionAssist.IsIncrementKey(args.Key))
+                {
+                    MoveSelection(index, 1);
+                    args.Handled = true;
+                }
+                else if (InteractionAssist.IsDecrementKey(args.Key))
+                {
+                    MoveSelection(index, -1);
+                    args.Handled = true;
+                }
+            };
+            root.GotFocus += (_, _) => UpdateActive();
+            root.LostFocus += (_, _) => UpdateActive();
 
             _headers.Children.Add(root);
             _headerControls.Add((root, label, underline));
@@ -143,6 +176,17 @@ public class Tabs : TemplatedControl
             var active = i == SelectedIndex;
             _headerControls[i].Label.Color = active ? Color : LoamColor.Default;
             _headerControls[i].Underline.IsVisible = active;
+            if (!active && _headerControls[i].Root.IsFocused)
+            {
+                var accentName = Color is LoamColor.Default or LoamColor.Inherit
+                    ? nameof(LoamPalette.Primary)
+                    : Color.ToPaletteName()!;
+                _headerControls[i].Root.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteFocus(accentName)));
+            }
+            else
+            {
+                _headerControls[i].Root.Background = null;
+            }
         }
     }
 
@@ -152,5 +196,17 @@ public class Tabs : TemplatedControl
         {
             _content.Content = Items[SelectedIndex].Content;
         }
+    }
+
+    private void MoveSelection(int currentIndex, int direction)
+    {
+        if (_headerControls.Count == 0)
+        {
+            return;
+        }
+
+        var next = Math.Clamp(currentIndex + direction, 0, _headerControls.Count - 1);
+        SelectedIndex = next;
+        _headerControls[next].Root.Focus();
     }
 }

@@ -3,7 +3,9 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Loam;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -136,10 +138,12 @@ public class ChipSet : TemplatedControl
         foreach (var chip in Items)
         {
             chip.Margin = new Thickness(0, 0, 8, 8);
+            chip.Focusable = true;
             _items.Children.Add(chip);
             if (_hooked.Add(chip))
             {
                 chip.PointerPressed += OnChipPressed;
+                chip.KeyDown += OnChipKeyDown;
             }
         }
 
@@ -153,6 +157,26 @@ public class ChipSet : TemplatedControl
             return;
         }
 
+        chip.Focus();
+        SelectChip(chip);
+    }
+
+    private void OnChipKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!Selectable || e.Handled || sender is not Chip chip)
+        {
+            return;
+        }
+
+        if (InteractionAssist.IsActivationKey(e.Key))
+        {
+            SelectChip(chip);
+            e.Handled = true;
+        }
+    }
+
+    private void SelectChip(Chip chip)
+    {
         var index = Items.IndexOf(chip);
         if (MultiSelect)
         {

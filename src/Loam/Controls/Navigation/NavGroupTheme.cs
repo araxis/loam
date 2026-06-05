@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -51,6 +52,7 @@ internal static class NavGroupTheme
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Header", scope);
+            header.Bind(Layoutable.MinHeightProperty, group.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
 
             var items = new StackPanel { IsVisible = false }.Named("PART_Items", scope);
             var itemsCollapse = new Collapse { Child = items }.Named("PART_ItemsCollapse", scope);

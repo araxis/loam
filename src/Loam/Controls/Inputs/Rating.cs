@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -37,6 +38,14 @@ public class Rating : TemplatedControl
     private readonly List<Icon> _stars = new();
     private StackPanel? _panel;
     private int _hover;
+
+    /// <summary>Creates the rating.</summary>
+    public Rating()
+    {
+        Focusable = true;
+        Cursor = new Cursor(StandardCursorType.Hand);
+        InteractionAssist.SetAutomationName(this, "Rating");
+    }
 
     /// <summary>The selected score (two-way). Mirrors the reference API's <c>SelectedValue</c>.</summary>
     public int SelectedValue
@@ -83,6 +92,8 @@ public class Rating : TemplatedControl
         _panel = e.NameScope.Find("PART_Stars") as StackPanel;
         if (_panel is not null)
         {
+            _panel.Focusable = true;
+            _panel.Cursor = Cursor;
             _panel.PointerExited += (_, _) =>
             {
                 _hover = 0;
@@ -101,9 +112,42 @@ public class Rating : TemplatedControl
         {
             Rebuild();
         }
-        else if (change.Property == SelectedValueProperty)
+        else if (change.Property == SelectedValueProperty || change.Property == ColorProperty ||
+                 change.Property == ReadOnlyProperty || change.Property == IsEnabledProperty)
         {
+            ApplyEnabledState();
             UpdateStars();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (!IsEnabled || ReadOnly)
+        {
+            return;
+        }
+
+        if (InteractionAssist.IsIncrementKey(e.Key))
+        {
+            SelectedValue = ClampValue(SelectedValue + 1);
+            e.Handled = true;
+        }
+        else if (InteractionAssist.IsDecrementKey(e.Key))
+        {
+            SelectedValue = ClampValue(SelectedValue - 1);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Home)
+        {
+            SelectedValue = 0;
+            e.Handled = true;
+        }
+        else if (e.Key == Key.End)
+        {
+            SelectedValue = Math.Max(0, MaxValue);
+            e.Handled = true;
         }
     }
 
@@ -126,6 +170,7 @@ public class Rating : TemplatedControl
                 VerticalAlignment = VerticalAlignment.Center,
             };
             var index = i;
+            InteractionAssist.SetAutomationName(star, $"{index} of {MaxValue}");
             star.PointerEntered += (_, _) =>
             {
                 if (!ReadOnly)
@@ -138,6 +183,7 @@ public class Rating : TemplatedControl
             {
                 if (!ReadOnly)
                 {
+                    Focus();
                     SelectedValue = index;
                 }
             };
@@ -147,6 +193,7 @@ public class Rating : TemplatedControl
         }
 
         UpdateStars();
+        ApplyEnabledState();
     }
 
     private void UpdateStars()
@@ -160,4 +207,8 @@ public class Rating : TemplatedControl
             _stars[i].Cursor = ReadOnly ? Cursor.Default : new Cursor(StandardCursorType.Hand);
         }
     }
+
+    private int ClampValue(int value) => Math.Clamp(value, 0, Math.Max(0, MaxValue));
+
+    private void ApplyEnabledState() => Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
 }

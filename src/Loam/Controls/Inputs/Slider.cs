@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -37,6 +38,14 @@ public class Slider : TemplatedControl
     private bool _dragging;
     private IDisposable? _fillBackground;
     private IDisposable? _thumbBackground;
+
+    /// <summary>Creates the slider.</summary>
+    public Slider()
+    {
+        Focusable = true;
+        Cursor = new Cursor(StandardCursorType.Hand);
+        InteractionAssist.SetAutomationName(this, "Slider");
+    }
 
     /// <summary>The current value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
     public double Value
@@ -83,12 +92,15 @@ public class Slider : TemplatedControl
 
         if (_area is not null)
         {
+            _area.Focusable = true;
+            _area.Cursor = Cursor;
             _area.PointerPressed += OnPointerPressed;
             _area.PointerMoved += OnPointerMoved;
             _area.PointerReleased += OnPointerReleased;
         }
 
         ApplyColors();
+        ApplyEnabledState();
         UpdatePositions();
     }
 
@@ -104,6 +116,41 @@ public class Slider : TemplatedControl
         else if (change.Property == ColorProperty)
         {
             ApplyColors();
+        }
+        else if (change.Property == IsEnabledProperty)
+        {
+            ApplyEnabledState();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        if (InteractionAssist.IsIncrementKey(e.Key))
+        {
+            Value = ClampValue(Value + KeyboardStep());
+            e.Handled = true;
+        }
+        else if (InteractionAssist.IsDecrementKey(e.Key))
+        {
+            Value = ClampValue(Value - KeyboardStep());
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Home)
+        {
+            Value = Minimum;
+            e.Handled = true;
+        }
+        else if (e.Key == Key.End)
+        {
+            Value = Maximum;
+            e.Handled = true;
         }
     }
 
@@ -145,6 +192,16 @@ public class Slider : TemplatedControl
         }
     }
 
+    private void ApplyEnabledState() => Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+
+    private double KeyboardStep()
+    {
+        var range = Maximum - Minimum;
+        return range <= 0 ? 0 : range / 10;
+    }
+
+    private double ClampValue(double value) => Maximum <= Minimum ? Minimum : Math.Clamp(value, Minimum, Maximum);
+
     private void SetValueFromPointer(PointerEventArgs e)
     {
         if (_area is null || _area.Bounds.Width <= 0)
@@ -165,6 +222,7 @@ public class Slider : TemplatedControl
         }
 
         _dragging = true;
+        Focus();
         e.Pointer.Capture(_area);
         SetValueFromPointer(e);
     }

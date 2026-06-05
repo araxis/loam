@@ -7,6 +7,34 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Component interaction audit
+
+**Done**
+- Hardened selection controls with tokenized hit targets, disabled opacity, keyboard adjustment or
+  activation, focusable template surfaces, and automation names for Slider, Rating, ToggleGroup, Chip,
+  and ChipSet while preserving existing component APIs.
+- Tightened navigation/data interaction behavior for Link, Breadcrumbs, NavLink, NavGroup, Tabs,
+  Stepper, and Pagination, including keyboard activation, selected/active state handling, automation
+  names, and selected-page clamping.
+- Expanded gallery samples for the touched families with selected, disabled, read-only, and grouped
+  states while keeping source-linked samples.
+- Added focused headless tests for keyboard selection/activation, focusable surfaces, automation
+  names, selected/disabled/clamped states, and gallery article coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 175 tests.
+- Release gallery launched from `samples\Loam.Gallery\bin\Release\net8.0\Loam.Gallery.exe`; live
+  visual captures checked CheckBox/Switch disabled states and ToggleGroup selected/disabled states.
+- Gallery acceptance coverage rendered all catalog articles in light and dark, including Navigation,
+  Tabs, and ScrollToTop pages.
+
+**Next:** shell/navigation surfaces and overlay/data polish.
+
+---
+
 ## 2026-06-05 — v2.0 — Gallery acceptance audit
 
 **Done**

@@ -40,6 +40,22 @@ public class NavigationTests
     }
 
     [AvaloniaFact]
+    public void Link_is_focusable_named_and_keyboard_clickable()
+    {
+        var clicked = false;
+        var link = new Link { Text = "Go", OnClick = () => clicked = true };
+        Show(link);
+
+        link.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(link).ShouldBe("Go");
+
+        var key = KeyArgs(Key.Enter);
+        link.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        clicked.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
     public void Breadcrumbs_renders_links_with_a_current_tail()
     {
         var crumbs = new Breadcrumbs();
@@ -56,6 +72,27 @@ public class NavigationTests
         crumbs.GetVisualDescendants().OfType<Link>().Count().ShouldBe(2);
         var current = panel.Children[4].ShouldBeOfType<Loam.Controls.Text>();
         current.Text.ShouldBe("Data");
+    }
+
+    [AvaloniaFact]
+    public void Breadcrumb_links_are_focusable_and_keyboard_clickable()
+    {
+        var clicked = false;
+        var crumbs = new Breadcrumbs();
+        crumbs.Items.Add(new BreadcrumbItem("Home", () => clicked = true));
+        crumbs.Items.Add(new BreadcrumbItem("Current"));
+        Show(crumbs);
+        crumbs.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var link = crumbs.GetVisualDescendants().OfType<Link>().Single();
+        link.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(link).ShouldBe("Home");
+
+        var key = KeyArgs(Key.Space);
+        link.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        clicked.ShouldBeTrue();
     }
 
     [AvaloniaFact]
@@ -84,6 +121,25 @@ public class NavigationTests
         Dispatcher.UIThread.RunJobs();
 
         link.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Icon").Color.ShouldBe(LoamColor.Default);
+    }
+
+    [AvaloniaFact]
+    public void NavLink_is_focusable_named_and_keyboard_clickable()
+    {
+        var clicked = false;
+        var link = new NavLink { Icon = Icons.Material.Filled.Home, Content = "Home", OnClick = () => clicked = true };
+        Show(link);
+        link.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        link.Focusable.ShouldBeTrue();
+        link.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Root").Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(link).ShouldBe("Home");
+
+        var key = KeyArgs(Key.Enter);
+        link.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        clicked.ShouldBeTrue();
     }
 
     [AvaloniaFact]

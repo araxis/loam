@@ -163,6 +163,36 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void Tabs_headers_are_focusable_named_and_keyboard_selectable()
+    {
+        var first = new TextBlock { Text = "A" };
+        var second = new TextBlock { Text = "B" };
+        var tabs = new Tabs();
+        tabs.Items.Add(new Loam.Controls.TabItem("First", first));
+        tabs.Items.Add(new Loam.Controls.TabItem("Second", second));
+        Show(tabs);
+        tabs.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        tabs.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(tabs).ShouldBe("Tabs");
+        var headers = tabs.GetVisualDescendants().OfType<Border>()
+            .Where(border => border.Focusable && AutomationProperties.GetName(border) is not null)
+            .ToList();
+        headers.Count.ShouldBe(2);
+        headers[0].MinHeight.ShouldBeGreaterThanOrEqualTo(40);
+        AutomationProperties.GetName(headers[1]).ShouldBe("Second");
+
+        var next = KeyArgs(Key.Right);
+        headers[0].RaiseEvent(next);
+        next.Handled.ShouldBeTrue();
+        tabs.SelectedIndex.ShouldBe(1);
+
+        var content = tabs.GetVisualDescendants().OfType<ContentControl>().First(c => c.Name == "PART_Content");
+        content.Content.ShouldBe(second);
+    }
+
+    [AvaloniaFact]
     public void SimpleTable_builds_header_and_data_cells()
     {
         var table = new SimpleTable();
@@ -206,12 +236,29 @@ public class DataDisplayTests
 
         var arrows = pagination.GetVisualDescendants().OfType<IconButton>().ToList();
         arrows.Count.ShouldBe(2);
+        AutomationProperties.GetName(arrows[0]).ShouldBe("Previous page");
+        AutomationProperties.GetName(arrows[1]).ShouldBe("Next page");
         arrows[0].IsEnabled.ShouldBeFalse();
         arrows[1].IsEnabled.ShouldBeTrue();
 
         arrows[1].RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
         pagination.Selected.ShouldBe(2);
+    }
+
+    [AvaloniaFact]
+    public void Pagination_clamps_selected_page_and_names_page_buttons()
+    {
+        var pagination = new Pagination { Count = 3, Selected = 9 };
+        Show(pagination);
+        pagination.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        pagination.Selected.ShouldBe(3);
+        var pages = pagination.GetVisualDescendants().OfType<Loam.Controls.Button>()
+            .Where(button => AutomationProperties.GetName(button)?.StartsWith("Page ", StringComparison.Ordinal) == true)
+            .ToList();
+        pages.Select(button => AutomationProperties.GetName(button)).ShouldContain("Page 3");
     }
 
     [AvaloniaFact]
@@ -252,6 +299,22 @@ public class DataDisplayTests
         stepper.Next();
         done.ShouldBeTrue();
         stepper.Steps[0].Completed.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Stepper_actions_are_named_and_empty_next_is_safe()
+    {
+        var stepper = new Stepper();
+        Show(stepper);
+        stepper.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        stepper.Next();
+
+        var buttons = stepper.GetVisualDescendants().OfType<Loam.Controls.Button>().ToList();
+        buttons.Count.ShouldBe(2);
+        AutomationProperties.GetName(buttons[0]).ShouldBe("Previous step");
+        AutomationProperties.GetName(buttons[1]).ShouldBe("Finish steps");
     }
 
     [AvaloniaFact]

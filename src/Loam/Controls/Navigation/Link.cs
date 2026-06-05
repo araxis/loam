@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -25,8 +26,10 @@ public class Link : Text
     public Link()
     {
         Color = LoamColor.Primary;
+        Focusable = true;
         Cursor = new Cursor(StandardCursorType.Hand);
         UpdateDecorations(hovered: false);
+        UpdateAutomation();
     }
 
     /// <summary>Invoked when the link is clicked. Mirrors the reference API's <c>OnClick</c>.</summary>
@@ -54,6 +57,14 @@ public class Link : Text
         {
             UpdateDecorations(hovered: IsPointerOver);
         }
+        else if (change.Property == TextProperty || change.Property == HrefProperty)
+        {
+            UpdateAutomation();
+        }
+        else if (change.Property == IsEnabledProperty)
+        {
+            Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        }
     }
 
     /// <inheritdoc />
@@ -79,6 +90,24 @@ public class Link : Text
             return;
         }
 
+        Focus();
+        Activate();
+        e.Handled = true;
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (IsEnabled && InteractionAssist.IsActivationKey(e.Key))
+        {
+            Activate();
+            e.Handled = true;
+        }
+    }
+
+    private void Activate()
+    {
         OnClick?.Invoke();
         if (!string.IsNullOrWhiteSpace(Href) && Uri.TryCreate(Href, UriKind.Absolute, out var uri))
         {
@@ -88,4 +117,6 @@ public class Link : Text
 
     private void UpdateDecorations(bool hovered) =>
         TextDecorations = Underline || hovered ? Avalonia.Media.TextDecorations.Underline : null;
+
+    private void UpdateAutomation() => InteractionAssist.SetAutomationName(this, Text, Href);
 }

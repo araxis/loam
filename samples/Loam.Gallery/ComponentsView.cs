@@ -914,6 +914,7 @@ public sealed class ComponentsView : UserControl
         wrap.Children.Add(new Chip { Text = "With icon", Icon = Icons.Material.Filled.Star, Color = LoamColor.Warning, Margin = m });
         wrap.Children.Add(new Chip { Text = "Closeable", Color = LoamColor.Info, Closeable = true, Margin = m });
         wrap.Children.Add(new Chip { Text = "Error", Color = LoamColor.Error, Margin = m });
+        wrap.Children.Add(new Chip { Text = "Disabled", Color = LoamColor.Primary, IsEnabled = false, Margin = m });
         return wrap;
     }
 
@@ -1159,7 +1160,39 @@ public sealed class ComponentsView : UserControl
 
         var slider = new Loam.Controls.Slider { Value = 40, Width = 280, HorizontalAlignment = HorizontalAlignment.Left };
 
-        return new StackPanel { Spacing = 16, Children = { Labeled("Radio", group), Labeled("Slider", slider) } };
+        var disabledRadio = new RadioGroup
+        {
+            Value = "email",
+            IsEnabled = false,
+            Child = new Stack
+            {
+                Row = true,
+                Children =
+                {
+                    new Radio { Value = "email", Content = "Email", IsChecked = true },
+                    new Radio { Value = "sms", Content = "SMS" },
+                },
+            },
+        };
+
+        var disabledSlider = new Loam.Controls.Slider
+        {
+            Value = 70,
+            Width = 280,
+            IsEnabled = false,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        return new StackPanel
+        {
+            Spacing = 16,
+            Children =
+            {
+                Labeled("Radio", group),
+                Labeled("Slider", slider),
+                Labeled("Disabled", new StackPanel { Spacing = 10, Children = { disabledRadio, disabledSlider } }),
+            },
+        };
     }
 
     private static StackPanel BuildTextFields()
@@ -1187,13 +1220,37 @@ public sealed class ComponentsView : UserControl
         return stack;
     }
 
-    private static ToggleGroup BuildToggleGroup()
+    private static StackPanel BuildToggleGroup()
     {
         var group = new ToggleGroup { HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = "week" };
         group.Items.Add(new ToggleItem("Day", "day"));
         group.Items.Add(new ToggleItem("Week", "week"));
         group.Items.Add(new ToggleItem("Month", "month"));
-        return group;
+
+        var priority = new ToggleGroup
+        {
+            Color = LoamColor.Secondary,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            SelectedValue = "high",
+        };
+        priority.Items.Add(new ToggleItem("Low", "low"));
+        priority.Items.Add(new ToggleItem("High", "high"));
+        priority.Items.Add(new ToggleItem("Urgent", "urgent"));
+
+        var disabled = new ToggleGroup { IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = "open" };
+        disabled.Items.Add(new ToggleItem("Open", "open"));
+        disabled.Items.Add(new ToggleItem("Closed", "closed"));
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                Labeled("Schedule", group),
+                Labeled("Priority", priority),
+                Labeled("Disabled", disabled),
+            },
+        };
     }
 
     private static StackPanel BuildRating()
@@ -1202,6 +1259,7 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(new Rating { SelectedValue = 3 });
         stack.Children.Add(new Rating { SelectedValue = 4, MaxValue = 6, Color = LoamColor.Primary });
         stack.Children.Add(new Rating { SelectedValue = 5, ReadOnly = true, Size = LoamSize.Small });
+        stack.Children.Add(new Rating { SelectedValue = 2, IsEnabled = false });
         return stack;
     }
 
@@ -1285,12 +1343,14 @@ public sealed class ComponentsView : UserControl
         links.Children.Add(new Link { Text = "Hover underline", OnClick = () => { } });
         links.Children.Add(new Link { Text = "Always underline", Underline = true, Color = LoamColor.Secondary });
         links.Children.Add(new Link { Text = "Guide link", OnClick = () => { } });
+        links.Children.Add(new Link { Text = "Disabled", IsEnabled = false });
         stack.Children.Add(links);
 
         var nav = new NavMenu { Width = 220 };
         var dashboard = new NavLink { Icon = Icons.Material.Filled.Home, Content = "Dashboard", IsActive = true };
         var people = new NavLink { Icon = Icons.Material.Filled.Person, Content = "People" };
         var settings = new NavLink { Icon = Icons.Material.Filled.Settings, Content = "Settings" };
+        var disabled = new NavLink { Icon = Icons.Material.Filled.VisibilityOff, Content = "Locked", IsEnabled = false };
         foreach (var item in new[] { dashboard, people, settings })
         {
             var current = item;
@@ -1303,6 +1363,8 @@ public sealed class ComponentsView : UserControl
             };
             nav.Children.Add(current);
         }
+
+        nav.Children.Add(disabled);
 
         var group = new NavGroup { Title = "Admin", Icon = Icons.Material.Filled.Settings, Expanded = true };
         group.Items.Add(new NavLink { Icon = Icons.Material.Filled.Person, Content = "Users" });
