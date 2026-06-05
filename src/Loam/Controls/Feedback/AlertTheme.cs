@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Styling;
 using Loam;
 using Loam.Internal.Templating;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -49,6 +50,7 @@ internal static class AlertTheme
             var border = new Border { Child = row }.Named("PART_Root", scope);
             border.Bind(Border.PaddingProperty, alert.GetObservable(TemplatedControl.PaddingProperty));
             border.Bind(Border.CornerRadiusProperty, alert.GetObservable(TemplatedControl.CornerRadiusProperty));
+            border.Bind(Layoutable.MinHeightProperty, alert.GetResourceObservable(LoamTokens.DensityInteractiveLarge));
             return border;
         });
 }

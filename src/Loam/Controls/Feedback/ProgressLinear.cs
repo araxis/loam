@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -48,6 +49,12 @@ public class ProgressLinear : TemplatedControl
     private Border? _fill;
     private IDisposable? _fillBackground;
     private CancellationTokenSource? _indeterminateAnimation;
+
+    /// <summary>Creates the progress bar.</summary>
+    public ProgressLinear()
+    {
+        InteractionAssist.SetAutomationName(this, "Progress");
+    }
 
     /// <summary>Current value. Mirrors the reference API's <c>Value</c>.</summary>
     public double Value
@@ -196,7 +203,9 @@ public class ProgressLinear : TemplatedControl
         SetCurrentValue(IndeterminateOffsetProperty, 0d);
         var animation = new Animation
         {
-            Duration = TimeSpan.FromSeconds(1.2),
+            Duration = InteractionAssist.DurationToken(this,
+                LoamTokens.MotionDuration(nameof(LoamMotion.ExtraLong4)),
+                TimeSpan.FromSeconds(1.2)),
             IterationCount = IterationCount.Infinite,
             Children =
             {

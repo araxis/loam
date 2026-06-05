@@ -7,6 +7,35 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Shell and overlay hardening
+
+**Done**
+- Hardened shell behavior for `AppBar`, `Drawer`, and `Layout`, including tokenized app-bar height,
+  visual stacking, temporary drawer scrim color, disabled opacity, focusability, automation naming,
+  and Escape close behavior.
+- Hardened overlay and feedback controls for `DialogService`, `Overlay`, `Popover`, `Menu`,
+  `SnackbarService`, `Tooltip`, `Alert`, progress controls, `Skeleton`, and `Collapse`, including
+  Escape/light-dismiss paths, focus return, automation names, tokenized scrims/z-order, deterministic
+  snackbar dismissal, and token-backed motion defaults.
+- Expanded gallery samples for docked/mini/temporary shell states, initially visible overlay scrim,
+  open popover, snackbar/dialog actions, and static feedback examples while keeping source-linked
+  sample panels.
+- Added headless coverage for temporary drawer Escape/scrim tokens, overlay Escape auto-close,
+  dialog Escape cancellation, popover Escape, snackbar Escape dismissal, tooltip help text, feedback
+  automation names, and disabled alert opacity.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 183 tests.
+- Release gallery visual QA checked Shell/Layout docked, mini, and temporary drawer examples;
+  Feedback progress/skeleton/static examples; Overlay scrim; Popover open state; and Alert surfaces.
+
+**Next:** data-grid/table/tree polish and chart theming remain follow-up phases.
+
+---
+
 ## 2026-06-05 — v2.0 — Component interaction audit
 
 **Done**

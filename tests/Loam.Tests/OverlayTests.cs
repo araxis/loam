@@ -1,12 +1,15 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Loam;
 using Loam.Controls;
+using Loam.Theming;
 using Shouldly;
 using Xunit;
 
@@ -21,6 +24,12 @@ public class OverlayTests
         Dispatcher.UIThread.RunJobs();
         return OverlayLayer.GetOverlayLayer(anchor)!;
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
 
     [AvaloniaFact]
     public async Task Dialog_shows_in_overlay_and_closes_with_result()
@@ -154,7 +163,53 @@ public class OverlayTests
         overlay.ApplyTemplate();
 
         var scrim = overlay.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Scrim");
-        ((ISolidColorBrush)scrim.Background!).Color.A.ShouldBe((byte)0x99);
+        scrim.Focusable.ShouldBeTrue();
+        scrim.ZIndex.ShouldBe(LoamZIndex.Default.Dialog);
+        ((ISolidColorBrush)scrim.Background!).Color.A.ShouldBe((byte)0x52);
+    }
+
+    [AvaloniaFact]
+    public void Overlay_escape_autoclose_hides_and_invokes_callback()
+    {
+        var clicked = false;
+        var overlay = new Overlay
+        {
+            Visible = true,
+            AutoClose = true,
+            OnClick = () => clicked = true,
+            Content = new TextBlock { Text = "Working" },
+        };
+        new Window { Width = 300, Height = 200, Content = overlay }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var key = KeyArgs(Key.Escape);
+        overlay.RaiseEvent(key);
+        Dispatcher.UIThread.RunJobs();
+
+        clicked.ShouldBeTrue();
+        key.Handled.ShouldBeTrue();
+        overlay.Visible.ShouldBeFalse();
+        overlay.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public async Task Dialog_escape_cancels_and_removes_overlay()
+    {
+        var layer = ShowAnchor(out var anchor);
+        var service = DialogService.For(anchor);
+
+        var task = service.ShowAsync("Title", _ => new Border());
+        Dispatcher.UIThread.RunJobs();
+
+        var root = layer.Children.OfType<Panel>().Single();
+        root.Focusable.ShouldBeTrue();
+        root.ZIndex.ShouldBe(LoamZIndex.Default.Dialog);
+        root.RaiseEvent(KeyArgs(Key.Escape));
+        Dispatcher.UIThread.RunJobs();
+
+        var result = await task;
+        result.Canceled.ShouldBeTrue();
+        layer.GetVisualDescendants().OfType<Paper>().ShouldBeEmpty();
     }
 
     [AvaloniaFact]
@@ -172,5 +227,55 @@ public class OverlayTests
         Dispatcher.UIThread.RunJobs();
 
         window.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Popover body").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Popover_escape_closes()
+    {
+        var anchor = new Border { Width = 50, Height = 20 };
+        var popover = new Popover { Target = anchor, Content = new TextBlock { Text = "Popover body" } };
+        var window = new Window { Width = 300, Height = 200, Content = new StackPanel { Children = { anchor, popover } } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        popover.Open = true;
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = window.GetVisualDescendants().OfType<Paper>().First();
+        paper.ZIndex.ShouldBe(LoamZIndex.Default.Popover);
+        paper.RaiseEvent(KeyArgs(Key.Escape));
+        Dispatcher.UIThread.RunJobs();
+
+        popover.Open.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Snackbar_escape_dismisses_toast()
+    {
+        var layer = ShowAnchor(out var anchor);
+        var snackbar = SnackbarService.For(anchor);
+
+        snackbar.Add(new SnackbarOptions("Saved") { Duration = Timeout.InfiniteTimeSpan });
+        Dispatcher.UIThread.RunJobs();
+
+        var toast = layer.GetVisualDescendants().OfType<Alert>().Single();
+        toast.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(toast).ShouldBe("Saved");
+        toast.RaiseEvent(KeyArgs(Key.Escape));
+        Dispatcher.UIThread.RunJobs();
+
+        layer.GetVisualDescendants().OfType<Alert>().ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Tooltip_sets_help_text_and_loam_surface()
+    {
+        var button = new Avalonia.Controls.Button { Content = "Info" };
+
+        Tooltip.Set(button, "More detail");
+
+        AutomationProperties.GetHelpText(button).ShouldBe("More detail");
+        var tip = ToolTip.GetTip(button).ShouldBeOfType<Paper>();
+        tip.ZIndex.ShouldBe(LoamZIndex.Default.Tooltip);
     }
 }

@@ -1,9 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Loam;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -47,7 +50,9 @@ public sealed class SnackbarService : ISnackbar
             Content = BuildContent(options),
             MinWidth = 280,
             Margin = new Thickness(0, 8, 0, 0),
+            Focusable = true,
         };
+        InteractionAssist.SetAutomationName(toast, options.Message);
 
         DispatcherTimer? timer = null;
         void Dismiss()
@@ -55,6 +60,15 @@ public sealed class SnackbarService : ISnackbar
             timer?.Stop();
             host.Children.Remove(toast);
         }
+
+        toast.KeyDown += (_, args) =>
+        {
+            if (args.Key == Key.Escape)
+            {
+                Dismiss();
+                args.Handled = true;
+            }
+        };
 
         if (toast.Content is Panel panel)
         {
@@ -113,6 +127,7 @@ public sealed class SnackbarService : ISnackbar
         };
 
         var root = new Panel { Name = HostRootName, Children = { _host } };
+        InteractionAssist.ApplyZIndex(root, LoamTokens.ZIndex(nameof(LoamZIndex.Snackbar)), LoamZIndex.Default.Snackbar);
         root.Bind(Layoutable.WidthProperty, layer.GetObservable(Visual.BoundsProperty, b => b.Width));
         root.Bind(Layoutable.HeightProperty, layer.GetObservable(Visual.BoundsProperty, b => b.Height));
         layer.Children.Add(root);
@@ -133,6 +148,16 @@ public sealed class SnackbarService : ISnackbar
             return message;
         }
 
+        var action = new Button
+        {
+            Content = options.ActionText,
+            Variant = Variant.Text,
+            Color = options.Severity,
+            Size = LoamSize.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        InteractionAssist.SetAutomationName(action, options.ActionText);
+
         return new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -140,14 +165,7 @@ public sealed class SnackbarService : ISnackbar
             Children =
             {
                 message,
-                new Button
-                {
-                    Content = options.ActionText,
-                    Variant = Variant.Text,
-                    Color = options.Severity,
-                    Size = LoamSize.Small,
-                    VerticalAlignment = VerticalAlignment.Center,
-                },
+                action,
             },
         };
     }

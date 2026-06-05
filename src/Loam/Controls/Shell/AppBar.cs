@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -74,7 +75,10 @@ public class AppBar : ContentControl
 
     private void ApplyVisual()
     {
-        Height = Dense ? 48 : 64;
+        Height = Dense
+            ? InteractionAssist.DoubleToken(this, LoamTokens.DensityInteractiveLarge, 48)
+            : InteractionAssist.DoubleToken(this, LoamTokens.AppBarHeight, 64);
+        InteractionAssist.ApplyZIndex(this, LoamTokens.ZIndex(nameof(LoamZIndex.AppBar)), LoamZIndex.Default.AppBar);
 
         string backgroundKey;
         string foregroundKey;

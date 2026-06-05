@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -12,6 +14,8 @@ namespace Loam.Controls;
 /// </summary>
 public class Collapse : Decorator
 {
+    private static readonly TimeSpan DefaultDuration = TimeSpan.FromMilliseconds(180);
+
     /// <summary>Identifies the <see cref="Expanded"/> property.</summary>
     public static readonly StyledProperty<bool> ExpandedProperty =
         AvaloniaProperty.Register<Collapse, bool>(nameof(Expanded),
@@ -23,7 +27,7 @@ public class Collapse : Decorator
 
     /// <summary>Identifies the <see cref="Duration"/> property.</summary>
     public static readonly StyledProperty<TimeSpan> DurationProperty =
-        AvaloniaProperty.Register<Collapse, TimeSpan>(nameof(Duration), TimeSpan.FromMilliseconds(180));
+        AvaloniaProperty.Register<Collapse, TimeSpan>(nameof(Duration), DefaultDuration);
 
     /// <summary>Creates the collapse.</summary>
     public Collapse()
@@ -55,6 +59,14 @@ public class Collapse : Decorator
     }
 
     /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        UpdateTransitions();
+        UpdateState();
+    }
+
+    /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -77,7 +89,7 @@ public class Collapse : Decorator
                 new DoubleTransition
                 {
                     Property = MaxHeightProperty,
-                    Duration = Duration,
+                    Duration = ResolveDuration(),
                     Easing = new CubicEaseOut(),
                 },
             }
@@ -115,4 +127,9 @@ public class Collapse : Decorator
 
         return double.PositiveInfinity;
     }
+
+    private TimeSpan ResolveDuration() =>
+        Duration == DefaultDuration
+            ? InteractionAssist.DurationToken(this, LoamTokens.MotionDurationShort3, DefaultDuration)
+            : Duration;
 }

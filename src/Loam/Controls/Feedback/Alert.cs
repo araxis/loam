@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -69,9 +70,14 @@ public class Alert : ContentControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == ColorProperty || change.Property == VariantProperty || change.Property == IconProperty)
+        if (change.Property == ColorProperty || change.Property == VariantProperty || change.Property == IconProperty ||
+            change.Property == IsEnabledProperty)
         {
             ApplyVisual();
+        }
+        else if (change.Property == ContentProperty)
+        {
+            InteractionAssist.SetAutomationName(this, Content);
         }
     }
 
@@ -84,6 +90,9 @@ public class Alert : ContentControl
             _iconPart.Data = Icon;
             _iconPart.IsVisible = !string.IsNullOrEmpty(Icon);
         }
+
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        InteractionAssist.SetAutomationName(this, Content);
 
         _foreground?.Dispose();
         _border?.Dispose();

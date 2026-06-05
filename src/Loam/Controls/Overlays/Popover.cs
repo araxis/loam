@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -28,6 +31,7 @@ public class Popover : Decorator
         AvaloniaProperty.Register<Popover, Control?>(nameof(Target));
 
     private readonly Popup _popup;
+    private IInputElement? _restoreFocus;
 
     /// <summary>Creates the popover.</summary>
     public Popover()
@@ -41,6 +45,7 @@ public class Popover : Decorator
         _popup.Closed += (_, _) => SetCurrentValue(OpenProperty, false);
         _popup.Bind(Popup.IsOpenProperty, this.GetObservable(OpenProperty));
         Child = _popup;
+        InteractionAssist.SetAutomationName(this, "Popover");
     }
 
     /// <summary>The popover body (wrapped in an elevated <see cref="Paper"/>).</summary>
@@ -72,14 +77,23 @@ public class Popover : Decorator
     }
 
     /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        ApplyPlacementTarget();
+    }
+
+    /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
         if (change.Property == ContentProperty)
         {
-            _popup.Child = Content is null
-                ? null
-                : new Paper { Elevation = 8, Padding = new Thickness(12), Content = Content };
+            _popup.Child = Content is null ? null : BuildSurface(Content);
+        }
+        else if (change.Property == OpenProperty)
+        {
+            ApplyOpenState();
         }
         else if (change.Property == PlacementProperty)
         {
@@ -87,7 +101,52 @@ public class Popover : Decorator
         }
         else if (change.Property == TargetProperty)
         {
-            _popup.PlacementTarget = Target;
+            ApplyPlacementTarget();
         }
+    }
+
+    private Paper BuildSurface(object content)
+    {
+        var paper = new Paper
+        {
+            Elevation = 8,
+            Padding = new Thickness(12),
+            Content = content,
+            Focusable = true,
+        };
+        paper.KeyDown += (_, args) =>
+        {
+            if (args.Key == Key.Escape)
+            {
+                Open = false;
+                args.Handled = true;
+            }
+        };
+        InteractionAssist.ApplyZIndex(paper, LoamTokens.ZIndex(nameof(LoamZIndex.Popover)), LoamZIndex.Default.Popover);
+        InteractionAssist.SetAutomationName(paper, "Popover");
+        return paper;
+    }
+
+    private void ApplyOpenState()
+    {
+        var topLevel = TopLevel.GetTopLevel(Target ?? this);
+        if (Open)
+        {
+            _restoreFocus = topLevel?.FocusManager?.GetFocusedElement();
+            if (_popup.Child is Control child)
+            {
+                child.Focus();
+            }
+        }
+        else if (topLevel is not null)
+        {
+            InteractionAssist.RestoreFocus(topLevel, _restoreFocus);
+            _restoreFocus = null;
+        }
+    }
+
+    private void ApplyPlacementTarget()
+    {
+        _popup.PlacementTarget = Target ?? Parent as Control;
     }
 }

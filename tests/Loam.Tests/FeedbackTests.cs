@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -30,6 +31,16 @@ public class FeedbackTests
 
         var root = alert.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Root");
         ((ISolidColorBrush)root.Background!).Color.ShouldBe(Color.Parse("#B3261E"));
+        AutomationProperties.GetName(alert).ShouldBe("Failed");
+    }
+
+    [AvaloniaFact]
+    public void Alert_disabled_uses_state_opacity()
+    {
+        var alert = new Alert { Content = "Paused", IsEnabled = false };
+        Show(alert);
+
+        alert.Opacity.ShouldBeLessThan(1);
     }
 
     [AvaloniaFact]
@@ -41,6 +52,7 @@ public class FeedbackTests
         Dispatcher.UIThread.RunJobs();
 
         progress.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Fill").Width.ShouldBeGreaterThan(0);
+        AutomationProperties.GetName(progress).ShouldBe("Progress");
     }
 
     [AvaloniaFact]
@@ -67,6 +79,7 @@ public class FeedbackTests
         var skeleton = new Skeleton { Animate = false };
         Show(skeleton);
 
+        AutomationProperties.GetName(skeleton).ShouldBe("Loading");
         skeleton.Animate.ShouldBeFalse();
         skeleton.Opacity.ShouldBe(1);
 

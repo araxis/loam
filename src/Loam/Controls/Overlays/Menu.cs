@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -24,33 +27,84 @@ public sealed class MenuItem
 public class Menu : Button
 {
     private Flyout? _flyout;
+    private IInputElement? _restoreFocus;
 
     /// <summary>Creates the menu trigger.</summary>
-    public Menu() => Click += (_, _) => Open();
+    public Menu()
+    {
+        Click += (_, _) => Open();
+        InteractionAssist.SetAutomationName(this, Content, "Menu");
+    }
 
     /// <summary>The menu items.</summary>
     public ObservableCollection<MenuItem> Items { get; } = new();
 
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == ContentProperty)
+        {
+            InteractionAssist.SetAutomationName(this, Content, "Menu");
+        }
+    }
+
     private void Open()
     {
         var list = new StackPanel();
+        ListItem? firstRow = null;
         foreach (var entry in Items)
         {
-            var row = new ListItem { Icon = entry.Icon, Content = entry.Text, MinWidth = 160 };
+            var row = new ListItem { Icon = entry.Icon, Content = entry.Text, MinWidth = 160, Focusable = true };
             var captured = entry;
-            row.PointerPressed += (_, _) =>
+            InteractionAssist.SetAutomationName(row, captured.Text);
+            void Choose()
             {
-                _flyout?.Hide();
                 captured.OnClick?.Invoke();
+                Close();
+            }
+
+            row.PointerPressed += (_, _) => Choose();
+            row.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    Choose();
+                    args.Handled = true;
+                }
+                else if (args.Key == Key.Escape)
+                {
+                    Close();
+                    args.Handled = true;
+                }
             };
+            firstRow ??= row;
             list.Children.Add(row);
         }
 
+        _restoreFocus = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+        var paper = new Paper { Elevation = 8, Padding = new Thickness(0, 8), Content = list };
+        InteractionAssist.ApplyZIndex(paper, LoamTokens.ZIndex(nameof(LoamZIndex.Popover)), LoamZIndex.Default.Popover);
+
         _flyout = new Flyout
         {
-            Content = new Paper { Elevation = 8, Padding = new Thickness(0, 8), Content = list },
+            Content = paper,
             Placement = PlacementMode.BottomEdgeAlignedLeft,
         };
+        _flyout.Closed += (_, _) => RestoreFocus();
         _flyout.ShowAt(this);
+        firstRow?.Focus();
+    }
+
+    private void Close() => _flyout?.Hide();
+
+    private void RestoreFocus()
+    {
+        if (TopLevel.GetTopLevel(this) is { } topLevel)
+        {
+            InteractionAssist.RestoreFocus(topLevel, _restoreFocus);
+        }
+
+        _restoreFocus = null;
     }
 }

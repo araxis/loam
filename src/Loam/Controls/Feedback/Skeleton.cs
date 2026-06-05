@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Styling;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -31,6 +32,7 @@ public class Skeleton : Border
     {
         Height = 16;
         this.Bind(BackgroundProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.Skeleton))));
+        InteractionAssist.SetAutomationName(this, "Loading");
         Apply();
     }
 
@@ -102,7 +104,9 @@ public class Skeleton : Border
         _shimmerAnimation = new CancellationTokenSource();
         var animation = new Animation
         {
-            Duration = TimeSpan.FromSeconds(1.1),
+            Duration = InteractionAssist.DurationToken(this,
+                LoamTokens.MotionDuration(nameof(LoamMotion.ExtraLong3)),
+                TimeSpan.FromSeconds(1.1)),
             IterationCount = IterationCount.Infinite,
             Children =
             {

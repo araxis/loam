@@ -3,9 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
-using Avalonia.Media;
-using Avalonia.Media.Immutable;
 using Loam;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -15,8 +15,6 @@ namespace Loam.Controls;
 /// </summary>
 public sealed class DialogService : IDialogService
 {
-    private static readonly IImmutableSolidColorBrush Scrim = new ImmutableSolidColorBrush(Color.FromArgb(0x66, 0, 0, 0));
-
     private readonly TopLevel _topLevel;
 
     /// <summary>Creates a service targeting the given window/top level.</summary>
@@ -35,31 +33,46 @@ public sealed class DialogService : IDialogService
 
         var completion = new TaskCompletionSource<DialogResult>();
         Panel? root = null;
+        var restoreFocus = _topLevel.FocusManager?.GetFocusedElement();
         var instance = new DialogInstance(completion, () =>
         {
             if (root is not null)
             {
                 layer.Children.Remove(root);
             }
+
+            InteractionAssist.RestoreFocus(_topLevel, restoreFocus);
         });
 
         var dialog = BuildDialog(title, content(instance), options);
+        InteractionAssist.SetAutomationName(dialog, title, "Dialog");
 
         var scrim = new Border
         {
-            Background = Scrim,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
+            Focusable = true,
         };
+        scrim.Bind(Border.BackgroundProperty, _topLevel.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.OverlayDark))));
         if (options.DismissOnScrimClick)
         {
             scrim.PointerPressed += (_, _) => instance.Cancel();
         }
 
-        root = new Panel { Children = { scrim, dialog } };
+        root = new Panel { Focusable = true, Children = { scrim, dialog } };
+        root.KeyDown += (_, args) =>
+        {
+            if (args.Key == Key.Escape)
+            {
+                instance.Cancel();
+                args.Handled = true;
+            }
+        };
+        InteractionAssist.ApplyZIndex(root, LoamTokens.ZIndex(nameof(LoamZIndex.Dialog)), LoamZIndex.Default.Dialog);
         root.Bind(Layoutable.WidthProperty, layer.GetObservable(Visual.BoundsProperty, b => b.Width));
         root.Bind(Layoutable.HeightProperty, layer.GetObservable(Visual.BoundsProperty, b => b.Height));
         layer.Children.Add(root);
+        root.Focus();
         return completion.Task;
     }
 

@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -27,9 +29,16 @@ public class Overlay : ContentControl
         AvaloniaProperty.Register<Overlay, bool>(nameof(AutoClose));
 
     private Border? _scrim;
+    private IDisposable? _scrimBackground;
+    private IInputElement? _restoreFocus;
 
     /// <summary>Creates the overlay (hidden until <see cref="Visible"/>).</summary>
-    public Overlay() => IsVisible = Visible;
+    public Overlay()
+    {
+        Focusable = true;
+        IsVisible = Visible;
+        InteractionAssist.SetAutomationName(this, "Overlay");
+    }
 
     /// <summary>Whether the scrim is shown (two-way). Mirrors the reference API's <c>Visible</c>.</summary>
     public bool Visible
@@ -65,8 +74,12 @@ public class Overlay : ContentControl
         _scrim = e.NameScope.Find("PART_Scrim") as Border;
         if (_scrim is not null)
         {
+            _scrim.Focusable = true;
             _scrim.PointerPressed += OnScrimPressed;
         }
+
+        ApplyScrim();
+        ApplyVisibleState();
     }
 
     /// <inheritdoc />
@@ -75,7 +88,23 @@ public class Overlay : ContentControl
         base.OnPropertyChanged(change);
         if (change.Property == VisibleProperty)
         {
-            IsVisible = Visible;
+            ApplyVisibleState();
+        }
+        else if (change.Property == DarkBackgroundProperty)
+        {
+            ApplyScrim();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Key == Key.Escape && Visible && AutoClose)
+        {
+            OnClick?.Invoke();
+            Visible = false;
+            e.Handled = true;
         }
     }
 
@@ -91,5 +120,35 @@ public class Overlay : ContentControl
         {
             Visible = false;
         }
+    }
+
+    private void ApplyVisibleState()
+    {
+        IsVisible = Visible;
+        if (Visible)
+        {
+            _restoreFocus = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
+            Focus();
+        }
+        else if (TopLevel.GetTopLevel(this) is { } topLevel)
+        {
+            InteractionAssist.RestoreFocus(topLevel, _restoreFocus);
+            _restoreFocus = null;
+        }
+    }
+
+    private void ApplyScrim()
+    {
+        if (_scrim is null)
+        {
+            return;
+        }
+
+        _scrimBackground?.Dispose();
+        var token = DarkBackground
+            ? LoamTokens.Palette(nameof(LoamPalette.OverlayDark))
+            : LoamTokens.Palette(nameof(LoamPalette.OverlayLight));
+        _scrimBackground = _scrim.Bind(Border.BackgroundProperty,
+            this.GetResourceObservable(token));
     }
 }

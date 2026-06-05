@@ -641,64 +641,95 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static Border BuildShellPreview()
+    private static StackPanel BuildShellPreview()
     {
-        var nav = new NavMenu { Width = 180 };
-        nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Home, Content = "Dashboard", IsActive = true });
-        nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Search, Content = "Search" });
-        nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Settings, Content = "Settings" });
-
-        var drawer = new Drawer
+        static NavMenu BuildNav(bool compact)
         {
-            DrawerWidth = 196,
-            Content = new Border { Padding = new Thickness(8), Child = nav },
-        };
+            var nav = new NavMenu { Width = compact ? 52 : 148 };
+            nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Home, Content = compact ? string.Empty : "Dashboard", IsActive = true });
+            nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Search, Content = compact ? string.Empty : "Search" });
+            nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Settings, Content = compact ? string.Empty : "Settings" });
+            return nav;
+        }
 
-        var toolbar = new StackPanel
+        static Border Frame(string title, Drawer drawer)
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 12,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children =
+            drawer.DrawerWidth = 148;
+            drawer.MiniWidth = 52;
+            drawer.Content = new Border { Padding = new Thickness(8), Child = BuildNav(drawer.Mini) };
+
+            var toolbar = new StackPanel
             {
-                new Icon { Data = Icons.Material.Filled.Menu, Color = LoamColor.Inherit },
-                new Text { Text = "Workspace", Typo = Typo.H6, Color = LoamColor.Inherit },
-            },
-        };
-
-        var content = new MainContent
-        {
-            Content = new StackPanel
-            {
-                Spacing = 14,
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                VerticalAlignment = VerticalAlignment.Center,
                 Children =
                 {
-                    new Text { Text = "Main content", Typo = Typo.H5 },
-                    new Alert { Color = LoamColor.Info, Content = "Layout composes AppBar, Drawer, and MainContent." },
-                    new ProgressLinear { Value = 46, Width = 280 },
+                    new Icon { Data = Icons.Material.Filled.Menu, Color = LoamColor.Inherit },
+                    new Text { Text = title, Typo = Typo.Subtitle1, Color = LoamColor.Inherit },
                 },
+            };
+
+            var content = new MainContent
+            {
+                Content = new StackPanel
+                {
+                    Spacing = 10,
+                    Children =
+                    {
+                        new Text { Text = "Content", Typo = Typo.Subtitle1 },
+                        new Alert { Color = LoamColor.Info, Content = "Tokenized shell" },
+                        new ProgressLinear { Value = drawer.Mode == DrawerMode.Temporary ? 68 : 46, Width = 120 },
+                    },
+                },
+            };
+
+            var shell = new Layout
+            {
+                AppBar = new AppBar { Dense = true, Color = LoamColor.Primary, Content = toolbar },
+                Drawer = drawer,
+                Content = content,
+            };
+
+            var frame = new Border
+            {
+                Width = 320,
+                Height = 260,
+                Child = shell,
+                ClipToBounds = true,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+            };
+            frame.Bind(Border.BorderBrushProperty, frame.GetResourceObservable(LoamTokens.Divider));
+            return frame;
+        }
+
+        static StackPanel Example(string label, Border frame) => new()
+        {
+            Width = 320,
+            Margin = new Thickness(0, 0, 18, 18),
+            Spacing = 8,
+            Children =
+            {
+                new Text { Text = label, Typo = Typo.Subtitle2 },
+                frame,
             },
         };
 
-        var shell = new Layout
-        {
-            AppBar = new AppBar { Dense = true, Color = LoamColor.Primary, Content = toolbar },
-            Drawer = drawer,
-            Content = content,
-        };
+        var frames = new WrapPanel { Orientation = Orientation.Horizontal };
+        frames.Children.Add(Example("Docked", Frame("Docked", new Drawer())));
+        frames.Children.Add(Example("Mini", Frame("Mini", new Drawer { Mini = true })));
+        frames.Children.Add(Example("Temporary", Frame("Temporary", new Drawer { Mode = DrawerMode.Temporary, Open = true })));
 
-        var frame = new Border
+        return new StackPanel
         {
-            Width = 720,
-            Height = 420,
-            MaxWidth = 720,
-            Child = shell,
-            ClipToBounds = true,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
+            Spacing = 16,
+            Children =
+            {
+                frames,
+                new Alert { Color = LoamColor.Info, Content = "Temporary drawers use tokenized scrims and Escape close." },
+            },
         };
-        frame.Bind(Border.BorderBrushProperty, frame.GetResourceObservable(LoamTokens.Divider));
-        return frame;
     }
 
     private static StackPanel BuildText()
@@ -1138,7 +1169,26 @@ public sealed class ComponentsView : UserControl
             }
         };
 
-        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { openDialog, showSnackbar, actionSnackbar, messageBox } };
+        foreach (var button in new[] { openDialog, showSnackbar, actionSnackbar, messageBox })
+        {
+            button.Margin = new Thickness(0, 0, 8, 8);
+        }
+
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal };
+        actions.Children.Add(openDialog);
+        actions.Children.Add(showSnackbar);
+        actions.Children.Add(actionSnackbar);
+        actions.Children.Add(messageBox);
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                actions,
+                new Alert { Color = LoamColor.Info, Content = "Snackbar actions stay keyboard-accessible and dialogs restore focus after dismissal." },
+            },
+        };
     }
 
     private static StackPanel BuildRadioSlider()
@@ -1270,6 +1320,7 @@ public sealed class ComponentsView : UserControl
         {
             Target = toggle,
             Placement = Avalonia.Controls.PlacementMode.Bottom,
+            Open = true,
             Content = new StackPanel
             {
                 Width = 220,
@@ -1277,24 +1328,34 @@ public sealed class ComponentsView : UserControl
                 Children =
                 {
                     new Text { Text = "Popover", Typo = Typo.Subtitle1 },
-                    new Text { Text = "A floating panel anchored to its target, dismissed by clicking away.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                    new Text { Text = "Light-dismiss and Escape close.", Typo = Typo.Body2, Color = LoamColor.Secondary },
                 },
             },
         };
         toggle.Click += (_, _) => popover.Open = !popover.Open;
 
-        return new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Left, Children = { toggle, popover } };
+        return new StackPanel
+        {
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                toggle,
+                popover,
+                new Border { Height = 72 },
+            },
+        };
     }
 
     private static StackPanel BuildOverlayScrim()
     {
-        var overlay = new Overlay { DarkBackground = true, AutoClose = true, Content = new ProgressCircular() };
+        var overlay = new Overlay { DarkBackground = true, AutoClose = true, Visible = true, Content = new ProgressCircular() };
 
         var region = new Panel { Width = 320, Height = 160, HorizontalAlignment = HorizontalAlignment.Left };
         region.Children.Add(new Paper
         {
             Elevation = 1,
-            Content = new Text { Text = "Content area — click the scrim to dismiss." },
+            Content = new Text { Text = "Local content behind the scrim." },
             Padding = new Thickness(16),
         });
         region.Children.Add(overlay);
@@ -1319,6 +1380,7 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(new ProgressLinear { Value = 60, Width = 320 });
         stack.Children.Add(new ProgressLinear { Value = 30, Width = 320, Color = LoamColor.Warning });
         stack.Children.Add(new ProgressLinear { Indeterminate = true, Width = 320, Color = LoamColor.Info });
+        stack.Children.Add(new ProgressLinear { Value = 75, Width = 320, IsEnabled = false });
 
         var skeletons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
         skeletons.Children.Add(new Skeleton { Width = 140 });

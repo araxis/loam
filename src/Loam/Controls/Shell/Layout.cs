@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 
 namespace Loam.Controls;
 
@@ -18,6 +20,12 @@ public class Layout : ContentControl
     public static readonly StyledProperty<object?> DrawerProperty =
         AvaloniaProperty.Register<Layout, object?>(nameof(Drawer));
 
+    /// <summary>Creates the shell layout.</summary>
+    public Layout()
+    {
+        Focusable = true;
+    }
+
     /// <summary>The top app bar (typically an <see cref="Controls.AppBar"/>).</summary>
     public object? AppBar
     {
@@ -34,4 +42,15 @@ public class Layout : ContentControl
 
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(Layout);
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Key == Key.Escape && Drawer is Drawer { Mode: DrawerMode.Temporary, Open: true } drawer)
+        {
+            drawer.Open = false;
+            e.Handled = true;
+        }
+    }
 }

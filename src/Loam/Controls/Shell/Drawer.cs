@@ -2,6 +2,9 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -54,11 +57,10 @@ public class Drawer : ContentControl
     public Drawer()
     {
         ClipToBounds = true;
+        Focusable = true;
         Width = ResolveWidth(Open, Mini, DrawerWidth, MiniWidth);
-        Transitions = new Transitions
-        {
-            new DoubleTransition { Property = WidthProperty, Duration = TimeSpan.FromMilliseconds(180), Easing = new CubicEaseOut() },
-        };
+        UpdateTransitions();
+        InteractionAssist.SetAutomationName(this, "Navigation drawer");
     }
 
     /// <summary>Whether the drawer is open. Mirrors the reference API's <c>Open</c>.</summary>
@@ -118,6 +120,13 @@ public class Drawer : ContentControl
     protected override Type StyleKeyOverride => typeof(Drawer);
 
     /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        UpdateTransitions();
+    }
+
+    /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -128,5 +137,33 @@ public class Drawer : ContentControl
             Width = ResolveWidth(Open, Mini, DrawerWidth, MiniWidth);
             InvalidateMeasure();
         }
+        else if (change.Property == IsEnabledProperty)
+        {
+            Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (IsEnabled && e.Key == Key.Escape && Mode == DrawerMode.Temporary && Open)
+        {
+            Open = false;
+            e.Handled = true;
+        }
+    }
+
+    private void UpdateTransitions()
+    {
+        Transitions = new Transitions
+        {
+            new DoubleTransition
+            {
+                Property = WidthProperty,
+                Duration = InteractionAssist.DurationToken(this, LoamTokens.MotionDurationShort3, TimeSpan.FromMilliseconds(180)),
+                Easing = new CubicEaseOut(),
+            },
+        };
     }
 }

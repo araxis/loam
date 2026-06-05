@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -63,6 +64,12 @@ public class ProgressCircular : Control
         AffectsRender<ProgressCircular>(ValueProperty, MinimumProperty, MaximumProperty,
             StrokeWidthProperty, IndeterminateProperty, SpinAngleProperty);
         AffectsMeasure<ProgressCircular>(SizeProperty, StrokeWidthProperty);
+    }
+
+    /// <summary>Creates the progress indicator.</summary>
+    public ProgressCircular()
+    {
+        InteractionAssist.SetAutomationName(this, "Progress");
     }
 
     /// <summary>Current value. Mirrors the reference API's <c>Value</c>.</summary>
@@ -252,7 +259,9 @@ public class ProgressCircular : Control
         _spinCancellation = new CancellationTokenSource();
         var animation = new Animation
         {
-            Duration = TimeSpan.FromSeconds(1.2),
+            Duration = InteractionAssist.DurationToken(this,
+                LoamTokens.MotionDuration(nameof(LoamMotion.ExtraLong4)),
+                TimeSpan.FromSeconds(1.2)),
             IterationCount = IterationCount.Infinite,
             Children =
             {

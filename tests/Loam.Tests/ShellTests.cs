@@ -1,12 +1,15 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Loam.Controls;
+using Loam.Theming;
 using Shouldly;
 using Xunit;
 
@@ -19,6 +22,12 @@ public class ShellTests
         new Window { Width = 800, Height = 600, Content = content }.Show();
         Dispatcher.UIThread.RunJobs();
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
 
     [Fact]
     public void Drawer_resolve_width_for_states()
@@ -53,6 +62,7 @@ public class ShellTests
         bar.ApplyTemplate();
 
         bar.Height.ShouldBe(64d);
+        bar.ZIndex.ShouldBe(LoamZIndex.Default.AppBar);
         var border = bar.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Root");
         ((ISolidColorBrush)border.Background!).Color.ShouldBe(Color.Parse("#FFFBFE"));
     }
@@ -127,6 +137,54 @@ public class ShellTests
 
         drawer.Open = false;
         Dispatcher.UIThread.RunJobs();
+        scrim.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Drawer_escape_closes_temporary_drawer()
+    {
+        var drawer = new Drawer { Mode = DrawerMode.Temporary, Open = true };
+        Show(drawer);
+
+        drawer.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(drawer).ShouldBe("Navigation drawer");
+
+        var key = KeyArgs(Key.Escape);
+        drawer.RaiseEvent(key);
+
+        key.Handled.ShouldBeTrue();
+        drawer.Open.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Layout_scrim_escape_closes_temporary_drawer()
+    {
+        var drawer = new Drawer
+        {
+            Mode = DrawerMode.Temporary,
+            Open = true,
+            Content = new TextBlock { Text = "Nav" },
+        };
+        var layout = new Layout
+        {
+            Drawer = drawer,
+            Content = new MainContent { Content = new TextBlock { Text = "Body" } },
+        };
+        Show(layout);
+        layout.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var scrim = layout.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_DrawerScrim");
+        scrim.Focusable.ShouldBeTrue();
+        scrim.ZIndex.ShouldBe(LoamZIndex.Default.Drawer);
+        ((ISolidColorBrush)scrim.Background!).Color.A.ShouldBe((byte)0x52);
+
+        var key = KeyArgs(Key.Escape);
+        scrim.RaiseEvent(key);
+        Dispatcher.UIThread.RunJobs();
+
+        key.Handled.ShouldBeTrue();
+        drawer.Open.ShouldBeFalse();
         scrim.IsVisible.ShouldBeFalse();
     }
 }

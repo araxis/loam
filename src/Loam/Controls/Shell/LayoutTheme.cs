@@ -4,8 +4,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
-using Avalonia.Media;
-using Avalonia.Media.Immutable;
+using Loam.Controls.Internal;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
 using Loam.Theming;
@@ -37,9 +36,11 @@ internal static class LayoutTheme
 
             var scrim = new Border
             {
-                Background = new ImmutableSolidColorBrush(Color.FromArgb(0x66, 0, 0, 0)),
+                Focusable = true,
                 IsVisible = false,
             }.Named("PART_DrawerScrim", scope);
+            scrim.Bind(Border.BackgroundProperty,
+                layout.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.OverlayDark))));
             scrim.PointerPressed += (_, _) =>
             {
                 if (drawer.Content is Drawer { Mode: DrawerMode.Temporary, CloseOnScrimClick: true } current)
@@ -47,6 +48,16 @@ internal static class LayoutTheme
                     current.Open = false;
                 }
             };
+            scrim.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Escape && drawer.Content is Drawer { Mode: DrawerMode.Temporary, Open: true } current)
+                {
+                    current.Open = false;
+                    args.Handled = true;
+                }
+            };
+            InteractionAssist.ApplyZIndex(scrim, LoamTokens.ZIndex(nameof(LoamZIndex.Drawer)), LoamZIndex.Default.Drawer);
+            InteractionAssist.ApplyZIndex(drawer, LoamTokens.ZIndex(nameof(LoamZIndex.Drawer)), LoamZIndex.Default.Drawer);
 
             var body = new DrawerLayoutPanel
             {
