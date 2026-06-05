@@ -7,7 +7,7 @@ theming, and no XAML.
 
 > **Status:** ✅ **v2.0 design-system rebaseline.** The default visual system now uses role-based
 > light/dark color schemes, expanded foundation tokens, tokenized state feedback, and updated gallery
-> design-system coverage. Full solution builds clean with **154 headless/unit tests passing**.
+> design-system coverage. Full solution builds clean with **196 headless/unit tests passing**.
 > See the **[Development Plan](DEVELOPMENT_PLAN.md)** and the project **[memory](memory/README.md)**
 > (decisions, progress log, learnings, and the per-component status tracker).
 
@@ -159,7 +159,7 @@ The gallery has a side menu and focused pages for the component catalog.
 
 - Avalonia **12.x**, .NET **8** library target, C# pure code-only UI.
 - xUnit + `Avalonia.Headless.XUnit` for behavior tests; `.slnx` solution; SDK pinned via `global.json`.
-- Build: `dotnet build`  ·  Test: `dotnet test`  ·  Pack: `dotnet pack src/Loam`.
+- Build: `dotnet build`  ·  Test: `dotnet test`  ·  Pack: `dotnet pack src/Loam/Loam.csproj`.
 
 ## License
 

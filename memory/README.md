@@ -46,7 +46,6 @@ picking the project up cold. Read this file first.
 
 - **Phase:** v2.0 design-system rebaseline. Default visuals now use role-based schemes and expanded
   foundation tokens while preserving the familiar component API.
-- **Latest:** `LoamColorScheme`, spacing, stroke, density, elevation, typography, shape, and motion
-  tokens are projected through `LoamTheme`; button/state feedback, fields, paper, tables, and the
-  design-system gallery were updated to consume the new baseline.
+- **Latest:** all major component families have been rechecked for the v2.0 baseline; data display
+  and charts now include tokenized visuals, gallery acceptance examples, and focused headless tests.
 - **Last updated:** 2026-06-05

@@ -7,6 +7,32 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Release readiness and packaging
+
+**Done**
+- Refreshed README and chart docs for the current test count, source-compatible package command,
+  theme-role chart colors, explicit chart color overrides, visible no-data chart states, negative
+  value clamping, and `Charts.Palette` compatibility behavior.
+- Updated docs metadata and component trackers so chart/data-display release status no longer reads
+  as pending for the v2.0 baseline.
+- Verified package contents for version `2.0.0`, `Loam.dll`, XML docs, README, MIT license
+  expression, repository metadata, and no gallery/test/build artifacts inside the package.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 196 tests.
+- `dotnet pack src\Loam\Loam.csproj -c Release --no-build` produced
+  `src\Loam\bin\Release\Loam.2.0.0.nupkg`.
+- `npm run docs:build` in `docs` passed.
+- Release gallery visual QA checked Overview, Design System, Charts, DataGrid, TextField,
+  Dialog/Snackbar, and Shell pages.
+
+**Next:** tag/publish decision can be handled separately; no registry publish was performed here.
+
+---
+
 ## 2026-06-05 — v2.0 — Chart theming and acceptance
 
 **Done**

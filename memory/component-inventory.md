@@ -126,7 +126,7 @@ source before implementation (source-first, ADR-0007).
 
 | reference | Loam | Status | Notes |
 | --- | --- | --- | --- |
-| `Chart` (Line/Bar/Pie/Donut/StackedBar/TimeSeries) | `PieChart`/`BarChart`/`LineChart` (+`ChartBase`/`Charts`) | 🟦 | Custom `Render` charts (`: Control`): Pie + Donut (`HoleRatio`), vertical Bar, Line (`Area` fill). `Values`/`Colors` (default `Charts.Palette`); pure `Charts.SliceSweeps`/`BarHeights`. In `Loam.Controls` for now (separate `Loam.Charts` package + StackedBar/TimeSeries/axes/legend/tooltips ⬜). |
+| `Chart` (Line/Bar/Pie/Donut/StackedBar/TimeSeries) | `PieChart`/`BarChart`/`LineChart` (+`ChartBase`/`Charts`) | ✅ | Custom `Render` charts (`: Control`): Pie + Donut (`HoleRatio`), vertical Bar with tokenized grid, Line (`Area` fill), visible `No data` state, automation text, and negative-value clamping. `Values`/`Colors`; default series resolve from theme roles, explicit colors override, and `Charts.Palette` remains a compatibility fallback. Stacked/time-series charts, axes, legend, and tooltips remain future expansion. |
 
 ## Cross-cutting (not single components)
 

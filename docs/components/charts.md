@@ -4,20 +4,22 @@ title: Charts & effects
 
 # Charts & effects
 
-Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). All chart controls mirror the reference `Chart` component and are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
+Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
+
+Chart visuals are theme-aware by default. If `Colors` is `null`, series colors resolve from the active light/dark role tokens. Supplying `Colors` overrides theme roles for that chart. `Charts.Palette` remains available as a compatibility fallback for custom math/rendering scenarios.
 
 ---
 
 ## PieChart
 
-Draws one filled slice per value, sized by its share of the total. Mirrors the reference `Chart` Pie/Donut variant. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`.
+Draws one filled slice per positive value, sized by its share of the positive-value total. Negative values are clamped to zero. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`. Empty and zero-only charts render a tokenized `No data` state instead of a blank surface.
 
 ### Properties
 
 | Member | Type | Default | Description |
 |---|---|---|---|
-| `Values` | `IReadOnlyList<double>` | `[]` | Data values; each entry becomes one slice. |
-| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. Falls back to `Charts.Palette`. |
+| `Values` | `IReadOnlyList<double>` | `[]` | Data values; positive entries become slices and negative entries are clamped to zero. |
+| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. When `null`, defaults resolve from theme role tokens; `Charts.Palette` is only the compatibility fallback. |
 | `Donut` | `bool` | `false` | When `true`, renders a center hole to produce a donut chart. |
 | `HoleRatio` | `double` | `0.6` | Hole radius as a fraction of the chart radius. Clamped to 0–0.95. |
 
@@ -40,20 +42,36 @@ new PieChart
     Donut = true,
     HoleRatio = 0.55,
 }
+
+// Explicit colors override theme roles
+new PieChart
+{
+    Width = 180,
+    Height = 180,
+    Values = new[] { 40d, 25d, 20d, 15d },
+    Donut = true,
+    Colors = new[]
+    {
+        Color.Parse("#355C7D"),
+        Color.Parse("#6C5B7B"),
+        Color.Parse("#C06C84"),
+        Color.Parse("#F67280"),
+    },
+}
 ```
 
 ---
 
 ## BarChart
 
-Renders a vertical bar per value, scaled against the largest value in the series. Mirrors the reference `Chart` Bar variant. The default measured size is 320 × 180. Bars are drawn with 2 px rounded corners and an 8 px gap between slots.
+Renders a vertical bar per value, scaled against the largest positive value in the series. Negative values are clamped to zero. The default measured size is 320 x 180. Bars are drawn with tokenized grid lines and rounded corners. Empty and zero-only charts render the shared `No data` state.
 
 ### Properties
 
 | Member | Type | Default | Description |
 |---|---|---|---|
-| `Values` | `IReadOnlyList<double>` | `[]` | Data values; each entry becomes one bar. |
-| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. Falls back to `Charts.Palette`. |
+| `Values` | `IReadOnlyList<double>` | `[]` | Data values; each entry becomes one bar and negative values are clamped to zero. |
+| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. When `null`, defaults resolve from theme role tokens; `Charts.Palette` is only the compatibility fallback. |
 
 ### Example
 
@@ -64,20 +82,28 @@ new BarChart
     Height = 180,
     Values = new[] { 12d, 48d, 30d, 65d, 22d },
 }
+
+// Visible empty state
+new BarChart
+{
+    Width = 320,
+    Height = 180,
+    Values = new[] { 0d, -2d, 0d },
+}
 ```
 
 ---
 
 ## LineChart
 
-Plots values as a connected polyline with a dot at each data point, scaled against the maximum value. Mirrors the reference `Chart` Line variant. Set `Area = true` to fill the region beneath the line with a translucent wash (18 % opacity). Requires at least two values to render.
+Plots values as a connected polyline with a dot at each data point, scaled against the largest positive value. Negative values are clamped to zero. Set `Area = true` to fill the region beneath the line with a tokenized translucent wash. Empty and zero-only charts render the shared `No data` state; a single positive value renders as one centered dot.
 
 ### Properties
 
 | Member | Type | Default | Description |
 |---|---|---|---|
-| `Values` | `IReadOnlyList<double>` | `[]` | Data values plotted left-to-right. Minimum 2 values required to render. |
-| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. Index 0 is used for the line and fill. Falls back to `Charts.Palette`. |
+| `Values` | `IReadOnlyList<double>` | `[]` | Data values plotted left-to-right; negative values are clamped to zero. |
+| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. Index 0 is used for the line and fill. When `null`, defaults resolve from theme role tokens; `Charts.Palette` is only the compatibility fallback. |
 | `Area` | `bool` | `false` | When `true`, fills the area beneath the line at 18 % opacity. |
 
 ### Example
@@ -96,15 +122,15 @@ new LineChart
 
 ## Charts (static helper)
 
-Static class containing the default series color palette and math helpers shared by all chart controls. Mirrors the helper utilities from the reference API's `Chart`.
+Static class containing the compatibility series color palette and math helpers shared by all chart controls.
 
 ### Members
 
 | Member | Type | Description |
 |---|---|---|
-| `Palette` | `IReadOnlyList<Color>` | Eight categorical colors used as the default series palette. |
-| `SliceSweeps(values)` | `IReadOnlyList<double>` | Converts a list of values to per-slice sweep angles in degrees summing to 360. Returns empty when the total is ≤ 0. |
-| `BarHeights(values, maxPixels)` | `IReadOnlyList<double>` | Scales values to pixel heights proportional to the largest value. Returns all zeros when the maximum is ≤ 0. |
+| `Palette` | `IReadOnlyList<Color>` | Eight categorical colors retained as a compatibility fallback and for custom code. Built-in charts prefer theme roles when `Colors` is `null`. |
+| `SliceSweeps(values)` | `IReadOnlyList<double>` | Converts positive values to per-slice sweep angles in degrees summing to 360. Negative values count as zero; returns empty when the positive total is less than or equal to zero. |
+| `BarHeights(values, maxPixels)` | `IReadOnlyList<double>` | Scales positive values to pixel heights proportional to the largest value. Negative values count as zero; returns all zeros when the maximum is less than or equal to zero. |
 
 ### Example
 
@@ -117,7 +143,7 @@ var sweeps = Charts.SliceSweeps(new[] { 40d, 25d, 20d, 15d });
 var heights = Charts.BarHeights(new[] { 20d, 80d, 50d }, maxPixels: 160d);
 // heights → [40, 160, 100] pixels
 
-// Access the built-in palette
+// Access the compatibility palette for custom code
 Color first = Charts.Palette[0]; // #2196F3
 ```
 
@@ -125,7 +151,7 @@ Color first = Charts.Palette[0]; // #2196F3
 
 ## Ripple
 
-A click-ripple `Decorator`. Wraps a child control and, on each pointer press, animates a translucent dark circle that expands from the press point to the farthest corner and fades out over 450 ms. Mirrors the reference API's ripple effect. `ClipToBounds` is enabled automatically.
+A click-ripple `Decorator`. Wraps a child control and, on each pointer press, animates a translucent circle that expands from the press point to the farthest corner and fades out. `ClipToBounds` is enabled automatically.
 
 ### Properties / Members
 

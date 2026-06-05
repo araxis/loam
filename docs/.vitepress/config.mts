@@ -8,14 +8,14 @@ export default defineConfig({
   base,
   lang: 'en-US',
   title: 'Loam',
-  description: 'Pure C# Material Design controls for Avalonia applications.',
+  description: 'Pure C# themed controls for Avalonia applications.',
   cleanUrls: true,
   lastUpdated: true,
   ignoreDeadLinks: true,
 
   head: [
     ['meta', { name: 'theme-color', content: '#594AE2' }],
-    ['meta', { name: 'keywords', content: 'avalonia, material design, ui, controls, csharp, dotnet' }],
+    ['meta', { name: 'keywords', content: 'avalonia, ui, controls, theme, csharp, dotnet' }],
   ],
 
   markdown: {
@@ -29,7 +29,7 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/introduction', activeMatch: '/guide/' },
       { text: 'Components', link: '/components/overview', activeMatch: '/components/' },
       {
-        text: 'v1',
+        text: 'v2',
         items: [
           { text: 'Development Plan', link: `${repo}/blob/main/DEVELOPMENT_PLAN.md` },
           { text: 'Progress log', link: `${repo}/blob/main/memory/progress/progress-log.md` },
