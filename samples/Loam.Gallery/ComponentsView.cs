@@ -1952,26 +1952,137 @@ public sealed class ComponentsView : UserControl
         return border;
     }
 
-    private static WrapPanel BuildCharts()
+    private static StackPanel BuildCharts()
     {
         var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
         var split = new[] { 40d, 25d, 20d, 15d };
-
-        Control Labeledchart(string label, Control chart) => new StackPanel
+        var explicitColors = new[]
         {
-            Spacing = 6,
-            Margin = new Thickness(0, 0, 24, 16),
-            Children = { new Text { Text = label, Typo = Typo.Subtitle2 }, chart },
+            Color.Parse("#355C7D"),
+            Color.Parse("#6C5B7B"),
+            Color.Parse("#C06C84"),
+            Color.Parse("#F67280"),
         };
 
-        return new WrapPanel
+        Control ChartPanel(string title, string caption, Control chart, Control legend) => new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Width = 360,
+            Margin = new Thickness(0, 0, 16, 16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = title, Typo = Typo.Subtitle2 },
+                    new Text { Text = caption, Typo = Typo.Caption, Color = LoamColor.Secondary, TextWrapping = TextWrapping.Wrap },
+                    chart,
+                    legend,
+                },
+            },
+        };
+
+        Control Legend(params Control[] rows)
+        {
+            var stack = new StackPanel { Spacing = 6 };
+            foreach (var row in rows)
+            {
+                stack.Children.Add(row);
+            }
+
+            return stack;
+        }
+
+        Control TokenLegendRow(string token, string label)
+        {
+            var swatch = new Border { Width = 12, Height = 12, CornerRadius = new CornerRadius(6), VerticalAlignment = VerticalAlignment.Center };
+            swatch.Bind(Border.BackgroundProperty, swatch.GetResourceObservable(token));
+            return new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                Children = { swatch, new Text { Text = label, Typo = Typo.Caption } },
+            };
+        }
+
+        Control ColorLegendRow(Color color, string label) => new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            Children =
+            {
+                new Border
+                {
+                    Width = 12,
+                    Height = 12,
+                    CornerRadius = new CornerRadius(6),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Background = new SolidColorBrush(color),
+                },
+                new Text { Text = label, Typo = Typo.Caption },
+            },
+        };
+
+        return new StackPanel
         {
             Children =
             {
-                Labeledchart("Pie", new PieChart { Width = 180, Height = 180, Values = split }),
-                Labeledchart("Donut", new PieChart { Width = 180, Height = 180, Values = split, Donut = true }),
-                Labeledchart("Bar", new BarChart { Width = 280, Height = 160, Values = revenue }),
-                Labeledchart("Line", new LineChart { Width = 280, Height = 160, Values = revenue, Area = true }),
+                new WrapPanel
+                {
+                    Children =
+                    {
+                        ChartPanel(
+                            "Themed pie",
+                            "Default series colors resolve from the active theme.",
+                            new PieChart { Width = 180, Height = 180, Values = split },
+                            Legend(
+                                TokenLegendRow(LoamTokens.ColorPrimary, "Planning"),
+                                TokenLegendRow(LoamTokens.ColorSecondary, "Build"),
+                                TokenLegendRow(LoamTokens.ColorTertiary, "Review"))),
+                        ChartPanel(
+                            "Themed donut",
+                            "The center hole uses the current surface role.",
+                            new PieChart { Width = 180, Height = 180, Values = split, Donut = true },
+                            Legend(
+                                TokenLegendRow(LoamTokens.ColorPrimary, "Desktop"),
+                                TokenLegendRow(LoamTokens.ColorSecondary, "Browser"),
+                                TokenLegendRow(LoamTokens.ColorTertiary, "Mobile"))),
+                        ChartPanel(
+                            "Themed bars",
+                            "Grid and baseline colors come from outline roles.",
+                            new BarChart { Width = 280, Height = 160, Values = revenue },
+                            Legend(
+                                TokenLegendRow(LoamTokens.ColorPrimary, "Q1"),
+                                TokenLegendRow(LoamTokens.ColorSecondary, "Q2"),
+                                TokenLegendRow(LoamTokens.ColorTertiary, "Q3"))),
+                        ChartPanel(
+                            "Line and area",
+                            "Area fill follows the first resolved series color.",
+                            new LineChart { Width = 280, Height = 160, Values = revenue, Area = true },
+                            Legend(TokenLegendRow(LoamTokens.ColorPrimary, "Release readiness"))),
+                    },
+                },
+                new WrapPanel
+                {
+                    Children =
+                    {
+                        ChartPanel(
+                            "Explicit colors",
+                            "Custom series colors still override theme roles.",
+                            new PieChart { Width = 180, Height = 180, Values = split, Donut = true, Colors = explicitColors },
+                            Legend(
+                                ColorLegendRow(explicitColors[0], "Alpha"),
+                                ColorLegendRow(explicitColors[1], "Beta"),
+                                ColorLegendRow(explicitColors[2], "Stable"))),
+                        ChartPanel(
+                            "No data",
+                            "Empty and zero-only charts render a visible empty state.",
+                            new BarChart { Width = 280, Height = 160, Values = [0d, -2d, 0d] },
+                            Legend(new Text { Text = "No data", Typo = Typo.Caption, Color = LoamColor.Secondary })),
+                    },
+                },
             },
         };
     }

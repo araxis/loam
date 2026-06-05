@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Chart theming and acceptance
+
+**Done**
+- Hardened `PieChart`, `BarChart`, and `LineChart` with theme-role default series colors,
+  explicit color override preservation, tokenized grid/outline/surface/text rendering, visible
+  empty states, automation names/help text, and deterministic negative-value clamping.
+- Kept existing chart APIs source-compatible while adding internal chart visual resolution and
+  test visibility for focused acceptance coverage.
+- Expanded gallery chart samples with themed pie/donut/bar/line examples, legend rows, an
+  explicit-color sample, and a visible no-data sample while keeping source-linked code.
+- Added headless tests for chart math, light/dark role colors, explicit overrides, empty states,
+  automation text, and value/property update behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 196 tests.
+- Release gallery visual QA checked Overview plus PieChart, BarChart, and LineChart pages in
+  light and dark, including explicit-color and no-data chart examples.
+
+**Next:** final packaging/docs scan and release readiness pass.
+
+---
+
 ## 2026-06-05 — v2.0 — Data display hardening
 
 **Done**
