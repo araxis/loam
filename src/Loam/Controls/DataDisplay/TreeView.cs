@@ -1,10 +1,12 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using Avalonia.VisualTree;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -25,8 +27,10 @@ public class TreeView : TemplatedControl
     /// <summary>Creates the tree.</summary>
     public TreeView()
     {
+        Focusable = true;
         Items.CollectionChanged += OnItemsChanged;
         AddHandler(TreeViewItem.ItemSelectedEvent, OnItemSelected);
+        InteractionAssist.SetAutomationName(this, "Tree view");
     }
 
     /// <summary>The root nodes.</summary>
@@ -60,7 +64,22 @@ public class TreeView : TemplatedControl
         }
     }
 
-    private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+    private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        ReconcileSelection();
+        Rebuild();
+    }
+
+    internal void ReconcileSelection()
+    {
+        if (SelectedItem is not null && !AllItems().Contains(SelectedItem))
+        {
+            SelectedItem.IsSelected = false;
+            SelectedItem = null;
+        }
+
+        ApplySelection(SelectedItem);
+    }
 
     private void Rebuild()
     {
@@ -74,6 +93,8 @@ public class TreeView : TemplatedControl
         {
             _root.Children.Add(item);
         }
+
+        ApplySelection(SelectedItem);
     }
 
     private void OnItemSelected(object? sender, RoutedEventArgs e)
@@ -87,9 +108,32 @@ public class TreeView : TemplatedControl
 
     private void ApplySelection(TreeViewItem? selected)
     {
-        foreach (var node in this.GetVisualDescendants().OfType<TreeViewItem>())
+        foreach (var node in AllItems())
         {
             node.IsSelected = ReferenceEquals(node, selected);
+        }
+    }
+
+    private IEnumerable<TreeViewItem> AllItems()
+    {
+        foreach (var item in Items)
+        {
+            foreach (var node in Flatten(item))
+            {
+                yield return node;
+            }
+        }
+    }
+
+    private static IEnumerable<TreeViewItem> Flatten(TreeViewItem item)
+    {
+        yield return item;
+        foreach (var child in item.Items)
+        {
+            foreach (var node in Flatten(child))
+            {
+                yield return node;
+            }
         }
     }
 }

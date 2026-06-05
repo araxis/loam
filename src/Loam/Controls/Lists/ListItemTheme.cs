@@ -9,7 +9,6 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Loam;
 using Loam.Internal.Templating;
-using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -26,11 +25,6 @@ internal static class ListItemTheme
                 new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent),
             },
         };
-
-        theme.Add(new Style(x => x.Nesting().Class(":pointerover"))
-        {
-            Setters = { ButtonStyles.Dyn(TemplatedControl.BackgroundProperty, LoamTokens.LinesDefault) },
-        });
 
         return theme;
     }
@@ -62,8 +56,9 @@ internal static class ListItemTheme
             {
                 Child = row,
                 Cursor = new Cursor(StandardCursorType.Hand),
+                Background = Brushes.Transparent,
+                MinHeight = 48,
             }.Named("PART_Root", scope);
-            border.Bind(Border.BackgroundProperty, item.GetObservable(TemplatedControl.BackgroundProperty));
             return border;
         });
 }

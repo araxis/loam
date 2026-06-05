@@ -7,6 +7,35 @@ Next.
 
 ---
 
+## 2026-06-05 — v2.0 — Data display hardening
+
+**Done**
+- Hardened `DataGrid` row and header behavior with focusable/named rows, keyboard row selection,
+  keyboard sorting, tokenized selected/focus/hover/striped layers, deterministic page clamping,
+  and selected-item cleanup when filtered rows disappear.
+- Hardened `SimpleTable`, `TreeView`, `ListItem`, `ExpansionPanel`, `Timeline`, and `Carousel`
+  with clearer automation names, keyboard behavior, disabled/selected/focus states, empty-state
+  rendering, clamped carousel selection, and tokenized surface feedback.
+- Expanded gallery examples for paged and virtual data grids, dense/bordered/empty tables,
+  selected and disabled tree/list states, disabled expansion panels, timeline cards, and carousel
+  navigation while preserving source-linked samples.
+- Added focused headless coverage for data-grid selection/sorting/clamping, simple-table empty
+  states, tree expansion/navigation, list-item activation, expansion-panel disabled behavior,
+  timeline automation, and carousel keyboard navigation.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 191 tests.
+- Release gallery visual QA checked DataGrid, SimpleTable, TreeView, List/ListItem,
+  ExpansionPanels, Timeline, and Carousel with captured desktop surfaces.
+
+**Next:** chart theming remains the next deferred phase; deeper data-grid grouping remains future
+expansion.
+
+---
+
 ## 2026-06-05 — v2.0 — Shell and overlay hardening
 
 **Done**

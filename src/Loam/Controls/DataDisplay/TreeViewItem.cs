@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
@@ -6,6 +8,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using Loam.Controls.Internal;
 using Loam.Theming;
 
@@ -45,12 +48,23 @@ public class TreeViewItem : TemplatedControl
     private Text? _text;
     private StackPanel? _children;
     private bool _hover;
+    private bool _focused;
     private IDisposable? _rowBackground;
 
     /// <summary>Creates the node.</summary>
     public TreeViewItem()
     {
         Focusable = true;
+        GotFocus += (_, _) =>
+        {
+            _focused = true;
+            UpdateRow();
+        };
+        LostFocus += (_, _) =>
+        {
+            _focused = false;
+            UpdateRow();
+        };
         Items.CollectionChanged += OnItemsChanged;
     }
 
@@ -124,6 +138,16 @@ public class TreeViewItem : TemplatedControl
                 SelectItem();
             };
             _row.KeyDown += (_, e) => HandleKeyDown(e);
+            _row.GotFocus += (_, _) =>
+            {
+                _focused = true;
+                UpdateRow();
+            };
+            _row.LostFocus += (_, _) =>
+            {
+                _focused = false;
+                UpdateRow();
+            };
         }
 
         UpdateText();
@@ -153,7 +177,7 @@ public class TreeViewItem : TemplatedControl
         {
             UpdateIcon();
         }
-        else if (change.Property == IsSelectedProperty)
+        else if (change.Property == IsSelectedProperty || change.Property == IsEnabledProperty)
         {
             UpdateRow();
         }
@@ -186,6 +210,7 @@ public class TreeViewItem : TemplatedControl
     {
         UpdateChevron();
         RebuildChildren();
+        this.GetVisualAncestors().OfType<TreeView>().FirstOrDefault()?.ReconcileSelection();
     }
 
     private void UpdateText()
@@ -195,7 +220,11 @@ public class TreeViewItem : TemplatedControl
             _text.Text = Text;
         }
 
-        InteractionAssist.SetAutomationName(this, Text);
+        InteractionAssist.SetAutomationName(this, Text, "Tree item");
+        if (_row is not null)
+        {
+            InteractionAssist.SetAutomationName(_row, Text, "Tree item");
+        }
     }
 
     private void UpdateIcon()
@@ -239,6 +268,11 @@ public class TreeViewItem : TemplatedControl
             return;
         }
 
+        if (!IsEnabled)
+        {
+            return;
+        }
+
         if (e.Key == Key.Enter)
         {
             SelectItem();
@@ -257,6 +291,42 @@ public class TreeViewItem : TemplatedControl
 
             e.Handled = true;
         }
+        else if (e.Key == Key.Right)
+        {
+            if (Items.Count > 0 && !Expanded)
+            {
+                Expanded = true;
+            }
+            else
+            {
+                FocusFirstVisibleChild();
+            }
+
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Left)
+        {
+            if (Items.Count > 0 && Expanded)
+            {
+                Expanded = false;
+            }
+            else
+            {
+                FocusParentItem();
+            }
+
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Down)
+        {
+            MoveFocus(1);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Up)
+        {
+            MoveFocus(-1);
+            e.Handled = true;
+        }
     }
 
     private void SelectItem() => RaiseEvent(new RoutedEventArgs(ItemSelectedEvent));
@@ -268,21 +338,94 @@ public class TreeViewItem : TemplatedControl
             return;
         }
 
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
         _rowBackground?.Dispose();
         _rowBackground = null;
 
-        if (IsSelected)
+        if (!IsEnabled)
+        {
+            _row.Background = Brushes.Transparent;
+        }
+        else if (IsSelected)
         {
             _rowBackground = _row.Bind(Border.BackgroundProperty,
-                this.GetResourceObservable(LoamTokens.PaletteHover(nameof(LoamPalette.Primary))));
+                this.GetResourceObservable(LoamTokens.PaletteSelected(nameof(LoamPalette.Primary))));
+        }
+        else if (_focused)
+        {
+            _rowBackground = _row.Bind(Border.BackgroundProperty,
+                this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
         }
         else if (_hover)
         {
-            _rowBackground = _row.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.LinesDefault));
+            _rowBackground = _row.Bind(Border.BackgroundProperty,
+                this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
         }
         else
         {
             _row.Background = Brushes.Transparent;
+        }
+    }
+
+    private void FocusFirstVisibleChild()
+    {
+        var child = Items.FirstOrDefault(x => x.IsEnabled);
+        child?.Focus();
+    }
+
+    private void FocusParentItem()
+    {
+        var parent = this.GetVisualAncestors().OfType<TreeViewItem>().FirstOrDefault(x => x.IsEnabled);
+        parent?.Focus();
+    }
+
+    private void MoveFocus(int delta)
+    {
+        var tree = this.GetVisualAncestors().OfType<TreeView>().FirstOrDefault();
+        if (tree is null)
+        {
+            return;
+        }
+
+        var visible = VisibleItems(tree).Where(x => x.IsEnabled).ToList();
+        var current = visible.IndexOf(this);
+        if (current < 0)
+        {
+            return;
+        }
+
+        var next = current + delta;
+        if (next >= 0 && next < visible.Count)
+        {
+            visible[next].Focus();
+        }
+    }
+
+    private static IEnumerable<TreeViewItem> VisibleItems(TreeView tree)
+    {
+        foreach (var root in tree.Items)
+        {
+            foreach (var item in VisibleItems(root))
+            {
+                yield return item;
+            }
+        }
+    }
+
+    private static IEnumerable<TreeViewItem> VisibleItems(TreeViewItem item)
+    {
+        yield return item;
+        if (!item.Expanded)
+        {
+            yield break;
+        }
+
+        foreach (var child in item.Items)
+        {
+            foreach (var visible in VisibleItems(child))
+            {
+                yield return visible;
+            }
         }
     }
 }

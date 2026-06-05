@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -20,6 +21,12 @@ public class FeedbackTests
         new Window { Width = 400, Height = 300, Content = content }.Show();
         Dispatcher.UIThread.RunJobs();
     }
+
+    private static KeyEventArgs KeyArgs(Key key) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+    };
 
     [AvaloniaFact]
     public void Alert_filled_uses_severity_color()
@@ -117,5 +124,39 @@ public class FeedbackTests
         item.ApplyTemplate();
 
         item.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Icon").IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void ListItem_is_named_selected_disabled_and_keyboard_activates()
+    {
+        var activated = false;
+        var item = new ListItem
+        {
+            Icon = Icons.Material.Filled.Home,
+            Content = "Inbox",
+            IsSelected = true,
+        };
+        item.Activated += (_, _) => activated = true;
+        Show(item);
+        item.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        item.Focusable.ShouldBeTrue();
+        AutomationProperties.GetName(item).ShouldBe("Inbox");
+        var root = item.GetVisualDescendants().OfType<Border>().First(border => border.Name == "PART_Root");
+        root.Focusable.ShouldBeTrue();
+
+        var key = KeyArgs(Key.Space);
+        item.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        activated.ShouldBeTrue();
+
+        item.IsEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+        item.Opacity.ShouldBeLessThan(1);
+
+        var disabledKey = KeyArgs(Key.Enter);
+        item.RaiseEvent(disabledKey);
+        disabledKey.Handled.ShouldBeFalse();
     }
 }

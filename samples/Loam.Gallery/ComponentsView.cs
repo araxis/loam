@@ -1489,9 +1489,9 @@ public sealed class ComponentsView : UserControl
     private static Timeline BuildTimeline()
     {
         var timeline = new Timeline { MaxWidth = 420, HorizontalAlignment = HorizontalAlignment.Left };
-        timeline.Items.Add(new TimelineItem("Order placed — 9:24 AM", LoamColor.Primary));
-        timeline.Items.Add(new TimelineItem("Payment confirmed — 9:25 AM", LoamColor.Success));
-        timeline.Items.Add(new TimelineItem("Shipped — 2:10 PM", LoamColor.Info));
+        timeline.Items.Add(new TimelineItem("Order placed - 9:24 AM", LoamColor.Primary));
+        timeline.Items.Add(new TimelineItem("Payment confirmed - 9:25 AM", LoamColor.Success));
+        timeline.Items.Add(new TimelineItem("Shipped - 2:10 PM", LoamColor.Info));
         timeline.Items.Add(new TimelineItem("Out for delivery", LoamColor.Warning));
         return timeline;
     }
@@ -1515,6 +1515,12 @@ public sealed class ComponentsView : UserControl
             Header = "Delivery options",
             Content = new Text { Text = "Standard, express, or pickup.", Margin = new Thickness(0, 4) },
         });
+        panels.Panels.Add(new ExpansionPanel
+        {
+            Header = "Locked review",
+            Content = new Text { Text = "Disabled panels keep a stable header surface.", Margin = new Thickness(0, 4) },
+            IsEnabled = false,
+        });
         return panels;
     }
 
@@ -1532,7 +1538,13 @@ public sealed class ComponentsView : UserControl
             },
         };
 
-        var carousel = new Loam.Controls.Carousel { Width = 380, Height = 200, HorizontalAlignment = HorizontalAlignment.Left };
+        var carousel = new Loam.Controls.Carousel
+        {
+            Width = 380,
+            Height = 200,
+            SelectedIndex = 1,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
         carousel.Items.Add(new CarouselItem(Slide("First slide", LoamColor.Primary)));
         carousel.Items.Add(new CarouselItem(Slide("Second slide", LoamColor.Secondary)));
         carousel.Items.Add(new CarouselItem(Slide("Third slide", LoamColor.Info)));
@@ -1552,14 +1564,24 @@ public sealed class ComponentsView : UserControl
             return node;
         }
 
-        var tree = new Loam.Controls.TreeView { MaxWidth = 320, HorizontalAlignment = HorizontalAlignment.Left };
-        tree.Items.Add(Node("src", Icons.Material.Filled.Home,
-            Node("Components", null,
-                Node("Button.cs", null),
-                Node("TreeView.cs", null)),
+        var treeFile = Node("TreeView.cs", null);
+        var disabledFile = Node("Archived.cs", null);
+        disabledFile.IsEnabled = false;
+
+        var components = Node("Components", null,
+            Node("Button.cs", null),
+            treeFile,
+            disabledFile);
+        var root = Node("src", Icons.Material.Filled.Home,
+            components,
             Node("Theming", null,
-                Node("LoamTheme.cs", null))));
-        tree.Items[0].Expanded = true;
+                Node("LoamTheme.cs", null)));
+        root.Expanded = true;
+        components.Expanded = true;
+
+        var tree = new Loam.Controls.TreeView { MaxWidth = 320, HorizontalAlignment = HorizontalAlignment.Left };
+        tree.Items.Add(root);
+        tree.SelectedItem = treeFile;
         return tree;
     }
 
@@ -1572,26 +1594,20 @@ public sealed class ComponentsView : UserControl
         public double Fat { get; } = fat;
     }
 
-    private static Loam.Controls.DataGrid<Dessert> BuildDataGrid()
+    private static StackPanel BuildDataGrid()
     {
-        var grid = new Loam.Controls.DataGrid<Dessert>
+        static void AddColumns(Loam.Controls.DataGrid<Dessert> grid, bool editable = false)
         {
-            Striped = true,
-            Hover = true,
-            PageSize = 4,
-            FilterText = "i",
-            Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
-            MaxWidth = 480,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-        grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name)
-        {
-            Editable = true,
-            SetText = (dessert, text) => dessert.Name = text ?? "",
-        });
-        grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
-        grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
-        grid.Items = new List<Dessert>
+            grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name)
+            {
+                Editable = editable,
+                SetText = editable ? (Action<Dessert, string?>)((dessert, text) => dessert.Name = text ?? "") : null,
+            });
+            grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
+            grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
+        }
+
+        var desserts = new List<Dessert>
         {
             new("Frozen yogurt", 159, 6.0),
             new("Ice cream sandwich", 237, 9.0),
@@ -1602,12 +1618,58 @@ public sealed class ComponentsView : UserControl
             new("Lollipop", 392, 0.2),
             new("Honeycomb", 408, 3.2),
         };
-        return grid;
+
+        var paged = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            PageSize = 4,
+            FilterText = "i",
+            Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddColumns(paged, editable: true);
+        paged.Items = desserts;
+        paged.SelectedItem = desserts[1];
+
+        var virtualized = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            Virtualize = true,
+            MaxRenderedRows = 3,
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddColumns(virtualized);
+        virtualized.Items = desserts;
+
+        return new StackPanel
+        {
+            Spacing = 16,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Labeled("Paged", paged),
+                Labeled("Virtual", virtualized),
+            },
+        };
     }
 
-    private static SimpleTable BuildTable()
+    private static StackPanel BuildTable()
     {
-        var table = new SimpleTable { Striped = true, Hover = true, MaxWidth = 480, HorizontalAlignment = HorizontalAlignment.Left };
+        var table = new SimpleTable
+        {
+            Dense = true,
+            Bordered = true,
+            Striped = true,
+            Hover = true,
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
         table.Headers.Add("Dessert");
         table.Headers.Add("Calories");
         table.Headers.Add("Fat (g)");
@@ -1615,7 +1677,27 @@ public sealed class ComponentsView : UserControl
         table.Rows.Add(new TableRow("Ice cream sandwich", 237, 9.0));
         table.Rows.Add(new TableRow("Eclair", 262, 16.0));
         table.Rows.Add(new TableRow("Cupcake", 305, 3.7));
-        return table;
+
+        var empty = new SimpleTable
+        {
+            Dense = true,
+            Bordered = true,
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        empty.Headers.Add("Dessert");
+        empty.Headers.Add("Calories");
+
+        return new StackPanel
+        {
+            Spacing = 16,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Labeled("Dense", table),
+                Labeled("Empty", empty),
+            },
+        };
     }
 
     private static StackPanel BuildFileUpload()
@@ -1821,11 +1903,18 @@ public sealed class ComponentsView : UserControl
     private static StackPanel BuildList()
     {
         var list = new List();
+        var status = new Text { Text = "Activate a row with pointer or keyboard.", Typo = Typo.Caption, Color = LoamColor.Secondary };
+        var inbox = new ListItem { Icon = Icons.Material.Filled.Home, Content = "Inbox", IsSelected = true };
+        inbox.Activated += (_, _) => status.Text = "Inbox activated";
+        var starred = new ListItem { Icon = Icons.Material.Filled.Star, Content = "Starred" };
+        starred.Activated += (_, _) => status.Text = "Starred activated";
+
         list.Children.Add(new ListSubheader { Text = "MAILBOXES" });
-        list.Children.Add(new ListItem { Icon = Icons.Material.Filled.Home, Content = "Inbox" });
-        list.Children.Add(new ListItem { Icon = Icons.Material.Filled.Star, Content = "Starred" });
+        list.Children.Add(inbox);
+        list.Children.Add(starred);
         list.Children.Add(new ListSubheader { Text = "LABELS" });
         list.Children.Add(new ListItem { Icon = Icons.Material.Filled.Person, Content = "Personal" });
+        list.Children.Add(new ListItem { Icon = Icons.Material.Filled.Settings, Content = "Disabled", IsEnabled = false });
 
         // Spacer pushes the trailing button to the right edge of a DockPanel row.
         var title = new Text { Text = "Toolbar", VerticalAlignment = VerticalAlignment.Center };
@@ -1843,7 +1932,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 16,
             MaxWidth = 280,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { new Paper { Elevation = 1, Content = list }, bar },
+            Children = { new Paper { Elevation = 1, Content = list }, status, bar },
         };
     }
 

@@ -6,6 +6,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 using AvaGrid = Avalonia.Controls.Grid;
 
@@ -43,7 +44,12 @@ public class Timeline : Decorator
     private const double DotSize = 14;
 
     /// <summary>Creates the timeline.</summary>
-    public Timeline() => Items.CollectionChanged += OnItemsChanged;
+    public Timeline()
+    {
+        Focusable = true;
+        Items.CollectionChanged += OnItemsChanged;
+        InteractionAssist.SetAutomationName(this, "Timeline");
+    }
 
     /// <summary>The timeline entries, top to bottom.</summary>
     public ObservableCollection<TimelineItem> Items { get; } = new();
@@ -96,10 +102,12 @@ public class Timeline : Decorator
             var card = new Paper
             {
                 Elevation = 1,
+                Focusable = true,
                 Padding = new Thickness(16, 12),
                 Margin = new Thickness(8, 0, 0, i == Items.Count - 1 ? 0 : 16),
                 Content = presenter,
             };
+            InteractionAssist.SetAutomationName(card, $"Timeline item {i + 1}: {ItemLabel(item.Content)}");
             AvaGrid.SetColumn(card, 1);
             AvaGrid.SetRow(card, i);
             grid.Children.Add(card);
@@ -107,4 +115,15 @@ public class Timeline : Decorator
 
         Child = grid;
     }
+
+    private static string ItemLabel(object? content) =>
+        content switch
+        {
+            null => "Item",
+            string text when !string.IsNullOrWhiteSpace(text) => text,
+            TextBlock textBlock when !string.IsNullOrWhiteSpace(textBlock.Text) => textBlock.Text!,
+            Text text when !string.IsNullOrWhiteSpace(text.Text) => text.Text!,
+            ContentControl { Content: string text } when !string.IsNullOrWhiteSpace(text) => text,
+            _ => "Item",
+        };
 }

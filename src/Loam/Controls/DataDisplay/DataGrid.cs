@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -110,7 +111,11 @@ public class DataGrid<T> : Decorator
     private bool _sortDescending;
 
     /// <summary>Creates the grid.</summary>
-    public DataGrid() => Columns.CollectionChanged += OnColumnsChanged;
+    public DataGrid()
+    {
+        Columns.CollectionChanged += OnColumnsChanged;
+        InteractionAssist.SetAutomationName(this, "Data grid");
+    }
 
     /// <summary>Raised when <see cref="SelectedItem"/> changes via a row click.</summary>
     public event Action<T?>? SelectionChanged;
@@ -215,9 +220,19 @@ public class DataGrid<T> : Decorator
         var all = _items?.ToList() ?? new List<T>();
         var filtered = DataGrids.Filter(all, _filterText, MatchesFilter);
         var sorted = DataGrids.Sort(filtered, _sortColumn, _sortDescending);
+        if (_selectedItem is T selected && !sorted.Contains(selected, EqualityComparer<T>.Default))
+        {
+            _selectedItem = default;
+            SelectionChanged?.Invoke(default);
+        }
 
         var pageCount = DataGrids.PageCount(sorted.Count, _pageSize);
         var page = Math.Clamp(_page, 1, pageCount);
+        if (page != _page)
+        {
+            _page = page;
+        }
+
         var rows = _pageSize <= 0
             ? _virtualize ? sorted.Take(_maxRenderedRows).ToList() : sorted
             : sorted.Skip((page - 1) * _pageSize).Take(_pageSize).ToList();
@@ -298,13 +313,73 @@ public class DataGrid<T> : Decorator
             });
         }
 
-        var cell = new Border { Child = row, Padding = pad, BorderThickness = new Thickness(0, 0, 0, 1) };
+        var cell = new Border
+        {
+            Child = row,
+            Padding = pad,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Focusable = column.Sortable,
+            Cursor = column.Sortable ? HandCursor : null,
+        };
+        InteractionAssist.SetAutomationName(cell, column.Sortable
+            ? $"Sort by {column.Header}"
+            : $"{column.Header} column");
         cell.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableLines))));
 
         if (column.Sortable)
         {
-            cell.Cursor = HandCursor;
+            var focused = false;
+            var hovered = false;
+            IDisposable? backgroundBinding = null;
+            void ApplyHeaderState()
+            {
+                backgroundBinding?.Dispose();
+                backgroundBinding = null;
+                if (focused)
+                {
+                    backgroundBinding = cell.Bind(Border.BackgroundProperty,
+                        this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
+                }
+                else if (hovered)
+                {
+                    backgroundBinding = cell.Bind(Border.BackgroundProperty,
+                        this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
+                }
+                else
+                {
+                    cell.Background = Brushes.Transparent;
+                }
+            }
+
+            cell.GotFocus += (_, _) =>
+            {
+                focused = true;
+                ApplyHeaderState();
+            };
+            cell.LostFocus += (_, _) =>
+            {
+                focused = false;
+                ApplyHeaderState();
+            };
+            cell.PointerEntered += (_, _) =>
+            {
+                hovered = true;
+                ApplyHeaderState();
+            };
+            cell.PointerExited += (_, _) =>
+            {
+                hovered = false;
+                ApplyHeaderState();
+            };
             cell.PointerPressed += (_, _) => ToggleSort(column);
+            cell.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    ToggleSort(column);
+                    args.Handled = true;
+                }
+            };
         }
 
         return cell;
@@ -343,8 +418,16 @@ public class DataGrid<T> : Decorator
     {
         var selected = EqualityComparer<T>.Default.Equals(item, _selectedItem);
         var striped = _striped && dataIndex % 2 == 1;
+        var focused = false;
+        var hovered = false;
 
-        var background = new Border { Background = Brushes.Transparent, Cursor = HandCursor };
+        var background = new Border
+        {
+            Background = Brushes.Transparent,
+            Cursor = HandCursor,
+            Focusable = IsEnabled,
+        };
+        InteractionAssist.SetAutomationName(background, $"Row {dataIndex + 1}: {RowLabel(item)}");
         AvaGrid.SetRow(background, rowIndex);
         AvaGrid.SetColumn(background, 0);
         AvaGrid.SetColumnSpan(background, Columns.Count);
@@ -357,7 +440,15 @@ public class DataGrid<T> : Decorator
             baseBinding = null;
             if (selected)
             {
-                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteHover(nameof(LoamPalette.Primary))));
+                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteSelected(nameof(LoamPalette.Primary))));
+            }
+            else if (focused)
+            {
+                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
+            }
+            else if (hovered && _hover)
+            {
+                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
             }
             else if (striped)
             {
@@ -371,22 +462,52 @@ public class DataGrid<T> : Decorator
 
         ApplyBase();
 
-        if (_hover && !selected)
+        background.GotFocus += (_, _) =>
+        {
+            focused = true;
+            ApplyBase();
+        };
+        background.LostFocus += (_, _) =>
+        {
+            focused = false;
+            ApplyBase();
+        };
+        background.KeyDown += (_, args) =>
+        {
+            if (InteractionAssist.IsActivationKey(args.Key))
+            {
+                SelectRow(item);
+                args.Handled = true;
+            }
+        };
+
+        if (_hover)
         {
             background.PointerEntered += (_, _) =>
             {
-                baseBinding?.Dispose();
-                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
+                hovered = true;
+                ApplyBase();
             };
-            background.PointerExited += (_, _) => ApplyBase();
+            background.PointerExited += (_, _) =>
+            {
+                hovered = false;
+                ApplyBase();
+            };
         }
 
-        background.PointerPressed += (_, _) =>
+        background.PointerPressed += (_, _) => SelectRow(item);
+    }
+
+    private void SelectRow(T item)
+    {
+        if (EqualityComparer<T>.Default.Equals(item, _selectedItem))
         {
-            _selectedItem = item;
-            SelectionChanged?.Invoke(item);
-            Rebuild();
-        };
+            return;
+        }
+
+        _selectedItem = item;
+        SelectionChanged?.Invoke(item);
+        Rebuild();
     }
 
     private void ToggleSort(DataGridColumn<T> column)
@@ -402,6 +523,12 @@ public class DataGrid<T> : Decorator
         }
 
         Rebuild();
+    }
+
+    private string RowLabel(T item)
+    {
+        var label = Columns.Count > 0 ? Columns[0].Display(item) : item?.ToString();
+        return string.IsNullOrWhiteSpace(label) ? "item" : label;
     }
 
     private bool MatchesFilter(T item, string text)

@@ -2,8 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Loam.Controls.Internal;
+using Loam.Theming;
 
 namespace Loam.Controls;
 
@@ -23,9 +25,25 @@ public class ExpansionPanel : HeaderedContentControl
     private Icon? _chevron;
     private Control? _content;
     private Collapse? _collapse;
+    private bool _headerFocused;
+    private bool _headerHovered;
+    private IDisposable? _headerBackground;
 
     /// <summary>Creates the panel.</summary>
-    public ExpansionPanel() => Focusable = true;
+    public ExpansionPanel()
+    {
+        Focusable = true;
+        GotFocus += (_, _) =>
+        {
+            _headerFocused = true;
+            UpdateHeaderState();
+        };
+        LostFocus += (_, _) =>
+        {
+            _headerFocused = false;
+            UpdateHeaderState();
+        };
+    }
 
     /// <summary>Whether the panel is open. Mirrors the reference API's <c>IsExpanded</c>.</summary>
     public bool IsExpanded
@@ -47,11 +65,33 @@ public class ExpansionPanel : HeaderedContentControl
         _collapse = e.NameScope.Find("PART_Collapse") as Collapse;
         if (_header is not null)
         {
+            _header.Focusable = true;
             _header.PointerPressed += (_, _) =>
             {
                 Focus();
                 Toggle();
             };
+            _header.PointerEntered += (_, _) =>
+            {
+                _headerHovered = true;
+                UpdateHeaderState();
+            };
+            _header.PointerExited += (_, _) =>
+            {
+                _headerHovered = false;
+                UpdateHeaderState();
+            };
+            _header.GotFocus += (_, _) =>
+            {
+                _headerFocused = true;
+                UpdateHeaderState();
+            };
+            _header.LostFocus += (_, _) =>
+            {
+                _headerFocused = false;
+                UpdateHeaderState();
+            };
+            _header.KeyDown += (_, args) => HandleKeyDown(args);
         }
 
         UpdateState();
@@ -65,6 +105,10 @@ public class ExpansionPanel : HeaderedContentControl
         {
             UpdateState();
         }
+        else if (change.Property == IsEnabledProperty)
+        {
+            UpdateHeaderState();
+        }
         else if (change.Property == HeaderProperty)
         {
             UpdateAutomationName();
@@ -75,14 +119,27 @@ public class ExpansionPanel : HeaderedContentControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (InteractionAssist.IsActivationKey(e.Key))
-        {
-            Toggle();
-            e.Handled = true;
-        }
+        HandleKeyDown(e);
     }
 
-    private void Toggle() => IsExpanded = !IsExpanded;
+    private void HandleKeyDown(KeyEventArgs e)
+    {
+        if (!IsEnabled || e.Handled || !InteractionAssist.IsActivationKey(e.Key))
+        {
+            return;
+        }
+
+        Toggle();
+        e.Handled = true;
+    }
+
+    private void Toggle()
+    {
+        if (IsEnabled)
+        {
+            IsExpanded = !IsExpanded;
+        }
+    }
 
     private void UpdateState()
     {
@@ -102,7 +159,46 @@ public class ExpansionPanel : HeaderedContentControl
         }
 
         UpdateAutomationName();
+        UpdateHeaderState();
     }
 
-    private void UpdateAutomationName() => InteractionAssist.SetAutomationName(this, Header);
+    private void UpdateHeaderState()
+    {
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        if (_header is null)
+        {
+            return;
+        }
+
+        _headerBackground?.Dispose();
+        _headerBackground = null;
+
+        if (!IsEnabled)
+        {
+            _header.Background = Brushes.Transparent;
+        }
+        else if (_headerFocused)
+        {
+            _headerBackground = _header.Bind(Border.BackgroundProperty,
+                this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
+        }
+        else if (_headerHovered)
+        {
+            _headerBackground = _header.Bind(Border.BackgroundProperty,
+                this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
+        }
+        else
+        {
+            _header.Background = Brushes.Transparent;
+        }
+    }
+
+    private void UpdateAutomationName()
+    {
+        InteractionAssist.SetAutomationName(this, Header, "Expansion panel");
+        if (_header is not null)
+        {
+            InteractionAssist.SetAutomationName(_header, Header, "Expansion panel");
+        }
+    }
 }

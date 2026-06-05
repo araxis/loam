@@ -143,6 +143,74 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void DataGrid_rows_are_focusable_named_and_keyboard_selectable()
+    {
+        var grid = new DataGrid<Person> { Hover = false };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        var alice = new Person("Alice", 25);
+        grid.Items = new List<Person> { alice };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var row = grid.GetVisualDescendants().OfType<Border>()
+            .Single(border => AutomationProperties.GetName(border) == "Row 1: Alice");
+        row.Focusable.ShouldBeTrue();
+
+        var key = KeyArgs(Key.Enter);
+        row.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        grid.SelectedItem.ShouldBe(alice);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_sort_headers_are_focusable_named_and_keyboard_sortable()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        grid.Items = new List<Person> { new("Bob", 30), new("Alice", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var ageHeader = grid.GetVisualDescendants().OfType<Border>()
+            .Single(border => AutomationProperties.GetName(border) == "Sort by Age");
+        ageHeader.Focusable.ShouldBeTrue();
+
+        var key = KeyArgs(Key.Space);
+        ageHeader.RaiseEvent(key);
+        Dispatcher.UIThread.RunJobs();
+        key.Handled.ShouldBeTrue();
+
+        var names = grid.GetVisualDescendants().OfType<Text>()
+            .Select(text => text.Text)
+            .Where(text => text is "Alice" or "Bob")
+            .ToList();
+        names.ShouldBe(["Alice", "Bob"]);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_clamps_page_and_clears_selection_when_filtered_out()
+    {
+        var alice = new Person("Alice", 25);
+        var bob = new Person("Bob", 30);
+        var grid = new DataGrid<Person>
+        {
+            PageSize = 1,
+            FilterText = "Alice",
+            Filter = (person, text) => person.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { alice, bob };
+        grid.SelectedItem = bob;
+        grid.Page = 99;
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.Page.ShouldBe(1);
+        grid.SelectedItem.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
     public void Tabs_switch_content_on_selection()
     {
         var first = new TextBlock { Text = "A" };
@@ -212,6 +280,32 @@ public class DataDisplayTests
         texts.ShouldContain("Name");
         texts.ShouldContain("Alice");
         texts.ShouldContain("25");
+    }
+
+    [AvaloniaFact]
+    public void SimpleTable_empty_state_and_rows_are_named()
+    {
+        var empty = new SimpleTable();
+        Show(empty);
+        empty.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        empty.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ShouldContain("No rows");
+        AutomationProperties.GetName(empty).ShouldBe("Table");
+        empty.GetVisualDescendants().OfType<Border>()
+            .Any(border => AutomationProperties.GetName(border) == "No rows")
+            .ShouldBeTrue();
+
+        var table = new SimpleTable { Hover = true };
+        table.Headers.Add("Name");
+        table.Rows.Add(new TableRow("Alice"));
+        Show(table);
+        table.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var row = table.GetVisualDescendants().OfType<Border>()
+            .Single(border => AutomationProperties.GetName(border) == "Row 1: Alice");
+        row.Focusable.ShouldBeTrue();
     }
 
     [Fact]
@@ -374,6 +468,36 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void TreeView_arrow_keys_expand_collapse_and_removed_selection_clears()
+    {
+        var child = new Loam.Controls.TreeViewItem { Text = "Child" };
+        var root = new Loam.Controls.TreeViewItem { Text = "Root" };
+        root.Items.Add(child);
+        var tree = new Loam.Controls.TreeView();
+        tree.Items.Add(root);
+        Show(tree);
+        tree.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var expand = KeyArgs(Key.Right);
+        root.RaiseEvent(expand);
+        expand.Handled.ShouldBeTrue();
+        root.Expanded.ShouldBeTrue();
+
+        var collapse = KeyArgs(Key.Left);
+        root.RaiseEvent(collapse);
+        collapse.Handled.ShouldBeTrue();
+        root.Expanded.ShouldBeFalse();
+
+        tree.SelectedItem = child;
+        root.Items.Remove(child);
+        Dispatcher.UIThread.RunJobs();
+
+        tree.SelectedItem.ShouldBeNull();
+        child.IsSelected.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void Carousel_navigation_wraps_and_swaps_content()
     {
         var a = new TextBlock { Text = "A" };
@@ -403,6 +527,38 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void Carousel_is_named_and_supports_keyboard_navigation()
+    {
+        var carousel = new Loam.Controls.Carousel();
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "A" }));
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "B" }));
+        Show(carousel);
+        carousel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetName(carousel).ShouldBe("Carousel");
+        var key = KeyArgs(Key.Right);
+        carousel.RaiseEvent(key);
+        key.Handled.ShouldBeTrue();
+        carousel.SelectedIndex.ShouldBe(1);
+
+        var bullets = carousel.GetVisualDescendants().OfType<Border>()
+            .Where(border => AutomationProperties.GetName(border)?.StartsWith("Slide ", StringComparison.Ordinal) == true)
+            .ToList();
+        bullets.Count.ShouldBe(2);
+        bullets[0].Focusable.ShouldBeTrue();
+
+        var selectFirst = KeyArgs(Key.Enter);
+        bullets[0].RaiseEvent(selectFirst);
+        selectFirst.Handled.ShouldBeTrue();
+        carousel.SelectedIndex.ShouldBe(0);
+
+        carousel.SelectedIndex = 8;
+        Dispatcher.UIThread.RunJobs();
+        carousel.SelectedIndex.ShouldBe(1);
+    }
+
+    [AvaloniaFact]
     public void Timeline_builds_a_dot_and_card_per_item()
     {
         var timeline = new Timeline();
@@ -419,6 +575,11 @@ public class DataDisplayTests
         var texts = timeline.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
         texts.ShouldContain("First");
         texts.ShouldContain("Second");
+
+        AutomationProperties.GetName(timeline).ShouldBe("Timeline");
+        timeline.GetVisualDescendants().OfType<Paper>()
+            .Count(paper => paper.Focusable && AutomationProperties.GetName(paper)?.StartsWith("Timeline item ", StringComparison.Ordinal) == true)
+            .ShouldBe(2);
     }
 
     [AvaloniaFact]
@@ -454,6 +615,24 @@ public class DataDisplayTests
         panel.RaiseEvent(key);
         key.Handled.ShouldBeTrue();
         panel.IsExpanded.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void ExpansionPanel_disabled_header_does_not_toggle()
+    {
+        var panel = new ExpansionPanel { Header = "Locked", Content = new TextBlock { Text = "body" }, IsEnabled = false };
+        Show(panel);
+        panel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var header = panel.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Header");
+        AutomationProperties.GetName(header).ShouldBe("Locked");
+        panel.Opacity.ShouldBeLessThan(1);
+
+        var key = KeyArgs(Key.Space);
+        header.RaiseEvent(key);
+        key.Handled.ShouldBeFalse();
+        panel.IsExpanded.ShouldBeFalse();
     }
 
     [AvaloniaFact]

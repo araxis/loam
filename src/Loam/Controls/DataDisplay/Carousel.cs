@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -45,13 +46,19 @@ public class Carousel : TemplatedControl
         AvaloniaProperty.Register<Carousel, bool>(nameof(ShowBullets), true);
 
     private readonly List<Border> _bullets = new();
+    private readonly List<IDisposable?> _bulletBindings = new();
     private ContentControl? _content;
     private StackPanel? _bulletPanel;
     private Control? _prev;
     private Control? _next;
 
     /// <summary>Creates the carousel.</summary>
-    public Carousel() => Items.CollectionChanged += OnItemsChanged;
+    public Carousel()
+    {
+        Focusable = true;
+        Items.CollectionChanged += OnItemsChanged;
+        InteractionAssist.SetAutomationName(this, "Carousel");
+    }
 
     /// <summary>The slides.</summary>
     public ObservableCollection<CarouselItem> Items { get; } = new();
@@ -109,12 +116,32 @@ public class Carousel : TemplatedControl
 
         if (_prev is not null)
         {
+            _prev.Focusable = true;
+            InteractionAssist.SetAutomationName(_prev, "Previous slide");
             _prev.PointerPressed += (_, _) => Previous();
+            _prev.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    Previous();
+                    args.Handled = true;
+                }
+            };
         }
 
         if (_next is not null)
         {
+            _next.Focusable = true;
+            InteractionAssist.SetAutomationName(_next, "Next slide");
             _next.PointerPressed += (_, _) => Next();
+            _next.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    Next();
+                    args.Handled = true;
+                }
+            };
         }
 
         Rebuild();
@@ -135,14 +162,41 @@ public class Carousel : TemplatedControl
         }
     }
 
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Handled || Items.Count == 0)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Left)
+        {
+            Previous();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Right)
+        {
+            Next();
+            e.Handled = true;
+        }
+    }
+
     private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
     {
         if (_bulletPanel is not null)
         {
+            foreach (var binding in _bulletBindings)
+            {
+                binding?.Dispose();
+            }
+
             _bulletPanel.Children.Clear();
             _bullets.Clear();
+            _bulletBindings.Clear();
             for (var i = 0; i < Items.Count; i++)
             {
                 var bullet = new Border
@@ -152,11 +206,22 @@ public class Carousel : TemplatedControl
                     CornerRadius = new CornerRadius(4),
                     Margin = new Thickness(3, 0),
                     Cursor = new Cursor(StandardCursorType.Hand),
+                    Focusable = true,
                 };
                 var index = i;
                 bullet.PointerPressed += (_, _) => SelectedIndex = index;
+                bullet.KeyDown += (_, args) =>
+                {
+                    if (InteractionAssist.IsActivationKey(args.Key))
+                    {
+                        SelectedIndex = index;
+                        args.Handled = true;
+                    }
+                };
+                InteractionAssist.SetAutomationName(bullet, $"Slide {index + 1}");
                 _bulletPanel.Children.Add(bullet);
                 _bullets.Add(bullet);
+                _bulletBindings.Add(null);
             }
         }
 
@@ -167,7 +232,30 @@ public class Carousel : TemplatedControl
 
     private void ShowContent()
     {
-        if (_content is not null && SelectedIndex >= 0 && SelectedIndex < Items.Count)
+        if (_content is null)
+        {
+            return;
+        }
+
+        if (Items.Count == 0)
+        {
+            _content.Content = null;
+            if (SelectedIndex != 0)
+            {
+                SelectedIndex = 0;
+            }
+
+            return;
+        }
+
+        var clamped = Math.Clamp(SelectedIndex, 0, Items.Count - 1);
+        if (clamped != SelectedIndex)
+        {
+            SelectedIndex = clamped;
+            return;
+        }
+
+        if (SelectedIndex >= 0 && SelectedIndex < Items.Count)
         {
             _content.Content = Items[SelectedIndex].Content;
         }
@@ -177,7 +265,8 @@ public class Carousel : TemplatedControl
     {
         for (var i = 0; i < _bullets.Count; i++)
         {
-            _bullets[i].Bind(Border.BackgroundProperty, this.GetResourceObservable(
+            _bulletBindings[i]?.Dispose();
+            _bulletBindings[i] = _bullets[i].Bind(Border.BackgroundProperty, this.GetResourceObservable(
                 i == SelectedIndex ? LoamTokens.Primary : LoamTokens.Palette(nameof(LoamPalette.GrayLight))));
         }
     }

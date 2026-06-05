@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -63,6 +64,7 @@ public class SimpleTable : TemplatedControl
     {
         Headers.CollectionChanged += OnDataChanged;
         Rows.CollectionChanged += OnDataChanged;
+        InteractionAssist.SetAutomationName(this, "Table");
     }
 
     /// <summary>The column header labels.</summary>
@@ -143,7 +145,7 @@ public class SimpleTable : TemplatedControl
         var columns = Math.Max(Headers.Count, Rows.Count == 0 ? 0 : Rows.Max(r => r.Cells.Count));
         if (columns == 0)
         {
-            _paper.Content = null;
+            _paper.Content = EmptyState("No rows");
             return;
         }
 
@@ -169,13 +171,23 @@ public class SimpleTable : TemplatedControl
             rowIndex++;
         }
 
+        if (Rows.Count == 0)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var empty = EmptyState("No rows");
+            AvaGrid.SetRow(empty, rowIndex);
+            AvaGrid.SetColumn(empty, 0);
+            AvaGrid.SetColumnSpan(empty, columns);
+            grid.Children.Add(empty);
+        }
+
         for (var i = 0; i < Rows.Count; i++)
         {
             grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
             var striped = Striped && i % 2 == 1;
             var baseBrushKey = striped ? LoamTokens.Palette(nameof(LoamPalette.TableStriped)) : null;
-            AddRowBackground(grid, rowIndex, columns, baseBrushKey);
+            AddRowBackground(grid, rowIndex, columns, baseBrushKey, i, Rows[i]);
 
             var row = Rows[i];
             for (var c = 0; c < columns; c++)
@@ -193,43 +205,64 @@ public class SimpleTable : TemplatedControl
         _paper.Content = grid;
     }
 
-    private void AddRowBackground(AvaGrid grid, int rowIndex, int columns, string? baseBrushKey)
+    private void AddRowBackground(AvaGrid grid, int rowIndex, int columns, string? baseBrushKey, int dataIndex, TableRow row)
     {
-        if (baseBrushKey is null && !Hover)
-        {
-            return;
-        }
-
-        var background = new Border { Background = Brushes.Transparent };
+        var focused = false;
+        var hovered = false;
+        var background = new Border { Background = Brushes.Transparent, Focusable = true };
+        InteractionAssist.SetAutomationName(background, $"Row {dataIndex + 1}: {RowLabel(row)}");
         AvaGrid.SetRow(background, rowIndex);
         AvaGrid.SetColumn(background, 0);
         AvaGrid.SetColumnSpan(background, columns);
         grid.Children.Add(background);
 
         IDisposable? baseBinding = null;
-        if (baseBrushKey is not null)
+        void ApplyBase()
         {
-            baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(baseBrushKey));
+            baseBinding?.Dispose();
+            if (focused)
+            {
+                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
+            }
+            else if (hovered && Hover)
+            {
+                baseBinding = background.Bind(Border.BackgroundProperty,
+                    this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
+            }
+            else if (baseBrushKey is not null)
+            {
+                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(baseBrushKey));
+            }
+            else
+            {
+                baseBinding = null;
+                background.Background = Brushes.Transparent;
+            }
         }
+
+        ApplyBase();
+        background.GotFocus += (_, _) =>
+        {
+            focused = true;
+            ApplyBase();
+        };
+        background.LostFocus += (_, _) =>
+        {
+            focused = false;
+            ApplyBase();
+        };
 
         if (Hover)
         {
             background.PointerEntered += (_, _) =>
             {
-                baseBinding?.Dispose();
-                baseBinding = background.Bind(Border.BackgroundProperty,
-                    this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
+                hovered = true;
+                ApplyBase();
             };
             background.PointerExited += (_, _) =>
             {
-                baseBinding?.Dispose();
-                baseBinding = baseBrushKey is not null
-                    ? background.Bind(Border.BackgroundProperty, this.GetResourceObservable(baseBrushKey))
-                    : null;
-                if (baseBrushKey is null)
-                {
-                    background.Background = Brushes.Transparent;
-                }
+                hovered = false;
+                ApplyBase();
             };
         }
     }
@@ -255,6 +288,9 @@ public class SimpleTable : TemplatedControl
         var pad = InteractionAssist.ThicknessToken(this, paddingToken,
             Dense ? new Thickness(8, 6) : header ? new Thickness(16, 12) : new Thickness(16, 10));
         var cell = new Border { Child = content, Padding = pad };
+        InteractionAssist.SetAutomationName(cell, header
+            ? $"{value} column"
+            : value);
 
         var borderThickness = header
             ? new Thickness(Bordered ? 1 : 0, 0, Bordered ? 1 : 0, 1)
@@ -267,5 +303,28 @@ public class SimpleTable : TemplatedControl
         }
 
         return cell;
+    }
+
+    private Border EmptyState(string text)
+    {
+        var empty = new Border
+        {
+            MinHeight = 48,
+            Padding = InteractionAssist.ThicknessToken(this, LoamTokens.DensityDataCellPadding, new Thickness(16, 10)),
+            Child = new Text { Text = text, Typo = Typo.Body2, Color = LoamColor.Secondary },
+        };
+        InteractionAssist.SetAutomationName(empty, text);
+        return empty;
+    }
+
+    private static string RowLabel(TableRow row)
+    {
+        var value = row.Cells.FirstOrDefault(cell => cell is not null);
+        return value switch
+        {
+            null => "item",
+            Control control => AutomationProperties.GetName(control) ?? control.GetType().Name,
+            _ => value.ToString() ?? "item",
+        };
     }
 }
