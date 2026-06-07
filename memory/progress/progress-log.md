@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 1 — Theme consistency: ContextMenu / MenuFlyout bridge
+
+**Done**
+- Added `LoamTheme.BridgeFluentMenu`: base Avalonia context menus, menu flyouts, and plain flyouts now
+  read as Material — `SurfaceContainer` surface (no border), `OnSurface` item text, OnSurface state
+  layers on hover/press (using the theme's state-layer opacities), muted `OnSurfaceVariant` shortcut
+  text and submenu chevrons, with disabled states at the disabled opacity. Per variant,
+  runtime-swappable.
+- Overrides the Fluent menu brush keys: `MenuFlyoutPresenterBackground/BorderBrush`,
+  `FlyoutPresenterBackground`, `MenuFlyoutItem{Background,Foreground}*`,
+  `MenuFlyoutItemKeyboardAcceleratorTextForeground*`, `MenuFlyoutSubItemChevron*`. Size/margin/corner
+  keys left to Fluent.
+- Added two `FluentBridgeTests` (per-variant projection + end-to-end menu-surface resolution).
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/{MenuItem,ContextMenu,MenuFlyoutPresenter,FlyoutPresenter}.xaml`
+  for exact keys; confirmed chevrons are `Fill` brushes and accelerators are `Foreground` brushes.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **386 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `Window` background, text selection/caret, `Expander`, Avalonia `DataGrid`.
+Visual gallery pass (light/dark) still pending.
+
+---
+
 ## 2026-06-07 — v3 Phase 1 — Theme consistency: ToolTip bridge
 
 **Done**

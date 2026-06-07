@@ -139,6 +139,34 @@ public class FluentBridgeTests
         ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.InverseSurface);
     }
 
+    [Fact]
+    public void Menu_brush_keys_project_surface_and_on_surface_tokens_per_variant()
+    {
+        var res = new LoamTheme().Resources;
+
+        ScrollBrush(res, "MenuFlyoutPresenterBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
+        ScrollBrush(res, "FlyoutPresenterBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.SurfaceContainer);
+        ScrollBrush(res, "MenuFlyoutItemForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
+        ScrollBrush(res, "MenuFlyoutItemBackgroundPointerOver", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
+        ScrollBrush(res, "MenuFlyoutItemKeyboardAcceleratorTextForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+        ScrollBrush(res, "MenuFlyoutSubItemChevron", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+        ScrollBrush(res, "MenuFlyoutPresenterBorderBrush", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+    }
+
+    [AvaloniaFact]
+    public void Stray_menu_surface_resolves_to_loam_surface_container()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+
+        var probe = new Border();
+        new Window { Content = probe }.Show();
+        Dispatcher.UIThread.RunJobs();
+        probe.Bind(Border.BackgroundProperty, probe.GetResourceObservable("MenuFlyoutPresenterBackground"));
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
+    }
+
     private static Color ScrollBrush(IResourceDictionary res, string key, ThemeVariant variant)
     {
         res.TryGetResource(key, variant, out var value).ShouldBeTrue($"{key} ({variant})");

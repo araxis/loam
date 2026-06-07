@@ -184,8 +184,49 @@ public sealed class LoamTheme : Styles
         BridgeFluentAccent(dict, scheme.Primary);
         BridgeFluentScrollBar(dict, scheme);
         BridgeFluentToolTip(dict, scheme);
+        BridgeFluentMenu(dict, scheme, stateLayer);
 
         return dict;
+    }
+
+    // Phase 1 — theme consistency. Material menus/flyouts: a SurfaceContainer surface (elevation, no
+    // border), OnSurface item text, OnSurface state layers on hover/press, muted OnSurfaceVariant
+    // shortcut text and submenu chevrons. Overrides the Fluent menu brush keys (resolved by the
+    // ContextMenu / MenuFlyoutPresenter / MenuItem / FlyoutPresenter control themes via DynamicResource
+    // from the control's scope). Size/margin/corner keys are left to Fluent. Keys verified against
+    // Avalonia 12.0.4 Controls/{MenuItem,ContextMenu,MenuFlyoutPresenter,FlyoutPresenter}.xaml.
+    private static void BridgeFluentMenu(ResourceDictionary dict, LoamColorScheme scheme, LoamStateLayer stateLayer)
+    {
+        var transparent = new ImmutableSolidColorBrush(Colors.Transparent);
+        var surface = new ImmutableSolidColorBrush(scheme.SurfaceContainer);
+        var onSurface = new ImmutableSolidColorBrush(scheme.OnSurface);
+        var onSurfaceVariant = new ImmutableSolidColorBrush(scheme.OnSurfaceVariant);
+        var disabled = new ImmutableSolidColorBrush(scheme.OnSurface, stateLayer.DisabledOpacity);
+
+        dict["MenuFlyoutPresenterBackground"] = surface;
+        dict["FlyoutPresenterBackground"] = surface;
+        dict["MenuFlyoutPresenterBorderBrush"] = transparent;
+
+        dict["MenuFlyoutItemBackground"] = transparent;
+        dict["MenuFlyoutItemBackgroundPointerOver"] = new ImmutableSolidColorBrush(scheme.OnSurface, stateLayer.HoverOpacity);
+        dict["MenuFlyoutItemBackgroundPressed"] = new ImmutableSolidColorBrush(scheme.OnSurface, stateLayer.PressedOpacity);
+        dict["MenuFlyoutItemBackgroundDisabled"] = transparent;
+
+        dict["MenuFlyoutItemForeground"] = onSurface;
+        dict["MenuFlyoutItemForegroundPointerOver"] = onSurface;
+        dict["MenuFlyoutItemForegroundPressed"] = onSurface;
+        dict["MenuFlyoutItemForegroundDisabled"] = disabled;
+
+        dict["MenuFlyoutItemKeyboardAcceleratorTextForeground"] = onSurfaceVariant;
+        dict["MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver"] = onSurfaceVariant;
+        dict["MenuFlyoutItemKeyboardAcceleratorTextForegroundPressed"] = onSurfaceVariant;
+        dict["MenuFlyoutItemKeyboardAcceleratorTextForegroundDisabled"] = disabled;
+
+        dict["MenuFlyoutSubItemChevron"] = onSurfaceVariant;
+        dict["MenuFlyoutSubItemChevronPointerOver"] = onSurface;
+        dict["MenuFlyoutSubItemChevronPressed"] = onSurface;
+        dict["MenuFlyoutSubItemChevronDisabled"] = disabled;
+        dict["MenuFlyoutSubItemChevronSubMenuOpened"] = onSurface;
     }
 
     // Phase 1 — theme consistency. Material tooltips use the inverse-surface container with
