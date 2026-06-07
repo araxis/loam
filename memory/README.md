@@ -58,8 +58,8 @@ picking the project up cold. Read this file first.
   switch (`LoamDensity.Compact` + `SetDensity`), and a high-contrast variant (`LoamContrast`). Runtime
   theming API: `SetSeed`/`SetPrimary`/`SetPalette`/`SetDensity`/`SetData`. Builds clean; **401 tests
   pass**; demo visually confirmed light + dark.
-- **Next:** Phase 3 — naming & ergonomics. Done: `AppBar.CustomActions` (arbitrary `Control`s).
-  Remaining: generated-vs-custom content precedence (explicit slots + debug warning on `Paper`/`Card`/
-  `Drawer`), collision tooling (GlobalUsings/analyzer). (Optional later: CAM16/HCT upgrade; wire/remove
-  the orphaned `DesignSystemView`.)
+- **Next:** Phase 3 — naming & ergonomics. Done: `AppBar.CustomActions` (arbitrary `Control`s);
+  generated-vs-custom content precedence (explicit rule + debug-only `DualContent` warning on
+  `Paper`/`Card`/`Drawer`). Remaining: collision tooling (GlobalUsings snippet / analyzer for the
+  restyle names). (Optional later: CAM16/HCT upgrade; wire/remove the orphaned `DesignSystemView`.)
 - **Last updated:** 2026-06-07

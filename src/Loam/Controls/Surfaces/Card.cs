@@ -187,6 +187,7 @@ public class Card : Paper
         {
             _usingGeneratedContent = false;
             _hasCustomContent = Content is not null;
+            DualContent.WarnIfConflicting(_hasCustomContent, HasGeneratedContent, GetType().Name);
             return;
         }
 
@@ -215,6 +216,8 @@ public class Card : Paper
         {
             return;
         }
+
+        DualContent.WarnIfConflicting(_hasCustomContent, hasGeneratedContent: true, GetType().Name);
 
         if (_hasCustomContent && !_usingGeneratedContent)
         {

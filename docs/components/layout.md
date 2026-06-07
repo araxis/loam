@@ -14,6 +14,11 @@ All controls live in `Loam.Controls`. Enums such as `Breakpoint`, `LoamColor`, a
 
 Equivalent of the reference API's `Paper`. A `ContentControl` that renders on a token-driven surface background with an elevation shadow. Optionally removes corner rounding (`Square`) or replaces the shadow with a 1 px outline (`Outlined`).
 
+> **Generated anatomy vs custom content.** `Paper` (and `Card`, `Drawer`) can either build a generated
+> layout from typed properties (`Title`, `Subtitle`, `Body`, …) **or** host your own `Content`. The
+> precedence is explicit: **custom `Content` always wins.** If you set both on one instance the
+> generated properties are ignored, and a Debug build logs a warning. Pick one mode per instance.
+
 ### Properties
 
 | Property | Type | Default | Description |

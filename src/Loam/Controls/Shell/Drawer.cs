@@ -306,6 +306,7 @@ public class Drawer : ContentControl
         {
             _usingGeneratedContent = false;
             _hasCustomContent = Content is not null;
+            DualContent.WarnIfConflicting(_hasCustomContent, HasGeneratedContent, GetType().Name);
         }
     }
 
@@ -341,6 +342,8 @@ public class Drawer : ContentControl
         {
             return;
         }
+
+        DualContent.WarnIfConflicting(_hasCustomContent, hasGeneratedContent: true, GetType().Name);
 
         if (_hasCustomContent && !_usingGeneratedContent)
         {

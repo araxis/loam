@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 3 — Generated-vs-custom content precedence
+
+**Done**
+- Made the dual-mode content rule explicit: **custom `Content` always wins** over the generated
+  anatomy (`Title`/`Subtitle`/`Body`/…) on `Paper`, `Card`, and `Drawer`. Documented it on the shared
+  `Internal.DualContent` helper, in the control docs, and in `docs/components/layout.md`.
+- Added a **debug-only** diagnostic (`DualContent.WarnIfConflicting`, `[Conditional("DEBUG")]`) that
+  logs when both custom `Content` and generated props are set on one instance — compiled out entirely
+  in Release (call + arg evaluation elided), so zero cost and no Release warnings. Wired at both
+  conflict points (Content set with generated props present; generated prop set with custom Content
+  present) in Paper/Card/Drawer.
+- Added `PrimitivesTests` covering the precedence contract in both orderings (custom set after generated
+  wins; generated set after custom is ignored).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **405 passed**, 0 failed. (Warning itself is debug-only, so tested via the behavioral
+  precedence contract, not the log output — tests run in Release.)
+
+**Next:** Phase 3 remaining — collision tooling: a `GlobalUsings` snippet / analyzer so consumers
+don't hand-alias the restyle names (`Button`/`Text`/`Card`/`Menu`/…) per file. (`Form`'s Child-based
+dual mode could get the same warning later.)
+
+---
+
 ## 2026-06-07 — v3 Phase 3 — AppBar custom-actions slot
 
 **Done**
