@@ -7,6 +7,35 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 2 — High-contrast variant (Phase 2 complete)
+
+**Done**
+- Added a `LoamContrast` { Standard, Medium, High } level threaded through
+  `LoamColorScheme.FromSeed(seed, dark, contrast)`, `LoamThemeData.FromSeed(seed, contrast)`, and
+  `LoamTheme.SetSeed(seed, contrast)`. Standard reproduces the Material 3 tones exactly (existing tests
+  unchanged); higher levels push role tones toward the extremes (accents, on-roles, surfaces, outlines)
+  for stronger separation.
+- Gallery: added a **High contrast** `Switch` to the theme playground; the playground now tracks the
+  current seed + contrast via closures so seed swatches and the contrast toggle compose
+  (`SetSeed(seed, contrast)`). `SeedSwatch` takes a callback.
+- Documented high contrast in `docs/guide/theming.md`.
+- Added `MaterialYouTests`: Standard overload equals the 2-arg default; High increases separation over
+  Standard; High meets WCAG AAA (≥ 7:1) on the main text pairs across 6 seeds × light/dark.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **401 passed**, 0 failed.
+
+**Phase 2 is complete:** Material You seed→scheme generator, gallery seed picker, one-call density
+switch, and a high-contrast variant. `LoamTheme` now exposes `SetSeed`/`SetPrimary`/`SetPalette`/
+`SetDensity`/`SetData`.
+
+**Next:** Phase 3 — naming & ergonomics refactor: `AppBar` custom-actions slot (accept arbitrary
+`Control`s, not just immutable `AppBarAction`), generated-vs-custom content precedence (explicit slots
++ debug warning), and collision tooling (a `GlobalUsings` snippet / analyzer for the restyle names).
+
+---
+
 ## 2026-06-07 — v3 Phase 2 — One-call density switch (compact mode)
 
 **Done**

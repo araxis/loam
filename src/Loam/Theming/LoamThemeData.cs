@@ -63,10 +63,10 @@ public sealed record LoamThemeData
     /// <see cref="LoamColorScheme"/>s and matching compatibility palettes, keeping the default
     /// typography/shape/spacing/etc. See ADR-0012.
     /// </summary>
-    public static LoamThemeData FromSeed(Avalonia.Media.Color seed)
+    public static LoamThemeData FromSeed(Avalonia.Media.Color seed, LoamContrast contrast = LoamContrast.Standard)
     {
-        var light = LoamColorScheme.FromSeed(seed, dark: false);
-        var dark = LoamColorScheme.FromSeed(seed, dark: true);
+        var light = LoamColorScheme.FromSeed(seed, dark: false, contrast);
+        var dark = LoamColorScheme.FromSeed(seed, dark: true, contrast);
         return Default with
         {
             ColorSchemeLight = light,

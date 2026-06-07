@@ -49,17 +49,17 @@ picking the project up cold. Read this file first.
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 2: Theming power** (branch `work/vnext`, version
-  `3.0.0-preview.1`). Phase 0 (scaffold) and Phase 1 (theme consistency) are done. The v3 roadmap and
-  its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md).
-- **Latest:** shipped the **Material You** seed→scheme generator (ADR-0012): one seed color produces a
-  complete, accessible light + dark `LoamColorScheme` at runtime via `LoamTheme.SetSeed` /
-  `LoamThemeData.FromSeed`. CIELAB tonal palettes (tone = L\*), gamut-clamped, with M3 role mapping;
-  accessible by construction (132 contrast assertions across 6 seeds × light/dark pass WCAG AA). Full
-  solution builds clean; **395 headless/unit tests pass**.
-- **Latest (playground):** the gallery header now has a live **seed picker** (palette icon) that calls
-  `SetSeed` to recolor the whole app at runtime; documented in `docs/guide/theming.md`. **396 tests**.
-- **Next:** Phase 2 remaining — high-contrast variant (one-call compact density is done:
-  `LoamDensity.Compact` + `LoamTheme.SetDensity`, with a gallery toggle). **398 tests**. (Optional
-  later: CAM16/HCT upgrade for exact M3 fidelity; wire/remove the orphaned `DesignSystemView`.)
+- **Phase:** **v3 (vNext) — Phase 2 complete; starting Phase 3** (branch `work/vnext`, version
+  `3.0.0-preview.1`). Phases 0 (scaffold), 1 (theme consistency), and 2 (theming power) are done. The
+  v3 roadmap and its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and
+  [`REVIEW.md`](../REVIEW.md).
+- **Latest:** **Phase 2 (theming power) complete.** Material You seed→scheme generator (ADR-0012;
+  CIELAB tonal palettes, accessible by construction), a live gallery seed picker, a one-call density
+  switch (`LoamDensity.Compact` + `SetDensity`), and a high-contrast variant (`LoamContrast`). Runtime
+  theming API: `SetSeed`/`SetPrimary`/`SetPalette`/`SetDensity`/`SetData`. Builds clean; **401 tests
+  pass**; demo visually confirmed light + dark.
+- **Next:** Phase 3 — naming & ergonomics: `AppBar` custom-actions slot (arbitrary `Control`s),
+  generated-vs-custom content precedence (explicit slots + debug warning), collision tooling
+  (GlobalUsings/analyzer). (Optional later: CAM16/HCT upgrade for exact M3 fidelity; wire/remove the
+  orphaned `DesignSystemView`.)
 - **Last updated:** 2026-06-07

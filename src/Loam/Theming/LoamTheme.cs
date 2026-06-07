@@ -117,10 +117,10 @@ public sealed class LoamTheme : Styles
     /// current typography/shape/spacing/etc. The headline customizable entry point: one seed produces
     /// a complete, accessible light + dark scheme. See ADR-0012.
     /// </summary>
-    public void SetSeed(Color seed)
+    public void SetSeed(Color seed, LoamContrast contrast = LoamContrast.Standard)
     {
-        var light = LoamColorScheme.FromSeed(seed, dark: false);
-        var dark = LoamColorScheme.FromSeed(seed, dark: true);
+        var light = LoamColorScheme.FromSeed(seed, dark: false, contrast);
+        var dark = LoamColorScheme.FromSeed(seed, dark: true, contrast);
         SetData(_data with
         {
             ColorSchemeLight = light,

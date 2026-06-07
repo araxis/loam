@@ -102,6 +102,49 @@ public class MaterialYouTests
         ((Color)accent!).ShouldBe(expected);
     }
 
+    [Fact]
+    public void Standard_contrast_overload_matches_two_arg_default()
+    {
+        var seed = Color.Parse("#1565C0");
+        foreach (var dark in new[] { false, true })
+        {
+            LoamColorScheme.FromSeed(seed, dark, LoamContrast.Standard)
+                .ShouldBe(LoamColorScheme.FromSeed(seed, dark));
+        }
+    }
+
+    [Fact]
+    public void High_contrast_increases_separation_over_standard()
+    {
+        foreach (var dark in new[] { false, true })
+        {
+            var std = LoamColorScheme.FromSeed(Color.Parse("#1565C0"), dark, LoamContrast.Standard);
+            var high = LoamColorScheme.FromSeed(Color.Parse("#1565C0"), dark, LoamContrast.High);
+
+            LoamColors.ContrastRatio(high.OnSurface, high.Surface)
+                .ShouldBeGreaterThan(LoamColors.ContrastRatio(std.OnSurface, std.Surface));
+            LoamColors.ContrastRatio(high.OnPrimaryContainer, high.PrimaryContainer)
+                .ShouldBeGreaterThan(LoamColors.ContrastRatio(std.OnPrimaryContainer, std.PrimaryContainer));
+            LoamColors.ContrastRatio(high.Outline, high.Surface)
+                .ShouldBeGreaterThan(LoamColors.ContrastRatio(std.Outline, std.Surface));
+        }
+    }
+
+    [Fact]
+    public void High_contrast_meets_aaa_on_main_text_pairs()
+    {
+        foreach (var seed in Seeds)
+        {
+            foreach (var dark in new[] { false, true })
+            {
+                var s = LoamColorScheme.FromSeed(seed, dark, LoamContrast.High);
+                LoamColors.ContrastRatio(s.OnSurface, s.Surface).ShouldBeGreaterThanOrEqualTo(7.0);
+                LoamColors.ContrastRatio(s.OnPrimary, s.Primary).ShouldBeGreaterThanOrEqualTo(7.0);
+                LoamColors.ContrastRatio(s.OnSurfaceVariant, s.SurfaceVariant).ShouldBeGreaterThanOrEqualTo(7.0);
+            }
+        }
+    }
+
     private static Color Role(LoamColorScheme scheme, string role) =>
         (Color)typeof(LoamColorScheme).GetProperty(role)!.GetValue(scheme)!;
 }

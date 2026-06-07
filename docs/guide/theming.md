@@ -72,6 +72,9 @@ complete, **accessible** light + dark scheme at runtime. Build one up front with
 ```csharp
 // Recolor the whole app — base Avalonia controls follow via the Fluent bridge.
 theme.SetSeed(Color.Parse("#006A6A"));
+
+// Boost contrast for low-vision users (targets WCAG AAA on the main text pairs).
+theme.SetSeed(Color.Parse("#006A6A"), LoamContrast.High);
 ```
 
 Schemes are accessible by construction: a color's WCAG luminance is fixed by its tone (L\*), so the

@@ -221,6 +221,10 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildSeedFlyout()
     {
+        var seed = Color.Parse(SeedPresets[0]);
+        var contrast = LoamContrast.Standard;
+        void ApplySeed() => CurrentLoamTheme()?.SetSeed(seed, contrast);
+
         var caption = new Text
         {
             Text = "Theme playground",
@@ -231,14 +235,31 @@ public sealed class ComponentsView : UserControl
         var swatches = new WrapPanel { MaxWidth = 220 };
         foreach (var hex in SeedPresets)
         {
-            swatches.Children.Add(SeedSwatch(Color.Parse(hex)));
+            var color = Color.Parse(hex);
+            swatches.Children.Add(SeedSwatch(color, () =>
+            {
+                seed = color;
+                ApplySeed();
+            }));
         }
+
+        var highContrast = new Switch
+        {
+            Content = "High contrast",
+            Color = LoamColor.Primary,
+            Margin = new Thickness(4, 12, 4, 0),
+        };
+        highContrast.IsCheckedChanged += (_, _) =>
+        {
+            contrast = highContrast.IsChecked == true ? LoamContrast.High : LoamContrast.Standard;
+            ApplySeed();
+        };
 
         var compact = new Switch
         {
             Content = "Compact density",
             Color = LoamColor.Primary,
-            Margin = new Thickness(4, 12, 4, 0),
+            Margin = new Thickness(4, 4, 4, 0),
         };
         compact.IsCheckedChanged += (_, _) =>
             CurrentLoamTheme()?.SetDensity(compact.IsChecked == true ? LoamDensity.Compact : LoamDensity.Default);
@@ -254,14 +275,17 @@ public sealed class ComponentsView : UserControl
         };
         reset.Click += (_, _) =>
         {
+            seed = Color.Parse(SeedPresets[0]);
+            contrast = LoamContrast.Standard;
+            highContrast.IsChecked = false;
             compact.IsChecked = false;
             CurrentLoamTheme()?.SetData(LoamThemeData.Default);
         };
 
-        return new StackPanel { Margin = new Thickness(8), Children = { caption, swatches, compact, reset } };
+        return new StackPanel { Margin = new Thickness(8), Children = { caption, swatches, highContrast, compact, reset } };
     }
 
-    private static Border SeedSwatch(Color color)
+    private static Border SeedSwatch(Color color, Action onPick)
     {
         var swatch = new Border
         {
@@ -273,7 +297,7 @@ public sealed class ComponentsView : UserControl
             Cursor = new Cursor(StandardCursorType.Hand),
         };
         AutomationProperties.SetName(swatch, $"Seed {color}");
-        swatch.PointerPressed += (_, _) => CurrentLoamTheme()?.SetSeed(color);
+        swatch.PointerPressed += (_, _) => onPick();
         return swatch;
     }
 
