@@ -695,6 +695,7 @@ public sealed class ComponentsView : UserControl
         Page("Feedback", "Tooltip", "Attached contextual help on focusable targets.", BuildTooltip),
         Page("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildDialogService),
         Page("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildSnackbarService),
+        Page("Feedback", "CommandPalette", "Searchable command list with keyboard navigation.", BuildCommandPalette),
 
         Page("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.", BuildTable),
         Page("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.", BuildDataGrid),
@@ -890,7 +891,7 @@ public sealed class ComponentsView : UserControl
 
         "Field" or "TextField" or "MaskedTextField" => Icons.Material.Filled.Edit,
         "NumericField" => Icons.Material.Filled.FormatSize,
-        "Autocomplete" => Icons.Material.Filled.Search,
+        "Autocomplete" or "CommandPalette" => Icons.Material.Filled.Search,
         "Select" or "NavGroup" => Icons.Material.Filled.ExpandMore,
         "CheckBox" => Icons.Material.Filled.CheckBox,
         "Switch" => Icons.Material.Filled.ToggleOn,
@@ -5058,6 +5059,21 @@ public sealed class ComponentsView : UserControl
                 new NavigationRailItem { Icon = Icons.Material.Filled.Dashboard, Label = "Dashboard" },
                 new NavigationRailItem { Icon = Icons.Material.Filled.Notifications, Label = "Alerts" },
                 new NavigationRailItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
+            },
+        };
+    }
+
+    private static CommandPalette BuildCommandPalette()
+    {
+        return new CommandPalette
+        {
+            Commands =
+            {
+                new CommandPaletteItem { Title = "New item", Icon = Icons.Material.Filled.Add, Keywords = ["create"] },
+                new CommandPaletteItem { Title = "Search", Icon = Icons.Material.Filled.Search },
+                new CommandPaletteItem { Title = "Open in new window", Icon = Icons.Material.Filled.OpenInNew, Keywords = ["external"] },
+                new CommandPaletteItem { Title = "Toggle dark mode", Icon = Icons.Material.Filled.DarkMode, Keywords = ["theme", "light"] },
+                new CommandPaletteItem { Title = "Settings", Icon = Icons.Material.Filled.Settings },
             },
         };
     }

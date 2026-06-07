@@ -491,3 +491,36 @@ var staticCollapse = new Collapse
     Child = new TextBlock { Text = "Shown immediately without motion." },
 };
 ```
+
+## CommandPalette
+
+A searchable command palette: a search field over a live-filtered list of commands, with keyboard navigation (Down/Up to move, Enter to run, Escape to close). Host it inside an `Overlay`, a dialog, or place it inline. Matching is exposed as the pure static `CommandPalette.Filter(commands, query)` (case-insensitive contains on `Title` or any `Keywords`).
+
+### CommandPalette properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `Commands` | `IList<CommandPaletteItem>` | `(empty)` | The commands to search. |
+| `FilterText` | `string?` | `null` | The current query (two-way; bound to the search field). |
+| `IsOpen` | `bool` | `true` | Whether the palette is shown (two-way). Escape sets it `false`. |
+| `SelectedIndex` | `int` (get) | `-1` | Highlighted index within the filtered results. |
+| `FilteredCommands` | `IReadOnlyList<CommandPaletteItem>` (get) | — | The current filtered results. |
+| `Invoked` | event | — | Raised when a command is chosen (Enter or click). |
+| `Closed` | event | — | Raised when dismissed (Escape). |
+
+`CommandPaletteItem` carries `Title`, optional `Icon` and `Keywords`, and an `OnInvoke` callback.
+
+```csharp
+using Loam.Controls;
+
+var palette = new CommandPalette
+{
+    Commands =
+    {
+        new CommandPaletteItem { Title = "New item", Icon = Icons.Material.Filled.Add, Keywords = ["create"] },
+        new CommandPaletteItem { Title = "Toggle dark mode", Icon = Icons.Material.Filled.DarkMode, Keywords = ["theme"] },
+        new CommandPaletteItem { Title = "Settings", Icon = Icons.Material.Filled.Settings },
+    },
+};
+palette.Invoked += (_, command) => Run(command);
+```

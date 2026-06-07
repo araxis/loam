@@ -63,8 +63,9 @@ picking the project up cold. Read this file first.
   `DualContent` warning), and a global-usings collision aid (docs). Optional remainder: a Roslyn
   rename/collision analyzer.
 - **Phase 4 so far:** deprecated `Stack`→`StackPanel` (`LOAM0003`); table strategy decided
-  (ADR-0013: `DataGrid<T>` recommended); added `NavigationRail` and `BottomNavigation` (M3). **411 tests.**
-- **Next:** Phase 4 remaining — add `CommandPalette` (additive),
-  then the package split into `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites (ADR-0009).
+  (ADR-0013: `DataGrid<T>` recommended); added `NavigationRail`, `BottomNavigation`, `CommandPalette`
+  (M3). **414 tests.**
+- **Next:** Phase 4 remaining — the package split into `Loam.Charts`/`Loam.Pickers`/`Loam.Data`
+  satellites (ADR-0009), the last and biggest Phase 4 item.
   (Optional: CAM16/HCT upgrade; wire/remove the orphaned `DesignSystemView`/`LayoutView`.)
 - **Last updated:** 2026-06-07

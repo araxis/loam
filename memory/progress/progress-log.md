@@ -7,6 +7,28 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 4 — CommandPalette (additive)
+
+**Done**
+- Added `CommandPalette` + `CommandPaletteItem`: a searchable command list (search `TextField` over
+  live-filtered `ListItem` rows on an elevated `Paper`) with keyboard nav (Down/Up move, Enter runs,
+  Escape closes), two-way `FilterText`/`IsOpen`, `Invoked`/`Closed` events, and a **pure testable**
+  `Filter(commands, query)` (case-insensitive title/keyword match).
+- Added a gallery page (`Feedback/CommandPalette`) + icon, `CommandPaletteTests` (pure filter, live
+  filter + selection reset, keyboard invoke + close), docs, and the tracker row.
+- Scope note: hosting the palette on the window overlay layer (a `DialogService`-style
+  `CommandPalette.For(...)`) is a deferred follow-up; the control works inline / in an `Overlay`/dialog.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **414 passed**, 0 failed.
+
+**This completes Phase 4's additive controls** (`NavigationRail`, `BottomNavigation`, `CommandPalette`).
+**Next:** the Phase 4 package split — extract `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites
+(ADR-0009), the last and biggest Phase 4 item.
+
+---
+
 ## 2026-06-07 — v3 Phase 4 — BottomNavigation (additive shell control)
 
 **Done**
