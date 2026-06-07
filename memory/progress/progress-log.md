@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 1 — Theme consistency: ScrollBar bridge
+
+**Done**
+- Added `LoamTheme.BridgeFluentScrollBar` so base Avalonia ScrollBars read as Material: a subtle
+  on-surface thumb (rest/hover/pressed/disabled) on a transparent track, with neutral line-button
+  chrome. Per variant, runtime-swappable. Scrollbars are intentionally neutral, not accent-colored.
+- Overrides the Fluent ScrollBar brush keys (`ScrollBarPanningThumbBackground`,
+  `ScrollBarThumbFill{PointerOver,Pressed,Disabled}`, `ScrollBarTrackFill/Stroke`,
+  `ScrollBarBackground/Border/Foreground`, and the `ScrollBarButton*` set). Geometry/size keys left to
+  Fluent. The template resolves these via DynamicResource from the control's scope, so LoamTheme wins.
+- Added two `FluentBridgeTests`: per-variant projection of the neutral thumb/track tokens, and
+  end-to-end resolution of `ScrollBarPanningThumbBackground` through a live control.
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/ScrollBar.xaml` (`gh api` at tag `12.0.4`) for the exact
+  brush keys, thumb rest/hover/pressed states, and line-button chrome.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **382 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `ToolTip`, then `ContextMenu`/`MenuFlyout`, `Window` background, text
+selection/caret, `Expander`, Avalonia `DataGrid`. Visual gallery pass (light/dark) still pending; the
+thumb opacities (0.45/0.70/0.72) are reasonable defaults to confirm visually.
+
+---
+
 ## 2026-06-07 — v3 Phase 1 — Theme consistency: Fluent accent bridge (first slice)
 
 **Done**

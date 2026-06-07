@@ -81,4 +81,42 @@ public class FluentBridgeTests
 
         ((ISolidColorBrush)probe.Background!).Color.ShouldBe(accent);
     }
+
+    [Fact]
+    public void Scrollbar_brush_keys_project_neutral_tokens_per_variant()
+    {
+        var res = new LoamTheme().Resources;
+
+        ScrollBrush(res, "ScrollBarPanningThumbBackground", ThemeVariant.Light)
+            .ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+        ScrollBrush(res, "ScrollBarThumbFillPointerOver", ThemeVariant.Dark)
+            .ShouldBe(LoamColorScheme.DefaultDark.OnSurfaceVariant);
+        ScrollBrush(res, "ScrollBarThumbFillPressed", ThemeVariant.Light)
+            .ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
+
+        // Track and root chrome are transparent — Material scrollbars float.
+        ScrollBrush(res, "ScrollBarTrackFill", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+        ScrollBrush(res, "ScrollBarBackground", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+    }
+
+    [AvaloniaFact]
+    public void Stray_scrollbar_thumb_resolves_to_loam_neutral()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+
+        var probe = new Border();
+        new Window { Content = probe }.Show();
+        Dispatcher.UIThread.RunJobs();
+        probe.Bind(Border.BackgroundProperty, probe.GetResourceObservable("ScrollBarPanningThumbBackground"));
+        Dispatcher.UIThread.RunJobs();
+
+        // The stray base ScrollBar thumb is a neutral on-surface tone, not Fluent's grey.
+        ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+    }
+
+    private static Color ScrollBrush(IResourceDictionary res, string key, ThemeVariant variant)
+    {
+        res.TryGetResource(key, variant, out var value).ShouldBeTrue($"{key} ({variant})");
+        return ((ISolidColorBrush)value!).Color;
+    }
 }

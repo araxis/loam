@@ -182,6 +182,7 @@ public sealed class LoamTheme : Styles
         }
 
         BridgeFluentAccent(dict, scheme.Primary);
+        BridgeFluentScrollBar(dict, scheme);
 
         return dict;
     }
@@ -240,6 +241,43 @@ public sealed class LoamTheme : Styles
             new HslColor(hsl.A, hsl.H, hsl.S, hsl.L + light1Step).ToRgb(),
             new HslColor(hsl.A, hsl.H, hsl.S, hsl.L + light2Step).ToRgb(),
             new HslColor(hsl.A, hsl.H, hsl.S, hsl.L + light3Step).ToRgb());
+    }
+
+    // Phase 1 — theme consistency. Material-neutral scrollbars: a subtle on-surface thumb on a
+    // transparent track, with the line-button chrome retinted to on-surface tones. Overrides the
+    // Fluent ScrollBar brush keys, which Fluent's ScrollBar template resolves via DynamicResource from
+    // the control's own scope — so LoamTheme (layered after FluentTheme) wins. Geometry/size keys
+    // (ScrollBarSize, thicknesses) are left to Fluent. Keys verified against Avalonia 12.0.4
+    // Controls/ScrollBar.xaml. Scrollbars are intentionally neutral, not accent-colored.
+    private static void BridgeFluentScrollBar(ResourceDictionary dict, LoamColorScheme scheme)
+    {
+        var transparent = new ImmutableSolidColorBrush(Colors.Transparent);
+        var arrow = new ImmutableSolidColorBrush(scheme.OnSurfaceVariant);
+        var arrowActive = new ImmutableSolidColorBrush(scheme.OnSurface);
+
+        dict["ScrollBarBackground"] = transparent;
+        dict["ScrollBarBorderBrush"] = transparent;
+        dict["ScrollBarForeground"] = arrow;
+        dict["ScrollBarTrackFill"] = transparent;
+        dict["ScrollBarTrackStroke"] = transparent;
+
+        dict["ScrollBarPanningThumbBackground"] = new ImmutableSolidColorBrush(scheme.OnSurfaceVariant, 0.45);
+        dict["ScrollBarThumbFillPointerOver"] = new ImmutableSolidColorBrush(scheme.OnSurfaceVariant, 0.70);
+        dict["ScrollBarThumbFillPressed"] = new ImmutableSolidColorBrush(scheme.OnSurface, 0.72);
+        dict["ScrollBarThumbFillDisabled"] = new ImmutableSolidColorBrush(scheme.OnSurface, 0.12);
+
+        dict["ScrollBarButtonBackground"] = transparent;
+        dict["ScrollBarButtonBackgroundPointerOver"] = new ImmutableSolidColorBrush(scheme.OnSurface, 0.08);
+        dict["ScrollBarButtonBackgroundPressed"] = new ImmutableSolidColorBrush(scheme.OnSurface, 0.12);
+        dict["ScrollBarButtonBackgroundDisabled"] = transparent;
+        dict["ScrollBarButtonBorderBrush"] = transparent;
+        dict["ScrollBarButtonBorderBrushPointerOver"] = transparent;
+        dict["ScrollBarButtonBorderBrushPressed"] = transparent;
+        dict["ScrollBarButtonBorderBrushDisabled"] = transparent;
+        dict["ScrollBarButtonArrowForeground"] = arrow;
+        dict["ScrollBarButtonArrowForegroundPointerOver"] = arrowActive;
+        dict["ScrollBarButtonArrowForegroundPressed"] = arrowActive;
+        dict["ScrollBarButtonArrowForegroundDisabled"] = new ImmutableSolidColorBrush(scheme.OnSurface, 0.38);
     }
 
     private void ProjectSharedTokens()
