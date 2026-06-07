@@ -2,6 +2,8 @@
 
 **Pure C# themed controls for Avalonia applications.**
 
+[![NuGet](https://img.shields.io/nuget/v/Loam.svg)](https://www.nuget.org/packages/Loam)
+
 Loam gives Avalonia apps a complete themed control set with a familiar, compact API, runtime
 theming, and no XAML.
 
