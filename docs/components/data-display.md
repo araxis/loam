@@ -113,6 +113,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Dense` | `bool` | `false` | Compact cell padding. Mirrors the reference API's `Dense`. |
 | `Elevation` | `int` | `1` | Host paper elevation. Mirrors the reference API's `Elevation`. |
 | `GroupBy` | `Func<T, object?>?` | `null` | Groups rows by key with a group-header row (key + count) above each group, in first-appearance order (follows the current sort). Applies within the rendered page. |
+| `CollapsibleGroups` | `bool` | `true` | When grouped, lets the user click (or keyboard-activate) a group header to collapse/expand its rows. Collapsed state is keyed by group key and survives re-renders. |
 | `SelectionChanged` | `event Action<T?>?` | — | Raised when a row is clicked and `SelectedItem` changes. |
 
 ### DataGridColumn&lt;T&gt; properties

@@ -7,6 +7,25 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 5 — Collapsible DataGrid groups
+
+**Done**
+- Group headers in `DataGrid<T>` are now collapsible: a chevron (ExpandLess/ExpandMore) + clickable,
+  keyboard-activatable header toggles showing/hiding that group's rows. Collapsed state is tracked by
+  group key (`HashSet<object>` with a null-key sentinel) and **survives re-renders** (sort/filter/page);
+  the header keeps the full group count when collapsed. New `CollapsibleGroups` opt-out (default on);
+  `GroupBy` changes clear collapsed state.
+- Added a `DataDisplayTests` case (collapse hides rows + keeps header/other groups; re-expand restores).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **418 passed**, 0 failed.
+
+**Next:** optional Phase 5 (frozen columns) or Phase 6 release prep (visual-regression snapshots,
+positioning docs, `3.0.0`). Package split still deferred (ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 5 — DataGrid grouping
 
 **Done**

@@ -130,6 +130,7 @@ public sealed record DataGridGroup<T>(object? Key, IReadOnlyList<T> Items);
 public class DataGrid<T> : Decorator
 {
     private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
+    private static readonly object NullKeyToken = new();
 
     private IEnumerable<T>? _items;
     private int _pageSize;
@@ -146,6 +147,8 @@ public class DataGrid<T> : Decorator
     private DataGridColumn<T>? _sortColumn;
     private bool _sortDescending;
     private Func<T, object?>? _groupBy;
+    private readonly HashSet<object> _collapsedGroups = new();
+    private bool _collapsibleGroups = true;
 
     /// <summary>Creates the grid.</summary>
     public DataGrid()
@@ -252,7 +255,18 @@ public class DataGrid<T> : Decorator
     public Func<T, object?>? GroupBy
     {
         get => _groupBy;
-        set { _groupBy = value; Rebuild(); }
+        set { _groupBy = value; _collapsedGroups.Clear(); Rebuild(); }
+    }
+
+    /// <summary>
+    /// When <see cref="GroupBy"/> is set, whether group headers can be clicked (or activated by
+    /// keyboard) to collapse/expand their rows. Collapsed state is keyed by group key and survives
+    /// re-renders. Defaults to <c>true</c>.
+    /// </summary>
+    public bool CollapsibleGroups
+    {
+        get => _collapsibleGroups;
+        set { _collapsibleGroups = value; Rebuild(); }
     }
 
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
@@ -353,16 +367,20 @@ public class DataGrid<T> : Decorator
             foreach (var group in DataGrids.Group(rows, _groupBy))
             {
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-                var header = BuildGroupHeader(group.Key, group.Items.Count);
+                var collapsed = _collapsibleGroups && _collapsedGroups.Contains(group.Key ?? NullKeyToken);
+                var header = BuildGroupHeader(group.Key, group.Items.Count, collapsed);
                 AvaGrid.SetRow(header, rowIndex);
                 AvaGrid.SetColumn(header, 0);
                 AvaGrid.SetColumnSpan(header, Columns.Count);
                 grid.Children.Add(header);
                 rowIndex++;
 
-                foreach (var item in group.Items)
+                if (!collapsed)
                 {
-                    AddDataRow(item);
+                    foreach (var item in group.Items)
+                    {
+                        AddDataRow(item);
+                    }
                 }
             }
         }
@@ -490,7 +508,7 @@ public class DataGrid<T> : Decorator
         return new Border { Child = text, Padding = pad };
     }
 
-    private Border BuildGroupHeader(object? key, int count)
+    private Border BuildGroupHeader(object? key, int count, bool collapsed)
     {
         var pad = InteractionAssist.ThicknessToken(this,
             _dense ? LoamTokens.DensityDataHeaderPaddingDense : LoamTokens.DensityDataHeaderPadding,
@@ -502,15 +520,53 @@ public class DataGrid<T> : Decorator
             Color = LoamColor.Default,
             VerticalAlignment = VerticalAlignment.Center,
         };
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 4,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { label },
+        };
+        if (_collapsibleGroups)
+        {
+            row.Children.Insert(0, new Icon
+            {
+                Data = collapsed ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ExpandLess,
+                Color = LoamColor.Default,
+                Size = LoamSize.Small,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
+
         var cell = new Border
         {
-            Child = label,
+            Child = row,
             Padding = pad,
             BorderThickness = new Thickness(0, 0, 0, 1),
         };
         cell.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.ColorSurfaceContainerHigh));
         cell.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableLines))));
-        InteractionAssist.SetAutomationName(cell, $"Group {key}, {count} items");
+
+        if (_collapsibleGroups)
+        {
+            cell.Focusable = true;
+            cell.Cursor = HandCursor;
+            cell.PointerPressed += (_, _) => ToggleGroup(key);
+            cell.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    ToggleGroup(key);
+                    args.Handled = true;
+                }
+            };
+            InteractionAssist.SetAutomationName(cell, $"{(collapsed ? "Expand" : "Collapse")} group {key}, {count} items");
+        }
+        else
+        {
+            InteractionAssist.SetAutomationName(cell, $"Group {key}, {count} items");
+        }
+
         return cell;
     }
 
@@ -620,6 +676,17 @@ public class DataGrid<T> : Decorator
         {
             _sortColumn = column;
             _sortDescending = false;
+        }
+
+        Rebuild();
+    }
+
+    private void ToggleGroup(object? key)
+    {
+        var token = key ?? NullKeyToken;
+        if (!_collapsedGroups.Remove(token))
+        {
+            _collapsedGroups.Add(token);
         }
 
         Rebuild();

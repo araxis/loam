@@ -117,6 +117,35 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void DataGrid_group_header_collapses_and_expands_rows()
+    {
+        var grid = new DataGrid<Person> { GroupBy = p => p.Age < 35 ? "Junior" : "Senior" };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Ann", 30), new("Cy", 25), new("Bob", 40) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Ann").ShouldBeTrue();
+
+        Border JuniorHeader() => grid.GetVisualDescendants().OfType<Border>()
+            .First(b => AutomationProperties.GetName(b)?.Contains("group Junior", StringComparison.Ordinal) == true);
+
+        JuniorHeader().RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        // Junior rows hidden; the header (with full count) and the Senior group stay.
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Ann").ShouldBeFalse();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Cy").ShouldBeFalse();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Junior (2)").ShouldBeTrue();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Bob").ShouldBeTrue();
+
+        JuniorHeader().RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Ann").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
     public void DataGrid_filter_text_limits_rendered_rows()
     {
         var grid = new DataGrid<Person>
