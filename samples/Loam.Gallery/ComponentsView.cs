@@ -713,6 +713,7 @@ public sealed class ComponentsView : UserControl
         Page("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavLink),
         Page("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavGroup),
         Page("Navigation", "NavigationRail", "Compact vertical destination rail with single selection.", BuildNavigationRail),
+        Page("Navigation", "BottomNavigation", "Horizontal bottom destination bar with single selection.", BuildBottomNavigation),
 
         Page("Layout", "Container", "Centered and width-capped content regions.", BuildContainer),
         Page("Layout", "ResponsiveGrid", "Responsive 12-column layout with column spans.", BuildGridLayout),
@@ -923,6 +924,7 @@ public sealed class ComponentsView : UserControl
         "Link" => Icons.Material.Filled.OpenInNew,
         "NavLink" => Icons.Material.Filled.ArrowForward,
         "NavigationRail" => Icons.Material.Filled.ViewWeek,
+        "BottomNavigation" => Icons.Material.Filled.ViewHeadline,
 
         "Container" => Icons.Material.Filled.WebAsset,
         "ResponsiveGrid" or "Col" => Icons.Material.Filled.GridView,
@@ -5056,6 +5058,22 @@ public sealed class ComponentsView : UserControl
                 new NavigationRailItem { Icon = Icons.Material.Filled.Dashboard, Label = "Dashboard" },
                 new NavigationRailItem { Icon = Icons.Material.Filled.Notifications, Label = "Alerts" },
                 new NavigationRailItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
+            },
+        };
+    }
+
+    private static BottomNavigation BuildBottomNavigation()
+    {
+        return new BottomNavigation
+        {
+            Width = 420,
+            SelectedIndex = 0,
+            Items =
+            {
+                new BottomNavigationItem { Icon = Icons.Material.Filled.Home, Label = "Home" },
+                new BottomNavigationItem { Icon = Icons.Material.Filled.Search, Label = "Search" },
+                new BottomNavigationItem { Icon = Icons.Material.Filled.Notifications, Label = "Alerts" },
+                new BottomNavigationItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
             },
         };
     }

@@ -7,6 +7,27 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 4 — BottomNavigation (additive shell control)
+
+**Done**
+- Added Material 3 `BottomNavigation` + `BottomNavigationItem`. `BottomNavigation` (`: Decorator` +
+  `UniformGrid` Rows=1 for equal-width cells, surface-container background, two-way `SelectedIndex`,
+  `SelectedItem`, `SelectionChanged`). `BottomNavigationItem : NavigationRailItem` — reuses the
+  icon-over-label active-indicator-pill anatomy and activation (zero duplication).
+- Made `NavigationRailItem` fully tappable (transparent stretch hit-target wrapper around the centered
+  content) — benefits wide bottom-nav cells and the rail alike.
+- Added a gallery page (`Navigation/BottomNavigation`) + icon, `BottomNavigationTests`, docs, and the
+  tracker row.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **411 passed**, 0 failed.
+
+**Next:** Phase 4 remaining — `CommandPalette` (searchable command overlay), then the package split
+(`Loam.Charts`/`Loam.Pickers`/`Loam.Data`, ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 4 — NavigationRail (additive shell control)
 
 **Done**

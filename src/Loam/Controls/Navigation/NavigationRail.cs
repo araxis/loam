@@ -181,11 +181,19 @@ public class NavigationRailItem : Decorator
             Child = _iconPart,
         };
 
-        Child = new StackPanel
+        // Transparent stretch wrapper so the whole item area is a hit target (e.g. wide bottom-nav cells).
+        Child = new Border
         {
-            Spacing = 4,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Children = { _pill, _labelPart },
+            Background = Brushes.Transparent,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Child = new StackPanel
+            {
+                Spacing = 4,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children = { _pill, _labelPart },
+            },
         };
 
         GotFocus += (_, _) => ApplyState();

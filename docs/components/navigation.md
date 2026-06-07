@@ -200,3 +200,33 @@ var rail = new NavigationRail
 };
 rail.SelectionChanged += (_, _) => Navigate(rail.SelectedIndex);
 ```
+
+## BottomNavigation
+
+A Material 3 **bottom navigation bar** — a horizontal strip of equal-width destinations for the bottom of a compact (mobile-width) layout. `BottomNavigationItem` shares the icon-over-label, active-indicator-pill anatomy of `NavigationRailItem`; the bar manages single selection.
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Items` | `IList<BottomNavigationItem>` | `(empty)` | The destinations, laid out in equal-width cells. |
+| `SelectedIndex` | `int` | `0` | The selected destination index. Two-way bindable; `-1` selects nothing. |
+| `SelectionChanged` | event | — | Raised when `SelectedIndex` changes. |
+
+`BottomNavigationItem` has the same `Icon` / `Label` / `IsActive` / `Value` / `OnClick` members as `NavigationRailItem`.
+
+```csharp
+using Loam.Controls;
+
+var bar = new BottomNavigation
+{
+    SelectedIndex = 0,
+    Items =
+    {
+        new BottomNavigationItem { Icon = Icons.Material.Filled.Home, Label = "Home" },
+        new BottomNavigationItem { Icon = Icons.Material.Filled.Search, Label = "Search" },
+        new BottomNavigationItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
+    },
+};
+bar.SelectionChanged += (_, _) => Navigate(bar.SelectedIndex);
+```

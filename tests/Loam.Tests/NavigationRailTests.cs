@@ -86,3 +86,48 @@ public class NavigationRailTests
         ((ISolidColorBrush)inactivePill.Background!).Color.ShouldBe(Colors.Transparent);
     }
 }
+
+public class BottomNavigationTests
+{
+    private static void Show(Control content)
+    {
+        new Window { Width = 480, Height = 200, Content = content }.Show();
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static BottomNavigation BuildBar() => new()
+    {
+        Width = 420,
+        Items =
+        {
+            new BottomNavigationItem { Icon = Icons.Material.Filled.Home, Label = "Home" },
+            new BottomNavigationItem { Icon = Icons.Material.Filled.Search, Label = "Search" },
+            new BottomNavigationItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
+        },
+    };
+
+    [AvaloniaFact]
+    public void Bar_selects_first_destination_by_default()
+    {
+        var bar = BuildBar();
+        Show(bar);
+
+        bar.SelectedIndex.ShouldBe(0);
+        bar.SelectedItem.ShouldBe(bar.Items[0]);
+        bar.Items[0].IsActive.ShouldBeTrue();
+        bar.Items[1].IsActive.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Activating_item_by_keyboard_selects_it()
+    {
+        var bar = BuildBar();
+        Show(bar);
+
+        bar.Items[2].RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+
+        bar.SelectedIndex.ShouldBe(2);
+        bar.Items[2].IsActive.ShouldBeTrue();
+        bar.Items[0].IsActive.ShouldBeFalse();
+    }
+}
