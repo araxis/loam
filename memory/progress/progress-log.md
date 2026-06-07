@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 4 — NavigationRail (additive shell control)
+
+**Done**
+- Added Material 3 `NavigationRail` + `NavigationRailItem` (new Loam controls). Self-composed
+  (`: Decorator`, no ControlTheme boilerplate): item = centered icon in a secondary-container
+  active-indicator pill above a label, with hover/focus state layers and click + keyboard (Enter/Space)
+  activation; rail = `Items` + optional `Header` + two-way `SelectedIndex` + `SelectedItem` +
+  `SelectionChanged`, single-selection management.
+- Token-bound (Surface rail bg; SecondaryContainer/OnSecondaryContainer/OnSurface/OnSurfaceVariant
+  roles), so it re-themes with Material You / variant swaps. Icons tinted via `Icon.Foreground`
+  (`Color = Inherit`).
+- Added a gallery page (`Navigation/NavigationRail`) + icon, and `NavigationRailTests` (default
+  selection, `SelectedIndex` updates, keyboard activation, active-indicator color). Documented in
+  `docs/components/navigation.md` and the component tracker.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **409 passed**, 0 failed.
+
+**Next:** Phase 4 remaining — `BottomNavigation`, `CommandPalette` (additive), then the package split
+(`Loam.Charts`/`Loam.Pickers`/`Loam.Data`, ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 4 — Deprecate Stack + table strategy
 
 **Done**

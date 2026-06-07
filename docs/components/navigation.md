@@ -159,3 +159,44 @@ var navGroup = new NavGroup
     },
 };
 ```
+
+## NavigationRail
+
+A Material 3 **navigation rail** — a compact vertical strip of top-level destinations for the side of an app shell (best for 3–7 destinations and medium-width layouts; use `NavMenu` inside a `Drawer` for the full list). Each `NavigationRailItem` shows a centered icon in an active-indicator pill above a label; the rail manages single selection.
+
+### NavigationRail properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Items` | `IList<NavigationRailItem>` | `(empty)` | The destinations. |
+| `SelectedIndex` | `int` | `0` | The selected destination index. Two-way bindable; `-1` selects nothing. |
+| `Header` | `object?` | `null` | Optional content above the destinations (e.g. a menu button or `Fab`). |
+| `SelectionChanged` | event | — | Raised when `SelectedIndex` changes. |
+
+### NavigationRailItem properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Icon` | `string?` | `null` | Destination icon path data. |
+| `Label` | `string?` | `null` | Label shown under the icon. |
+| `IsActive` | `bool` | `false` | Whether this is the selected destination (set by the rail). |
+| `Value` | `object?` | `null` | Opaque value carried by the destination. |
+| `OnClick` | `Action?` | `null` | Invoked when the destination is activated. |
+
+The active item uses the secondary-container indicator pill with on-surface label; inactive items use on-surface-variant. Activation works by click and keyboard (Enter/Space).
+
+```csharp
+using Loam.Controls;
+
+var rail = new NavigationRail
+{
+    SelectedIndex = 0,
+    Items =
+    {
+        new NavigationRailItem { Icon = Icons.Material.Filled.Home, Label = "Home" },
+        new NavigationRailItem { Icon = Icons.Material.Filled.Dashboard, Label = "Dashboard" },
+        new NavigationRailItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
+    },
+};
+rail.SelectionChanged += (_, _) => Navigate(rail.SelectedIndex);
+```

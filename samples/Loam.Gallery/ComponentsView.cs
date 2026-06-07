@@ -712,6 +712,7 @@ public sealed class ComponentsView : UserControl
         Page("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavMenu),
         Page("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavLink),
         Page("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavGroup),
+        Page("Navigation", "NavigationRail", "Compact vertical destination rail with single selection.", BuildNavigationRail),
 
         Page("Layout", "Container", "Centered and width-capped content regions.", BuildContainer),
         Page("Layout", "ResponsiveGrid", "Responsive 12-column layout with column spans.", BuildGridLayout),
@@ -921,6 +922,7 @@ public sealed class ComponentsView : UserControl
         "Breadcrumbs" => Icons.Material.Filled.AltRoute,
         "Link" => Icons.Material.Filled.OpenInNew,
         "NavLink" => Icons.Material.Filled.ArrowForward,
+        "NavigationRail" => Icons.Material.Filled.ViewWeek,
 
         "Container" => Icons.Material.Filled.WebAsset,
         "ResponsiveGrid" or "Col" => Icons.Material.Filled.GridView,
@@ -5039,6 +5041,21 @@ public sealed class ComponentsView : UserControl
             {
                 new Text { Text = "Rows", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = links },
+            },
+        };
+    }
+
+    private static NavigationRail BuildNavigationRail()
+    {
+        return new NavigationRail
+        {
+            SelectedIndex = 0,
+            Items =
+            {
+                new NavigationRailItem { Icon = Icons.Material.Filled.Home, Label = "Home" },
+                new NavigationRailItem { Icon = Icons.Material.Filled.Dashboard, Label = "Dashboard" },
+                new NavigationRailItem { Icon = Icons.Material.Filled.Notifications, Label = "Alerts" },
+                new NavigationRailItem { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
             },
         };
     }
