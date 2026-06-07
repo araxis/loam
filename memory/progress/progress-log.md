@@ -7,6 +7,36 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 1 — Theme consistency: Fluent accent bridge (first slice)
+
+**Done**
+- Added `LoamTheme.BridgeFluentAccent` so base Fluent controls with no Loam ControlTheme adopt Loam's
+  primary instead of Fluent blue. Runs per variant inside `BuildVariantDictionary`, so it is
+  runtime-swappable (`SetPrimary`/`SetPalette`/`SetData`) and light/dark correct.
+- Overrides the `SystemAccentColor*` Color keys (base + six HSL-derived shades, mirroring Avalonia
+  12.0.4's `SystemAccentColors` shade math) AND the `SystemControl*AccentBrush` brush keys — the
+  brushes are the part that actually retints stray controls (see finding below).
+- Added `FluentBridgeTests`: per-variant projection, runtime `SetPrimary` update, and an end-to-end
+  test through the live `TestApp` (FluentTheme under LoamTheme) proving a stray
+  `SystemControlHighlightAccentBrush` resolves to Loam primary.
+
+**Verified**
+- Source-checked Avalonia 12.0.4 (`gh api` at tag `12.0.4`): `Accents/SystemAccentColors.cs`,
+  `Accents/BaseResources.xaml` — exact keys, shade formula, and per-key opacities.
+- Discovered (and recorded in `findings/2026-06-07-fluent-accent-bridge.md`) that overriding only the
+  `SystemAccentColor` color does NOT cascade — Fluent's accent brushes resolve it in FluentTheme's own
+  scope; the brush keys must be overridden. Caught by the end-to-end test failing first (`#0078d7`),
+  then passing after the brush override (`#6750a4`).
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **380 passed**, 0 failed (added 3 bridge tests).
+
+**Next:** continue Phase 1 — theme the residual base primitives via Loam ControlThemes / resource
+bridges: `ScrollBar` (most visible), `ToolTip`, `ContextMenu`/`MenuFlyout`, `Window` background,
+text selection/caret, `Expander`, Avalonia `DataGrid`. Then a visual pass of the gallery in light/dark
+(not yet run — headless only). Consider an ADR for the base-chrome bridging approach as it grows.
+
+---
+
 ## 2026-06-07 — v3 Phase 0 — Decide & scaffold (kickoff)
 
 **Done**

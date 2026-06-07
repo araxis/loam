@@ -181,7 +181,65 @@ public sealed class LoamTheme : Styles
             dict[$"Loam.Palette.{name}.Darken"] = new ImmutableSolidColorBrush(baseColor.Darken(0.075));
         }
 
+        BridgeFluentAccent(dict, scheme.Primary);
+
         return dict;
+    }
+
+    // Phase 1 — theme consistency. Bridge Loam's primary into Avalonia Fluent's accent system so base
+    // Fluent controls that have no Loam ControlTheme still adopt Loam's accent instead of Fluent blue.
+    // Two layers, because Fluent resolves accent in two scopes:
+    //   1. The SystemAccentColor* Color keys (mirroring Avalonia 12.0.4's internal SystemAccentColors,
+    //      including the HSL-derived shade math) — what direct color lookups and ColorPaletteResources
+    //      consumers see.
+    //   2. The SystemControl*AccentBrush keys controls bind via DynamicResource. Fluent's own accent
+    //      brushes resolve SystemAccentColor inside FluentTheme's scope, so overriding only the color
+    //      does NOT recolor them; overriding the brush keys here (LoamTheme is layered after
+    //      FluentTheme) is what actually retints stray controls. Opacities mirror Fluent's list-accent
+    //      selection states (High/Medium/Low = 0.7/0.6/0.4).
+    private static void BridgeFluentAccent(ResourceDictionary dict, Color accent)
+    {
+        var (dark1, dark2, dark3, light1, light2, light3) = CalculateAccentShades(accent);
+        dict["SystemAccentColor"] = accent;
+        dict["SystemAccentColorDark1"] = dark1;
+        dict["SystemAccentColorDark2"] = dark2;
+        dict["SystemAccentColorDark3"] = dark3;
+        dict["SystemAccentColorLight1"] = light1;
+        dict["SystemAccentColorLight2"] = light2;
+        dict["SystemAccentColorLight3"] = light3;
+
+        var accentBrush = new ImmutableSolidColorBrush(accent);
+        dict["SystemControlBackgroundAccentBrush"] = accentBrush;
+        dict["SystemControlForegroundAccentBrush"] = accentBrush;
+        dict["SystemControlDisabledAccentBrush"] = accentBrush;
+        dict["SystemControlHighlightAccentBrush"] = accentBrush;
+        dict["SystemControlHighlightAltAccentBrush"] = accentBrush;
+        dict["SystemControlHyperlinkTextBrush"] = accentBrush;
+        dict["SystemControlHighlightListAccentHighBrush"] = new ImmutableSolidColorBrush(accent, 0.7);
+        dict["SystemControlHighlightListAccentMediumBrush"] = new ImmutableSolidColorBrush(accent, 0.6);
+        dict["SystemControlHighlightListAccentLowBrush"] = new ImmutableSolidColorBrush(accent, 0.4);
+        dict["SystemControlHighlightAltListAccentHighBrush"] = new ImmutableSolidColorBrush(accent, 0.7);
+        dict["SystemControlHighlightAltListAccentMediumBrush"] = new ImmutableSolidColorBrush(accent, 0.6);
+        dict["SystemControlHighlightAltListAccentLowBrush"] = new ImmutableSolidColorBrush(accent, 0.4);
+    }
+
+    private static (Color D1, Color D2, Color D3, Color L1, Color L2, Color L3) CalculateAccentShades(Color accent)
+    {
+        const double dark1Step = 28.5 / 255d;
+        const double dark2Step = 49 / 255d;
+        const double dark3Step = 74.5 / 255d;
+        const double light1Step = 39 / 255d;
+        const double light2Step = 70 / 255d;
+        const double light3Step = 103 / 255d;
+
+        var hsl = accent.ToHsl();
+        return (
+            new HslColor(hsl.A, hsl.H, hsl.S, hsl.L - dark1Step).ToRgb(),
+            new HslColor(hsl.A, hsl.H, hsl.S, hsl.L - dark2Step).ToRgb(),
+            new HslColor(hsl.A, hsl.H, hsl.S, hsl.L - dark3Step).ToRgb(),
+            new HslColor(hsl.A, hsl.H, hsl.S, hsl.L + light1Step).ToRgb(),
+            new HslColor(hsl.A, hsl.H, hsl.S, hsl.L + light2Step).ToRgb(),
+            new HslColor(hsl.A, hsl.H, hsl.S, hsl.L + light3Step).ToRgb());
     }
 
     private void ProjectSharedTokens()
