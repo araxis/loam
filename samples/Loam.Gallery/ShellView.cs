@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Layout;
 using Loam;
 using Loam.Controls;
@@ -18,39 +17,21 @@ public sealed class ShellView : UserControl
         _drawer = new Drawer { Mode = DrawerMode.Temporary, Content = BuildNav() };
         Content = new Layout
         {
-            AppBar = new AppBar { Color = LoamColor.Primary, Content = BuildToolbar() },
+            AppBar = new AppBar
+            {
+                Color = LoamColor.Primary,
+                Title = "Loam App",
+                NavigationIcon = Icons.Material.Filled.Menu,
+                NavigationAction = () => _drawer.Open = !_drawer.Open,
+            },
             Drawer = _drawer,
             Content = new MainContent { Content = BuildBody() },
         };
     }
 
-    private StackPanel BuildToolbar()
-    {
-        var menu = new Icon
-        {
-            Data = Icons.Material.Filled.Menu,
-            Color = LoamColor.Inherit,
-            Cursor = new Cursor(StandardCursorType.Hand),
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        menu.PointerPressed += (_, _) => _drawer.Open = !_drawer.Open;
-
-        return new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 16,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children =
-            {
-                menu,
-                new Text { Text = "Loam App", Typo = Typo.H6, Color = LoamColor.Inherit, VerticalAlignment = VerticalAlignment.Center },
-            },
-        };
-    }
-
     private static Border BuildNav()
     {
-        var items = new StackPanel { Spacing = 2 };
+        var items = new NavMenu();
         foreach (var (icon, label) in new[]
                  {
                      (Icons.Material.Filled.Home, "Home"),
@@ -60,25 +41,10 @@ public sealed class ShellView : UserControl
                      (Icons.Material.Filled.Settings, "Settings"),
                  })
         {
-            items.Children.Add(NavItem(icon, label));
+            items.Children.Add(new NavLink { Icon = icon, Content = label, IsActive = label == "Home" });
         }
 
         return new Border { Child = items, Padding = new Thickness(8) };
-    }
-
-    private static Border NavItem(string icon, string label)
-    {
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 16,
-            Children =
-            {
-                new Icon { Data = icon, Color = LoamColor.Default, VerticalAlignment = VerticalAlignment.Center },
-                new Text { Text = label, Typo = Typo.Body2, VerticalAlignment = VerticalAlignment.Center },
-            },
-        };
-        return new Border { Child = row, Padding = new Thickness(16, 10), Cursor = new Cursor(StandardCursorType.Hand) };
     }
 
     private static StackPanel BuildBody()

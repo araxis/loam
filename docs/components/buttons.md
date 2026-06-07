@@ -19,7 +19,7 @@ Button templates include press ripple feedback automatically.
 |---|---|---|---|
 | `Variant` | `Variant` | `Variant.Text` | Visual style: `Text`, `Filled`, or `Outlined`. |
 | `Color` | `LoamColor` | `LoamColor.Default` | Semantic color role applied to the button surface. |
-| `Size` | `LoamSize` | `LoamSize.Medium` | Button size: `Small`, `Medium`, or `Large`. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Button size: `ExtraSmall`, `Small`, `Medium`, `Large`, or `ExtraLarge`. |
 | `FullWidth` | `bool` | `false` | Stretches the button to fill the available width. |
 | `StartIcon` | `string?` | `null` | SVG path data for a leading icon. |
 | `EndIcon` | `string?` | `null` | SVG path data for a trailing icon. |
@@ -36,7 +36,7 @@ var saveButton = new Button
     Variant    = Variant.Filled,
     Color      = LoamColor.Primary,
     Size       = LoamSize.Medium,
-    StartIcon  = Icons.Material.Filled.Save,
+    StartIcon  = Icons.Material.Filled.Check,
     FullWidth  = false,
     Command    = ViewModel.SaveCommand,
 };
@@ -97,8 +97,8 @@ using Loam.Controls;
 
 var bookmark = new ToggleIconButton
 {
-    Icon        = Icons.Material.Outlined.BookmarkBorder,
-    ToggledIcon = Icons.Material.Filled.Bookmark,
+    Icon        = Icons.Material.Filled.FavoriteBorder,
+    ToggledIcon = Icons.Material.Filled.Favorite,
     Color       = LoamColor.Primary,
     ToggledColor = LoamColor.Success,
 };
@@ -172,7 +172,7 @@ var fab = new Fab
 
 ## Menu
 
-Mirrors the reference API's `Menu`. Inherits `Button` for its trigger appearance; clicking opens an Avalonia `Flyout` containing the `Items` list. Each row is represented by a `MenuItem` plain-object.
+Mirrors the reference API's `Menu`. Inherits `Button` for its trigger appearance; clicking opens an Avalonia `Flyout` containing the `Items` list. Each row is represented by a `MenuItem` plain-object. Disabled menu triggers do not open, disabled rows are skipped by keyboard navigation, Escape closes the popup, and Up/Down move through enabled rows.
 
 ### Menu properties
 
@@ -182,6 +182,9 @@ Mirrors the reference API's `Menu`. Inherits `Button` for its trigger appearance
 | `Variant` | `Variant` | `Variant.Text` | Inherited trigger button style. |
 | `Color` | `LoamColor` | `LoamColor.Default` | Inherited trigger button color. |
 | `Size` | `LoamSize` | `LoamSize.Medium` | Inherited trigger button size. |
+| `MenuWidth` | `double` | `180` | Minimum popup surface width. |
+| `CloseOnItemClick` | `bool` | `true` | Whether choosing an enabled row closes the popup. |
+| `OpenMenu()` / `CloseMenu()` | methods | — | Public imperative open/close hooks. |
 
 ### MenuItem properties
 
@@ -192,6 +195,9 @@ Mirrors the reference API's `Menu`. Inherits `Button` for its trigger appearance
 | `Text` | `string?` | `null` | Label displayed in the dropdown row. |
 | `Icon` | `string?` | `null` | Optional leading icon path data for the row. |
 | `OnClick` | `Action?` | `null` | Callback invoked when the row is selected. |
+| `ShortcutText` | `string?` | `null` | Optional trailing shortcut hint. |
+| `IsDivider` | `bool` | `false` | Renders this entry as a divider row. |
+| `IsEnabled` | `bool` | `true` | Disabled rows are visible but not focusable or activatable. |
 
 ```csharp
 using Loam;
@@ -202,17 +208,21 @@ var menu = new Menu
     Content = "Actions",
     Variant = Variant.Outlined,
     Color   = LoamColor.Primary,
+    MenuWidth = 220,
 };
 menu.Items.Add(new MenuItem
 {
     Text    = "Edit",
     Icon    = Icons.Material.Filled.Edit,
+    ShortcutText = "E",
     OnClick = () => ViewModel.EditCommand.Execute(null),
 });
+menu.Items.Add(new MenuItem { IsDivider = true });
 menu.Items.Add(new MenuItem
 {
     Text    = "Delete",
     Icon    = Icons.Material.Filled.Delete,
+    IsEnabled = ViewModel.CanDelete,
     OnClick = () => ViewModel.DeleteCommand.Execute(null),
 });
 ```

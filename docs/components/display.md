@@ -57,7 +57,10 @@ SVG vector icon that mirrors the reference API's `Icon`. Renders an SVG path str
 Data = Icons.Material.Filled.Search
 ```
 
-Available paths include `Home`, `Menu`, `Search`, `Close`, `Check`, `Add`, `Delete`, `Favorite`, `FavoriteBorder`, `Star`, `Settings`, `ArrowBack`, `ArrowForward`, `Edit`, `Person`, `ExpandMore`, `ExpandLess`, `CalendarToday`, `Schedule`, and `CloudUpload`.
+Available paths include `Home`, `Menu`, `Search`, `Close`, `Check`, `Add`, `Delete`, `Favorite`,
+`FavoriteBorder`, `Star`, `Settings`, `DarkMode`, `LightMode`, `ArrowBack`, `ArrowForward`, `Edit`,
+`Person`, `ExpandMore`, `ExpandLess`, `CalendarToday`, `Schedule`, `CloudUpload`, and other curated
+catalog icons used by the component gallery.
 
 The `ViewBox` property accepts any `"x y w h"` string, defaulting to `"0 0 24 24"`, so third-party or custom paths with a different coordinate space render correctly without manual scaling.
 
@@ -67,7 +70,7 @@ The `ViewBox` property accepts any `"x y w h"` string, defaulting to `"0 0 24 24
 |---|---|---|---|
 | `Data` | `string?` | `null` | SVG path data. Mirrors the reference API's `Icon` property (renamed to avoid the type/member name clash). |
 | `Color` | `LoamColor` | `LoamColor.Inherit` | Semantic fill color. `Inherit` uses the ambient `Foreground`; `Default` resolves to the theme `ActionDefault` palette token. |
-| `Size` | `LoamSize` | `LoamSize.Medium` | Rendered pixel size: `Small` = 20 px, `Medium` = 24 px, `Large` = 32 px. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Rendered pixel size: `ExtraSmall` = 18 px, `Small` = 20 px, `Medium` = 24 px, `Large` = 32 px, `ExtraLarge` = 40 px. |
 | `ViewBox` | `string` | `"0 0 24 24"` | SVG coordinate space. Space- or comma-separated `"x y w h"`. |
 | `Foreground` | `IBrush?` | inherited | Fill brush; inherited from the visual tree so icons adopt a parent control's text color automatically. |
 
@@ -143,7 +146,7 @@ A compact pill element representing an input, attribute, or action, mirroring th
 | `Label` | `bool` | `false` | Rounded-rectangle shape (corner radius 4) instead of the default pill shape. |
 | `Variant` | `Variant` | `Variant.Filled` | `Filled`, `Outlined`, or `Text` visual style. |
 | `Color` | `LoamColor` | `LoamColor.Default` | Semantic color for background/foreground/border tokens. |
-| `Size` | `LoamSize` | `LoamSize.Medium` | `Small` = 24 px height, `Medium` = 32 px, `Large` = 40 px. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Height: `ExtraSmall` = 24 px, `Small` = 28 px, `Medium` = 32 px, `Large` = 40 px, `ExtraLarge` = 48 px. |
 
 ### Events
 
@@ -264,7 +267,7 @@ A circular (or square/rounded) content holder for initials, icons, or images, mi
 |---|---|---|---|
 | `Variant` | `Variant` | `Variant.Filled` | `Filled` (solid background), `Outlined` (border, no fill), or `Text` (transparent). |
 | `Color` | `LoamColor` | `LoamColor.Default` | Semantic color for background, foreground, and border tokens. |
-| `Size` | `LoamSize` | `LoamSize.Medium` | `Small` = 32 px, `Medium` = 40 px, `Large` = 56 px. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Diameter: `ExtraSmall` = 24 px, `Small` = 32 px, `Medium` = 40 px, `Large` = 56 px, `ExtraLarge` = 72 px. |
 | `Square` | `bool` | `false` | Square corners (corner radius 0). |
 | `Rounded` | `bool` | `false` | Rounded-rectangle corners (20 % of size). Ignored when `Square` is `true`. |
 

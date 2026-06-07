@@ -4,6 +4,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.Runtime.CompilerServices;
 using Loam.Internal.Templating;
 using Loam.Theming;
 
@@ -28,6 +29,8 @@ internal static class FieldChrome
         "TextBoxBorderBrushPointerOver",
         "TextBoxBorderBrushFocused",
     ];
+
+    private static readonly ConditionalWeakTable<Border, LabelBackgroundBinding> LabelBackgroundBindings = new();
 
     public static void ResetInnerTextBox(TextBox textBox)
     {
@@ -91,23 +94,50 @@ internal static class FieldChrome
             Padding = new Thickness(metrics.FloatingLabelHorizontalPadding, 0),
         }.Named("PART_LabelHost", scope);
 
-        host.Bind(Border.BackgroundProperty, owner.GetResourceObservable(LoamTokens.ColorSurfaceContainer));
+        host.Background = Brushes.Transparent;
         return host;
     }
 
-    public static void ApplyLabelLayout(Control owner, Border? inputBorder, Border? labelHost, bool showLabel)
+    public static void ApplyLabelLayout(
+        Control owner,
+        Border? inputBorder,
+        Border? labelHost,
+        bool showLabel,
+        Variant variant = Variant.Outlined)
     {
         var metrics = ReadFieldMetrics(owner);
         if (labelHost is not null)
         {
             labelHost.IsVisible = showLabel;
             labelHost.Margin = new Thickness(metrics.LabelX, 0, 0, 0);
-            labelHost.Padding = new Thickness(metrics.FloatingLabelHorizontalPadding, 0);
+            labelHost.Padding = variant == Variant.Outlined
+                ? new Thickness(metrics.FloatingLabelHorizontalPadding, 0)
+                : default;
+            ApplyLabelBackground(owner, labelHost, showLabel && variant == Variant.Outlined);
         }
 
         if (inputBorder is not null)
         {
-            inputBorder.Margin = showLabel ? new Thickness(0, metrics.FloatingLabelTopMargin, 0, 0) : default;
+            inputBorder.Margin = showLabel && variant == Variant.Outlined
+                ? new Thickness(0, metrics.FloatingLabelTopMargin, 0, 0)
+                : default;
+        }
+    }
+
+    private static void ApplyLabelBackground(Control owner, Border labelHost, bool outlined)
+    {
+        var binding = LabelBackgroundBindings.GetOrCreateValue(labelHost);
+        binding.Subscription?.Dispose();
+        binding.Subscription = null;
+
+        if (outlined)
+        {
+            binding.Subscription = labelHost.Bind(Border.BackgroundProperty,
+                owner.GetResourceObservable(LoamTokens.ColorSurfaceContainer));
+        }
+        else
+        {
+            labelHost.Background = Brushes.Transparent;
         }
     }
 
@@ -214,5 +244,10 @@ internal static class FieldChrome
         return host.TryGetResource(key, host.ActualThemeVariant, out var value) && value is T typed
             ? typed
             : fallback;
+    }
+
+    private sealed class LabelBackgroundBinding
+    {
+        public IDisposable? Subscription { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 
@@ -17,7 +18,11 @@ public class Stack : StackPanel
         AvaloniaProperty.Register<Stack, bool>(nameof(Row));
 
     /// <summary>Creates the stack with a sensible default spacing.</summary>
-    public Stack() => Spacing = 8;
+    public Stack()
+    {
+        Spacing = 8;
+        AutomationProperties.SetName(this, "Stack");
+    }
 
     /// <summary>Lays out horizontally instead of vertically. Mirrors the reference API's <c>Row</c>.</summary>
     public bool Row

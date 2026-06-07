@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Styling;
+using Loam;
 using Loam.Theming;
 using AC = Avalonia.Controls;
 
@@ -17,9 +18,9 @@ internal static class FabTheme
             Setters =
             {
                 new Setter(TemplatedControl.TemplateProperty, ButtonStyles.IconContentTemplate()),
-                ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, LoamTokens.ShapeLarge),
-                new Setter(TemplatedControl.PaddingProperty, new Thickness(24, 16)),
-                new Setter(Layoutable.MinHeightProperty, 56d),
+                ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, ButtonSizeMetrics.FabShapeToken(LoamSize.Medium)),
+                new Setter(TemplatedControl.PaddingProperty, ButtonSizeMetrics.FabPadding(LoamSize.Medium)),
+                new Setter(Layoutable.MinHeightProperty, ButtonSizeMetrics.FabHeight(LoamSize.Medium)),
                 ButtonStyles.Dyn(TemplatedControl.FontSizeProperty, LoamTokens.TypographyFontSize("Button")),
                 ButtonStyles.Dyn(TemplatedControl.FontWeightProperty, LoamTokens.TypographyFontWeight("Button")),
                 new Setter(AC.ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Center),
@@ -29,8 +30,26 @@ internal static class FabTheme
             },
         };
 
+        foreach (var size in ButtonSizeMetrics.All)
+        {
+            theme.Add(SizeStyle(size));
+        }
+
         ButtonStyles.AddFilledColorMatrix(theme);
         ButtonStyles.AddDisabled(theme);
         return theme;
     }
+
+    private static Style SizeStyle(LoamSize size) =>
+        new(x => x.Nesting().PropertyEquals(Button.SizeProperty, size))
+        {
+            Setters =
+            {
+                new Setter(TemplatedControl.PaddingProperty, ButtonSizeMetrics.FabPadding(size)),
+                new Setter(Layoutable.MinHeightProperty, ButtonSizeMetrics.FabHeight(size)),
+                ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, ButtonSizeMetrics.FabShapeToken(size)),
+                ButtonStyles.Dyn(TemplatedControl.FontSizeProperty, LoamTokens.TypographyFontSize(ButtonSizeMetrics.TextStyleName(size))),
+                ButtonStyles.Dyn(TemplatedControl.FontWeightProperty, LoamTokens.TypographyFontWeight(ButtonSizeMetrics.TextStyleName(size))),
+            },
+        };
 }

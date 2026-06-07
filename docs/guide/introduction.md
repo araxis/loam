@@ -14,8 +14,8 @@ the compact vocabulary teams expect in application UI: `Variant`, `Color`, `Dens
 similar knobs.
 
 - **Familiar API.** Component parameters use predictable names and consistent semantics.
-- **Polished look.** Colors, elevation/shadows, ripple, and typography all resolve from a central
-  theme.
+- **Polished look.** Role-based colors, elevation/shadows, ripple, and typography all resolve from
+  central theme tokens.
 - **Pure C# authoring.** Controls, `ControlTheme`s, templates and bindings are built with Avalonia's
   code-only APIs — no `.axaml`. This keeps the whole UI in one language and one toolchain.
 - **Self-contained.** The pickers (date / time / color) and the month calendar are custom-built, so a
@@ -29,10 +29,10 @@ similar knobs.
 
 ## Status
 
-Loam is **v1 component-complete**: every component on the v1 component catalog is mapped — built,
-themed, registered, tested, and demonstrated in the gallery. A handful of per-component enhancements
-(e.g. DataGrid filtering/grouping, picker clock-face/HSV editing, stacked/time-series charts, and some
-animations) are documented as deliberate post-v1 follow-ups.
+Loam is in its **v2.0 rebaseline**: every component in the current catalog is built, themed,
+registered, tested, and demonstrated in the gallery. Remaining future enhancements, such as deeper
+DataGrid grouping/editing, picker clock-face/HSV editing, and stacked/time-series charts, are tracked
+separately from the release baseline.
 
 The library targets **Avalonia 12** on **.NET 8**, with **xUnit + Avalonia.Headless** behavior tests.
 

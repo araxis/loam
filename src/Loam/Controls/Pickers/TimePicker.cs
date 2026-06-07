@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -11,7 +12,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A time input with a popup, mirroring the reference API's <c>TimePicker</c>. An outlined box shows
+/// A time input with a popup, mirroring the reference API's <c>TimePicker</c>. A variant field shows
 /// the two-way <see cref="Time"/> formatted by <see cref="TimeFormat"/>; clicking it opens a flyout with
 /// scrollable hour and minute columns (no FluentTheme dependency).
 /// </summary>
@@ -34,6 +35,10 @@ public class TimePicker : TemplatedControl
     /// <summary>Identifies the <see cref="TimeFormat"/> property.</summary>
     public static readonly StyledProperty<string> TimeFormatProperty =
         AvaloniaProperty.Register<TimePicker, string>(nameof(TimeFormat), "t");
+
+    /// <summary>Identifies the <see cref="Variant"/> property.</summary>
+    public static readonly StyledProperty<Variant> VariantProperty =
+        AvaloniaProperty.Register<TimePicker, Variant>(nameof(Variant), Loam.Variant.Outlined);
 
     /// <summary>Identifies the <see cref="MinuteStep"/> property.</summary>
     public static readonly StyledProperty<int> MinuteStepProperty =
@@ -59,8 +64,20 @@ public class TimePicker : TemplatedControl
     public static readonly StyledProperty<bool> ShrinkLabelProperty =
         AvaloniaProperty.Register<TimePicker, bool>(nameof(ShrinkLabel));
 
-    private readonly List<(Border Row, int Value)> _hourRows = new();
-    private readonly List<(Border Row, int Value)> _minuteRows = new();
+    /// <summary>Identifies the <see cref="PickerTitle"/> property.</summary>
+    public static readonly StyledProperty<string> PickerTitleProperty =
+        AvaloniaProperty.Register<TimePicker, string>(nameof(PickerTitle), "Select time");
+
+    /// <summary>Identifies the <see cref="CancelText"/> property.</summary>
+    public static readonly StyledProperty<string> CancelTextProperty =
+        AvaloniaProperty.Register<TimePicker, string>(nameof(CancelText), "Cancel");
+
+    /// <summary>Identifies the <see cref="OkText"/> property.</summary>
+    public static readonly StyledProperty<string> OkTextProperty =
+        AvaloniaProperty.Register<TimePicker, string>(nameof(OkText), "OK");
+
+    private readonly List<TimePickerRow> _hourRows = new();
+    private readonly List<TimePickerRow> _minuteRows = new();
     private Border? _box;
     private Border? _labelHost;
     private Text? _display;
@@ -74,6 +91,12 @@ public class TimePicker : TemplatedControl
     private IDisposable? _restingLabelForeground;
     private IDisposable? _helperForeground;
     private Flyout? _flyout;
+    private bool _flyoutOpen;
+    private Text? _popupHourDisplay;
+    private Text? _popupMinuteDisplay;
+
+    /// <summary>Raised when the picker commits a time through the generated OK action.</summary>
+    public event Action<TimeSpan?>? TimeSelected;
 
     /// <summary>Creates the picker.</summary>
     public TimePicker()
@@ -109,6 +132,13 @@ public class TimePicker : TemplatedControl
     {
         get => GetValue(TimeFormatProperty);
         set => SetValue(TimeFormatProperty, value);
+    }
+
+    /// <summary>Visual field style: outlined, filled, or text/underline.</summary>
+    public Variant Variant
+    {
+        get => GetValue(VariantProperty);
+        set => SetValue(VariantProperty, value);
     }
 
     /// <summary>Granularity of the minute column. Mirrors the reference API's <c>MinuteSelectionStep</c>.</summary>
@@ -153,6 +183,40 @@ public class TimePicker : TemplatedControl
         set => SetValue(ShrinkLabelProperty, value);
     }
 
+    /// <summary>Title shown at the top of the time picker flyout.</summary>
+    public string PickerTitle
+    {
+        get => GetValue(PickerTitleProperty);
+        set => SetValue(PickerTitleProperty, value);
+    }
+
+    /// <summary>Text for the generated cancel action.</summary>
+    public string CancelText
+    {
+        get => GetValue(CancelTextProperty);
+        set => SetValue(CancelTextProperty, value);
+    }
+
+    /// <summary>Text for the generated confirmation action.</summary>
+    public string OkText
+    {
+        get => GetValue(OkTextProperty);
+        set => SetValue(OkTextProperty, value);
+    }
+
+    /// <summary>Opens the time picker flyout when enabled.</summary>
+    public void OpenPicker() => Open();
+
+    /// <summary>Closes the time picker flyout without committing pending changes.</summary>
+    public void ClosePicker()
+    {
+        _flyout?.Hide();
+        ApplyBoxChrome();
+    }
+
+    /// <summary>Clears the selected time.</summary>
+    public void Clear() => Time = null;
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(TimePicker);
 
@@ -170,10 +234,16 @@ public class TimePicker : TemplatedControl
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
             _box.LostFocus += (_, _) => ApplyBoxChrome();
-            _box.PointerPressed += (_, _) =>
+            _box.PointerPressed += (_, args) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 Focus();
                 Open();
+                args.Handled = true;
             };
         }
 
@@ -197,7 +267,7 @@ public class TimePicker : TemplatedControl
             UpdateLabel();
         }
 
-        if (change.Property == ColorProperty || change.Property == ErrorProperty ||
+        if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
             ApplyBoxChrome();
@@ -209,6 +279,11 @@ public class TimePicker : TemplatedControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (!IsEnabled)
+        {
+            return;
+        }
+
         if (InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
@@ -224,55 +299,226 @@ public class TimePicker : TemplatedControl
 
     private void Open()
     {
-        var current = Time ?? TimeSpan.Zero;
-        var hours = BuildColumn("Hour", _hourRows, Enumerable.Range(0, 24), current.Hours, h => SetTime(h, null));
+        if (!IsEnabled)
+        {
+            return;
+        }
 
+        _flyout?.Hide();
+        _popupHourDisplay = null;
+        _popupMinuteDisplay = null;
+
+        var current = Time ?? TimeSpan.Zero;
         var step = Math.Clamp(MinuteStep, 1, 30);
+        var pendingHour = current.Hours;
+        var pendingMinute = current.Minutes - current.Minutes % step;
+
+        void SetPending(int? hour, int? minute)
+        {
+            pendingHour = hour ?? pendingHour;
+            pendingMinute = minute ?? pendingMinute;
+            if (_popupHourDisplay is not null)
+            {
+                _popupHourDisplay.Text = pendingHour.ToString("00", CultureInfo.CurrentCulture);
+            }
+
+            if (_popupMinuteDisplay is not null)
+            {
+                _popupMinuteDisplay.Text = pendingMinute.ToString("00", CultureInfo.CurrentCulture);
+            }
+
+            if (hour is not null)
+            {
+                Highlight(_hourRows, pendingHour);
+            }
+
+            if (minute is not null)
+            {
+                Highlight(_minuteRows, pendingMinute);
+            }
+        }
+
+        var hours = BuildColumn("Hour", _hourRows, Enumerable.Range(0, 24), pendingHour, h => SetPending(h, null));
+
         var minuteValues = new List<int>();
         for (var m = 0; m < 60; m += step)
         {
             minuteValues.Add(m);
         }
 
-        var minutes = BuildColumn("Min", _minuteRows, minuteValues, current.Minutes - current.Minutes % step, m => SetTime(null, m));
+        var minutes = BuildColumn("Minute", _minuteRows, minuteValues, pendingMinute, m => SetPending(null, m));
+
+        var cancel = new Button
+        {
+            Content = CancelText,
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        cancel.Click += (_, _) =>
+        {
+            _flyout?.Hide();
+            ApplyBoxChrome();
+        };
+
+        var ok = new Button
+        {
+            Content = OkText,
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        ok.Click += (_, _) =>
+        {
+            Time = new TimeSpan(pendingHour, pendingMinute, 0);
+            TimeSelected?.Invoke(Time);
+            _flyout?.Hide();
+            ApplyBoxChrome();
+        };
+
+        var body = new StackPanel
+        {
+            Spacing = 18,
+            Children =
+            {
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Spacing = 8,
+                    Children =
+                    {
+                        BuildTimePart("Hour", pendingHour, text => _popupHourDisplay = text),
+                        new Text
+                        {
+                            Text = ":",
+                            Typo = Typo.DisplaySmall,
+                            Color = LoamColor.Default,
+                            Margin = new Thickness(0, 24, 0, 0),
+                        },
+                        BuildTimePart("Minute", pendingMinute, text => _popupMinuteDisplay = text),
+                    },
+                },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Spacing = 12,
+                    Children = { hours, minutes },
+                },
+            },
+        };
+
+        var actions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Children = { cancel, ok },
+        };
 
         _flyout = new Flyout
         {
-            Content = new Paper
-            {
-                Elevation = 8,
-                Padding = new Thickness(8),
-                Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { hours, minutes } },
-            },
+            Content = PopupSurface.PickerPaper(PopupSurface.PickerContent(PickerTitle, body, actions)),
             Placement = PlacementMode.BottomEdgeAlignedLeft,
+            FlyoutPresenterTheme = PopupSurface.FlyoutPresenterTheme,
         };
+        _flyout.Closed += (_, _) =>
+        {
+            _flyoutOpen = false;
+            _popupHourDisplay = null;
+            _popupMinuteDisplay = null;
+            ApplyBoxChrome();
+        };
+        _flyoutOpen = true;
         _flyout.ShowAt(_box ?? (Control)this);
         ApplyBoxChrome();
     }
 
-    private StackPanel BuildColumn(string heading, List<(Border Row, int Value)> rows, IEnumerable<int> values, int selected, Action<int> onPick)
+    private StackPanel BuildTimePart(string labelText, int value, Action<Text> capture)
+    {
+        var valueText = new Text
+        {
+            Text = value.ToString("00", CultureInfo.CurrentCulture),
+            Typo = Typo.DisplaySmall,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        valueText.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.ColorOnPrimaryContainer));
+        capture(valueText);
+
+        var field = new Border
+        {
+            Width = 104,
+            Height = 72,
+            CornerRadius = new CornerRadius(16),
+            Child = valueText,
+        };
+        field.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.ColorPrimaryContainer));
+
+        return new StackPanel
+        {
+            Spacing = 6,
+            Children =
+            {
+                new Text
+                {
+                    Text = labelText,
+                    Typo = Typo.LabelMedium,
+                    Color = LoamColor.Default,
+                    Opacity = 0.72,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                },
+                field,
+            },
+        };
+    }
+
+    private StackPanel BuildColumn(string heading, List<TimePickerRow> rows, IEnumerable<int> values, int selected, Action<int> onPick)
     {
         rows.Clear();
-        var list = new StackPanel();
+        var list = new StackPanel { Spacing = 4 };
         foreach (var value in values)
         {
             var label = new Text
             {
                 Text = value.ToString("00", CultureInfo.CurrentCulture),
-                Typo = Typo.Body2,
+                Typo = Typo.Body1,
                 HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            var stateLayer = new Border
+            {
+                Background = Brushes.Transparent,
+                CornerRadius = new CornerRadius(24),
+                IsHitTestVisible = false,
             };
             var row = new Border
             {
-                Child = label,
-                Padding = new Thickness(16, 6),
-                CornerRadius = new CornerRadius(4),
+                Child = new Avalonia.Controls.Grid { Children = { stateLayer, label } },
+                Width = 96,
+                MinHeight = 48,
+                Padding = new Thickness(12, 8),
+                CornerRadius = new CornerRadius(24),
                 Cursor = HandCursor,
+                Focusable = true,
                 Background = Brushes.Transparent,
+                ClipToBounds = true,
             };
+            AutomationProperties.SetName(row, $"{heading} {value:00}");
+            var item = new TimePickerRow(row, label, stateLayer, value);
             var captured = value;
             row.PointerPressed += (_, _) => onPick(captured);
-            rows.Add((row, value));
+            row.KeyDown += (_, e) =>
+            {
+                if (InteractionAssist.IsActivationKey(e.Key))
+                {
+                    onPick(captured);
+                    e.Handled = true;
+                }
+            };
+            row.PointerEntered += (_, _) => ApplyTimeRowState(item, "Hover");
+            row.PointerExited += (_, _) => ApplyTimeRowState(item, row.IsFocused ? "Focus" : null);
+            row.GotFocus += (_, _) => ApplyTimeRowState(item, "Focus");
+            row.LostFocus += (_, _) => ApplyTimeRowState(item, null);
+            rows.Add(item);
             list.Children.Add(row);
         }
 
@@ -283,46 +529,64 @@ public class TimePicker : TemplatedControl
             Spacing = 4,
             Children =
             {
-                new Text { Text = heading, Typo = Typo.Caption, Color = LoamColor.Default, Opacity = 0.6, HorizontalAlignment = HorizontalAlignment.Center },
-                new ScrollViewer { Height = 200, Content = list },
+                new Text { Text = heading, Typo = Typo.LabelMedium, Color = LoamColor.Default, Opacity = 0.72, HorizontalAlignment = HorizontalAlignment.Center },
+                new ScrollViewer
+                {
+                    Height = 176,
+                    Content = list,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                },
             },
         };
     }
 
-    private void Highlight(List<(Border Row, int Value)> rows, int selected)
+    private void Highlight(List<TimePickerRow> rows, int selected)
     {
-        foreach (var (row, value) in rows)
+        foreach (var item in rows)
         {
-            var label = (Text)row.Child!;
-            if (value == selected)
-            {
-                row.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Primary));
-                label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.PrimaryContrastText));
-            }
-            else
-            {
-                row.Background = Brushes.Transparent;
-                label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(LoamTokens.TextPrimary));
-            }
+            ApplyTimeRowSelection(item, item.Value == selected);
         }
     }
 
-    private void SetTime(int? hour, int? minute)
+    private void ApplyTimeRowSelection(TimePickerRow item, bool selected)
     {
-        var current = Time ?? TimeSpan.Zero;
-        var h = hour ?? current.Hours;
-        var m = minute ?? current.Minutes;
-        Time = new TimeSpan(h, m, 0);
+        item.Selected = selected;
+        item.BackgroundBinding?.Dispose();
+        item.ForegroundBinding?.Dispose();
+        item.BackgroundBinding = null;
+        item.ForegroundBinding = null;
 
-        if (hour is not null)
+        if (selected)
         {
-            Highlight(_hourRows, h);
+            item.BackgroundBinding = item.Row.Bind(Border.BackgroundProperty,
+                this.GetResourceObservable(LoamTokens.ColorPrimaryContainer));
+            item.ForegroundBinding = item.Label.Bind(TextBlock.ForegroundProperty,
+                this.GetResourceObservable(LoamTokens.ColorOnPrimaryContainer));
+        }
+        else
+        {
+            item.Row.Background = Brushes.Transparent;
+            item.ForegroundBinding = item.Label.Bind(TextBlock.ForegroundProperty,
+                this.GetResourceObservable(LoamTokens.TextPrimary));
         }
 
-        if (minute is not null)
+        ApplyTimeRowState(item, item.Row.IsFocused ? "Focus" : null);
+    }
+
+    private void ApplyTimeRowState(TimePickerRow item, string? state)
+    {
+        item.StateBinding?.Dispose();
+        item.StateBinding = null;
+        if (state is null)
         {
-            Highlight(_minuteRows, m);
+            item.StateLayer.Background = Brushes.Transparent;
+            return;
         }
+
+        var role = item.Selected ? nameof(LoamColorScheme.OnPrimaryContainer) : nameof(LoamColorScheme.OnSurface);
+        item.StateBinding = item.StateLayer.Bind(Border.BackgroundProperty,
+            this.GetResourceObservable(LoamTokens.ColorSchemeStateLayer(role, state)));
     }
 
     private void UpdateLabel()
@@ -354,7 +618,7 @@ public class TimePicker : TemplatedControl
             _display.IsVisible = !resting;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant);
 
         if (_helper is not null)
         {
@@ -393,12 +657,14 @@ public class TimePicker : TemplatedControl
             return;
         }
 
-        FieldChrome.Apply(this, _box, Variant.Outlined, Color, Error, IsActive(), IsEnabled,
+        FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
+        _box.IsEnabled = IsEnabled;
+        _box.Cursor = IsEnabled ? HandCursor : Cursor.Default;
         UpdateLabel();
     }
 
-    private bool IsActive() => IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
 
     private string LabelForegroundKey()
     {
@@ -414,5 +680,17 @@ public class TimePicker : TemplatedControl
         }
 
         return LoamTokens.TextSecondary;
+    }
+
+    private sealed class TimePickerRow(Border row, Text label, Border stateLayer, int value)
+    {
+        public Border Row { get; } = row;
+        public Text Label { get; } = label;
+        public Border StateLayer { get; } = stateLayer;
+        public int Value { get; } = value;
+        public bool Selected { get; set; }
+        public IDisposable? BackgroundBinding { get; set; }
+        public IDisposable? ForegroundBinding { get; set; }
+        public IDisposable? StateBinding { get; set; }
     }
 }

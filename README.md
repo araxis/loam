@@ -7,7 +7,7 @@ theming, and no XAML.
 
 > **Status:** ✅ **v2.0 design-system rebaseline.** The default visual system now uses role-based
 > light/dark color schemes, expanded foundation tokens, tokenized state feedback, and updated gallery
-> design-system coverage. Full solution builds clean with **196 headless/unit tests passing**.
+> design-system coverage. Full solution builds clean with **376 headless/unit tests passing**.
 > See the **[Development Plan](DEVELOPMENT_PLAN.md)** and the project **[memory](memory/README.md)**
 > (decisions, progress log, learnings, and the per-component status tracker).
 
@@ -134,8 +134,8 @@ automatically. Per-control overrides use the same Loam knobs: `Variant`, `Color`
 | **Effects** | `Ripple` |
 
 See **[`memory/component-inventory.md`](memory/component-inventory.md)** for the full component catalog
-and the live status of each control, including the documented v1 scope cuts (e.g.
-DataGrid filter/group/edit, picker clock-face/HSV, stacked/time-series charts) earmarked for follow-up.
+and the live status of each control, including documented future enhancements such as deeper
+DataGrid grouping/editing, picker clock-face/HSV editing, and stacked/time-series charts.
 
 ## Run the gallery
 

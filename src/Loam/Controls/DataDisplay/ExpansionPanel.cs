@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -68,6 +69,11 @@ public class ExpansionPanel : HeaderedContentControl
             _header.Focusable = true;
             _header.PointerPressed += (_, _) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 Focus();
                 Toggle();
             };
@@ -108,6 +114,7 @@ public class ExpansionPanel : HeaderedContentControl
         else if (change.Property == IsEnabledProperty)
         {
             UpdateHeaderState();
+            UpdateAutomationName();
         }
         else if (change.Property == HeaderProperty)
         {
@@ -196,9 +203,11 @@ public class ExpansionPanel : HeaderedContentControl
     private void UpdateAutomationName()
     {
         InteractionAssist.SetAutomationName(this, Header, "Expansion panel");
+        AutomationProperties.SetHelpText(this, IsExpanded ? "Expanded" : "Collapsed");
         if (_header is not null)
         {
             InteractionAssist.SetAutomationName(_header, Header, "Expansion panel");
+            AutomationProperties.SetHelpText(_header, IsExpanded ? "Expanded" : "Collapsed");
         }
     }
 }

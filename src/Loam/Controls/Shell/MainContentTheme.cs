@@ -24,11 +24,25 @@ internal static class MainContentTheme
     private static FuncControlTemplate<MainContent> BuildTemplate() =>
         new((main, scope) =>
         {
+            var header = new ContentControl
+            {
+                IsVisible = false,
+            }.Named("PART_HeaderPresenter", scope);
+
             var presenter = new ContentPresenter().Named("PART_ContentPresenter", scope);
             presenter.Bind(ContentPresenter.ContentProperty, main.GetObservable(ContentControl.ContentProperty));
             presenter.Bind(ContentPresenter.ContentTemplateProperty, main.GetObservable(ContentControl.ContentTemplateProperty));
 
-            var inner = new Border { Child = presenter };
+            var stack = new StackPanel
+            {
+                Children =
+                {
+                    header,
+                    presenter,
+                },
+            };
+
+            var inner = new Border { Child = stack };
             inner.Bind(Border.PaddingProperty, main.GetObservable(TemplatedControl.PaddingProperty));
 
             return new ScrollViewer { Content = inner }.Named("PART_Root", scope);

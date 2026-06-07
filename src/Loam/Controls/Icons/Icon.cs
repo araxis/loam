@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
+using Avalonia.Automation;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -41,11 +42,15 @@ public class Icon : Control
     static Icon()
     {
         AffectsMeasure<Icon>(DataProperty, SizeProperty);
-        AffectsRender<Icon>(DataProperty, ForegroundProperty);
+        AffectsRender<Icon>(DataProperty, ForegroundProperty, SizeProperty, ViewBoxProperty);
     }
 
     /// <summary>Creates the icon.</summary>
-    public Icon() => ApplyColor();
+    public Icon()
+    {
+        AutomationProperties.SetName(this, "Icon");
+        ApplyColor();
+    }
 
     /// <summary>SVG path data (the reference API's <c>Icon.Icon</c>; renamed to avoid the type/member clash).</summary>
     public string? Data
@@ -85,8 +90,10 @@ public class Icon : Control
     /// <summary>The pixel dimension for a <see cref="LoamSize"/>.</summary>
     public static double PixelSize(LoamSize size) => size switch
     {
+        LoamSize.ExtraSmall => 18,
         LoamSize.Small => 20,
         LoamSize.Large => 32,
+        LoamSize.ExtraLarge => 40,
         _ => 24,
     };
 
@@ -152,6 +159,10 @@ public class Icon : Control
         if (key is not null)
         {
             _colorBinding = this.Bind(ForegroundProperty, this.GetResourceObservable(key));
+        }
+        else
+        {
+            ClearValue(ForegroundProperty);
         }
     }
 

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Loam;
@@ -261,6 +262,41 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void Tabs_clamp_selection_and_suppress_disabled_header_activation()
+    {
+        var tabs = new Tabs();
+        tabs.Items.Add(new Loam.Controls.TabItem("First", new TextBlock { Text = "A" }));
+        tabs.Items.Add(new Loam.Controls.TabItem("Second", new TextBlock { Text = "B" }));
+        tabs.SelectedIndex = 99;
+        Show(tabs);
+        tabs.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        tabs.SelectedIndex.ShouldBe(1);
+        AutomationProperties.GetHelpText(tabs).ShouldBe("Tab 2 of 2");
+
+        tabs.Items.RemoveAt(1);
+        Dispatcher.UIThread.RunJobs();
+        tabs.SelectedIndex.ShouldBe(0);
+        AutomationProperties.GetHelpText(tabs).ShouldBe("Tab 1 of 1");
+
+        tabs.IsEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+        tabs.Items.Add(new Loam.Controls.TabItem("Third", new TextBlock { Text = "C" }));
+        Dispatcher.UIThread.RunJobs();
+
+        var headers = tabs.GetVisualDescendants().OfType<Border>()
+            .Where(border => border.Focusable && AutomationProperties.GetName(border) is not null)
+            .ToList();
+        headers.All(header => !header.IsEnabled).ShouldBeTrue();
+
+        var key = KeyArgs(Key.Enter);
+        headers[1].RaiseEvent(key);
+        key.Handled.ShouldBeFalse();
+        tabs.SelectedIndex.ShouldBe(0);
+    }
+
+    [AvaloniaFact]
     public void SimpleTable_builds_header_and_data_cells()
     {
         var table = new SimpleTable();
@@ -352,7 +388,30 @@ public class DataDisplayTests
         var pages = pagination.GetVisualDescendants().OfType<Loam.Controls.Button>()
             .Where(button => AutomationProperties.GetName(button)?.StartsWith("Page ", StringComparison.Ordinal) == true)
             .ToList();
-        pages.Select(button => AutomationProperties.GetName(button)).ShouldContain("Page 3");
+        pages.Select(button => AutomationProperties.GetName(button)).ShouldContain("Page 3, selected");
+        AutomationProperties.GetName(pagination).ShouldBe("Pagination");
+        AutomationProperties.GetHelpText(pagination).ShouldBe("Page 3 of 3");
+    }
+
+    [AvaloniaFact]
+    public void Pagination_disabled_suppresses_direct_page_and_arrow_clicks()
+    {
+        var pagination = new Pagination { Count = 5, Selected = 3, IsEnabled = false };
+        Show(pagination);
+        pagination.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var next = pagination.GetVisualDescendants().OfType<IconButton>()
+            .Single(button => AutomationProperties.GetName(button) == "Next page");
+        next.IsEnabled.ShouldBeFalse();
+        next.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+
+        var pageFour = pagination.GetVisualDescendants().OfType<Loam.Controls.Button>()
+            .Single(button => AutomationProperties.GetName(button) == "Page 4");
+        pageFour.IsEnabled.ShouldBeFalse();
+        pageFour.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+
+        pagination.Selected.ShouldBe(3);
     }
 
     [AvaloniaFact]
@@ -409,6 +468,35 @@ public class DataDisplayTests
         buttons.Count.ShouldBe(2);
         AutomationProperties.GetName(buttons[0]).ShouldBe("Previous step");
         AutomationProperties.GetName(buttons[1]).ShouldBe("Finish steps");
+        buttons[1].IsEnabled.ShouldBeFalse();
+        AutomationProperties.GetName(stepper).ShouldBe("Stepper");
+        AutomationProperties.GetHelpText(stepper).ShouldBe("No steps");
+    }
+
+    [AvaloniaFact]
+    public void Stepper_clamps_active_index_and_disables_actions_when_disabled()
+    {
+        var stepper = new Stepper { IsEnabled = false };
+        stepper.Steps.Add(new Step("One", new TextBlock { Text = "1" }));
+        stepper.Steps.Add(new Step("Two", new TextBlock { Text = "2" }));
+        stepper.ActiveIndex = 99;
+        Show(stepper);
+        stepper.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        stepper.ActiveIndex.ShouldBe(1);
+        AutomationProperties.GetHelpText(stepper).ShouldBe("Step 2 of 2");
+
+        stepper.Next();
+        stepper.Previous();
+        stepper.ActiveIndex.ShouldBe(1);
+
+        var buttons = stepper.GetVisualDescendants().OfType<Loam.Controls.Button>().ToArray();
+        buttons.All(button => !button.IsEnabled).ShouldBeTrue();
+
+        stepper.Steps.RemoveAt(1);
+        Dispatcher.UIThread.RunJobs();
+        stepper.ActiveIndex.ShouldBe(0);
     }
 
     [AvaloniaFact]
@@ -527,6 +615,31 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void Carousel_generated_slides_goto_and_selection_event_work()
+    {
+        var changedTo = -1;
+        var carousel = new Loam.Controls.Carousel();
+        carousel.SelectedIndexChanged += (_, index) => changedTo = index;
+        carousel.Items.Add(new CarouselItem("Plan", "Define scope", LoamColor.Primary));
+        carousel.Items.Add(new CarouselItem("Build", "Implement controls", LoamColor.Success));
+        Show(carousel);
+        carousel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var content = carousel.GetVisualDescendants().OfType<ContentControl>().First(cc => cc.Name == "PART_Content");
+        content.Content.ShouldBeOfType<Border>();
+        carousel.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ShouldContain("Plan");
+        carousel.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ShouldContain("Define scope");
+
+        carousel.GoTo(99);
+        Dispatcher.UIThread.RunJobs();
+
+        carousel.SelectedIndex.ShouldBe(1);
+        changedTo.ShouldBe(1);
+        carousel.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ShouldContain("Build");
+    }
+
+    [AvaloniaFact]
     public void Carousel_is_named_and_supports_keyboard_navigation()
     {
         var carousel = new Loam.Controls.Carousel();
@@ -559,6 +672,119 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void Carousel_prev_next_buttons_activate_from_click_events()
+    {
+        var carousel = new Loam.Controls.Carousel();
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "A" }));
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "B" }));
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "C" }));
+        Show(carousel);
+        carousel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var next = carousel.GetVisualDescendants().OfType<IconButton>()
+            .Single(button => AutomationProperties.GetName(button) == "Next slide");
+        next.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        carousel.SelectedIndex.ShouldBe(1);
+
+        var previous = carousel.GetVisualDescendants().OfType<IconButton>()
+            .Single(button => AutomationProperties.GetName(button) == "Previous slide");
+        previous.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        carousel.SelectedIndex.ShouldBe(0);
+    }
+
+    [AvaloniaFact]
+    public async Task Carousel_auto_play_advances_while_enabled_and_attached()
+    {
+        var carousel = new Loam.Controls.Carousel
+        {
+            AutoPlay = true,
+            AutoPlayInterval = TimeSpan.FromMilliseconds(20),
+        };
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "A" }));
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "B" }));
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "C" }));
+        carousel.Items.Add(new CarouselItem(new TextBlock { Text = "D" }));
+        Show(carousel);
+        carousel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        for (var attempt = 0; attempt < 20 && carousel.SelectedIndex == 0; attempt++)
+        {
+            await Task.Delay(20);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        carousel.SelectedIndex.ShouldNotBe(0);
+
+        carousel.IsEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+        var disabledIndex = carousel.SelectedIndex;
+        await Task.Delay(80);
+        Dispatcher.UIThread.RunJobs();
+        carousel.SelectedIndex.ShouldBe(disabledIndex);
+    }
+
+    [AvaloniaFact]
+    public void Carousel_empty_disabled_and_chrome_state_are_deterministic()
+    {
+        var empty = new Loam.Controls.Carousel { SelectedIndex = 4 };
+        Show(empty);
+        empty.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        empty.SelectedIndex.ShouldBe(0);
+        AutomationProperties.GetHelpText(empty).ShouldBe("No slides");
+        empty.GetVisualDescendants().OfType<ContentControl>().First(cc => cc.Name == "PART_Content")
+            .Content.ShouldBeOfType<Text>().Text.ShouldBe("No slides");
+
+        var disabled = new Loam.Controls.Carousel { IsEnabled = false };
+        disabled.Items.Add(new CarouselItem(new TextBlock { Text = "A" }));
+        disabled.Items.Add(new CarouselItem(new TextBlock { Text = "B" }));
+        Show(disabled);
+        disabled.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        disabled.Next();
+        disabled.SelectedIndex.ShouldBe(0);
+
+        var key = KeyArgs(Key.Right);
+        disabled.RaiseEvent(key);
+        key.Handled.ShouldBeFalse();
+        disabled.SelectedIndex.ShouldBe(0);
+        AutomationProperties.GetHelpText(disabled).ShouldBe("Slide 1 of 2");
+
+        var bullets = disabled.GetVisualDescendants().OfType<Border>()
+            .Where(border => AutomationProperties.GetName(border)?.StartsWith("Slide ", StringComparison.Ordinal) == true)
+            .ToList();
+        bullets.Count.ShouldBe(2);
+        bullets.All(bullet => !bullet.IsEnabled).ShouldBeTrue();
+
+        var bulletKey = KeyArgs(Key.Enter);
+        bullets[1].RaiseEvent(bulletKey);
+        bulletKey.Handled.ShouldBeFalse();
+        disabled.SelectedIndex.ShouldBe(0);
+
+        var chrome = new Loam.Controls.Carousel { ShowArrows = false, ShowBullets = false };
+        chrome.Items.Add(new CarouselItem(new TextBlock { Text = "A" }));
+        Show(chrome);
+        chrome.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        chrome.GetVisualDescendants().OfType<Control>()
+            .Single(control => AutomationProperties.GetName(control) == "Previous slide")
+            .IsVisible.ShouldBeFalse();
+        chrome.GetVisualDescendants().OfType<Control>()
+            .Single(control => AutomationProperties.GetName(control) == "Next slide")
+            .IsVisible.ShouldBeFalse();
+        chrome.GetVisualDescendants().OfType<StackPanel>()
+            .Single(panel => panel.Name == "PART_Bullets")
+            .IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void Timeline_builds_a_dot_and_card_per_item()
     {
         var timeline = new Timeline();
@@ -580,6 +806,80 @@ public class DataDisplayTests
         timeline.GetVisualDescendants().OfType<Paper>()
             .Count(paper => paper.Focusable && AutomationProperties.GetName(paper)?.StartsWith("Timeline item ", StringComparison.Ordinal) == true)
             .ShouldBe(2);
+    }
+
+    [AvaloniaFact]
+    public void Timeline_generated_item_anatomy_uses_title_subtitle_and_time()
+    {
+        var timeline = new Timeline();
+        timeline.Items.Add(new TimelineItem("Review finished", "Keyboard checks passed.", "10:30", LoamColor.Success));
+        Show(timeline);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = timeline.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ToArray();
+        texts.ShouldContain("10:30");
+        texts.ShouldContain("Review finished");
+        texts.ShouldContain("Keyboard checks passed.");
+
+        var card = timeline.GetVisualDescendants().OfType<Paper>()
+            .Single(paper => AutomationProperties.GetName(paper)?.StartsWith("Timeline item ", StringComparison.Ordinal) == true);
+        AutomationProperties.GetName(card).ShouldBe("Timeline item 1: Review finished");
+    }
+
+    [AvaloniaFact]
+    public void Timeline_horizontal_orientation_builds_horizontal_surface()
+    {
+        var timeline = new Timeline { Orientation = Orientation.Horizontal };
+        timeline.Items.Add(new TimelineItem("First"));
+        timeline.Items.Add(new TimelineItem("Second", LoamColor.Success));
+        timeline.Items.Add(new TimelineItem("Third", LoamColor.Info));
+        Show(timeline);
+        Dispatcher.UIThread.RunJobs();
+
+        var grid = timeline.GetVisualDescendants().OfType<Avalonia.Controls.Grid>().First();
+        grid.RowDefinitions.Count.ShouldBe(2);
+        grid.ColumnDefinitions.Count.ShouldBe(3);
+        timeline.GetVisualDescendants().OfType<Paper>().Count().ShouldBe(3);
+
+        timeline.Orientation = Orientation.Vertical;
+        Dispatcher.UIThread.RunJobs();
+
+        var vertical = timeline.GetVisualDescendants().OfType<Avalonia.Controls.Grid>().First();
+        vertical.RowDefinitions.Count.ShouldBe(3);
+        vertical.ColumnDefinitions.Count.ShouldBe(2);
+    }
+
+    [AvaloniaFact]
+    public void Timeline_empty_disabled_and_dynamic_help_text_are_deterministic()
+    {
+        var timeline = new Timeline();
+        Show(timeline);
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetHelpText(timeline).ShouldBe("No items");
+        timeline.Child.ShouldBeOfType<Text>().Text.ShouldBe("No timeline items");
+
+        timeline.Items.Add(new TimelineItem("First"));
+        timeline.Items.Add(new TimelineItem("Second", LoamColor.Success));
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetHelpText(timeline).ShouldBe("2 items");
+        var cards = timeline.GetVisualDescendants().OfType<Paper>()
+            .Where(paper => AutomationProperties.GetName(paper)?.StartsWith("Timeline item ", StringComparison.Ordinal) == true)
+            .ToArray();
+        cards.Length.ShouldBe(2);
+        AutomationProperties.GetHelpText(cards[0]).ShouldBe("Item 1 of 2");
+        AutomationProperties.GetHelpText(cards[1]).ShouldBe("Item 2 of 2");
+
+        timeline.IsEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+        timeline.Opacity.ShouldBeLessThan(1);
+
+        timeline.Items.Clear();
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetHelpText(timeline).ShouldBe("No items");
+        timeline.Child.ShouldBeOfType<Text>().Text.ShouldBe("No timeline items");
     }
 
     [AvaloniaFact]
@@ -653,6 +953,82 @@ public class DataDisplayTests
 
         b.IsExpanded.ShouldBeTrue();
         a.IsExpanded.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void ExpansionPanels_helper_methods_add_and_control_panels()
+    {
+        var panels = new ExpansionPanels { MultiExpansion = true };
+        var first = panels.AddPanel("A", new TextBlock { Text = "a" }, isExpanded: true);
+        var second = panels.AddPanel("B", new TextBlock { Text = "b" });
+        Show(panels);
+        panels.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        panels.Panels.Count.ShouldBe(2);
+        panels.Panels[0].ShouldBe(first);
+        panels.Panels[1].ShouldBe(second);
+        first.IsExpanded.ShouldBeTrue();
+        second.IsExpanded.ShouldBeFalse();
+
+        panels.ExpandAll();
+        Dispatcher.UIThread.RunJobs();
+        first.IsExpanded.ShouldBeTrue();
+        second.IsExpanded.ShouldBeTrue();
+
+        panels.CollapsePanel(0);
+        Dispatcher.UIThread.RunJobs();
+        first.IsExpanded.ShouldBeFalse();
+        second.IsExpanded.ShouldBeTrue();
+
+        panels.CollapseAll();
+        Dispatcher.UIThread.RunJobs();
+        first.IsExpanded.ShouldBeFalse();
+        second.IsExpanded.ShouldBeFalse();
+
+        var accordion = new ExpansionPanels();
+        accordion.AddPanel("One", new TextBlock { Text = "one" });
+        accordion.AddPanel("Two", new TextBlock { Text = "two" });
+        accordion.ExpandAll();
+        accordion.Panels[0].IsExpanded.ShouldBeTrue();
+        accordion.Panels[1].IsExpanded.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void ExpansionPanels_multi_mode_keeps_siblings_open_and_names_container()
+    {
+        var a = new ExpansionPanel { Header = "A", Content = new TextBlock { Text = "a" } };
+        var b = new ExpansionPanel { Header = "B", Content = new TextBlock { Text = "b" } };
+        var panels = new ExpansionPanels { MultiExpansion = true };
+        panels.Panels.Add(a);
+        panels.Panels.Add(b);
+        Show(panels);
+        panels.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        a.IsExpanded = true;
+        b.IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+
+        a.IsExpanded.ShouldBeTrue();
+        b.IsExpanded.ShouldBeTrue();
+        AutomationProperties.GetName(panels).ShouldBe("Expansion panels");
+        AutomationProperties.GetHelpText(panels).ShouldBe("2 panels, 2 expanded, multi expansion");
+    }
+
+    [AvaloniaFact]
+    public void ExpansionPanel_help_text_tracks_expanded_state()
+    {
+        var panel = new ExpansionPanel { Header = "Details", Content = new TextBlock { Text = "body" } };
+        Show(panel);
+        panel.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetHelpText(panel).ShouldBe("Collapsed");
+
+        panel.IsExpanded = true;
+        Dispatcher.UIThread.RunJobs();
+        AutomationProperties.GetHelpText(panel).ShouldBe("Expanded");
     }
 
     [AvaloniaFact]

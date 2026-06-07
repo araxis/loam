@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
@@ -49,7 +50,11 @@ public class Breadcrumbs : TemplatedControl
     private StackPanel? _items;
 
     /// <summary>Creates the trail.</summary>
-    public Breadcrumbs() => Items.CollectionChanged += OnItemsChanged;
+    public Breadcrumbs()
+    {
+        AutomationProperties.SetName(this, "Breadcrumbs");
+        Items.CollectionChanged += OnItemsChanged;
+    }
 
     /// <summary>The breadcrumb entries, root first.</summary>
     public ObservableCollection<BreadcrumbItem> Items { get; } = new();

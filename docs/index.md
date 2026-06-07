@@ -22,7 +22,7 @@ features:
     details: Predictable names for variant, color, size, density, and elevation.
   - icon: 🎨
     title: Polished look
-    details: Palette-driven colors, elevation shadows, a click ripple and a full typography scale — all token-driven.
+    details: Role-based colors, elevation shadows, a click ripple and a full typography scale — all token-driven.
   - icon: 💜
     title: Pure C#
     details: Controls, ControlThemes and templates authored entirely in C#. No .axaml files anywhere.
@@ -65,8 +65,8 @@ var card = new Card
 };
 ```
 
-Every component in the v1 catalog is built, themed, tested, and demonstrated
-in the live gallery. The full solution builds clean (Debug + Release, 0 warnings) with **111 headless
+Every component in the current catalog is built, themed, tested, and demonstrated
+in the live gallery. The full solution builds clean in Release with **376 headless
 and unit tests passing**.
 
 </div>

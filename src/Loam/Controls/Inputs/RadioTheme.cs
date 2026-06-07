@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
 using Loam.Theming;
@@ -38,8 +40,28 @@ internal static class RadioTheme
                 Width = 20,
                 Height = 20,
                 Child = dot,
+                HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             }.Named("PART_Ring", scope);
+
+            var stateLayer = new Border
+            {
+                Width = 40,
+                Height = 40,
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                IsHitTestVisible = false,
+            }.Named("PART_StateLayer", scope);
+            stateLayer.Bind(Border.CornerRadiusProperty, radio.GetResourceObservable(LoamTokens.ShapeFull));
+
+            var visualHost = new Panel
+            {
+                Width = 20,
+                Height = 20,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children = { stateLayer, ring },
+            }.Named("PART_VisualHost", scope);
 
             var presenter = new ContentPresenter
             {
@@ -52,7 +74,8 @@ internal static class RadioTheme
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
-                Children = { ring, presenter },
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Children = { visualHost, presenter },
             };
             root.Bind(Layoutable.MinHeightProperty, radio.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
             return root;

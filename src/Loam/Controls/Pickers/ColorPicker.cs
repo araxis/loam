@@ -1,4 +1,7 @@
+using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -11,7 +14,7 @@ using AvaColor = Avalonia.Media.Color;
 namespace Loam.Controls;
 
 /// <summary>
-/// A palette color picker, mirroring the reference API's <c>ColorPicker</c> (palette mode). An outlined box
+/// A palette color picker, mirroring the reference API's <c>ColorPicker</c> (palette mode). A variant field
 /// shows the current <see cref="Value"/> as a swatch + hex string; clicking opens a flyout of preset
 /// swatches from the built-in palette that set <see cref="Value"/>.
 /// </summary>
@@ -41,6 +44,10 @@ public class ColorPicker : TemplatedControl
     /// <summary>Identifies the <see cref="ShowAlpha"/> property.</summary>
     public static readonly StyledProperty<bool> ShowAlphaProperty =
         AvaloniaProperty.Register<ColorPicker, bool>(nameof(ShowAlpha));
+
+    /// <summary>Identifies the <see cref="Variant"/> property.</summary>
+    public static readonly StyledProperty<Variant> VariantProperty =
+        AvaloniaProperty.Register<ColorPicker, Variant>(nameof(Variant), Loam.Variant.Outlined);
 
     /// <summary>Identifies the <see cref="Color"/> property.</summary>
     public static readonly StyledProperty<LoamColor> ColorProperty =
@@ -73,10 +80,18 @@ public class ColorPicker : TemplatedControl
     private IDisposable? _labelForeground;
     private IDisposable? _helperForeground;
     private Flyout? _flyout;
+    private bool _flyoutOpen;
+
+    /// <summary>Colors shown in the generated swatch palette.</summary>
+    public AvaloniaList<AvaColor> Palette { get; } = [];
+
+    /// <summary>Raised when <see cref="Value"/> changes.</summary>
+    public event EventHandler<AvaColor>? ValueChanged;
 
     /// <summary>Creates the picker.</summary>
     public ColorPicker()
     {
+        Palette.CollectionChanged += OnPaletteChanged;
         Focusable = true;
         GotFocus += (_, _) => ApplyBoxChrome();
         LostFocus += (_, _) => ApplyBoxChrome();
@@ -101,6 +116,13 @@ public class ColorPicker : TemplatedControl
     {
         get => GetValue(ShowAlphaProperty);
         set => SetValue(ShowAlphaProperty, value);
+    }
+
+    /// <summary>Visual field style: outlined, filled, or text/underline.</summary>
+    public Variant Variant
+    {
+        get => GetValue(VariantProperty);
+        set => SetValue(VariantProperty, value);
     }
 
     /// <summary>Focus accent color.</summary>
@@ -136,6 +158,16 @@ public class ColorPicker : TemplatedControl
     {
         get => GetValue(ShrinkLabelProperty);
         set => SetValue(ShrinkLabelProperty, value);
+    }
+
+    /// <summary>Opens the color palette flyout.</summary>
+    public void OpenPicker() => Open();
+
+    /// <summary>Closes the color palette flyout.</summary>
+    public void ClosePicker()
+    {
+        _flyout?.Hide();
+        ApplyBoxChrome();
     }
 
     /// <summary>A hue/saturation/value color triple using degrees and unit fractions.</summary>
@@ -207,6 +239,11 @@ public class ColorPicker : TemplatedControl
             _box.LostFocus += (_, _) => ApplyBoxChrome();
             _box.PointerPressed += (_, _) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 Focus();
                 Open();
             };
@@ -224,6 +261,10 @@ public class ColorPicker : TemplatedControl
         if (change.Property == ValueProperty || change.Property == ShowAlphaProperty)
         {
             UpdateDisplay();
+            if (change.Property == ValueProperty)
+            {
+                ValueChanged?.Invoke(this, Value);
+            }
         }
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
@@ -231,7 +272,7 @@ public class ColorPicker : TemplatedControl
             UpdateLabel();
         }
 
-        if (change.Property == ColorProperty || change.Property == ErrorProperty ||
+        if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
             ApplyBoxChrome();
@@ -243,6 +284,11 @@ public class ColorPicker : TemplatedControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (!IsEnabled)
+        {
+            return;
+        }
+
         if (InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
@@ -258,26 +304,93 @@ public class ColorPicker : TemplatedControl
 
     private void Open()
     {
-        var grid = new UniformGrid { Columns = 5, Width = 5 * 36 };
-        foreach (var color in DefaultPalette)
+        if (!IsEnabled)
         {
-            var swatch = new Border
+            return;
+        }
+
+        _flyout?.Hide();
+        var colors = Palette.Count > 0 ? Palette : DefaultPalette;
+        var columns = Math.Clamp(colors.Count, 1, 5);
+        var grid = new UniformGrid { Columns = columns, Width = columns * 36 };
+        foreach (var color in colors)
+        {
+            var fill = new Border
             {
                 Width = 28,
                 Height = 28,
-                Margin = new Thickness(3),
                 CornerRadius = new CornerRadius(4),
                 Background = new ImmutableSolidColorBrush(color),
+            };
+
+            var stateLayer = new Border
+            {
+                Name = "PART_PaletteStateLayer",
+                Background = Brushes.Transparent,
+                CornerRadius = new CornerRadius(4),
+                IsHitTestVisible = false,
+            };
+
+            var swatch = new Border
+            {
+                Name = "PART_PaletteSwatch",
+                Width = 36,
+                Height = 36,
+                Padding = new Thickness(3),
+                Child = new Grid { Children = { stateLayer, fill } },
                 Cursor = HandCursor,
+                Focusable = true,
             };
             var captured = color;
-            swatch.PointerPressed += (_, _) =>
+            IDisposable? stateLayerBinding = null;
+            void ApplyState(string? state)
+            {
+                stateLayerBinding?.Dispose();
+                stateLayerBinding = null;
+                if (state is null)
+                {
+                    stateLayer.Background = Brushes.Transparent;
+                    return;
+                }
+
+                stateLayerBinding = stateLayer.Bind(Border.BackgroundProperty,
+                    this.GetResourceObservable(LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state)));
+            }
+
+            void SelectColor()
             {
                 Value = ShowAlpha
                     ? AvaColor.FromArgb(Value.A, captured.R, captured.G, captured.B)
                     : captured;
                 _flyout?.Hide();
                 ApplyBoxChrome();
+            }
+
+            AutomationProperties.SetName(swatch, $"Color {ToHex(captured)}");
+            AutomationProperties.SetHelpText(swatch, "Select color");
+            swatch.PointerEntered += (_, _) => ApplyState("Hover");
+            swatch.PointerExited += (_, _) => ApplyState(swatch.IsFocused ? "Focus" : null);
+            swatch.PointerPressed += (_, args) =>
+            {
+                ApplyState("Pressed");
+                swatch.Focus();
+                SelectColor();
+                args.Handled = true;
+            };
+            swatch.GotFocus += (_, _) => ApplyState("Focus");
+            swatch.LostFocus += (_, _) => ApplyState(null);
+            swatch.KeyDown += (_, args) =>
+            {
+                if (InteractionAssist.IsActivationKey(args.Key))
+                {
+                    SelectColor();
+                    args.Handled = true;
+                }
+                else if (args.Key == Key.Escape)
+                {
+                    _flyout?.Hide();
+                    args.Handled = true;
+                }
             };
             grid.Children.Add(swatch);
         }
@@ -307,11 +420,26 @@ public class ColorPicker : TemplatedControl
 
         _flyout = new Flyout
         {
-            Content = new Paper { Elevation = 8, Padding = new Thickness(8), Content = content },
+            Content = PopupSurface.PickerPaper(content, 0, new Thickness(8)),
             Placement = PlacementMode.BottomEdgeAlignedLeft,
+            FlyoutPresenterTheme = PopupSurface.FlyoutPresenterTheme,
         };
+        _flyout.Closed += (_, _) =>
+        {
+            _flyoutOpen = false;
+            ApplyBoxChrome();
+        };
+        _flyoutOpen = true;
         _flyout.ShowAt(_box ?? (Control)this);
         ApplyBoxChrome();
+    }
+
+    private void OnPaletteChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_flyoutOpen)
+        {
+            Open();
+        }
     }
 
     private void UpdateLabel()
@@ -328,7 +456,7 @@ public class ColorPicker : TemplatedControl
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, hasLabel);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, hasLabel, Variant);
 
         if (_helper is not null)
         {
@@ -365,12 +493,14 @@ public class ColorPicker : TemplatedControl
             return;
         }
 
-        FieldChrome.Apply(this, _box, Variant.Outlined, Color, Error, IsActive(), IsEnabled,
+        FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
+        _box.IsEnabled = IsEnabled;
+        _box.Cursor = IsEnabled ? HandCursor : Cursor.Default;
         UpdateLabel();
     }
 
-    private bool IsActive() => IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
 
     private string LabelForegroundKey()
     {

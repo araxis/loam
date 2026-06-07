@@ -4,6 +4,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -181,6 +182,7 @@ public class Badge : ContentControl
         _badge.VerticalAlignment = v;
         _badge.RenderTransform = null;
         ReserveOverlaySpace(size, sx, sy);
+        InteractionAssist.SetAutomationName(this, Dot ? "Badge dot" : $"Badge {label}", "Badge");
     }
 
     private void ReserveOverlaySpace(double size, double sx, double sy)

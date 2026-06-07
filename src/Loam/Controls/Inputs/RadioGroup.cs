@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -23,16 +24,19 @@ public class RadioGroup : Decorator
         set => SetValue(ValueProperty, value);
     }
 
+    /// <summary>Creates a radio group that coordinates child radio options.</summary>
+    public RadioGroup()
+    {
+        Focusable = true;
+        AutomationProperties.SetName(this, "Radio group");
+        AutomationProperties.SetHelpText(this, "Single-choice group");
+    }
+
     /// <inheritdoc />
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        foreach (var radio in this.GetVisualDescendants().OfType<Radio>())
-        {
-            radio.IsCheckedChanged -= OnRadioChecked;
-            radio.IsCheckedChanged += OnRadioChecked;
-        }
-
+        WireRadios();
         SyncChecked();
     }
 
@@ -42,6 +46,13 @@ public class RadioGroup : Decorator
         base.OnPropertyChanged(change);
         if (change.Property == ValueProperty)
         {
+            SyncChecked();
+            ApplyAutomation();
+        }
+
+        if (change.Property == ChildProperty)
+        {
+            WireRadios();
             SyncChecked();
         }
     }
@@ -54,11 +65,29 @@ public class RadioGroup : Decorator
         }
     }
 
+    private void WireRadios()
+    {
+        foreach (var radio in this.GetVisualDescendants().OfType<Radio>())
+        {
+            radio.IsCheckedChanged -= OnRadioChecked;
+            radio.IsCheckedChanged += OnRadioChecked;
+        }
+    }
+
     private void SyncChecked()
     {
         foreach (var radio in this.GetVisualDescendants().OfType<Radio>())
         {
             radio.IsChecked = Equals(radio.Value, Value);
         }
+
+        ApplyAutomation();
+    }
+
+    private void ApplyAutomation()
+    {
+        AutomationProperties.SetHelpText(this, Value is null
+            ? "Single-choice group with no selection"
+            : $"Single-choice group selected {Value}");
     }
 }

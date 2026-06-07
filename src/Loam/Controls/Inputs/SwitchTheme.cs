@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
 using Loam.Theming;
@@ -35,6 +37,17 @@ internal static class SwitchTheme
                 VerticalAlignment = VerticalAlignment.Center,
             }.Named("PART_Track", scope);
 
+            var stateLayer = new Border
+            {
+                Width = 40,
+                Height = 40,
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+                IsHitTestVisible = false,
+            }.Named("PART_StateLayer", scope);
+            stateLayer.Bind(Border.CornerRadiusProperty, toggle.GetResourceObservable(LoamTokens.ShapeFull));
+
             var thumb = new Border
             {
                 Width = 20,
@@ -50,8 +63,8 @@ internal static class SwitchTheme
                 Width = 40,
                 Height = 20,
                 VerticalAlignment = VerticalAlignment.Center,
-                Children = { track, thumb },
-            };
+                Children = { track, stateLayer, thumb },
+            }.Named("PART_SwitchArea", scope);
 
             var presenter = new ContentPresenter
             {
@@ -64,6 +77,7 @@ internal static class SwitchTheme
             {
                 Orientation = Orientation.Horizontal,
                 VerticalAlignment = VerticalAlignment.Center,
+                Cursor = new Cursor(StandardCursorType.Hand),
                 Children = { switchArea, presenter },
             };
             root.Bind(Layoutable.MinHeightProperty, toggle.GetResourceObservable(LoamTokens.DensityInteractiveMedium));

@@ -24,7 +24,7 @@ public sealed class LoamShadows
     public static LoamShadows Default { get; }
 
     // Static ctor runs after the Css field initializer regardless of textual order.
-    static LoamShadows() => Default = new LoamShadows(Css.Select(ParseCss).ToArray());
+    static LoamShadows() => Default = new LoamShadows(Css.Select(css => SoftenDefault(ParseCss(css))).ToArray());
 
     /// <summary>
     /// Converts a CSS box-shadow string (one or more comma-separated <c>x y blur spread rgba()</c>
@@ -57,6 +57,48 @@ public sealed class LoamShadows
             Blur = Px(metrics[2]),
             Spread = Px(metrics[3]),
             Color = color,
+        };
+    }
+
+    private static BoxShadows SoftenDefault(BoxShadows shadows)
+    {
+        if (shadows.Count == 0)
+        {
+            return default;
+        }
+
+        var layers = Enumerable.Range(0, shadows.Count)
+            .Select(index => SoftenDefaultLayer(shadows[index], index))
+            .ToArray();
+
+        return layers.Length == 1
+            ? new BoxShadows(layers[0])
+            : new BoxShadows(layers[0], layers[1..]);
+    }
+
+    private static BoxShadow SoftenDefaultLayer(BoxShadow layer, int index)
+    {
+        var alphaScale = index switch
+        {
+            0 => 0.32,
+            1 => 0.24,
+            _ => 0.20,
+        };
+        var maxAlpha = index switch
+        {
+            0 => 18,
+            1 => 14,
+            _ => 12,
+        };
+        var alpha = (byte)Math.Min(maxAlpha, Math.Round(layer.Color.A * alphaScale));
+
+        return new BoxShadow
+        {
+            OffsetX = layer.OffsetX,
+            OffsetY = layer.OffsetY,
+            Blur = Math.Max(layer.Blur, Math.Abs(layer.OffsetY) * 1.8 + 4),
+            Spread = Math.Min(0, layer.Spread),
+            Color = Color.FromArgb(alpha, layer.Color.R, layer.Color.G, layer.Color.B),
         };
     }
 

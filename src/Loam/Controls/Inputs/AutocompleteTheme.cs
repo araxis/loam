@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Styling;
@@ -6,7 +7,7 @@ using Loam.Internal.Templating;
 
 namespace Loam.Controls;
 
-/// <summary>Builds the <see cref="Autocomplete"/> theme: a single <see cref="TextField"/> (<c>PART_Field</c>) whose label/placeholder/variant/color forward from the autocomplete; the suggestion flyout is driven by the control.</summary>
+/// <summary>Builds the <see cref="Autocomplete"/> theme: a single <see cref="TextField"/> (<c>PART_Field</c>) whose label/placeholder/variant/color forward from the autocomplete; the suggestion popup is driven by the control.</summary>
 internal static class AutocompleteTheme
 {
     public static ControlTheme Create() =>
@@ -27,6 +28,15 @@ internal static class AutocompleteTheme
             field.Bind(TextField.ErrorTextProperty, autocomplete.GetObservable(Autocomplete.ErrorTextProperty));
             field.Bind(TextField.ErrorProperty, autocomplete.GetObservable(Autocomplete.ErrorProperty));
             field.Bind(TextField.ShrinkLabelProperty, autocomplete.GetObservable(Autocomplete.ShrinkLabelProperty));
-            return field;
+
+            var popup = new Popup
+            {
+                IsLightDismissEnabled = true,
+                OverlayDismissEventPassThrough = true,
+                Placement = PlacementMode.BottomEdgeAlignedLeft,
+                PlacementTarget = field,
+            }.Named("PART_Popup", scope);
+
+            return new StackPanel { Children = { field, popup } };
         });
 }

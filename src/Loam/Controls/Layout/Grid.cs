@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Loam.Theming;
 
@@ -20,6 +21,9 @@ public class Grid : Panel
         AffectsMeasure<Grid>(SpacingProperty);
         AffectsArrange<Grid>(SpacingProperty);
     }
+
+    /// <summary>Creates the responsive grid.</summary>
+    public Grid() => AutomationProperties.SetName(this, "Grid layout");
 
     /// <summary>The gutter (px) between columns and rows. Mirrors the reference API's <c>Spacing</c>.</summary>
     public double Spacing

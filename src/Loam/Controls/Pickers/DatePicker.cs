@@ -10,9 +10,9 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A date input with a calendar popup, mirroring the reference API's <c>DatePicker</c>. An outlined
-/// box shows the two-way <see cref="Date"/> formatted by <see cref="DateFormat"/>; clicking it opens a
-/// self-contained <see cref="MonthCalendar"/> flyout (no FluentTheme dependency).
+/// A date input with a calendar popup, mirroring the reference API's <c>DatePicker</c>. A variant
+/// field shows the two-way <see cref="Date"/> formatted by <see cref="DateFormat"/>; clicking it opens
+/// a self-contained <see cref="MonthCalendar"/> flyout (no FluentTheme dependency).
 /// </summary>
 public class DatePicker : TemplatedControl
 {
@@ -31,6 +31,10 @@ public class DatePicker : TemplatedControl
     /// <summary>Identifies the <see cref="DateFormat"/> property.</summary>
     public static readonly StyledProperty<string> DateFormatProperty =
         AvaloniaProperty.Register<DatePicker, string>(nameof(DateFormat), "d");
+
+    /// <summary>Identifies the <see cref="Variant"/> property.</summary>
+    public static readonly StyledProperty<Variant> VariantProperty =
+        AvaloniaProperty.Register<DatePicker, Variant>(nameof(Variant), Loam.Variant.Outlined);
 
     /// <summary>Identifies the <see cref="MinDate"/> property.</summary>
     public static readonly StyledProperty<DateTime?> MinDateProperty =
@@ -60,6 +64,18 @@ public class DatePicker : TemplatedControl
     public static readonly StyledProperty<bool> ShrinkLabelProperty =
         AvaloniaProperty.Register<DatePicker, bool>(nameof(ShrinkLabel));
 
+    /// <summary>Identifies the <see cref="PickerTitle"/> property.</summary>
+    public static readonly StyledProperty<string> PickerTitleProperty =
+        AvaloniaProperty.Register<DatePicker, string>(nameof(PickerTitle), "Select date");
+
+    /// <summary>Identifies the <see cref="CancelText"/> property.</summary>
+    public static readonly StyledProperty<string> CancelTextProperty =
+        AvaloniaProperty.Register<DatePicker, string>(nameof(CancelText), "Cancel");
+
+    /// <summary>Identifies the <see cref="OkText"/> property.</summary>
+    public static readonly StyledProperty<string> OkTextProperty =
+        AvaloniaProperty.Register<DatePicker, string>(nameof(OkText), "OK");
+
     private Border? _box;
     private Border? _labelHost;
     private Text? _display;
@@ -73,6 +89,10 @@ public class DatePicker : TemplatedControl
     private IDisposable? _restingLabelForeground;
     private IDisposable? _helperForeground;
     private Flyout? _flyout;
+    private bool _flyoutOpen;
+
+    /// <summary>Raised when the picker commits a date through the generated OK action.</summary>
+    public event Action<DateTime?>? DateSelected;
 
     /// <summary>Creates the picker.</summary>
     public DatePicker()
@@ -108,6 +128,13 @@ public class DatePicker : TemplatedControl
     {
         get => GetValue(DateFormatProperty);
         set => SetValue(DateFormatProperty, value);
+    }
+
+    /// <summary>Visual field style: outlined, filled, or text/underline.</summary>
+    public Variant Variant
+    {
+        get => GetValue(VariantProperty);
+        set => SetValue(VariantProperty, value);
     }
 
     /// <summary>First selectable date.</summary>
@@ -159,6 +186,40 @@ public class DatePicker : TemplatedControl
         set => SetValue(ShrinkLabelProperty, value);
     }
 
+    /// <summary>Title shown at the top of the date picker flyout.</summary>
+    public string PickerTitle
+    {
+        get => GetValue(PickerTitleProperty);
+        set => SetValue(PickerTitleProperty, value);
+    }
+
+    /// <summary>Text for the generated cancel action.</summary>
+    public string CancelText
+    {
+        get => GetValue(CancelTextProperty);
+        set => SetValue(CancelTextProperty, value);
+    }
+
+    /// <summary>Text for the generated confirmation action.</summary>
+    public string OkText
+    {
+        get => GetValue(OkTextProperty);
+        set => SetValue(OkTextProperty, value);
+    }
+
+    /// <summary>Opens the date picker flyout when enabled.</summary>
+    public void OpenPicker() => Open();
+
+    /// <summary>Closes the date picker flyout without committing pending changes.</summary>
+    public void ClosePicker()
+    {
+        _flyout?.Hide();
+        ApplyBoxChrome();
+    }
+
+    /// <summary>Clears the selected date.</summary>
+    public void Clear() => Date = null;
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(DatePicker);
 
@@ -176,10 +237,16 @@ public class DatePicker : TemplatedControl
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
             _box.LostFocus += (_, _) => ApplyBoxChrome();
-            _box.PointerPressed += (_, _) =>
+            _box.PointerPressed += (_, args) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 Focus();
                 Open();
+                args.Handled = true;
             };
         }
 
@@ -203,7 +270,7 @@ public class DatePicker : TemplatedControl
             UpdateLabel();
         }
 
-        if (change.Property == ColorProperty || change.Property == ErrorProperty ||
+        if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
             ApplyBoxChrome();
@@ -215,6 +282,11 @@ public class DatePicker : TemplatedControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (!IsEnabled)
+        {
+            return;
+        }
+
         if (InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
@@ -230,30 +302,142 @@ public class DatePicker : TemplatedControl
 
     private void Open()
     {
-        var calendar = new MonthCalendar { SelectedDate = Date, MinDate = MinDate, MaxDate = MaxDate };
-        if (Date is { } date)
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        _flyout?.Hide();
+
+        var pending = Date;
+        var headline = new Text
+        {
+            Text = FormatPickerHeadline(pending, PickerTitle),
+            Typo = Typo.DisplaySmall,
+            Color = LoamColor.Default,
+            TextWrapping = TextWrapping.NoWrap,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+        };
+        var bodyHost = new ContentControl
+        {
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+        };
+
+        void SyncHeadline() => headline.Text = FormatPickerHeadline(pending, PickerTitle);
+
+        var calendar = new MonthCalendar
+        {
+            SelectedDate = pending,
+            MinDate = MinDate,
+            MaxDate = MaxDate,
+        };
+        if (pending is { } date)
         {
             calendar.DisplayMonth = new DateTime(date.Year, date.Month, 1);
         }
 
         calendar.DateSelected += picked =>
         {
-            if (!MonthCalendar.IsDisabled(picked, MinDate, MaxDate))
+            if (MonthCalendar.IsDisabled(picked, MinDate, MaxDate))
             {
-                Date = picked;
-                _flyout?.Hide();
-                ApplyBoxChrome();
+                return;
             }
+
+            pending = picked;
+            calendar.SelectedDate = picked;
+            SyncHeadline();
+        };
+        bodyHost.Content = calendar;
+
+        var cancel = new Button
+        {
+            Content = CancelText,
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        cancel.Click += (_, _) =>
+        {
+            _flyout?.Hide();
+            ApplyBoxChrome();
+        };
+
+        var ok = new Button
+        {
+            Content = OkText,
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        ok.Click += (_, _) =>
+        {
+            Date = pending;
+            DateSelected?.Invoke(Date);
+            _flyout?.Hide();
+            ApplyBoxChrome();
+        };
+
+        var content = new StackPanel
+        {
+            Spacing = 0,
+            Children =
+            {
+                new Text
+                {
+                    Text = PickerTitle,
+                    Typo = Typo.TitleSmall,
+                    Color = LoamColor.Default,
+                    Opacity = 0.72,
+                    Margin = new Thickness(24, 20, 24, 0),
+                },
+                BuildDatePickerHeadline(headline),
+                BuildDatePickerDivider(),
+                bodyHost,
+                new StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                    Margin = PopupSurface.PickerActionsMargin,
+                    Children = { cancel, ok },
+                },
+            },
         };
 
         _flyout = new Flyout
         {
-            Content = new Paper { Elevation = 8, Padding = new Thickness(12), Content = calendar },
+            Content = PopupSurface.PickerPaper(content),
             Placement = PlacementMode.BottomEdgeAlignedLeft,
+            FlyoutPresenterTheme = PopupSurface.FlyoutPresenterTheme,
         };
+        _flyout.Closed += (_, _) =>
+        {
+            _flyoutOpen = false;
+            ApplyBoxChrome();
+        };
+        _flyoutOpen = true;
         _flyout.ShowAt(_box ?? (Control)this);
         ApplyBoxChrome();
     }
+
+    private static Border BuildDatePickerHeadline(Text headline)
+    {
+        return new Border
+        {
+            MinHeight = 64,
+            Margin = new Thickness(24, 8, 12, 20),
+            Child = headline,
+        };
+    }
+
+    private Border BuildDatePickerDivider()
+    {
+        var divider = new Border { Height = 1 };
+        divider.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Divider));
+        return divider;
+    }
+
+    private static string FormatPickerHeadline(DateTime? date, string fallback) =>
+        date is { } value
+            ? value.ToString("ddd, MMM d", CultureInfo.CurrentCulture)
+            : fallback;
 
     private void UpdateLabel()
     {
@@ -284,7 +468,7 @@ public class DatePicker : TemplatedControl
             _display.IsVisible = !resting;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant);
 
         if (_helper is not null)
         {
@@ -321,12 +505,14 @@ public class DatePicker : TemplatedControl
             return;
         }
 
-        FieldChrome.Apply(this, _box, Variant.Outlined, Color, Error, IsActive(), IsEnabled,
+        FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
+        _box.IsEnabled = IsEnabled;
+        _box.Cursor = IsEnabled ? new Cursor(StandardCursorType.Hand) : Cursor.Default;
         UpdateLabel();
     }
 
-    private bool IsActive() => IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
 
     private string LabelForegroundKey()
     {

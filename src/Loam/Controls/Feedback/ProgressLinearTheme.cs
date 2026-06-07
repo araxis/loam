@@ -4,12 +4,14 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Styling;
+using Loam;
 using Loam.Internal.Templating;
 using Loam.Theming;
+using AC = Avalonia.Controls;
 
 namespace Loam.Controls;
 
-/// <summary>Builds the <see cref="ProgressLinear"/> theme: a track area (<c>PART_Area</c>) with a fill (<c>PART_Fill</c>).</summary>
+/// <summary>Builds the <see cref="ProgressLinear"/> theme: optional generated label/value text plus track and fill.</summary>
 internal static class ProgressLinearTheme
 {
     public static ControlTheme Create() =>
@@ -21,12 +23,34 @@ internal static class ProgressLinearTheme
     private static FuncControlTemplate<ProgressLinear> BuildTemplate() =>
         new((progress, scope) =>
         {
+            var label = new Text
+            {
+                Typo = Typo.Body2,
+                Color = LoamColor.Default,
+                VerticalAlignment = VerticalAlignment.Center,
+            }.Named("PART_Label", scope);
+
+            var value = new Text
+            {
+                Typo = Typo.Caption,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+            }.Named("PART_ValueText", scope);
+            value.Bind(AC.TextBlock.ForegroundProperty, progress.GetResourceObservable(LoamTokens.TextSecondary));
+
+            var header = new AC.Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+                IsVisible = false,
+                Children = { label, value },
+            }.Named("PART_Header", scope);
+            AC.Grid.SetColumn(value, 1);
+
             var track = new Border
             {
                 CornerRadius = new CornerRadius(2),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-            };
-            track.Bind(Border.BackgroundProperty, progress.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.LinesInputs))));
+            }.Named("PART_Track", scope);
 
             var fill = new Border
             {
@@ -35,10 +59,17 @@ internal static class ProgressLinearTheme
                 HorizontalAlignment = HorizontalAlignment.Left,
             }.Named("PART_Fill", scope);
 
-            return new Panel
+            var area = new Panel
             {
                 Height = 4,
+                ClipToBounds = true,
                 Children = { track, fill },
             }.Named("PART_Area", scope);
+
+            return new StackPanel
+            {
+                Spacing = 6,
+                Children = { header, area },
+            };
         });
 }

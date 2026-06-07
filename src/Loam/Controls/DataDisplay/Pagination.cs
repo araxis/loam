@@ -38,6 +38,12 @@ public class Pagination : TemplatedControl
     private StackPanel? _items;
     private bool _coercing;
 
+    /// <summary>Creates the pagination control.</summary>
+    public Pagination()
+    {
+        AutomationProperties.SetName(this, "Pagination");
+    }
+
     /// <summary>The total number of pages. Mirrors the reference API's <c>Count</c>.</summary>
     public int Count
     {
@@ -158,7 +164,7 @@ public class Pagination : TemplatedControl
         base.OnPropertyChanged(change);
         if (change.Property == CountProperty || change.Property == SelectedProperty ||
             change.Property == ColorProperty || change.Property == BoundaryCountProperty ||
-            change.Property == MiddleCountProperty)
+            change.Property == MiddleCountProperty || change.Property == IsEnabledProperty)
         {
             if (change.Property == CountProperty || change.Property == SelectedProperty)
             {
@@ -178,21 +184,29 @@ public class Pagination : TemplatedControl
 
         _items.Children.Clear();
 
-        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowBack, Selected > 1, () => Selected--, "Previous page"));
+        AutomationProperties.SetHelpText(this, Count <= 0 ? "No pages" : $"Page {Selected} of {Count}");
+
+        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowBack, IsEnabled && Selected > 1, () => Selected--, "Previous page"));
 
         foreach (var page in BuildPages(Count, Selected, BoundaryCount, MiddleCount))
         {
             _items.Children.Add(page == 0 ? Ellipsis() : PageButton(page));
         }
 
-        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowForward, Selected < Count, () => Selected++, "Next page"));
+        _items.Children.Add(Arrow(Icons.Material.Filled.ArrowForward, IsEnabled && Selected < Count, () => Selected++, "Next page"));
     }
 
     private static IconButton Arrow(string icon, bool enabled, Action onClick, string automationName)
     {
         var button = new IconButton { Icon = icon, Size = LoamSize.Small, IsEnabled = enabled };
         AutomationProperties.SetName(button, automationName);
-        button.Click += (_, _) => onClick();
+        button.Click += (_, _) =>
+        {
+            if (button.IsEnabled)
+            {
+                onClick();
+            }
+        };
         return button;
     }
 
@@ -206,10 +220,17 @@ public class Pagination : TemplatedControl
             Color = Color,
             Size = LoamSize.Small,
             MinWidth = 36,
+            IsEnabled = IsEnabled,
         };
-        AutomationProperties.SetName(button, $"Page {page}");
+        AutomationProperties.SetName(button, selected ? $"Page {page}, selected" : $"Page {page}");
         var captured = page;
-        button.Click += (_, _) => Selected = captured;
+        button.Click += (_, _) =>
+        {
+            if (button.IsEnabled)
+            {
+                Selected = captured;
+            }
+        };
         return button;
     }
 

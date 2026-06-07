@@ -15,6 +15,9 @@ public static class LoamTokens
     /// <summary>Resource key for a role-based color-scheme brush.</summary>
     public static string ColorScheme(string role) => $"Loam.Color.{role}";
 
+    /// <summary>Resource key for a color-scheme role's state-layer brush.</summary>
+    public static string ColorSchemeStateLayer(string role, string state) => $"Loam.Color.{role}.{state}";
+
     /// <summary>Resource key for a palette color brush, e.g. <c>Palette(nameof(LoamPalette.Primary))</c>.</summary>
     public static string Palette(string name) => $"Loam.Palette.{name}";
 
@@ -186,24 +189,46 @@ public static class LoamTokens
     // Density
     /// <summary>Resource key for a component density token.</summary>
     public static string Density(string name) => $"Loam.Density.{name}";
+    /// <summary>Extra-small interactive target size.</summary>
+    public const string DensityInteractiveExtraSmall = "Loam.Density.InteractiveExtraSmall";
     /// <summary>Small interactive target size.</summary>
     public const string DensityInteractiveSmall = "Loam.Density.InteractiveSmall";
     /// <summary>Default interactive target size.</summary>
     public const string DensityInteractiveMedium = "Loam.Density.InteractiveMedium";
     /// <summary>Large interactive target size.</summary>
     public const string DensityInteractiveLarge = "Loam.Density.InteractiveLarge";
+    /// <summary>Extra-large interactive target size.</summary>
+    public const string DensityInteractiveExtraLarge = "Loam.Density.InteractiveExtraLarge";
+    /// <summary>Extra-small button container height.</summary>
+    public const string DensityButtonContainerHeightExtraSmall = "Loam.Density.ButtonContainerHeightExtraSmall";
+    /// <summary>Small button container height.</summary>
+    public const string DensityButtonContainerHeightSmall = "Loam.Density.ButtonContainerHeightSmall";
+    /// <summary>Medium button container height.</summary>
+    public const string DensityButtonContainerHeightMedium = "Loam.Density.ButtonContainerHeightMedium";
+    /// <summary>Large button container height.</summary>
+    public const string DensityButtonContainerHeightLarge = "Loam.Density.ButtonContainerHeightLarge";
+    /// <summary>Extra-large button container height.</summary>
+    public const string DensityButtonContainerHeightExtraLarge = "Loam.Density.ButtonContainerHeightExtraLarge";
+    /// <summary>Extra-small button padding.</summary>
+    public const string DensityButtonPaddingExtraSmall = "Loam.Density.ButtonPaddingExtraSmall";
     /// <summary>Small button padding.</summary>
     public const string DensityButtonPaddingSmall = "Loam.Density.ButtonPaddingSmall";
     /// <summary>Default button padding.</summary>
     public const string DensityButtonPaddingMedium = "Loam.Density.ButtonPaddingMedium";
     /// <summary>Large button padding.</summary>
     public const string DensityButtonPaddingLarge = "Loam.Density.ButtonPaddingLarge";
+    /// <summary>Extra-large button padding.</summary>
+    public const string DensityButtonPaddingExtraLarge = "Loam.Density.ButtonPaddingExtraLarge";
+    /// <summary>Extra-small icon button padding.</summary>
+    public const string DensityIconButtonPaddingExtraSmall = "Loam.Density.IconButtonPaddingExtraSmall";
     /// <summary>Small icon button padding.</summary>
     public const string DensityIconButtonPaddingSmall = "Loam.Density.IconButtonPaddingSmall";
     /// <summary>Default icon button padding.</summary>
     public const string DensityIconButtonPaddingMedium = "Loam.Density.IconButtonPaddingMedium";
     /// <summary>Large icon button padding.</summary>
     public const string DensityIconButtonPaddingLarge = "Loam.Density.IconButtonPaddingLarge";
+    /// <summary>Extra-large icon button padding.</summary>
+    public const string DensityIconButtonPaddingExtraLarge = "Loam.Density.IconButtonPaddingExtraLarge";
     /// <summary>Default data header padding.</summary>
     public const string DensityDataHeaderPadding = "Loam.Density.DataHeaderPadding";
     /// <summary>Compact data header padding.</summary>

@@ -30,11 +30,11 @@ var list = new List
 {
     Children =
     {
-        new ListSubheader { Text = "Fruits" },
-        new ListItem { Icon = Icons.Material.Filled.Apple,  Content = new Text { Text = "Apple" } },
-        new ListItem { Icon = Icons.Material.Filled.Grass,  Content = new Text { Text = "Mango" } },
-        new ListSubheader { Text = "Vegetables" },
-        new ListItem { Content = new Text { Text = "Carrot" } },
+        new ListSubheader { Text = "Tasks" },
+        new ListItem { Icon = Icons.Material.Filled.Check, Content = new Text { Text = "Ready for review" } },
+        new ListItem { Icon = Icons.Material.Filled.Star,  Content = new Text { Text = "Pinned milestone" } },
+        new ListSubheader { Text = "Archive" },
+        new ListItem { Content = new Text { Text = "Older releases" } },
     },
 };
 ```
@@ -197,14 +197,14 @@ var tree = new Loam.Controls.TreeView();
 var parent = new Loam.Controls.TreeViewItem
 {
     Text     = "Documents",
-    Icon     = Icons.Material.Filled.Folder,
+    Icon     = Icons.Material.Filled.Article,
     Expanded = true,
 };
-parent.Items.Add(new Loam.Controls.TreeViewItem { Text = "Report.pdf",  Icon = Icons.Material.Filled.PictureAsPdf });
-parent.Items.Add(new Loam.Controls.TreeViewItem { Text = "Budget.xlsx", Icon = Icons.Material.Filled.TableChart });
+parent.Items.Add(new Loam.Controls.TreeViewItem { Text = "Report.pdf",  Icon = Icons.Material.Filled.Article });
+parent.Items.Add(new Loam.Controls.TreeViewItem { Text = "Budget.xlsx", Icon = Icons.Material.Filled.Table });
 
 tree.Items.Add(parent);
-tree.Items.Add(new Loam.Controls.TreeViewItem { Text = "Downloads", Icon = Icons.Material.Filled.Folder });
+tree.Items.Add(new Loam.Controls.TreeViewItem { Text = "Downloads", Icon = Icons.Material.Filled.CloudUpload });
 ```
 
 ---

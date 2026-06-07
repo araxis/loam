@@ -144,19 +144,20 @@ internal static class ButtonStyles
             var panel = new AC.StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 8,
+                Spacing = ButtonSizeMetrics.IconSpacing(button.Size),
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Children = { start, presenter, end },
             };
+            button.GetObservable(Button.SizeProperty)
+                .Subscribe(new ActionObserver<LoamSize>(size => panel.Spacing = ButtonSizeMetrics.IconSpacing(size)));
 
             var ripple = new Ripple { Child = panel }.Named("PART_Ripple", scope);
             ripple.Bind(Ripple.RippleOpacityProperty,
                 AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.StatePressedOpacity));
             ripple.Bind(Ripple.DurationProperty,
                 AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.MotionDurationShort3));
-            ripple.Bind(Ripple.RippleBrushProperty,
-                AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.ColorOnSurface));
+            ripple.Bind(Ripple.RippleBrushProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
 
             var border = new AC.Border { Child = ripple }.Named("PART_Root", scope);
             border.Bind(AC.Border.BackgroundProperty, button.GetObservable(TemplatedControl.BackgroundProperty));
@@ -196,6 +197,19 @@ internal static class ButtonStyles
         }
 
         return style;
+    }
+
+    private sealed class ActionObserver<T>(Action<T> onNext) : IObserver<T>
+    {
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+
+        public void OnNext(T value) => onNext(value);
     }
 
 }

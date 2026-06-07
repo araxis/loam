@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -27,7 +28,10 @@ public class ScrollToTop : Decorator
     public ScrollToTop()
     {
         AddHandler(Avalonia.Controls.Button.ClickEvent, OnChildButtonClick);
-        Child = new Fab { StartIcon = Icons.Material.Filled.ExpandLess, Color = LoamColor.Primary };
+        AutomationProperties.SetName(this, "Scroll to top");
+        var button = new Fab { StartIcon = Icons.Material.Filled.ExpandLess, Color = LoamColor.Primary };
+        AutomationProperties.SetName(button, "Scroll to top");
+        Child = button;
         IsVisible = false;
     }
 

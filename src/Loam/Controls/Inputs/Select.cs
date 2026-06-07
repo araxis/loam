@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Loam;
 using Loam.Controls.Internal;
@@ -271,32 +272,36 @@ public class Select : TemplatedControl
         var list = new StackPanel();
         foreach (var item in Items)
         {
-            var row = new ListItem { Content = BuildItemContent(item), MinWidth = 180 };
+            var row = BuildItemRow(item);
             var captured = item;
-            row.PointerPressed += (_, _) =>
+            void Choose()
             {
                 if (MultiSelect)
                 {
                     ToggleSelectedValue(captured.Value);
-                    row.Content = BuildItemContent(captured);
+                    ApplyItemRowState(row, captured);
                 }
                 else
                 {
                     Value = captured.Value;
                     Close();
                 }
+            }
+
+            PopupSurface.ActivateListRowOnPointer(row, Choose);
+            row.Activated += (_, _) => Choose();
+            row.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Escape)
+                {
+                    Close();
+                    args.Handled = true;
+                }
             };
             list.Children.Add(row);
         }
 
-        _popup.Child = new Paper
-        {
-            Elevation = 8,
-            Padding = new Thickness(0, 8),
-            MinWidth = Math.Max(180, _box?.Bounds.Width ?? 0),
-            ClipToBounds = true,
-            Content = list,
-        };
+        _popup.Child = PopupSurface.MenuPaper(list, Math.Max(180, _box?.Bounds.Width ?? 0));
         _popup.IsOpen = true;
         ApplyBoxChrome();
     }
@@ -340,7 +345,7 @@ public class Select : TemplatedControl
             _display.IsVisible = !resting;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant);
 
         if (_helper is not null)
         {
@@ -384,20 +389,34 @@ public class Select : TemplatedControl
         UpdateLabel();
     }
 
-    private Control BuildItemContent(SelectItem item)
+    private ListItem BuildItemRow(SelectItem item)
+    {
+        var row = new ListItem { MinWidth = 180 };
+        ApplyItemRowState(row, item);
+        return row;
+    }
+
+    private void ApplyItemRowState(ListItem row, SelectItem item)
     {
         if (ItemTemplate is not null)
         {
-            return ItemTemplate(item);
+            row.Content = ItemTemplate(item);
+        }
+        else
+        {
+            row.Content = DisplayText(item);
         }
 
-        var selected = MultiSelect && SelectedValues.Any(value => Equals(value, item.Value));
-        return new Text
-        {
-            Text = selected ? $"[x] {DisplayText(item)}" : DisplayText(item),
-            Color = selected ? LoamColor.Primary : LoamColor.Inherit,
-        };
+        var selected = IsItemSelected(item);
+        row.Icon = selected ? Icons.Material.Filled.Check : null;
+        row.IsSelected = selected;
+        InteractionAssist.SetAutomationName(row, DisplayText(item));
     }
+
+    private bool IsItemSelected(SelectItem item) =>
+        MultiSelect
+            ? SelectedValues.Any(value => Equals(value, item.Value))
+            : Equals(Value, item.Value);
 
     private string DisplayText(SelectItem item) => DisplayTextFunc?.Invoke(item) ?? item.Text ?? item.Value?.ToString() ?? string.Empty;
 

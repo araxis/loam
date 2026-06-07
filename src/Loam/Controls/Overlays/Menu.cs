@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Loam.Controls.Internal;
@@ -18,6 +19,15 @@ public sealed class MenuItem
 
     /// <summary>Invoked when the item is chosen.</summary>
     public Action? OnClick { get; set; }
+
+    /// <summary>Whether the row can be activated.</summary>
+    public bool IsEnabled { get; set; } = true;
+
+    /// <summary>Whether this entry renders as a divider row.</summary>
+    public bool IsDivider { get; set; }
+
+    /// <summary>Optional secondary text, commonly a shortcut hint.</summary>
+    public string? ShortcutText { get; set; }
 }
 
 /// <summary>
@@ -26,6 +36,14 @@ public sealed class MenuItem
 /// </summary>
 public class Menu : Button
 {
+    /// <summary>Identifies the <see cref="CloseOnItemClick"/> property.</summary>
+    public static readonly StyledProperty<bool> CloseOnItemClickProperty =
+        AvaloniaProperty.Register<Menu, bool>(nameof(CloseOnItemClick), true);
+
+    /// <summary>Identifies the <see cref="MenuWidth"/> property.</summary>
+    public static readonly StyledProperty<double> MenuWidthProperty =
+        AvaloniaProperty.Register<Menu, double>(nameof(MenuWidth), 180);
+
     private Flyout? _flyout;
     private IInputElement? _restoreFocus;
 
@@ -34,10 +52,31 @@ public class Menu : Button
     {
         Click += (_, _) => Open();
         InteractionAssist.SetAutomationName(this, Content, "Menu");
+        ApplyAutomationState(false);
     }
 
     /// <summary>The menu items.</summary>
     public ObservableCollection<MenuItem> Items { get; } = new();
+
+    /// <summary>Whether choosing an enabled item closes the menu.</summary>
+    public bool CloseOnItemClick
+    {
+        get => GetValue(CloseOnItemClickProperty);
+        set => SetValue(CloseOnItemClickProperty, value);
+    }
+
+    /// <summary>Minimum width of the opened menu surface.</summary>
+    public double MenuWidth
+    {
+        get => GetValue(MenuWidthProperty);
+        set => SetValue(MenuWidthProperty, value);
+    }
+
+    /// <summary>Opens the menu.</summary>
+    public void OpenMenu() => Open();
+
+    /// <summary>Closes the menu.</summary>
+    public void CloseMenu() => Close();
 
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -51,52 +90,160 @@ public class Menu : Button
 
     private void Open()
     {
+        if (!IsEnabled)
+        {
+            ApplyAutomationState(false);
+            return;
+        }
+
+        Close();
+
         var list = new StackPanel();
+        var rows = new System.Collections.Generic.List<ListItem>();
         ListItem? firstRow = null;
         foreach (var entry in Items)
         {
-            var row = new ListItem { Icon = entry.Icon, Content = entry.Text, MinWidth = 160, Focusable = true };
-            var captured = entry;
-            InteractionAssist.SetAutomationName(row, captured.Text);
-            void Choose()
+            if (entry.IsDivider)
             {
-                captured.OnClick?.Invoke();
-                Close();
+                list.Children.Add(new Divider { Margin = new Thickness(0, 4) });
+                continue;
             }
 
-            row.PointerPressed += (_, _) => Choose();
-            row.KeyDown += (_, args) =>
+            var row = new ListItem
             {
-                if (InteractionAssist.IsActivationKey(args.Key))
+                Icon = entry.Icon,
+                Content = entry.Text,
+                MinWidth = Math.Max(120, MenuWidth - 16),
+                Focusable = entry.IsEnabled,
+                IsEnabled = entry.IsEnabled,
+            };
+            var captured = entry;
+            if (!string.IsNullOrWhiteSpace(captured.ShortcutText))
+            {
+                row.Action = new Text
                 {
-                    Choose();
-                    args.Handled = true;
+                    Text = captured.ShortcutText,
+                    Typo = Typo.LabelMedium,
+                    Color = LoamColor.Default,
+                    Margin = new Thickness(24, 0, 0, 0),
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                };
+            }
+
+            InteractionAssist.SetAutomationName(row, captured.Text, captured.ShortcutText, "Menu item");
+            AutomationProperties.SetHelpText(row, captured.IsEnabled ? "Menu item" : "Disabled menu item");
+            void Choose()
+            {
+                if (!row.IsEnabled)
+                {
+                    return;
                 }
-                else if (args.Key == Key.Escape)
+
+                captured.OnClick?.Invoke();
+                if (CloseOnItemClick)
                 {
                     Close();
-                    args.Handled = true;
                 }
+            }
+
+            row.Activated += (_, _) => Choose();
+            row.KeyDown += (_, args) =>
+            {
+                HandlePopupKey(args, rows, row);
             };
-            firstRow ??= row;
+            if (row.IsEnabled)
+            {
+                rows.Add(row);
+                firstRow ??= row;
+            }
+
             list.Children.Add(row);
         }
 
+        list.KeyDown += (_, args) => HandlePopupKey(args, rows, null);
+
         _restoreFocus = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();
-        var paper = new Paper { Elevation = 8, Padding = new Thickness(0, 8), Content = list };
+        var paper = PopupSurface.MenuPaper(list, MenuWidth);
+        AutomationProperties.SetName(paper, $"{AutomationProperties.GetName(this)} menu");
+        paper.KeyDown += (_, args) => HandlePopupKey(args, rows, null);
         InteractionAssist.ApplyZIndex(paper, LoamTokens.ZIndex(nameof(LoamZIndex.Popover)), LoamZIndex.Default.Popover);
 
-        _flyout = new Flyout
+        var flyout = PopupSurface.Flyout(paper);
+        _flyout = flyout;
+        flyout.Closed += (_, _) =>
         {
-            Content = paper,
-            Placement = PlacementMode.BottomEdgeAlignedLeft,
+            if (ReferenceEquals(_flyout, flyout))
+            {
+                _flyout = null;
+                ApplyAutomationState(false);
+                RestoreFocus();
+            }
         };
-        _flyout.Closed += (_, _) => RestoreFocus();
-        _flyout.ShowAt(this);
+        flyout.ShowAt(this);
+        ApplyAutomationState(true);
         firstRow?.Focus();
     }
 
-    private void Close() => _flyout?.Hide();
+    private void HandlePopupKey(KeyEventArgs args, IReadOnlyList<ListItem> rows, ListItem? current)
+    {
+        if (args.Handled)
+        {
+            return;
+        }
+
+        switch (args.Key)
+        {
+            case Key.Escape:
+                Close();
+                args.Handled = true;
+                break;
+            case Key.Down:
+            case Key.Up:
+                FocusRelativeRow(rows, current, args.Key == Key.Down ? 1 : -1);
+                args.Handled = true;
+                break;
+        }
+    }
+
+    private static void FocusRelativeRow(IReadOnlyList<ListItem> rows, ListItem? current, int direction)
+    {
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        var index = -1;
+        if (current is not null)
+        {
+            for (var i = 0; i < rows.Count; i++)
+            {
+                if (ReferenceEquals(rows[i], current))
+                {
+                    index = i;
+                    break;
+                }
+            }
+        }
+
+        var next = index < 0
+            ? 0
+            : (index + direction + rows.Count) % rows.Count;
+        rows[next].Focus();
+    }
+
+    private void Close()
+    {
+        if (_flyout is null)
+        {
+            ApplyAutomationState(false);
+            return;
+        }
+
+        _flyout.Hide();
+    }
+
+    private void ApplyAutomationState(bool open) =>
+        AutomationProperties.SetHelpText(this, open ? "Open menu" : "Closed menu");
 
     private void RestoreFocus()
     {

@@ -56,9 +56,14 @@ public class Stepper : TemplatedControl
     private ContentControl? _content;
     private Button? _back;
     private Button? _next;
+    private bool _coercing;
 
     /// <summary>Creates the stepper.</summary>
-    public Stepper() => Steps.CollectionChanged += OnStepsChanged;
+    public Stepper()
+    {
+        AutomationProperties.SetName(this, "Stepper");
+        Steps.CollectionChanged += OnStepsChanged;
+    }
 
     /// <summary>The wizard steps.</summary>
     public ObservableCollection<Step> Steps { get; } = new();
@@ -76,7 +81,7 @@ public class Stepper : TemplatedControl
     /// <summary>Advances to the next step, marking the current one complete; finishes on the last step.</summary>
     public void Next()
     {
-        if (Steps.Count == 0)
+        if (!IsEnabled || Steps.Count == 0)
         {
             return;
         }
@@ -100,7 +105,7 @@ public class Stepper : TemplatedControl
     /// <summary>Returns to the previous step.</summary>
     public void Previous()
     {
-        if (ActiveIndex > 0)
+        if (IsEnabled && ActiveIndex > 0)
         {
             ActiveIndex--;
         }
@@ -138,13 +143,26 @@ public class Stepper : TemplatedControl
         base.OnPropertyChanged(change);
         if (change.Property == ActiveIndexProperty)
         {
+            CoerceActiveIndex();
             UpdateActive();
             ShowContent();
             UpdateButtons();
         }
+        else if (change.Property == IsEnabledProperty)
+        {
+            UpdateButtons();
+            Opacity = IsEnabled ? 1 : Controls.Internal.InteractionAssist.DisabledOpacity(this);
+        }
     }
 
-    private void OnStepsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+    private void OnStepsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        Rebuild();
+        CoerceActiveIndex();
+        UpdateActive();
+        ShowContent();
+        UpdateButtons();
+    }
 
     private void Rebuild()
     {
@@ -194,9 +212,34 @@ public class Stepper : TemplatedControl
         UpdateButtons();
     }
 
+    private void CoerceActiveIndex()
+    {
+        if (_coercing)
+        {
+            return;
+        }
+
+        var value = Steps.Count <= 0 ? 0 : Math.Clamp(ActiveIndex, 0, Steps.Count - 1);
+        if (value == ActiveIndex)
+        {
+            return;
+        }
+
+        _coercing = true;
+        try
+        {
+            ActiveIndex = value;
+        }
+        finally
+        {
+            _coercing = false;
+        }
+    }
+
     private void UpdateActive()
     {
-        for (var i = 0; i < _markers.Count; i++)
+        var count = Math.Min(_markers.Count, Steps.Count);
+        for (var i = 0; i < count; i++)
         {
             var (circle, number, check, _) = _markers[i];
             var completed = Steps[i].Completed;
@@ -220,19 +263,26 @@ public class Stepper : TemplatedControl
         {
             _content.Content = Steps[ActiveIndex].Content;
         }
+        else if (_content is not null)
+        {
+            _content.Content = null;
+        }
     }
 
     private void UpdateButtons()
     {
         if (_back is not null)
         {
-            _back.IsEnabled = ActiveIndex > 0;
+            _back.IsEnabled = IsEnabled && ActiveIndex > 0;
         }
 
         if (_next is not null)
         {
             _next.Content = ActiveIndex >= Steps.Count - 1 ? "Finish" : "Next";
+            _next.IsEnabled = IsEnabled && Steps.Count > 0;
             AutomationProperties.SetName(_next, ActiveIndex >= Steps.Count - 1 ? "Finish steps" : "Next step");
         }
+
+        AutomationProperties.SetHelpText(this, Steps.Count == 0 ? "No steps" : $"Step {ActiveIndex + 1} of {Steps.Count}");
     }
 }

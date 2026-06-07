@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Loam.Internal.Templating;
 using Loam.Theming;
@@ -39,6 +40,17 @@ internal static class SliderTheme
                 VerticalAlignment = VerticalAlignment.Center,
             }.Named("PART_Fill", scope);
 
+            var stateLayer = new Border
+            {
+                Width = 40,
+                Height = 40,
+                Background = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center,
+                IsHitTestVisible = false,
+            }.Named("PART_StateLayer", scope);
+            stateLayer.Bind(Border.CornerRadiusProperty, slider.GetResourceObservable(LoamTokens.ShapeFull));
+
             var thumb = new Border
             {
                 Width = 16,
@@ -51,7 +63,7 @@ internal static class SliderTheme
 
             var area = new Panel
             {
-                Children = { track, fill, thumb },
+                Children = { track, fill, stateLayer, thumb },
             }.Named("PART_Area", scope);
             area.Bind(Layoutable.MinHeightProperty, slider.GetResourceObservable(LoamTokens.DensityInteractiveMedium));
             return area;

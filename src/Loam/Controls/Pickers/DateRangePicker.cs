@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Loam.Controls.Internal;
 using Loam.Theming;
@@ -10,7 +11,7 @@ using Loam.Theming;
 namespace Loam.Controls;
 
 /// <summary>
-/// A date-range input, mirroring the reference API's <c>DateRangePicker</c>. An outlined box shows the
+/// A date-range input, mirroring the reference API's <c>DateRangePicker</c>. A variant field shows the
 /// two-way <see cref="Start"/>/<see cref="End"/> dates; clicking opens a <see cref="MonthCalendar"/>
 /// flyout where the first click sets the start and the second the end (auto-ordered).
 /// </summary>
@@ -35,6 +36,10 @@ public class DateRangePicker : TemplatedControl
     /// <summary>Identifies the <see cref="DateFormat"/> property.</summary>
     public static readonly StyledProperty<string> DateFormatProperty =
         AvaloniaProperty.Register<DateRangePicker, string>(nameof(DateFormat), "d");
+
+    /// <summary>Identifies the <see cref="Variant"/> property.</summary>
+    public static readonly StyledProperty<Variant> VariantProperty =
+        AvaloniaProperty.Register<DateRangePicker, Variant>(nameof(Variant), Loam.Variant.Outlined);
 
     /// <summary>Identifies the <see cref="MinDate"/> property.</summary>
     public static readonly StyledProperty<DateTime?> MinDateProperty =
@@ -64,6 +69,18 @@ public class DateRangePicker : TemplatedControl
     public static readonly StyledProperty<bool> ShrinkLabelProperty =
         AvaloniaProperty.Register<DateRangePicker, bool>(nameof(ShrinkLabel));
 
+    /// <summary>Identifies the <see cref="PickerTitle"/> property.</summary>
+    public static readonly StyledProperty<string> PickerTitleProperty =
+        AvaloniaProperty.Register<DateRangePicker, string>(nameof(PickerTitle), "Select range");
+
+    /// <summary>Identifies the <see cref="CancelText"/> property.</summary>
+    public static readonly StyledProperty<string> CancelTextProperty =
+        AvaloniaProperty.Register<DateRangePicker, string>(nameof(CancelText), "Cancel");
+
+    /// <summary>Identifies the <see cref="OkText"/> property.</summary>
+    public static readonly StyledProperty<string> OkTextProperty =
+        AvaloniaProperty.Register<DateRangePicker, string>(nameof(OkText), "OK");
+
     private Border? _box;
     private Border? _labelHost;
     private Text? _display;
@@ -77,6 +94,10 @@ public class DateRangePicker : TemplatedControl
     private IDisposable? _restingLabelForeground;
     private IDisposable? _helperForeground;
     private Flyout? _flyout;
+    private bool _flyoutOpen;
+
+    /// <summary>Raised when the picker commits a range through the generated OK action.</summary>
+    public event Action<DateTime?, DateTime?>? RangeSelected;
 
     /// <summary>Creates the picker.</summary>
     public DateRangePicker()
@@ -119,6 +140,13 @@ public class DateRangePicker : TemplatedControl
     {
         get => GetValue(DateFormatProperty);
         set => SetValue(DateFormatProperty, value);
+    }
+
+    /// <summary>Visual field style: outlined, filled, or text/underline.</summary>
+    public Variant Variant
+    {
+        get => GetValue(VariantProperty);
+        set => SetValue(VariantProperty, value);
     }
 
     /// <summary>First selectable date.</summary>
@@ -170,6 +198,44 @@ public class DateRangePicker : TemplatedControl
         set => SetValue(ShrinkLabelProperty, value);
     }
 
+    /// <summary>Title shown at the top of the range picker flyout.</summary>
+    public string PickerTitle
+    {
+        get => GetValue(PickerTitleProperty);
+        set => SetValue(PickerTitleProperty, value);
+    }
+
+    /// <summary>Text for the generated cancel action.</summary>
+    public string CancelText
+    {
+        get => GetValue(CancelTextProperty);
+        set => SetValue(CancelTextProperty, value);
+    }
+
+    /// <summary>Text for the generated confirmation action.</summary>
+    public string OkText
+    {
+        get => GetValue(OkTextProperty);
+        set => SetValue(OkTextProperty, value);
+    }
+
+    /// <summary>Opens the range picker flyout.</summary>
+    public void OpenPicker() => Open();
+
+    /// <summary>Closes the range picker flyout without changing the selected range.</summary>
+    public void ClosePicker()
+    {
+        _flyout?.Hide();
+        ApplyBoxChrome();
+    }
+
+    /// <summary>Clears the selected start and end dates.</summary>
+    public void Clear()
+    {
+        Start = null;
+        End = null;
+    }
+
     /// <summary>Formats a range for display (null when empty).</summary>
     public static string? Format(DateTime? start, DateTime? end, string format)
     {
@@ -199,10 +265,16 @@ public class DateRangePicker : TemplatedControl
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
             _box.LostFocus += (_, _) => ApplyBoxChrome();
-            _box.PointerPressed += (_, _) =>
+            _box.PointerPressed += (_, args) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 Focus();
                 Open();
+                args.Handled = true;
             };
         }
 
@@ -226,7 +298,7 @@ public class DateRangePicker : TemplatedControl
             UpdateLabel();
         }
 
-        if (change.Property == ColorProperty || change.Property == ErrorProperty ||
+        if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
             ApplyBoxChrome();
@@ -238,6 +310,11 @@ public class DateRangePicker : TemplatedControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (!IsEnabled)
+        {
+            return;
+        }
+
         if (InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
@@ -253,17 +330,41 @@ public class DateRangePicker : TemplatedControl
 
     private void Open()
     {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        _flyout?.Hide();
+
+        var pendingStart = Start;
+        var pendingEnd = End;
+        var preview = new Text
+        {
+            Text = Format(pendingStart, pendingEnd, DateFormat) ?? Placeholder ?? PickerTitle,
+            Typo = Typo.TitleSmall,
+            Color = LoamColor.Default,
+            Margin = new Thickness(24, 0, 24, 8),
+        };
         var calendar = new MonthCalendar
         {
-            SelectedDate = End ?? Start,
-            RangeStart = Start,
-            RangeEnd = End,
+            SelectedDate = pendingEnd ?? pendingStart,
+            RangeStart = pendingStart,
+            RangeEnd = pendingEnd,
             MinDate = MinDate,
             MaxDate = MaxDate,
         };
-        if ((Start ?? End) is { } anchor)
+        if ((pendingStart ?? pendingEnd) is { } anchor)
         {
             calendar.DisplayMonth = new DateTime(anchor.Year, anchor.Month, 1);
+        }
+
+        void SyncPendingDisplay()
+        {
+            preview.Text = Format(pendingStart, pendingEnd, DateFormat) ?? Placeholder ?? PickerTitle;
+            calendar.SelectedDate = pendingEnd ?? pendingStart;
+            calendar.RangeStart = pendingStart;
+            calendar.RangeEnd = pendingEnd;
         }
 
         calendar.DateSelected += picked =>
@@ -273,38 +374,76 @@ public class DateRangePicker : TemplatedControl
                 return;
             }
 
-            if (Start is null || End is not null)
+            if (pendingStart is null || pendingEnd is not null)
             {
-                Start = picked;
-                End = null;
-                calendar.SelectedDate = picked;
-                calendar.RangeStart = Start;
-                calendar.RangeEnd = End;
+                pendingStart = picked;
+                pendingEnd = null;
             }
-            else if (picked < Start)
+            else if (picked < pendingStart)
             {
-                End = Start;
-                Start = picked;
-                calendar.RangeStart = Start;
-                calendar.RangeEnd = End;
-                _flyout?.Hide();
-                ApplyBoxChrome();
+                pendingEnd = pendingStart;
+                pendingStart = picked;
             }
             else
             {
-                End = picked;
-                calendar.RangeStart = Start;
-                calendar.RangeEnd = End;
-                _flyout?.Hide();
-                ApplyBoxChrome();
+                pendingEnd = picked;
             }
+
+            SyncPendingDisplay();
+        };
+
+        var cancel = new Button
+        {
+            Content = CancelText,
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        cancel.Click += (_, _) =>
+        {
+            _flyout?.Hide();
+            ApplyBoxChrome();
+        };
+
+        var ok = new Button
+        {
+            Content = OkText,
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        ok.Click += (_, _) =>
+        {
+            Start = pendingStart;
+            End = pendingEnd;
+            RangeSelected?.Invoke(Start, End);
+            _flyout?.Hide();
+            ApplyBoxChrome();
+        };
+
+        var body = new StackPanel
+        {
+            Spacing = 0,
+            Children = { preview, calendar },
+        };
+        var actions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Children = { cancel, ok },
         };
 
         _flyout = new Flyout
         {
-            Content = new Paper { Elevation = 8, Padding = new Thickness(12), Content = calendar },
+            Content = PopupSurface.PickerPaper(
+                PopupSurface.PickerContent(PickerTitle, body, actions)),
             Placement = PlacementMode.BottomEdgeAlignedLeft,
+            FlyoutPresenterTheme = PopupSurface.FlyoutPresenterTheme,
         };
+        _flyout.Closed += (_, _) =>
+        {
+            _flyoutOpen = false;
+            ApplyBoxChrome();
+        };
+        _flyoutOpen = true;
         _flyout.ShowAt(_box ?? (Control)this);
         ApplyBoxChrome();
     }
@@ -338,7 +477,7 @@ public class DateRangePicker : TemplatedControl
             _display.IsVisible = !resting;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant);
 
         if (_helper is not null)
         {
@@ -376,12 +515,14 @@ public class DateRangePicker : TemplatedControl
             return;
         }
 
-        FieldChrome.Apply(this, _box, Variant.Outlined, Color, Error, IsActive(), IsEnabled,
+        FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
+        _box.IsEnabled = IsEnabled;
+        _box.Cursor = IsEnabled ? new Cursor(StandardCursorType.Hand) : Cursor.Default;
         UpdateLabel();
     }
 
-    private bool IsActive() => IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
 
     private string LabelForegroundKey()
     {

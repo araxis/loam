@@ -1,7 +1,9 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Media;
 using Loam;
 using Loam.Controls.Internal;
@@ -26,10 +28,53 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
         AvaloniaProperty.Register<CheckBox, LoamSize>(nameof(Size), LoamSize.Medium);
 
     private Border? _box;
+    private Border? _stateLayer;
+    private Panel? _visualHost;
     private AvaPath? _check;
     private IDisposable? _boxBackground;
     private IDisposable? _boxBorder;
     private IDisposable? _checkFill;
+    private IDisposable? _stateLayerBackground;
+    private bool _pressed;
+
+    /// <summary>Creates a checkbox with token-driven state feedback.</summary>
+    public CheckBox()
+    {
+        GotFocus += (_, _) => ApplyStateLayer(CurrentState());
+        LostFocus += (_, _) => ApplyStateLayer(CurrentState());
+        PointerEntered += (_, _) => ApplyStateLayer(CurrentState());
+        PointerExited += (_, _) =>
+        {
+            _pressed = false;
+            ApplyStateLayer(CurrentState());
+        };
+        PointerPressed += (_, _) =>
+        {
+            _pressed = true;
+            ApplyStateLayer(CurrentState());
+        };
+        PointerReleased += (_, _) =>
+        {
+            _pressed = false;
+            ApplyStateLayer(CurrentState());
+        };
+        KeyDown += (_, args) =>
+        {
+            if (InteractionAssist.IsActivationKey(args.Key))
+            {
+                _pressed = true;
+                ApplyStateLayer(CurrentState());
+            }
+        };
+        KeyUp += (_, args) =>
+        {
+            if (InteractionAssist.IsActivationKey(args.Key))
+            {
+                _pressed = false;
+                ApplyStateLayer(CurrentState());
+            }
+        };
+    }
 
     /// <summary>Checked color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
@@ -53,8 +98,11 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
     {
         base.OnApplyTemplate(e);
         _box = e.NameScope.Find("PART_Box") as Border;
+        _stateLayer = e.NameScope.Find("PART_StateLayer") as Border;
+        _visualHost = e.NameScope.Find("PART_VisualHost") as Panel;
         _check = e.NameScope.Find("PART_Check") as AvaPath;
         ApplyVisual();
+        ApplyAutomation();
     }
 
     /// <inheritdoc />
@@ -65,14 +113,35 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
             change.Property == SizeProperty || change.Property == IsEnabledProperty)
         {
             ApplyVisual();
+            ApplyStateLayer(CurrentState());
+        }
+
+        if (change.Property == ContentProperty)
+        {
+            ApplyAutomation();
         }
     }
 
     private void ApplyVisual()
     {
-        var size = Size switch { LoamSize.Small => 18d, LoamSize.Large => 24d, _ => 20d };
+        var size = Size switch
+        {
+            LoamSize.ExtraSmall => 16d,
+            LoamSize.Small => 18d,
+            LoamSize.Large => 24d,
+            LoamSize.ExtraLarge => 28d,
+            _ => 20d,
+        };
         var isChecked = IsChecked == true;
+        var isIndeterminate = IsChecked is null;
+        var isSelected = isChecked || isIndeterminate;
         var tokens = SemanticColor.Resolve(Color);
+
+        if (_visualHost is not null)
+        {
+            _visualHost.Width = size;
+            _visualHost.Height = size;
+        }
 
         if (_box is not null)
         {
@@ -82,7 +151,7 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
             _boxBorder?.Dispose();
             _boxBorder = null;
 
-            if (isChecked)
+            if (isSelected)
             {
                 _boxBackground = _box.Bind(Border.BackgroundProperty, this.GetResourceObservable(tokens.Fill));
                 _box.BorderThickness = default;
@@ -99,11 +168,79 @@ public class CheckBox : global::Avalonia.Controls.CheckBox
 
         if (_check is not null)
         {
-            _check.IsVisible = isChecked;
+            _check.IsVisible = isSelected;
+            _check.Data = Geometry.Parse(isIndeterminate ? Icons.Material.Filled.HorizontalRule : Icons.Material.Filled.Check);
+            _check.Margin = isIndeterminate ? new Thickness(4, 0) : new Thickness(3);
             _checkFill?.Dispose();
             _checkFill = _check.Bind(Shape.FillProperty, this.GetResourceObservable(tokens.FillText));
         }
 
         Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+    }
+
+    private string? CurrentState()
+    {
+        if (!IsEnabled)
+        {
+            return null;
+        }
+
+        if (_pressed)
+        {
+            return "Pressed";
+        }
+
+        if (IsFocused)
+        {
+            return "Focus";
+        }
+
+        return IsPointerOver ? "Hover" : null;
+    }
+
+    private void ApplyStateLayer(string? state)
+    {
+        if (_stateLayer is null)
+        {
+            return;
+        }
+
+        _stateLayerBackground?.Dispose();
+        _stateLayerBackground = null;
+        if (state is null)
+        {
+            _stateLayer.Background = Brushes.Transparent;
+            return;
+        }
+
+        _stateLayerBackground = _stateLayer.Bind(Border.BackgroundProperty,
+            this.GetResourceObservable(StateLayerToken(state)));
+    }
+
+    private string StateLayerToken(string state)
+    {
+        var selected = IsChecked == true || IsChecked is null;
+        if (!selected)
+        {
+            return LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state);
+        }
+
+        if (Color.ToPaletteName() is { } paletteName)
+        {
+            return state switch
+            {
+                "Focus" => LoamTokens.PaletteFocus(paletteName),
+                "Pressed" => LoamTokens.PalettePressed(paletteName),
+                _ => LoamTokens.PaletteHover(paletteName),
+            };
+        }
+
+        return LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state);
+    }
+
+    private void ApplyAutomation()
+    {
+        InteractionAssist.SetAutomationName(this, Content, "CheckBox");
+        AutomationProperties.SetHelpText(this, IsThreeState ? "Three-state checkbox" : "Checkbox");
     }
 }

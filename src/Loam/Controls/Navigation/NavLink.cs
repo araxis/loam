@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
@@ -29,6 +30,10 @@ public class NavLink : ContentControl
     /// <summary>Identifies the <see cref="Color"/> property.</summary>
     public static readonly StyledProperty<LoamColor> ColorProperty =
         AvaloniaProperty.Register<NavLink, LoamColor>(nameof(Color), LoamColor.Primary);
+
+    /// <summary>Identifies the <see cref="Label"/> property.</summary>
+    public static readonly StyledProperty<string?> LabelProperty =
+        AvaloniaProperty.Register<NavLink, string?>(nameof(Label));
 
     private Border? _root;
     private Icon? _iconPart;
@@ -65,6 +70,13 @@ public class NavLink : ContentControl
     {
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
+    }
+
+    /// <summary>Accessible label used when visible content is hidden or not descriptive enough.</summary>
+    public string? Label
+    {
+        get => GetValue(LabelProperty);
+        set => SetValue(LabelProperty, value);
     }
 
     /// <summary>Invoked when the entry is clicked. Mirrors the reference API's <c>OnClick</c>.</summary>
@@ -107,7 +119,7 @@ public class NavLink : ContentControl
         {
             ApplyState();
         }
-        else if (change.Property == ContentProperty)
+        else if (change.Property == ContentProperty || change.Property == LabelProperty)
         {
             UpdateAutomation();
         }
@@ -218,10 +230,17 @@ public class NavLink : ContentControl
         }
     }
 
-    private void UpdateAutomation() => InteractionAssist.SetAutomationName(this, Content, Href);
+    private void UpdateAutomation() => InteractionAssist.SetAutomationName(this, Label, Content, Href);
 }
 
 /// <summary>A vertical container of <see cref="NavLink"/>s, mirroring the reference API's <c>NavMenu</c>.</summary>
 public class NavMenu : StackPanel
 {
+    /// <summary>Creates the navigation menu.</summary>
+    public NavMenu()
+    {
+        Orientation = Avalonia.Layout.Orientation.Vertical;
+        Spacing = 2;
+        AutomationProperties.SetName(this, "Navigation menu");
+    }
 }

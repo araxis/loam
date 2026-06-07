@@ -19,6 +19,9 @@ as the built-in field-style inputs.
 Use it when you are composing a custom editor that should visually line up with `TextField`,
 `NumericField`, `Select`, and the pickers.
 
+Use `FieldEditor.MakeChromeless` when hosting a plain Avalonia `TextBox` so the outer `Field`
+owns the background, border, and focus outline.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -37,18 +40,13 @@ Use it when you are composing a custom editor that should visually line up with 
 ```csharp
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Loam;
 using Loam.Controls;
 
-var rawInput = new TextBox
+var rawInput = FieldEditor.MakeChromeless(new TextBox
 {
     PlaceholderText = "(555) 123-4567",
-    BorderBrush = Brushes.Transparent,
-    BorderThickness = default,
-    Background = Brushes.Transparent,
-    Padding = default,
-};
+});
 
 var phone = new Field
 {
@@ -105,6 +103,7 @@ on focus and switches to the error color when `Error` is set. Validates automati
 | **Method** `Validate()` | `string?` | — | Runs Required + custom validation, sets `Error`/`ErrorText`, returns the error or `null`. |
 
 ```csharp
+using Avalonia.Layout;
 using Loam;
 using Loam.Controls;
 
@@ -552,21 +551,50 @@ chips. The `FilesSelected` event fires after each successful pick.
 
 | Member | Type | Default | Description |
 |---|---|---|---|
+| `Label` | `string?` | `null` | Optional generated label shown above the picker button. |
+| `HelperText` | `string?` | `null` | Optional generated helper text below the picker/chips. |
+| `EmptyText` | `string?` | `"No files selected"` | Status text shown before files are selected. |
+| `SelectedTextFormat` | `string` | `"{0} files selected"` | Status format after selection; receives count and joined file names. |
 | `ButtonText` | `string` | `"Upload files"` | Caption of the picker button. |
+| `ButtonIcon` | `string?` | upload icon | Leading icon for the picker button. |
+| `Variant` | `Variant` | `Outlined` | Visual style for the generated picker button. |
+| `Color` | `LoamColor` | `Primary` | Semantic color for the generated picker button. |
+| `Size` | `LoamSize` | `Medium` | Size for the picker button, generated chips, and clear action. |
 | `AllowMultiple` | `bool` | `true` | Whether multiple files may be selected. |
+| `AcceptedFileTypes` | `IReadOnlyList<FilePickerFileType>?` | `null` | Optional platform file picker filters. |
+| `ShowRemoveButtons` | `bool` | `false` | Whether generated file chips show a remove affordance. |
+| `ShowClearButton` | `bool` | `false` | Whether to render a generated clear action after selected chips. |
+| `ClearText` | `string` | `"Clear"` | Text for the generated clear action. |
+| `SelectedFileIcon` | `string?` | document icon | Leading icon for generated selected-file chips. |
 | `Files` | `IReadOnlyList<IStorageFile>` | empty | Last picked files (read-only). |
 | `FileNames` | `IReadOnlyList<string>` | empty | Display names of the current selection (read-only). |
 | **Event** `FilesSelected` | `Action<IReadOnlyList<IStorageFile>>?` | — | Raised after a successful pick. |
+| **Event** `FileRemoved` | `Action<string>?` | — | Raised when a generated file chip is removed. |
+| **Event** `SelectionCleared` | `EventHandler?` | — | Raised when the generated clear action or `Clear()` clears the selection. |
 | **Method** `ShowSelection(names)` | `void` | — | Manually sets the displayed chip list without re-opening the picker. |
 | **Method** `Clear()` | `void` | — | Clears `Files`, `FileNames`, and the chip display. |
 
+When `FileUpload` is disabled, the generated picker button, selected-file chips, and clear action
+are disabled together. Programmatic methods such as `ShowSelection()` and `Clear()` remain usable for
+restoring or resetting application state.
+
 ```csharp
+using Loam;
 using Loam.Controls;
 
 var upload = new FileUpload
 {
-    ButtonText    = "Choose images",
-    AllowMultiple = true,
+    Label              = "Evidence",
+    HelperText         = "Attach documents for review.",
+    EmptyText          = "No evidence attached",
+    SelectedTextFormat = "{0} files selected",
+    ButtonText         = "Choose images",
+    Variant            = Variant.Outlined,
+    Color              = LoamColor.Primary,
+    Size               = LoamSize.Medium,
+    AllowMultiple      = true,
+    ShowRemoveButtons  = true,
+    ShowClearButton    = true,
 };
 upload.FilesSelected += files =>
 {
@@ -579,8 +607,9 @@ upload.FilesSelected += files =>
 
 ## Form
 
-Lightweight form container equivalent to the reference API's `Form`. Wraps any layout panel in a `Decorator`
-and provides a single `Validate()` call that walks visual descendants, triggers each `TextField`'s
+Lightweight form container equivalent to the reference API's `Form`. Wraps any layout panel in a
+`Decorator`, or generates a standard stacked form from `Children`, title/subtitle text, helper/status
+text, and generated actions. `Validate()` walks visual descendants, triggers each `TextField`'s
 validation, and sets `IsValid`.
 
 ### Properties and methods
@@ -588,16 +617,35 @@ validation, and sets `IsValid`.
 | Member | Type | Default | Description |
 |---|---|---|---|
 | `Child` | `Control?` | `null` | The content containing input controls (inherited from `Decorator`). |
+| `Title` / `Subtitle` | `string?` | `null` | Optional generated form heading and supporting copy. |
+| `HelperText` | `string?` | `null` | Neutral status text shown before submit or after reset. |
+| `SuccessText` / `ErrorText` | `string?` | `null` | Status text shown after generated submit succeeds or fails. |
+| `Children` | `AvaloniaList<Control>` | empty | Fields rendered in the generated vertical layout. |
+| `Actions` | `AvaloniaList<Control>` | empty | Extra action controls rendered before generated submit/reset buttons. |
+| `Spacing` | `double` | `16` | Vertical spacing between generated form sections and fields. |
+| `ActionSpacing` | `double` | `10` | Horizontal spacing between generated actions. |
+| `FieldWidth` | `double` | `360` | Default width applied to generated fields that do not already set `Width`. |
+| `SubmitText` / `ResetText` | `string?` | `null` | Optional generated submit and reset buttons. |
+| `SubmitIcon` / `ResetIcon` | `string?` | `null` | Optional leading icons for generated submit/reset buttons. |
+| `ActionSize` | `LoamSize` | `Medium` | Size for generated submit/reset buttons. |
+| `SubmitVariant` / `ResetVariant` | `Variant` | `Filled` / `Text` | Visual styles for generated submit/reset buttons. |
+| `SubmitColor` / `ResetColor` | `LoamColor` | `Primary` / `Primary` | Semantic colors for generated submit/reset buttons. |
+| `ActionsHorizontalAlignment` | `HorizontalAlignment` | `Left` | Alignment for the generated action row. |
 | `IsValid` | `bool` | `true` | `true` after `Validate()` if all `TextField` descendants passed. |
+| **Event** `Submitted` | `EventHandler?` | — | Raised after the generated submit action validates the form. |
+| **Event** `Reset` | `EventHandler?` | — | Raised after the generated reset action clears generated text fields. |
 | **Method** `Validate()` | `bool` | — | Runs `TextField.Validate()` on every descendant; returns `true` when all pass and updates `IsValid`. |
+| **Method** `ResetFields()` | `void` | — | Clears generated text fields and validation state. |
 
 > `Form` currently validates `TextField` descendants only (including `MaskedTextField`). `NumericField`,
 > `Select`, and other controls are not automatically validated by `Form.Validate()`.
 
+When `Form` is disabled, generated submit/reset actions are disabled and their handlers are
+suppressed. Programmatic `Validate()` and `ResetFields()` remain available for application workflows.
+
 ```csharp
 using Loam;
 using Loam.Controls;
-using Avalonia.Controls;
 
 var nameField  = new TextField { Label = "Name",  Required = true };
 var emailField = new TextField
@@ -609,16 +657,28 @@ var emailField = new TextField
 
 var form = new Form
 {
-    Child = new StackPanel
-    {
-        Spacing  = 16,
-        Children = { nameField, emailField },
-    },
+    Title = "Project access",
+    Subtitle = "Validate required fields before inviting a collaborator.",
+    HelperText = "Fill the required fields and validate.",
+    SuccessText = "Ready to submit.",
+    ErrorText = "Review the highlighted fields.",
+    FieldWidth = 360,
+    SubmitText = "Validate",
+    ResetText = "Reset",
+    SubmitIcon = Icons.Material.Filled.Check,
+    ResetIcon = Icons.Material.Filled.Close,
+    ActionSize = LoamSize.Small,
+    SubmitVariant = Variant.Filled,
+    ResetVariant = Variant.Outlined,
+    ActionsHorizontalAlignment = HorizontalAlignment.Right,
+    Children = { nameField, emailField },
 };
 
-// On submit:
-if (form.Validate())
+form.Submitted += (_, _) =>
 {
-    // all fields are valid
-}
+    if (form.IsValid)
+    {
+        // all fields are valid
+    }
+};
 ```

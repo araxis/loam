@@ -1,11 +1,13 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Loam;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -178,6 +180,7 @@ public class NumericField : TemplatedControl
             _textBox.GotFocus += OnFocusChanged;
             _textBox.LostFocus += OnFocusChanged;
             _textBox.TextChanged += OnTextChanged;
+            _textBox.KeyDown += OnTextBoxKeyDown;
         }
 
         if (_up is not null)
@@ -193,6 +196,7 @@ public class NumericField : TemplatedControl
         UpdateText();
         ApplyLabels();
         ApplyChrome();
+        ApplyAutomation();
     }
 
     /// <inheritdoc />
@@ -209,10 +213,17 @@ public class NumericField : TemplatedControl
             }
 
             UpdateText();
+            ApplyAutomation();
         }
         else if (change.Property == FormatProperty)
         {
             UpdateText();
+            ApplyAutomation();
+        }
+        else if (change.Property == MinimumProperty || change.Property == MaximumProperty ||
+                 change.Property == StepProperty || change.Property == LabelProperty)
+        {
+            ApplyAutomation();
         }
         else if (change.Property == VariantProperty || change.Property == ColorProperty ||
                  change.Property == ErrorProperty || change.Property == IsEnabledProperty)
@@ -235,6 +246,25 @@ public class NumericField : TemplatedControl
 
         Value = Clamp(Value + delta, Minimum, Maximum);
         _textBox?.Focus();
+    }
+
+    private void OnTextBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!IsEnabled || e.Handled)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Up)
+        {
+            Bump(Step);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Down)
+        {
+            Bump(-Step);
+            e.Handled = true;
+        }
     }
 
     private void OnTextChanged(object? sender, TextChangedEventArgs e)
@@ -291,7 +321,7 @@ public class NumericField : TemplatedControl
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
-        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, _label?.IsVisible == true);
+        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, _label?.IsVisible == true, Variant);
 
         if (_helper is not null)
         {
@@ -313,5 +343,40 @@ public class NumericField : TemplatedControl
         FieldChrome.Apply(this, _inputBorder, Variant, Color, Error, _focused, IsEnabled,
             ref _borderBrush, ref _background,
             outlinedPadding: new Thickness(12, 10, 4, 10));
+        ApplySpinnerState();
     }
+
+    private void ApplySpinnerState()
+    {
+        foreach (var control in new[] { _up, _down })
+        {
+            if (control is null)
+            {
+                continue;
+            }
+
+            control.IsEnabled = IsEnabled;
+            control.Cursor = IsEnabled ? new Cursor(StandardCursorType.Hand) : null;
+        }
+    }
+
+    private void ApplyAutomation()
+    {
+        InteractionAssist.SetAutomationName(this, Label, "Numeric field");
+        AutomationProperties.SetHelpText(this, $"Value {FormatValue(Value)}");
+
+        if (_up is not null)
+        {
+            InteractionAssist.SetAutomationName(_up, "Increase value");
+            AutomationProperties.SetHelpText(_up, $"Step {Step.ToString(CultureInfo.CurrentCulture)}");
+        }
+
+        if (_down is not null)
+        {
+            InteractionAssist.SetAutomationName(_down, "Decrease value");
+            AutomationProperties.SetHelpText(_down, $"Step {Step.ToString(CultureInfo.CurrentCulture)}");
+        }
+    }
+
+    private string FormatValue(double value) => value.ToString(Format, CultureInfo.CurrentCulture);
 }

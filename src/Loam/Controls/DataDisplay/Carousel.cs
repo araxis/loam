@@ -1,10 +1,13 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Loam;
 using Loam.Controls.Internal;
 using Loam.Theming;
 
@@ -21,8 +24,25 @@ public sealed class CarouselItem
     /// <summary>Creates a slide with content.</summary>
     public CarouselItem(object? content) => Content = content;
 
+    /// <summary>Creates a generated slide with title, subtitle, and semantic color.</summary>
+    public CarouselItem(string title, string? subtitle, LoamColor color = LoamColor.Primary)
+    {
+        Title = title;
+        Subtitle = subtitle;
+        Color = color;
+    }
+
     /// <summary>The slide content (string or any <see cref="Control"/>).</summary>
     public object? Content { get; set; }
+
+    /// <summary>Title used by the generated slide layout when <see cref="Content"/> is empty.</summary>
+    public string? Title { get; set; }
+
+    /// <summary>Supporting text used by the generated slide layout when <see cref="Content"/> is empty.</summary>
+    public string? Subtitle { get; set; }
+
+    /// <summary>Semantic color used by the generated slide layout.</summary>
+    public LoamColor Color { get; set; } = LoamColor.Primary;
 }
 
 /// <summary>
@@ -45,12 +65,22 @@ public class Carousel : TemplatedControl
     public static readonly StyledProperty<bool> ShowBulletsProperty =
         AvaloniaProperty.Register<Carousel, bool>(nameof(ShowBullets), true);
 
+    /// <summary>Identifies the <see cref="AutoPlay"/> property.</summary>
+    public static readonly StyledProperty<bool> AutoPlayProperty =
+        AvaloniaProperty.Register<Carousel, bool>(nameof(AutoPlay));
+
+    /// <summary>Identifies the <see cref="AutoPlayInterval"/> property.</summary>
+    public static readonly StyledProperty<TimeSpan> AutoPlayIntervalProperty =
+        AvaloniaProperty.Register<Carousel, TimeSpan>(nameof(AutoPlayInterval), TimeSpan.FromSeconds(4));
+
     private readonly List<Border> _bullets = new();
     private readonly List<IDisposable?> _bulletBindings = new();
     private ContentControl? _content;
     private StackPanel? _bulletPanel;
     private Control? _prev;
     private Control? _next;
+    private DispatcherTimer? _autoPlayTimer;
+    private bool _attached;
 
     /// <summary>Creates the carousel.</summary>
     public Carousel()
@@ -58,7 +88,11 @@ public class Carousel : TemplatedControl
         Focusable = true;
         Items.CollectionChanged += OnItemsChanged;
         InteractionAssist.SetAutomationName(this, "Carousel");
+        UpdateAutomation();
     }
+
+    /// <summary>Raised after the visible slide index changes.</summary>
+    public event EventHandler<int>? SelectedIndexChanged;
 
     /// <summary>The slides.</summary>
     public ObservableCollection<CarouselItem> Items { get; } = new();
@@ -84,26 +118,67 @@ public class Carousel : TemplatedControl
         set => SetValue(ShowBulletsProperty, value);
     }
 
+    /// <summary>Whether the carousel automatically advances while attached, enabled, and showing at least two slides.</summary>
+    public bool AutoPlay
+    {
+        get => GetValue(AutoPlayProperty);
+        set => SetValue(AutoPlayProperty, value);
+    }
+
+    /// <summary>How often <see cref="AutoPlay"/> advances to the next slide.</summary>
+    public TimeSpan AutoPlayInterval
+    {
+        get => GetValue(AutoPlayIntervalProperty);
+        set => SetValue(AutoPlayIntervalProperty, value);
+    }
+
     /// <summary>Advances to the next slide, wrapping to the first.</summary>
     public void Next()
     {
-        if (Items.Count > 0)
+        if (IsEnabled && Items.Count > 0)
         {
-            SelectedIndex = (SelectedIndex + 1) % Items.Count;
+            GoTo((SelectedIndex + 1) % Items.Count);
         }
     }
 
     /// <summary>Returns to the previous slide, wrapping to the last.</summary>
     public void Previous()
     {
-        if (Items.Count > 0)
+        if (IsEnabled && Items.Count > 0)
         {
-            SelectedIndex = (SelectedIndex - 1 + Items.Count) % Items.Count;
+            GoTo((SelectedIndex - 1 + Items.Count) % Items.Count);
         }
+    }
+
+    /// <summary>Moves to the requested slide index, clamping to the available slides.</summary>
+    public void GoTo(int index)
+    {
+        if (!IsEnabled || Items.Count == 0)
+        {
+            return;
+        }
+
+        SelectedIndex = Math.Clamp(index, 0, Items.Count - 1);
     }
 
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(Carousel);
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _attached = true;
+        UpdateAutoPlay();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        _attached = false;
+        StopAutoPlay();
+    }
 
     /// <inheritdoc />
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -118,10 +193,18 @@ public class Carousel : TemplatedControl
         {
             _prev.Focusable = true;
             InteractionAssist.SetAutomationName(_prev, "Previous slide");
-            _prev.PointerPressed += (_, _) => Previous();
+            if (_prev is global::Avalonia.Controls.Button previousButton)
+            {
+                previousButton.Click += (_, _) => Previous();
+            }
+            else
+            {
+                _prev.PointerPressed += (_, _) => Previous();
+            }
+
             _prev.KeyDown += (_, args) =>
             {
-                if (InteractionAssist.IsActivationKey(args.Key))
+                if (IsEnabled && InteractionAssist.IsActivationKey(args.Key))
                 {
                     Previous();
                     args.Handled = true;
@@ -133,10 +216,18 @@ public class Carousel : TemplatedControl
         {
             _next.Focusable = true;
             InteractionAssist.SetAutomationName(_next, "Next slide");
-            _next.PointerPressed += (_, _) => Next();
+            if (_next is global::Avalonia.Controls.Button nextButton)
+            {
+                nextButton.Click += (_, _) => Next();
+            }
+            else
+            {
+                _next.PointerPressed += (_, _) => Next();
+            }
+
             _next.KeyDown += (_, args) =>
             {
-                if (InteractionAssist.IsActivationKey(args.Key))
+                if (IsEnabled && InteractionAssist.IsActivationKey(args.Key))
                 {
                     Next();
                     args.Handled = true;
@@ -155,10 +246,19 @@ public class Carousel : TemplatedControl
         {
             ShowContent();
             UpdateBullets();
+            UpdateAutomation();
+            SelectedIndexChanged?.Invoke(this, SelectedIndex);
         }
-        else if (change.Property == ShowArrowsProperty || change.Property == ShowBulletsProperty)
+        else if (change.Property == ShowArrowsProperty || change.Property == ShowBulletsProperty ||
+                 change.Property == IsEnabledProperty)
         {
+            Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
             UpdateChrome();
+            UpdateAutoPlay();
+        }
+        else if (change.Property == AutoPlayProperty || change.Property == AutoPlayIntervalProperty)
+        {
+            UpdateAutoPlay();
         }
     }
 
@@ -166,7 +266,7 @@ public class Carousel : TemplatedControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (e.Handled || Items.Count == 0)
+        if (e.Handled || !IsEnabled || Items.Count == 0)
         {
             return;
         }
@@ -209,12 +309,18 @@ public class Carousel : TemplatedControl
                     Focusable = true,
                 };
                 var index = i;
-                bullet.PointerPressed += (_, _) => SelectedIndex = index;
+                bullet.PointerPressed += (_, _) =>
+                {
+                    if (IsEnabled)
+                    {
+                        GoTo(index);
+                    }
+                };
                 bullet.KeyDown += (_, args) =>
                 {
-                    if (InteractionAssist.IsActivationKey(args.Key))
+                    if (IsEnabled && InteractionAssist.IsActivationKey(args.Key))
                     {
-                        SelectedIndex = index;
+                        GoTo(index);
                         args.Handled = true;
                     }
                 };
@@ -228,6 +334,8 @@ public class Carousel : TemplatedControl
         ShowContent();
         UpdateBullets();
         UpdateChrome();
+        UpdateAutomation();
+        UpdateAutoPlay();
     }
 
     private void ShowContent()
@@ -239,7 +347,14 @@ public class Carousel : TemplatedControl
 
         if (Items.Count == 0)
         {
-            _content.Content = null;
+            _content.Content = new Text
+            {
+                Text = "No slides",
+                Color = LoamColor.Secondary,
+                Typo = Typo.Body2,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            };
             if (SelectedIndex != 0)
             {
                 SelectedIndex = 0;
@@ -257,8 +372,66 @@ public class Carousel : TemplatedControl
 
         if (SelectedIndex >= 0 && SelectedIndex < Items.Count)
         {
-            _content.Content = Items[SelectedIndex].Content;
+            _content.Content = BuildSlideContent(Items[SelectedIndex]);
         }
+    }
+
+    private Control BuildSlideContent(CarouselItem item)
+    {
+        if (item.Content is Control control)
+        {
+            return control;
+        }
+
+        if (item.Content is not null)
+        {
+            return new ContentControl { Content = item.Content };
+        }
+
+        var title = string.IsNullOrWhiteSpace(item.Title) ? $"Slide {SelectedIndex + 1}" : item.Title;
+        var tokens = SemanticColor.Resolve(item.Color);
+        var titleText = new Text
+        {
+            Text = title,
+            Typo = Typo.H6,
+            Color = LoamColor.Inherit,
+            TextWrapping = TextWrapping.Wrap,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+        };
+        titleText.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(tokens.FillText));
+
+        var stack = new StackPanel
+        {
+            Spacing = 6,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            Children = { titleText },
+        };
+
+        if (!string.IsNullOrWhiteSpace(item.Subtitle))
+        {
+            var subtitleText = new Text
+            {
+                Text = item.Subtitle,
+                Typo = Typo.Body2,
+                Color = LoamColor.Inherit,
+                Opacity = 0.82,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            };
+            subtitleText.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(tokens.FillText));
+            stack.Children.Add(subtitleText);
+        }
+
+        var surface = new Border
+        {
+            Child = stack,
+            Padding = new Thickness(56, 24),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch,
+        };
+        surface.Bind(Border.BackgroundProperty, this.GetResourceObservable(tokens.Fill));
+        return surface;
     }
 
     private void UpdateBullets()
@@ -266,6 +439,8 @@ public class Carousel : TemplatedControl
         for (var i = 0; i < _bullets.Count; i++)
         {
             _bulletBindings[i]?.Dispose();
+            _bullets[i].IsEnabled = IsEnabled;
+            AutomationProperties.SetHelpText(_bullets[i], i == SelectedIndex ? "Selected" : "Not selected");
             _bulletBindings[i] = _bullets[i].Bind(Border.BackgroundProperty, this.GetResourceObservable(
                 i == SelectedIndex ? LoamTokens.Primary : LoamTokens.Palette(nameof(LoamPalette.GrayLight))));
         }
@@ -276,11 +451,13 @@ public class Carousel : TemplatedControl
         if (_prev is not null)
         {
             _prev.IsVisible = ShowArrows;
+            _prev.IsEnabled = IsEnabled && Items.Count > 0;
         }
 
         if (_next is not null)
         {
             _next.IsVisible = ShowArrows;
+            _next.IsEnabled = IsEnabled && Items.Count > 0;
         }
 
         if (_bulletPanel is not null)
@@ -288,4 +465,36 @@ public class Carousel : TemplatedControl
             _bulletPanel.IsVisible = ShowBullets;
         }
     }
+
+    private void UpdateAutomation()
+    {
+        AutomationProperties.SetHelpText(this, Items.Count == 0 ? "No slides" : $"Slide {SelectedIndex + 1} of {Items.Count}");
+    }
+
+    private void UpdateAutoPlay()
+    {
+        StopAutoPlay();
+        if (!_attached || !AutoPlay || !IsEnabled || Items.Count < 2 || AutoPlayInterval <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        _autoPlayTimer = new DispatcherTimer { Interval = AutoPlayInterval };
+        _autoPlayTimer.Tick += OnAutoPlayTick;
+        _autoPlayTimer.Start();
+    }
+
+    private void StopAutoPlay()
+    {
+        if (_autoPlayTimer is null)
+        {
+            return;
+        }
+
+        _autoPlayTimer.Stop();
+        _autoPlayTimer.Tick -= OnAutoPlayTick;
+        _autoPlayTimer = null;
+    }
+
+    private void OnAutoPlayTick(object? sender, EventArgs e) => Next();
 }

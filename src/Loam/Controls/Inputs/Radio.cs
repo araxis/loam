@@ -1,6 +1,8 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Media;
 using Loam;
 using Loam.Controls.Internal;
@@ -29,8 +31,51 @@ public class Radio : RadioButton
 
     private Border? _ring;
     private Border? _dot;
+    private Border? _stateLayer;
+    private Panel? _visualHost;
     private IDisposable? _ringBorder;
     private IDisposable? _dotBackground;
+    private IDisposable? _stateLayerBackground;
+    private bool _pressed;
+
+    /// <summary>Creates a radio button with token-driven state feedback.</summary>
+    public Radio()
+    {
+        GotFocus += (_, _) => ApplyStateLayer(CurrentState());
+        LostFocus += (_, _) => ApplyStateLayer(CurrentState());
+        PointerEntered += (_, _) => ApplyStateLayer(CurrentState());
+        PointerExited += (_, _) =>
+        {
+            _pressed = false;
+            ApplyStateLayer(CurrentState());
+        };
+        PointerPressed += (_, _) =>
+        {
+            _pressed = true;
+            ApplyStateLayer(CurrentState());
+        };
+        PointerReleased += (_, _) =>
+        {
+            _pressed = false;
+            ApplyStateLayer(CurrentState());
+        };
+        KeyDown += (_, args) =>
+        {
+            if (InteractionAssist.IsActivationKey(args.Key))
+            {
+                _pressed = true;
+                ApplyStateLayer(CurrentState());
+            }
+        };
+        KeyUp += (_, args) =>
+        {
+            if (InteractionAssist.IsActivationKey(args.Key))
+            {
+                _pressed = false;
+                ApplyStateLayer(CurrentState());
+            }
+        };
+    }
 
     /// <summary>Selected color. Mirrors the reference API's <c>Color</c>.</summary>
     public LoamColor Color
@@ -62,7 +107,10 @@ public class Radio : RadioButton
         base.OnApplyTemplate(e);
         _ring = e.NameScope.Find("PART_Ring") as Border;
         _dot = e.NameScope.Find("PART_Dot") as Border;
+        _stateLayer = e.NameScope.Find("PART_StateLayer") as Border;
+        _visualHost = e.NameScope.Find("PART_VisualHost") as Panel;
         ApplyVisual();
+        ApplyAutomation();
     }
 
     /// <inheritdoc />
@@ -73,14 +121,34 @@ public class Radio : RadioButton
             change.Property == SizeProperty || change.Property == IsEnabledProperty)
         {
             ApplyVisual();
+            ApplyStateLayer(CurrentState());
+            ApplyAutomation();
+        }
+
+        if (change.Property == ContentProperty || change.Property == ValueProperty)
+        {
+            ApplyAutomation();
         }
     }
 
     private void ApplyVisual()
     {
-        var size = Size switch { LoamSize.Small => 16d, LoamSize.Large => 24d, _ => 20d };
+        var size = Size switch
+        {
+            LoamSize.ExtraSmall => 16d,
+            LoamSize.Small => 18d,
+            LoamSize.Large => 24d,
+            LoamSize.ExtraLarge => 28d,
+            _ => 20d,
+        };
         var isChecked = IsChecked == true;
         var tokens = SemanticColor.Resolve(Color);
+
+        if (_visualHost is not null)
+        {
+            _visualHost.Width = size;
+            _visualHost.Height = size;
+        }
 
         if (_ring is not null)
         {
@@ -105,5 +173,70 @@ public class Radio : RadioButton
         }
 
         Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+    }
+
+    private string? CurrentState()
+    {
+        if (!IsEnabled)
+        {
+            return null;
+        }
+
+        if (_pressed)
+        {
+            return "Pressed";
+        }
+
+        if (IsFocused)
+        {
+            return "Focus";
+        }
+
+        return IsPointerOver ? "Hover" : null;
+    }
+
+    private void ApplyStateLayer(string? state)
+    {
+        if (_stateLayer is null)
+        {
+            return;
+        }
+
+        _stateLayerBackground?.Dispose();
+        _stateLayerBackground = null;
+        if (state is null)
+        {
+            _stateLayer.Background = Brushes.Transparent;
+            return;
+        }
+
+        _stateLayerBackground = _stateLayer.Bind(Border.BackgroundProperty,
+            this.GetResourceObservable(StateLayerToken(state)));
+    }
+
+    private string StateLayerToken(string state)
+    {
+        if (IsChecked != true)
+        {
+            return LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state);
+        }
+
+        if (Color.ToPaletteName() is { } paletteName)
+        {
+            return state switch
+            {
+                "Focus" => LoamTokens.PaletteFocus(paletteName),
+                "Pressed" => LoamTokens.PalettePressed(paletteName),
+                _ => LoamTokens.PaletteHover(paletteName),
+            };
+        }
+
+        return LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state);
+    }
+
+    private void ApplyAutomation()
+    {
+        InteractionAssist.SetAutomationName(this, Content, Value, "Radio");
+        AutomationProperties.SetHelpText(this, IsChecked == true ? "Radio selected" : "Radio unselected");
     }
 }

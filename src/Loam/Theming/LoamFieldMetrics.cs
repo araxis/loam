@@ -32,7 +32,7 @@ public sealed record LoamFieldMetrics
     /// <summary>Horizontal label offset inside the outline notch.</summary>
     public double LabelX { get; init; } = 12;
 
-    /// <summary>Top margin applied when a floating label creates a notch.</summary>
+    /// <summary>Top space reserved when an outlined floating label creates a notch.</summary>
     public double FloatingLabelTopMargin { get; init; } = 7;
 
     /// <summary>Horizontal padding around the floating label text.</summary>

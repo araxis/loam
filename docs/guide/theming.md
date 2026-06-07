@@ -67,7 +67,7 @@ Loam controls use the same theme-aware knobs:
 - **`Color` (`LoamColor`)** — semantic roles: `Primary`, `Secondary`, `Tertiary`, `Info`, `Success`,
   `Warning`, `Error`, `Dark`, plus `Default`/`Inherit`/`Transparent`.
 - **`Variant`** — `Filled`, `Outlined`, `Text`.
-- **`Size` (`LoamSize`)** — `Small`, `Medium`, `Large`.
+- **`Size` (`LoamSize`)** — `ExtraSmall`, `Small`, `Medium`, `Large`, `ExtraLarge`.
 - **`Typo`** — display/headline/title/body/label roles in large/medium/small sizes. The older
   `H1`–`H6`, `Subtitle1/2`, `Body1/2`, `Button`, `Caption`, and `Overline` values remain aliases.
 

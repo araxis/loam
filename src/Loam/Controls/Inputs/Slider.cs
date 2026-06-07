@@ -1,7 +1,9 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Media;
 using Loam;
 using Loam.Controls.Internal;
 using Loam.Theming;
@@ -31,13 +33,17 @@ public class Slider : TemplatedControl
         AvaloniaProperty.Register<Slider, LoamColor>(nameof(Color), LoamColor.Primary);
 
     private const double ThumbSize = 16;
+    private const double StateLayerSize = 40;
 
     private Panel? _area;
     private Border? _fill;
     private Border? _thumb;
+    private Border? _stateLayer;
     private bool _dragging;
+    private bool _pressed;
     private IDisposable? _fillBackground;
     private IDisposable? _thumbBackground;
+    private IDisposable? _stateLayerBackground;
 
     /// <summary>Creates the slider.</summary>
     public Slider()
@@ -45,6 +51,10 @@ public class Slider : TemplatedControl
         Focusable = true;
         Cursor = new Cursor(StandardCursorType.Hand);
         InteractionAssist.SetAutomationName(this, "Slider");
+        ApplyAutomation();
+
+        GotFocus += (_, _) => ApplyStateLayer(CurrentState());
+        LostFocus += (_, _) => ApplyStateLayer(CurrentState());
     }
 
     /// <summary>The current value (two-way). Mirrors the reference API's <c>Value</c>.</summary>
@@ -89,11 +99,20 @@ public class Slider : TemplatedControl
         _area = e.NameScope.Find("PART_Area") as Panel;
         _fill = e.NameScope.Find("PART_Fill") as Border;
         _thumb = e.NameScope.Find("PART_Thumb") as Border;
+        _stateLayer = e.NameScope.Find("PART_StateLayer") as Border;
 
         if (_area is not null)
         {
             _area.Focusable = true;
             _area.Cursor = Cursor;
+            _area.PointerEntered += (_, _) => ApplyStateLayer(CurrentState());
+            _area.PointerExited += (_, _) =>
+            {
+                _pressed = false;
+                ApplyStateLayer(CurrentState());
+            };
+            _area.GotFocus += (_, _) => ApplyStateLayer(CurrentState());
+            _area.LostFocus += (_, _) => ApplyStateLayer(CurrentState());
             _area.PointerPressed += OnPointerPressed;
             _area.PointerMoved += OnPointerMoved;
             _area.PointerReleased += OnPointerReleased;
@@ -102,6 +121,7 @@ public class Slider : TemplatedControl
         ApplyColors();
         ApplyEnabledState();
         UpdatePositions();
+        ApplyStateLayer(CurrentState());
     }
 
     /// <inheritdoc />
@@ -112,14 +132,17 @@ public class Slider : TemplatedControl
             change.Property == MaximumProperty || change.Property == BoundsProperty)
         {
             UpdatePositions();
+            ApplyAutomation();
         }
         else if (change.Property == ColorProperty)
         {
             ApplyColors();
+            ApplyStateLayer(CurrentState());
         }
         else if (change.Property == IsEnabledProperty)
         {
             ApplyEnabledState();
+            ApplyStateLayer(CurrentState());
         }
     }
 
@@ -136,21 +159,25 @@ public class Slider : TemplatedControl
         {
             Value = ClampValue(Value + KeyboardStep());
             e.Handled = true;
+            ApplyStateLayer(CurrentState());
         }
         else if (InteractionAssist.IsDecrementKey(e.Key))
         {
             Value = ClampValue(Value - KeyboardStep());
             e.Handled = true;
+            ApplyStateLayer(CurrentState());
         }
         else if (e.Key == Key.Home)
         {
             Value = Minimum;
             e.Handled = true;
+            ApplyStateLayer(CurrentState());
         }
         else if (e.Key == Key.End)
         {
             Value = Maximum;
             e.Handled = true;
+            ApplyStateLayer(CurrentState());
         }
     }
 
@@ -190,9 +217,72 @@ public class Slider : TemplatedControl
         {
             _thumb.Margin = new Thickness(Math.Clamp(x - (ThumbSize / 2), 0, Math.Max(0, width - ThumbSize)), 0, 0, 0);
         }
+
+        if (_stateLayer is not null)
+        {
+            _stateLayer.Margin = new Thickness(
+                Math.Clamp(x - (StateLayerSize / 2), 0, Math.Max(0, width - StateLayerSize)),
+                0,
+                0,
+                0);
+        }
     }
 
     private void ApplyEnabledState() => Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+
+    private string? CurrentState()
+    {
+        if (!IsEnabled)
+        {
+            return null;
+        }
+
+        if (_pressed || _dragging)
+        {
+            return "Pressed";
+        }
+
+        if (IsFocused || _area?.IsFocused == true)
+        {
+            return "Focus";
+        }
+
+        return IsPointerOver || _area?.IsPointerOver == true ? "Hover" : null;
+    }
+
+    private void ApplyStateLayer(string? state)
+    {
+        if (_stateLayer is null)
+        {
+            return;
+        }
+
+        _stateLayerBackground?.Dispose();
+        _stateLayerBackground = null;
+        if (state is null)
+        {
+            _stateLayer.Background = Brushes.Transparent;
+            return;
+        }
+
+        _stateLayerBackground = _stateLayer.Bind(Border.BackgroundProperty,
+            this.GetResourceObservable(StateLayerToken(state)));
+    }
+
+    private string StateLayerToken(string state)
+    {
+        if (Color.ToPaletteName() is { } paletteName)
+        {
+            return state switch
+            {
+                "Focus" => LoamTokens.PaletteFocus(paletteName),
+                "Pressed" => LoamTokens.PalettePressed(paletteName),
+                _ => LoamTokens.PaletteHover(paletteName),
+            };
+        }
+
+        return LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state);
+    }
 
     private double KeyboardStep()
     {
@@ -222,9 +312,11 @@ public class Slider : TemplatedControl
         }
 
         _dragging = true;
+        _pressed = true;
         Focus();
         e.Pointer.Capture(_area);
         SetValueFromPointer(e);
+        ApplyStateLayer(CurrentState());
     }
 
     private void OnPointerMoved(object? sender, PointerEventArgs e)
@@ -238,6 +330,14 @@ public class Slider : TemplatedControl
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         _dragging = false;
+        _pressed = false;
         e.Pointer.Capture(null);
+        ApplyStateLayer(CurrentState());
+    }
+
+    private void ApplyAutomation()
+    {
+        AutomationProperties.SetName(this, "Slider");
+        AutomationProperties.SetHelpText(this, $"Value {Value:0.##} from {Minimum:0.##} to {Maximum:0.##}");
     }
 }

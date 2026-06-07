@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Loam.Theming;
@@ -26,7 +27,11 @@ public class Divider : Border
     private IDisposable? _brushBinding;
 
     /// <summary>Creates the divider.</summary>
-    public Divider() => Apply();
+    public Divider()
+    {
+        AutomationProperties.SetName(this, "Divider");
+        Apply();
+    }
 
     /// <summary>Renders vertically instead of horizontally. Mirrors the reference API's <c>Vertical</c>.</summary>
     public bool Vertical

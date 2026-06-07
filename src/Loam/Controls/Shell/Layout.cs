@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -24,6 +25,7 @@ public class Layout : ContentControl
     public Layout()
     {
         Focusable = true;
+        AutomationProperties.SetName(this, "Application layout");
     }
 
     /// <summary>The top app bar (typically an <see cref="Controls.AppBar"/>).</summary>

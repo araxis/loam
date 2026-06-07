@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Loam.Controls.Internal;
 using Loam.Theming;
@@ -33,6 +34,7 @@ public class Collapse : Decorator
     public Collapse()
     {
         ClipToBounds = true;
+        AutomationProperties.SetName(this, "Collapse");
         UpdateTransitions();
         UpdateState();
     }
@@ -74,7 +76,7 @@ public class Collapse : Decorator
         {
             UpdateState();
         }
-        else if (change.Property == AnimatedProperty || change.Property == DurationProperty)
+        else if (change.Property == AnimatedProperty || change.Property == DurationProperty || change.Property == IsEnabledProperty)
         {
             UpdateTransitions();
             UpdateState();
@@ -83,28 +85,30 @@ public class Collapse : Decorator
 
     private void UpdateTransitions()
     {
-        Transitions = Animated
+        var duration = ResolveDuration();
+        Transitions = ShouldAnimate(duration)
             ? new Transitions
-            {
-                new DoubleTransition
                 {
-                    Property = MaxHeightProperty,
-                    Duration = ResolveDuration(),
-                    Easing = new CubicEaseOut(),
-                },
-            }
+                    new DoubleTransition
+                    {
+                        Property = MaxHeightProperty,
+                        Duration = duration,
+                        Easing = new CubicEaseOut(),
+                    },
+                }
             : null;
     }
 
     private void UpdateState()
     {
         MaxHeight = Expanded ? ResolveExpandedHeight() : 0;
+        AutomationProperties.SetHelpText(this, $"{(Expanded ? "Expanded" : "Collapsed")}, {(ShouldAnimate() ? "animated" : "static")}");
         InvalidateMeasure();
     }
 
     private double ResolveExpandedHeight()
     {
-        if (!Animated || Child is null)
+        if (!ShouldAnimate() || Child is null)
         {
             return double.PositiveInfinity;
         }
@@ -132,4 +136,9 @@ public class Collapse : Decorator
         Duration == DefaultDuration
             ? InteractionAssist.DurationToken(this, LoamTokens.MotionDurationShort3, DefaultDuration)
             : Duration;
+
+    private bool ShouldAnimate() => ShouldAnimate(ResolveDuration());
+
+    private bool ShouldAnimate(TimeSpan duration) =>
+        IsEnabled && Animated && duration > TimeSpan.Zero;
 }

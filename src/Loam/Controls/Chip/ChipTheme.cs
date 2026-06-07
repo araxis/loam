@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Styling;
 using Loam;
 using Loam.Internal.Templating;
@@ -52,7 +53,19 @@ internal static class ChipTheme
                 Children = { icon, text, close },
             };
 
-            var root = new Border { Child = panel }.Named("PART_Root", scope);
+            var stateLayer = new Border
+            {
+                Background = Brushes.Transparent,
+                IsHitTestVisible = false,
+            }.Named("PART_StateLayer", scope);
+
+            var root = new Border
+            {
+                Child = new Panel
+                {
+                    Children = { stateLayer, panel },
+                },
+            }.Named("PART_Root", scope);
             root.Bind(Layoutable.MinHeightProperty, chip.GetResourceObservable(LoamTokens.DensityInteractiveSmall));
             return root;
         });

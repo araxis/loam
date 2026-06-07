@@ -1,8 +1,11 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Loam;
 using Loam.Controls.Internal;
 using Loam.Theming;
@@ -46,6 +49,7 @@ public sealed class DialogService : IDialogService
 
         var dialog = BuildDialog(title, content(instance), options);
         InteractionAssist.SetAutomationName(dialog, title, "Dialog");
+        AutomationProperties.SetHelpText(dialog, options.DismissOnEscape ? "Modal dialog, Escape dismissible" : "Modal dialog, Escape disabled");
 
         var scrim = new Border
         {
@@ -53,16 +57,24 @@ public sealed class DialogService : IDialogService
             VerticalAlignment = VerticalAlignment.Stretch,
             Focusable = true,
         };
+        AutomationProperties.SetName(scrim, "Dialog backdrop");
+        AutomationProperties.SetHelpText(scrim, options.DismissOnScrimClick ? "Click to dismiss" : "Dismiss disabled");
         scrim.Bind(Border.BackgroundProperty, _topLevel.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.OverlayDark))));
         if (options.DismissOnScrimClick)
         {
-            scrim.PointerPressed += (_, _) => instance.Cancel();
+            scrim.PointerPressed += (_, args) =>
+            {
+                instance.Cancel();
+                args.Handled = true;
+            };
         }
 
         root = new Panel { Focusable = true, Children = { scrim, dialog } };
+        AutomationProperties.SetName(root, title ?? "Dialog");
+        AutomationProperties.SetHelpText(root, options.DismissOnEscape ? "Modal layer, Escape dismissible" : "Modal layer, Escape disabled");
         root.KeyDown += (_, args) =>
         {
-            if (args.Key == Key.Escape)
+            if (options.DismissOnEscape && args.Key == Key.Escape)
             {
                 instance.Cancel();
                 args.Handled = true;
@@ -72,7 +84,18 @@ public sealed class DialogService : IDialogService
         root.Bind(Layoutable.WidthProperty, layer.GetObservable(Visual.BoundsProperty, b => b.Width));
         root.Bind(Layoutable.HeightProperty, layer.GetObservable(Visual.BoundsProperty, b => b.Height));
         layer.Children.Add(root);
-        root.Focus();
+        FocusInitial(dialog, root, options.AutoFocus);
+        if (options.AutoFocus)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (root.Parent is not null)
+                {
+                    FocusInitial(dialog, root, autoFocus: true);
+                }
+            });
+        }
+
         return completion.Task;
     }
 
@@ -101,7 +124,7 @@ public sealed class DialogService : IDialogService
 
         if (!string.IsNullOrEmpty(cancelText))
         {
-            var cancel = new Button { Content = cancelText, Variant = Variant.Text, Color = LoamColor.Default };
+            var cancel = new Button { Content = cancelText, Variant = Variant.Text, Color = LoamColor.Primary };
             cancel.Click += (_, _) => instance.Cancel();
             actions.Children.Add(cancel);
         }
@@ -113,7 +136,7 @@ public sealed class DialogService : IDialogService
             actions.Children.Add(no);
         }
 
-        var yes = new Button { Content = yesText, Variant = Variant.Filled, Color = LoamColor.Primary };
+        var yes = new Button { Content = yesText, Variant = Variant.Text, Color = LoamColor.Primary };
         yes.Click += (_, _) => instance.Ok(true);
         actions.Children.Add(yes);
 
@@ -129,7 +152,7 @@ public sealed class DialogService : IDialogService
         var stack = new StackPanel { Spacing = 16 };
         if (!string.IsNullOrEmpty(title))
         {
-            stack.Children.Add(new Text { Text = title, Typo = Typo.H6 });
+            stack.Children.Add(new Text { Text = title, Typo = Typo.HeadlineSmall });
         }
 
         stack.Children.Add(body);
@@ -137,10 +160,12 @@ public sealed class DialogService : IDialogService
         var paper = new Paper
         {
             Elevation = 8,
-            Padding = new Thickness(24),
+            Margin = options.Margin,
+            Padding = options.Padding,
             Content = stack,
-            MinWidth = 280,
-            MaxWidth = 560,
+            MinWidth = options.MinWidth,
+            MaxWidth = options.MaxWidth,
+            MaxHeight = options.MaxHeight,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -154,10 +179,10 @@ public sealed class DialogService : IDialogService
 
     private static StackPanel BuildConfirm(DialogInstance instance, string message, string okText, string cancelText)
     {
-        var cancel = new Button { Content = cancelText, Variant = Variant.Text, Color = LoamColor.Default };
+        var cancel = new Button { Content = cancelText, Variant = Variant.Text, Color = LoamColor.Primary };
         cancel.Click += (_, _) => instance.Cancel();
 
-        var ok = new Button { Content = okText, Variant = Variant.Filled, Color = LoamColor.Primary };
+        var ok = new Button { Content = okText, Variant = Variant.Text, Color = LoamColor.Primary };
         ok.Click += (_, _) => instance.Ok(true);
 
         var actions = new StackPanel
@@ -173,5 +198,22 @@ public sealed class DialogService : IDialogService
             Spacing = 20,
             Children = { new Text { Text = message, Typo = Typo.Body1 }, actions },
         };
+    }
+
+    private static void FocusInitial(Control dialog, InputElement fallback, bool autoFocus)
+    {
+        if (autoFocus)
+        {
+            foreach (var candidate in dialog.GetVisualDescendants().OfType<Control>())
+            {
+                if (candidate.Focusable && candidate.IsEnabled && candidate.IsVisible)
+                {
+                    candidate.Focus();
+                    return;
+                }
+            }
+        }
+
+        fallback.Focus();
     }
 }

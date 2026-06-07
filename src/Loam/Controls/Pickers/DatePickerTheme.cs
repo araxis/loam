@@ -5,6 +5,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Styling;
+using Loam.Controls.Internal;
 using Loam.Internal.Templating;
 using Loam.Theming;
 
@@ -38,15 +39,35 @@ internal static class DatePickerTheme
                 VerticalAlignment = VerticalAlignment.Center,
             }.Named("PART_RestingLabel", scope);
 
-            var display = new Text { Color = LoamColor.Inherit, VerticalAlignment = VerticalAlignment.Center }
+            var display = new Text
+            {
+                Color = LoamColor.Inherit,
+                Typo = Typo.Body1,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+            }
                 .Named("PART_Display", scope);
 
-            var icon = new Icon { Data = Icons.Material.Filled.CalendarToday, Color = LoamColor.Default, VerticalAlignment = VerticalAlignment.Center };
+            var icon = new Icon
+            {
+                Data = Icons.Material.Filled.CalendarToday,
+                Color = LoamColor.Default,
+                Size = LoamSize.Small,
+                Margin = new Thickness(12, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             DockPanel.SetDock(icon, Dock.Right);
 
-            var textLayer = new Avalonia.Controls.Grid { Children = { display, restingLabel } };
+            var textLayer = new Avalonia.Controls.Grid
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Children = { display, restingLabel },
+            };
             var box = new Border
             {
+                MinWidth = PopupSurface.PickerWidth,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = new DockPanel { LastChildFill = true, Children = { icon, textLayer } },
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,

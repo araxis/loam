@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Loam.Controls;
 using Loam.Theming;
 using Shouldly;
@@ -100,6 +101,61 @@ public class ChartTests
         finally
         {
             window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ChartLegend_renders_theme_and_explicit_color_rows()
+    {
+        var legend = new ChartLegend { Labels = { "Planning", "Build", "Review" } };
+        var window = Show(legend, ThemeVariant.Light);
+        try
+        {
+            var swatches = legend.GetVisualDescendants().OfType<Border>()
+                .Where(border => border.Width == 12 && border.Height == 12)
+                .ToList();
+
+            swatches.Count.ShouldBe(3);
+            ((ISolidColorBrush)swatches[0].Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.Primary);
+            ((ISolidColorBrush)swatches[1].Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.Secondary);
+            AutomationProperties.GetName(legend).ShouldBe("Chart legend");
+            AutomationProperties.GetHelpText(legend).ShouldBe("3 items");
+        }
+        finally
+        {
+            window.Close();
+        }
+
+        var colors = new[] { Colors.Red, Colors.Blue };
+        var explicitLegend = new ChartLegend { Colors = colors, Labels = { "A", "B", "C" } };
+        var explicitWindow = Show(explicitLegend, ThemeVariant.Dark);
+        try
+        {
+            var explicitSwatches = explicitLegend.GetVisualDescendants().OfType<Border>()
+                .Where(border => border.Width == 12 && border.Height == 12)
+                .ToList();
+
+            explicitSwatches.Count.ShouldBe(3);
+            ((ISolidColorBrush)explicitSwatches[0].Background!).Color.ShouldBe(Colors.Red);
+            ((ISolidColorBrush)explicitSwatches[2].Background!).Color.ShouldBe(Colors.Red);
+        }
+        finally
+        {
+            explicitWindow.Close();
+        }
+
+        var emptyLegend = new ChartLegend { ShowSwatches = false, Labels = { "No data" } };
+        var emptyWindow = Show(emptyLegend, ThemeVariant.Light);
+        try
+        {
+            emptyLegend.GetVisualDescendants().OfType<Border>()
+                .Where(border => border.Width == 12 && border.Height == 12)
+                .ShouldBeEmpty();
+            AutomationProperties.GetHelpText(emptyLegend).ShouldBe("1 item");
+        }
+        finally
+        {
+            emptyWindow.Close();
         }
     }
 

@@ -2,6 +2,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -72,6 +73,17 @@ public class NavigationTests
         crumbs.GetVisualDescendants().OfType<Link>().Count().ShouldBe(2);
         var current = panel.Children[4].ShouldBeOfType<Loam.Controls.Text>();
         current.Text.ShouldBe("Data");
+        AutomationProperties.GetName(crumbs).ShouldBe("Breadcrumbs");
+    }
+
+    [Fact]
+    public void NavMenu_defaults_to_vertical_spacing_and_automation_name()
+    {
+        var menu = new NavMenu();
+
+        menu.Orientation.ShouldBe(Orientation.Vertical);
+        menu.Spacing.ShouldBe(2d);
+        AutomationProperties.GetName(menu).ShouldBe("Navigation menu");
     }
 
     [AvaloniaFact]
@@ -177,5 +189,20 @@ public class NavigationTests
         group.RaiseEvent(key);
         key.Handled.ShouldBeTrue();
         group.Expanded.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void NavGroup_disabled_does_not_toggle_from_keyboard()
+    {
+        var group = new NavGroup { Title = "Admin", IsEnabled = false };
+        Show(group);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var key = KeyArgs(Key.Enter);
+        group.RaiseEvent(key);
+
+        key.Handled.ShouldBeFalse();
+        group.Expanded.ShouldBeFalse();
     }
 }

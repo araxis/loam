@@ -35,7 +35,14 @@ IDialogService dialogs = DialogService.For(this);
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Width` | `double?` | `null` | Fixed dialog width. When `null` the dialog sizes to content (capped at 560 px). |
+| `MaxWidth` | `double` | `560` | Maximum dialog width. |
+| `MinWidth` | `double` | `280` | Minimum dialog width. |
+| `MaxHeight` | `double` | `double.PositiveInfinity` | Maximum dialog height. |
+| `Margin` | `Thickness` | `new(24)` | Outer spacing from the window edge. |
+| `Padding` | `Thickness` | `new(24)` | Dialog surface padding. |
 | `DismissOnScrimClick` | `bool` | `true` | Whether clicking the backdrop scrim cancels the dialog. |
+| `DismissOnEscape` | `bool` | `true` | Whether pressing Escape cancels the dialog. |
+| `AutoFocus` | `bool` | `true` | Whether the first enabled focusable child receives focus when the dialog opens. |
 
 ### DialogInstance
 
@@ -82,12 +89,17 @@ DialogResult result = await DialogService.For(this).ShowAsync(
     "Edit name",
     instance =>
     {
-        var box = new TextBox { Text = "Current name" };
-        var ok = new Button { Content = "OK" };
-        ok.Click += (_, _) => instance.Ok(box.Text);
-        return new StackPanel { Spacing = 12, Children = { box, ok } };
+        var field = new TextField { Label = "Name", Text = "Current name" };
+        var ok = new Button { Content = "OK", Variant = Variant.Text };
+        ok.Click += (_, _) => instance.Ok(field.Text);
+        return new StackPanel { Spacing = 12, Children = { field, ok } };
     },
-    new DialogOptions { Width = 400 });
+    new DialogOptions
+    {
+        Width = 400,
+        MaxWidth = 520,
+        DismissOnEscape = true,
+    });
 
 if (!result.Canceled)
 {
@@ -99,7 +111,7 @@ if (!result.Canceled)
 
 ## SnackbarService / ISnackbar
 
-Mirrors the reference API's `ISnackbar`. Stacks auto-dismissing `Alert` toasts at the bottom-right of the window's overlay layer. Create an instance with `SnackbarService.For(visual)`.
+Mirrors the reference API's `ISnackbar`. Stacks auto-dismissing snackbar surfaces in the window's overlay layer. Create an instance with `SnackbarService.For(visual)`.
 
 ### Factory
 
@@ -127,6 +139,8 @@ ISnackbar snackbar = SnackbarService.For(this);
 | `ActionText` | `string?` | `null` | Optional action button text. |
 | `Action` | `Action?` | `null` | Invoked when the action button is clicked; the toast then dismisses. |
 | `MaxVisible` | `int?` | `null` | Maximum visible toast count after this toast is added. Uses the service default when null. |
+| `DismissText` | `string?` | `null` | Optional dismiss button text. Escape still dismisses the snackbar. |
+| `Position` | `SnackbarPosition?` | `null` | Optional stack placement for this snackbar. Uses the service default when null. |
 
 ### Example
 
@@ -145,8 +159,17 @@ snackbar.Add(new SnackbarOptions("Item archived")
     Severity = LoamColor.Info,
     ActionText = "Undo",
     Action = () => RestoreItem(),
+    DismissText = "Dismiss",
+    Position = SnackbarPosition.BottomCenter,
     Duration = TimeSpan.FromSeconds(8),
     MaxVisible = 3,
+});
+
+snackbar.Add(new SnackbarOptions("Waiting for approval")
+{
+    Duration = Timeout.InfiniteTimeSpan,
+    DismissText = "Close",
+    Position = SnackbarPosition.TopCenter,
 });
 ```
 
@@ -162,8 +185,8 @@ Mirrors the reference API's `Overlay`. A `ContentControl` that fills its parent 
 |----------|------|---------|-------------|
 | `Visible` | `bool` | `false` | Shows or hides the scrim (two-way). |
 | `DarkBackground` | `bool` | `false` | Uses a darker scrim (`#99000000`) instead of the light default (`#22000000`). |
-| `AutoClose` | `bool` | `false` | Sets `Visible = false` when the scrim is clicked. |
-| `OnClick` | `Action?` | `null` | Invoked when the scrim is clicked (fires before `AutoClose` hides it). |
+| `AutoClose` | `bool` | `false` | Sets `Visible = false` when the scrim is clicked or Escape is pressed while enabled. |
+| `OnClick` | `Action?` | `null` | Invoked when the enabled scrim is clicked or Escape closes an auto-close overlay. |
 
 ### Example
 
@@ -178,13 +201,22 @@ var overlay = new Overlay
     Content = new ProgressCircular(),
 };
 overlay.Bind(Overlay.VisibleProperty, viewModel.GetObservable(vm => vm.IsLoading));
+
+var manualOverlay = new Overlay
+{
+    AutoClose = false,
+    DarkBackground = true,
+};
+var close = new Button { Content = "Close" };
+close.Click += (_, _) => manualOverlay.Visible = false;
+manualOverlay.Content = close;
 ```
 
 ---
 
 ## Popover
 
-Mirrors the reference API's `Popover`. A `Decorator` wrapping an Avalonia `Popup`. Set `Content`, optionally `Target` and `Placement`, then toggle the two-way `Open` property. Light-dismiss automatically sets `Open = false`.
+Mirrors the reference API's `Popover`. A `Decorator` wrapping an Avalonia `Popup`. Set `Content`, optionally `Target` and `Placement`, then toggle the two-way `Open` property. Assign `Trigger` when the popover should open from a button or other control without custom event wiring. Light-dismiss automatically sets `Open = false`; Escape closes the open surface while the popover is enabled.
 
 ### Properties
 
@@ -194,21 +226,30 @@ Mirrors the reference API's `Popover`. A `Decorator` wrapping an Avalonia `Popup
 | `Open` | `bool` | `false` | Whether the popover is shown (two-way). |
 | `Placement` | `PlacementMode` | `Bottom` | Where the popover sits relative to the target. |
 | `Target` | `Control?` | `null` | The anchor control. Defaults to the popover's logical parent. |
+| `Trigger` | `Control?` | `null` | Optional control that toggles `Open` on pointer click or keyboard activation. |
 
 ### Example
 
 ```csharp
-using Avalonia.Controls.Primitives;
+using Avalonia.Controls;
+using Loam;
 using Loam.Controls;
 
-var button = new Button { Content = "Open" };
+var button = new Button { Content = "Open details" };
 var popover = new Popover
 {
-    Target = button,
+    Trigger = button,
     Placement = PlacementMode.BottomEdgeAlignedLeft,
-    Content = new TextBlock { Text = "Popover content" },
+    Content = new StackPanel
+    {
+        Spacing = 8,
+        Children =
+        {
+            new Text { Text = "Project details", Typo = Typo.Subtitle1 },
+            new Text { Text = "Escape or light-dismiss closes this surface." },
+        },
+    },
 };
-button.Click += (_, _) => popover.Open = !popover.Open;
 ```
 
 ---
@@ -236,7 +277,10 @@ Tooltip.Set(icon, "More information");
 
 ## Alert
 
-Mirrors the reference API's `Alert`. A `ContentControl` that renders a contextual message banner colored by severity (`Color`) and styled by `Variant`.
+Contextual message banner colored by severity (`Color`) and styled by `Variant`. Use the generated
+`Title`, `Message`, `Action`, and `Closeable` regions for standard alert anatomy, or keep using raw
+`Content` for compatibility. Closeable alerts use a generated icon button with keyboard access and
+raise `Closed` after `Close()` hides the alert.
 
 ### Properties
 
@@ -245,6 +289,13 @@ Mirrors the reference API's `Alert`. A `ContentControl` that renders a contextua
 | `Color` | `LoamColor` | `LoamColor.Info` | Severity color (mirrors the reference API's `Severity`). |
 | `Variant` | `Variant` | `Variant.Text` | Visual style: `Filled`, `Outlined`, or `Text` (tinted background). |
 | `Icon` | `string?` | `null` | Optional leading icon path. |
+| `Title` | `string?` | `null` | Generated alert title. |
+| `Message` | `string?` | `null` | Generated alert body text. |
+| `Action` | `object?` | `null` | Trailing action content, usually a text button. |
+| `Closeable` | `bool` | `false` | Shows a trailing close button. |
+| `CloseIcon` | `string?` | close icon | Icon path used by the generated close button. |
+| `Close()` | `void` | — | Hides a closeable enabled alert and raises `Closed`. |
+| `Closed` | `event EventHandler?` | — | Raised after the generated close action or `Close()` hides the alert. |
 | `Content` | `object?` | — | The message content (inherited from `ContentControl`). |
 
 ### Example
@@ -256,16 +307,21 @@ using Loam.Controls;
 var alert = new Alert
 {
     Color = LoamColor.Warning,
-    Variant = Variant.Filled,
-    Content = new TextBlock { Text = "Low disk space." },
+    Variant = Variant.Outlined,
+    Icon = Icons.Material.Filled.Warning,
+    Title = "Low disk space",
+    Message = "Archive old build artifacts before continuing.",
+    Action = new Button { Content = "Review", Variant = Variant.Text, Color = LoamColor.Warning },
+    Closeable = true,
 };
+alert.Closed += (_, _) => viewModel.DismissWarning();
 ```
 
 ---
 
 ## ProgressLinear
 
-Mirrors the reference API's `ProgressLinear`. A horizontal progress bar tinted by `Color`; use `Indeterminate = true` for a moving fill when no value is available.
+Mirrors the reference API's `ProgressLinear`. A horizontal progress bar tinted by `Color`; use `Indeterminate = true` for a moving fill when no value is available. The bar resolves its track, fill, disabled state, motion, and size metrics from theme tokens.
 
 ### Properties
 
@@ -275,7 +331,12 @@ Mirrors the reference API's `ProgressLinear`. A horizontal progress bar tinted b
 | `Minimum` | `double` | `0` | Lower bound (mirrors the reference API's `Min`). |
 | `Maximum` | `double` | `100` | Upper bound (mirrors the reference API's `Max`). |
 | `Color` | `LoamColor` | `LoamColor.Primary` | Accent color of the fill bar. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Track thickness: `ExtraSmall` = 2 px, `Small` = 3 px, `Medium` = 4 px, `Large` = 6 px, `ExtraLarge` = 8 px. |
 | `Indeterminate` | `bool` | `false` | Shows an animated moving fill instead of the fixed value. |
+| `Label` | `string?` | `null` | Optional generated label shown above the track and used as the automation name. |
+| `ShowValue` | `bool` | `false` | Shows generated value text beside `Label`. |
+| `ValueText` | `string?` | `null` | Explicit value text. When unset, `ValueTextFormat` formats the percentage. |
+| `ValueTextFormat` | `string` | `"{0:0}%"` | Format string for generated percentage text. |
 
 ### Example
 
@@ -283,10 +344,30 @@ Mirrors the reference API's `ProgressLinear`. A horizontal progress bar tinted b
 using Loam;
 using Loam.Controls;
 
-var progress = new ProgressLinear { Color = LoamColor.Success };
+var progress = new ProgressLinear
+{
+    Label = "Upload",
+    ShowValue = true,
+    Color = LoamColor.Success,
+    Size = LoamSize.Medium,
+};
 progress.Bind(ProgressLinear.ValueProperty, viewModel.GetObservable(vm => vm.UploadPercent));
 
-var loading = new ProgressLinear { Indeterminate = true, Width = 240 };
+var loading = new ProgressLinear
+{
+    Label = "Loading records",
+    ShowValue = true,
+    Indeterminate = true,
+    Width = 240,
+};
+
+var compact = new ProgressLinear
+{
+    Label = "Compact sync",
+    ShowValue = true,
+    Size = LoamSize.ExtraSmall,
+    Value = 48,
+};
 ```
 
 ---
@@ -303,9 +384,13 @@ Mirrors the reference API's `ProgressCircular`. Draws an arc tinted by `Color`: 
 | `Minimum` | `double` | `0` | Lower bound. |
 | `Maximum` | `double` | `100` | Upper bound. |
 | `Color` | `LoamColor` | `LoamColor.Primary` | Accent color of the arc. |
-| `Size` | `LoamSize` | `LoamSize.Medium` | Indicator diameter: `Small` = 24 px, `Medium` = 40 px, `Large` = 56 px. |
-| `StrokeWidth` | `double` | `3` | Arc stroke thickness in pixels. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Indicator diameter: `ExtraSmall` = 24 px, `Small` = 32 px, `Medium` = 48 px, `Large` = 64 px, `ExtraLarge` = 80 px. |
+| `StrokeWidth` | `double` | `0` | Arc stroke thickness in pixels. `0` uses the size-resolved default (`8.3333%` of diameter). |
 | `Indeterminate` | `bool` | `true` | Spins indefinitely when `true`; shows a fraction of `Value` when `false`. |
+| `Label` | `string?` | `null` | Accessible name for the indicator. |
+| `ShowValue` | `bool` | `false` | Draws generated value text in the center for determinate indicators. |
+| `ValueText` | `string?` | `null` | Explicit value text. When unset, `ValueTextFormat` formats the percentage. |
+| `ValueTextFormat` | `string` | `"{0:0}%"` | Format string for generated value text. |
 
 ### Example
 
@@ -322,6 +407,15 @@ var bar = new ProgressCircular
     Indeterminate = false,
     Color = LoamColor.Success,
     Value = 72,
+    Label = "Upload progress",
+    ShowValue = true,
+};
+
+var compact = new ProgressCircular
+{
+    Size = LoamSize.Small,
+    StrokeWidth = ProgressCircular.DefaultStrokeWidth(LoamSize.Small),
+    Label = "Sync progress",
 };
 ```
 
@@ -329,7 +423,7 @@ var bar = new ProgressCircular
 
 ## Skeleton
 
-Mirrors the reference API's `Skeleton`. A themed placeholder block shown while content is loading. Extends `Border` with a skeleton palette color and rounded corners. Set `Circle = true` for round avatar placeholders.
+Mirrors the reference API's `Skeleton`. A themed placeholder block shown while content is loading. Extends `Border` with a skeleton palette color and rounded corners. Use the public factories for common loading anatomy, or set `Circle = true` for a custom round placeholder.
 
 ### Properties
 
@@ -337,6 +431,9 @@ Mirrors the reference API's `Skeleton`. A themed placeholder block shown while c
 |----------|------|---------|-------------|
 | `Circle` | `bool` | `false` | Renders as a fully rounded circle (avatar placeholder). |
 | `Animate` | `bool` | `true` | Enables the subtle loading shimmer. Set `false` for a static placeholder. |
+| `Preset` | `SkeletonPreset` | `Custom` | Generated anatomy: `Text`, `Avatar`, `Button`, `Thumbnail`, or `Card`. |
+| `Size` | `LoamSize` | `LoamSize.Medium` | Size token used by text, avatar, and button presets. |
+| `Label` | `string?` | `null` | Accessible loading label. |
 | `Height` | `double` | `16` | Block height (inherited from `Border`). |
 | `Width` | `double` | — | Block width (inherited from `Border`). |
 
@@ -346,13 +443,17 @@ Mirrors the reference API's `Skeleton`. A themed placeholder block shown while c
 using Loam.Controls;
 
 // Text line placeholder
-var line = new Skeleton { Width = 200 };
+var line = Skeleton.TextLine(200, LoamSize.Medium, label: "Title loading");
 
 // Avatar placeholder
-var avatar = new Skeleton { Circle = true, Width = 40, Height = 40 };
+var avatar = Skeleton.Avatar(LoamSize.Medium, label: "Avatar loading");
 
 // Static placeholder
-var staticLine = new Skeleton { Width = 160, Animate = false };
+var staticLine = Skeleton.TextLine(160, LoamSize.Small, animate: false, label: "Subtitle loading");
+
+// Media and card placeholders
+var thumbnail = Skeleton.Thumbnail(128, 84, label: "Thumbnail loading");
+var card = Skeleton.Card(260, 96, animate: false, label: "Card loading");
 ```
 
 ---
@@ -366,8 +467,8 @@ Mirrors the reference API's `Collapse`. A `Decorator` that reveals its single `C
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Expanded` | `bool` | `false` | Whether the child is visible (two-way). `false` clips content to zero height. |
-| `Animated` | `bool` | `true` | Enables a short height reveal/collapse animation. |
-| `Duration` | `TimeSpan` | `180 ms` | Reveal/collapse duration. |
+| `Animated` | `bool` | `true` | Enables a short height reveal/collapse animation when the control is enabled and duration is greater than zero. |
+| `Duration` | `TimeSpan` | `180 ms` | Reveal/collapse duration. `TimeSpan.Zero` resolves immediately for reduced-motion scenarios. |
 | `Child` | `Control?` | — | The content to show/hide (inherited from `Decorator`). |
 
 ### Example
@@ -382,4 +483,11 @@ var collapse = new Collapse
     Child = new TextBlock { Text = "Hidden details shown when expanded." },
 };
 toggle.Click += (_, _) => collapse.Expanded = !collapse.Expanded;
+
+var staticCollapse = new Collapse
+{
+    Animated = false,
+    Expanded = true,
+    Child = new TextBlock { Text = "Shown immediately without motion." },
+};
 ```

@@ -49,12 +49,14 @@ public class Chip : TemplatedControl
         AvaloniaProperty.Register<Chip, LoamSize>(nameof(Size), LoamSize.Medium);
 
     private Border? _root;
+    private Border? _stateLayer;
     private Loam.Controls.Icon? _iconPart;
     private Loam.Controls.Text? _textPart;
     private Loam.Controls.Icon? _closePart;
     private IDisposable? _backgroundBinding;
     private IDisposable? _foregroundBinding;
     private IDisposable? _borderBinding;
+    private IDisposable? _stateLayerBinding;
 
     /// <summary>Raised when the close button is clicked.</summary>
     public event EventHandler? Closed;
@@ -64,6 +66,8 @@ public class Chip : TemplatedControl
     {
         Focusable = true;
         Cursor = new Cursor(StandardCursorType.Hand);
+        GotFocus += (_, _) => ApplyStateLayer("Focus");
+        LostFocus += (_, _) => ApplyStateLayer(null);
     }
 
     /// <summary>The chip label. Mirrors the reference API's <c>Text</c>.</summary>
@@ -130,6 +134,7 @@ public class Chip : TemplatedControl
     {
         base.OnApplyTemplate(e);
         _root = e.NameScope.Find("PART_Root") as Border;
+        _stateLayer = e.NameScope.Find("PART_StateLayer") as Border;
         _iconPart = e.NameScope.Find("PART_Icon") as Loam.Controls.Icon;
         _textPart = e.NameScope.Find("PART_Text") as Loam.Controls.Text;
         _closePart = e.NameScope.Find("PART_Close") as Loam.Controls.Icon;
@@ -176,7 +181,32 @@ public class Chip : TemplatedControl
         if (IsEnabled)
         {
             Focus();
+            ApplyStateLayer("Pressed");
         }
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerEntered(PointerEventArgs e)
+    {
+        base.OnPointerEntered(e);
+        if (IsEnabled)
+        {
+            ApplyStateLayer("Hover");
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+        ApplyStateLayer(IsFocused ? "Focus" : null);
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        ApplyStateLayer(IsPointerOver ? "Hover" : IsFocused ? "Focus" : null);
     }
 
     /// <inheritdoc />
@@ -198,7 +228,14 @@ public class Chip : TemplatedControl
 
     private void ApplyVisual()
     {
-        var height = Size switch { LoamSize.Large => 40d, _ => 32d };
+        var height = Size switch
+        {
+            LoamSize.ExtraSmall => 24d,
+            LoamSize.Small => 28d,
+            LoamSize.Large => 40d,
+            LoamSize.ExtraLarge => 48d,
+            _ => 32d,
+        };
         Height = height;
         MinHeight = height;
 
@@ -207,8 +244,48 @@ public class Chip : TemplatedControl
             return;
         }
 
-        _root.Padding = InteractionAssist.ThicknessToken(this, LoamTokens.DensityButtonPaddingSmall, new Thickness(10, 0));
+        _root.MinHeight = height;
+        _root.Padding = Size switch
+        {
+            LoamSize.ExtraSmall => new Thickness(6, 0),
+            LoamSize.Small => new Thickness(8, 0),
+            LoamSize.Large => new Thickness(14, 0),
+            LoamSize.ExtraLarge => new Thickness(18, 0),
+            _ => new Thickness(10, 0),
+        };
         _root.CornerRadius = Label ? new CornerRadius(4) : new CornerRadius(height / 2);
+        _root.ClipToBounds = true;
+        if (_stateLayer is not null)
+        {
+            _stateLayer.CornerRadius = _root.CornerRadius;
+        }
+
+        var iconSize = Size switch
+        {
+            LoamSize.Large or LoamSize.ExtraLarge => LoamSize.Medium,
+            LoamSize.ExtraSmall => LoamSize.ExtraSmall,
+            _ => LoamSize.Small,
+        };
+        if (_iconPart is not null)
+        {
+            _iconPart.Size = iconSize;
+        }
+
+        if (_closePart is not null)
+        {
+            _closePart.Size = iconSize;
+        }
+
+        if (_textPart is not null)
+        {
+            _textPart.Typo = Size switch
+            {
+                LoamSize.ExtraSmall => Typo.LabelSmall,
+                LoamSize.Small => Typo.Caption,
+                LoamSize.ExtraLarge => Typo.Body1,
+                _ => Typo.Body2,
+            };
+        }
 
         var tokens = SemanticColor.Resolve(Color);
         _backgroundBinding?.Dispose();
@@ -261,5 +338,48 @@ public class Chip : TemplatedControl
         InteractionAssist.SetAutomationName(this, Text);
     }
 
-    private void ApplyEnabledState() => Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+    private void ApplyEnabledState()
+    {
+        Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        if (!IsEnabled)
+        {
+            ApplyStateLayer(null);
+        }
+    }
+
+    private void ApplyStateLayer(string? state)
+    {
+        if (_stateLayer is null)
+        {
+            return;
+        }
+
+        _stateLayerBinding?.Dispose();
+        _stateLayerBinding = null;
+        if (!IsEnabled || state is null)
+        {
+            _stateLayer.Background = Brushes.Transparent;
+            return;
+        }
+
+        var tokens = SemanticColor.Resolve(Color);
+        var token = Variant == Loam.Variant.Filled
+            ? tokens.FillText switch
+            {
+                var fillText when fillText == LoamTokens.ColorOnSurface => LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), state),
+                var fillText when fillText.EndsWith(nameof(LoamColorScheme.OnPrimary), StringComparison.Ordinal) => LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnPrimary), state),
+                var fillText when fillText.EndsWith(nameof(LoamColorScheme.OnSecondary), StringComparison.Ordinal) => LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSecondary), state),
+                var fillText when fillText.EndsWith(nameof(LoamColorScheme.OnTertiary), StringComparison.Ordinal) => LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnTertiary), state),
+                var fillText when fillText.EndsWith(nameof(LoamColorScheme.OnError), StringComparison.Ordinal) => LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnError), state),
+                _ => tokens.Overlay,
+            }
+            : state switch
+            {
+                "Focus" => tokens.Border,
+                "Pressed" => tokens.Overlay,
+                _ => tokens.Overlay,
+            };
+
+        _stateLayerBinding = _stateLayer.Bind(Border.BackgroundProperty, this.GetResourceObservable(token));
+    }
 }

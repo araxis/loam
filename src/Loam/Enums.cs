@@ -50,12 +50,54 @@ public enum LoamColor
 /// </summary>
 public enum LoamSize
 {
+    /// <summary>Extra small.</summary>
+    ExtraSmall,
     /// <summary>Small.</summary>
     Small,
     /// <summary>Medium (default).</summary>
     Medium,
     /// <summary>Large.</summary>
     Large,
+    /// <summary>Extra large.</summary>
+    ExtraLarge,
+}
+
+/// <summary>Preset anatomy for loading placeholders.</summary>
+public enum SkeletonPreset
+{
+    /// <summary>Use explicit width, height, and <see cref="Loam.Controls.Skeleton.Circle"/> settings.</summary>
+    Custom,
+    /// <summary>A single text-line placeholder.</summary>
+    Text,
+    /// <summary>A circular avatar placeholder.</summary>
+    Avatar,
+    /// <summary>A pill-shaped action/button placeholder.</summary>
+    Button,
+    /// <summary>A small media thumbnail placeholder.</summary>
+    Thumbnail,
+    /// <summary>A larger content-card placeholder.</summary>
+    Card,
+}
+
+/// <summary>Shape scale for surface containers.</summary>
+public enum SurfaceShape
+{
+    /// <summary>Use the component default shape.</summary>
+    Default,
+    /// <summary>No corner rounding.</summary>
+    None,
+    /// <summary>Extra small shape.</summary>
+    ExtraSmall,
+    /// <summary>Small shape.</summary>
+    Small,
+    /// <summary>Medium shape.</summary>
+    Medium,
+    /// <summary>Large shape.</summary>
+    Large,
+    /// <summary>Extra large shape.</summary>
+    ExtraLarge,
+    /// <summary>Extra extra large shape.</summary>
+    ExtraExtraLarge,
 }
 
 /// <summary>

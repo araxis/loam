@@ -59,6 +59,11 @@ public class ThemingTests
         extraSmallShape.ShouldBe(new Avalonia.CornerRadius(4));
         res.TryGetResource(LoamTokens.StateHoverOpacity, ThemeVariant.Light, out var hover).ShouldBeTrue();
         hover.ShouldBe(0.08);
+        res.TryGetResource(
+            LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), "Hover"),
+            ThemeVariant.Light,
+            out var onSurfaceHover).ShouldBeTrue();
+        ((ISolidColorBrush)onSurfaceHover!).Color.ShouldBe(LoamColorScheme.DefaultLight.OnSurface.WithAlpha(0.08));
         res.TryGetResource(LoamTokens.StateDisabledOpacity, ThemeVariant.Light, out var disabled).ShouldBeTrue();
         disabled.ShouldBe(0.38);
         res.TryGetResource(LoamTokens.MotionDurationMedium, ThemeVariant.Light, out var duration).ShouldBeTrue();
@@ -70,13 +75,17 @@ public class ThemingTests
         res.TryGetResource(LoamTokens.Stroke(nameof(LoamStroke.Focus)), ThemeVariant.Light, out var stroke).ShouldBeTrue();
         stroke.ShouldBe(2d);
         res.TryGetResource(LoamTokens.DensityButtonPaddingMedium, ThemeVariant.Light, out var densityPadding).ShouldBeTrue();
-        densityPadding.ShouldBe(new Avalonia.Thickness(24, 10));
+        densityPadding.ShouldBe(new Avalonia.Thickness(16, 0));
         res.TryGetResource(LoamTokens.DensityInteractiveMedium, ThemeVariant.Light, out var densityTarget).ShouldBeTrue();
-        densityTarget.ShouldBe(40d);
+        densityTarget.ShouldBe(48d);
+        res.TryGetResource(LoamTokens.DensityButtonContainerHeightExtraLarge, ThemeVariant.Light, out var buttonExtraLarge).ShouldBeTrue();
+        buttonExtraLarge.ShouldBe(64d);
         res.TryGetResource(LoamTokens.ElevationShadow(nameof(LoamElevation.Level3Shadow)), ThemeVariant.Light, out var elevation).ShouldBeTrue();
         elevation.ShouldBe(6);
         res.TryGetResource(LoamTokens.FieldOutlinedHeight, ThemeVariant.Light, out var height).ShouldBeTrue();
         height.ShouldBe(56d);
+        res.TryGetResource(LoamTokens.FieldFloatingLabelTopMargin, ThemeVariant.Light, out var labelTopMargin).ShouldBeTrue();
+        labelTopMargin.ShouldBe(LoamFieldMetrics.Default.FloatingLabelTopMargin);
         res.TryGetResource(LoamTokens.FieldOutlinedPadding, ThemeVariant.Light, out var padding).ShouldBeTrue();
         padding.ShouldBe(new Avalonia.Thickness(16, 16));
     }
@@ -103,6 +112,62 @@ public class ThemingTests
         foreach (var (foreground, background) in pairs)
         {
             LoamColors.ContrastRatio(foreground, background).ShouldBeGreaterThan(4.5);
+        }
+    }
+
+    [Fact]
+    public void All_color_scheme_roles_project_to_variant_resources()
+    {
+        var res = new LoamTheme().Resources;
+        var variants = new[]
+        {
+            (ThemeVariant.Light, LoamColorScheme.DefaultLight),
+            (ThemeVariant.Dark, LoamColorScheme.DefaultDark),
+        };
+
+        foreach (var (variant, scheme) in variants)
+        {
+            foreach (var prop in typeof(LoamColorScheme).GetProperties().Where(prop => prop.PropertyType == typeof(Color)))
+            {
+                Brush(res, LoamTokens.ColorScheme(prop.Name), variant).ShouldBe((Color)prop.GetValue(scheme)!);
+            }
+        }
+    }
+
+    [Fact]
+    public void All_content_role_pairs_meet_text_contrast_baseline()
+    {
+        var pairs = new[]
+        {
+            ("OnPrimary", "Primary"),
+            ("OnPrimaryContainer", "PrimaryContainer"),
+            ("OnSecondary", "Secondary"),
+            ("OnSecondaryContainer", "SecondaryContainer"),
+            ("OnTertiary", "Tertiary"),
+            ("OnTertiaryContainer", "TertiaryContainer"),
+            ("OnError", "Error"),
+            ("OnErrorContainer", "ErrorContainer"),
+            ("OnBackground", "Background"),
+            ("OnSurface", "Surface"),
+            ("OnSurfaceVariant", "SurfaceVariant"),
+            ("InverseOnSurface", "InverseSurface"),
+            ("OnPrimaryFixed", "PrimaryFixed"),
+            ("OnPrimaryFixedVariant", "PrimaryFixedDim"),
+            ("OnSecondaryFixed", "SecondaryFixed"),
+            ("OnSecondaryFixedVariant", "SecondaryFixedDim"),
+            ("OnTertiaryFixed", "TertiaryFixed"),
+            ("OnTertiaryFixedVariant", "TertiaryFixedDim"),
+        };
+
+        foreach (var scheme in new[] { LoamColorScheme.DefaultLight, LoamColorScheme.DefaultDark })
+        {
+            foreach (var (foregroundRole, backgroundRole) in pairs)
+            {
+                var foreground = SchemeColor(scheme, foregroundRole);
+                var background = SchemeColor(scheme, backgroundRole);
+                LoamColors.ContrastRatio(foreground, background)
+                    .ShouldBeGreaterThan(4.5, $"{foregroundRole} on {backgroundRole}");
+            }
         }
     }
 
@@ -175,4 +240,7 @@ public class ThemingTests
         Brush(theme.Resources, LoamTokens.Primary, ThemeVariant.Light).ShouldBe(Color.Parse("#594AE2"));
         Brush(theme.Resources, LoamTokens.Surface, ThemeVariant.Dark).ShouldBe(Color.Parse("#373740"));
     }
+
+    private static Color SchemeColor(LoamColorScheme scheme, string role) =>
+        (Color)typeof(LoamColorScheme).GetProperty(role)!.GetValue(scheme)!;
 }

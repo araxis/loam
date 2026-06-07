@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Loam.Controls.Internal;
 using Loam.Theming;
 
 namespace Loam.Controls;
@@ -39,6 +40,7 @@ public class Text : TextBlock
         this.Bind(FontFamilyProperty, this.GetResourceObservable(LoamTokens.FontFamily));
         ApplyTypo();
         ApplyColor();
+        ApplyAutomationName();
     }
 
     /// <summary>The typographic role. Mirrors the reference API's <c>Typo</c>.</summary>
@@ -92,6 +94,10 @@ public class Text : TextBlock
         {
             TextAlignment = Align;
         }
+        else if (change.Property == TextProperty)
+        {
+            ApplyAutomationName();
+        }
     }
 
     private void ApplyTypo()
@@ -117,13 +123,19 @@ public class Text : TextBlock
 
         var key = Color switch
         {
-            LoamColor.Default or LoamColor.Inherit => LoamTokens.TextPrimary,
-            LoamColor.Transparent => null,
+            LoamColor.Default => LoamTokens.TextPrimary,
+            LoamColor.Inherit or LoamColor.Transparent => null,
             _ => LoamTokens.Palette(Color.ToPaletteName()!),
         };
 
         _foregroundBinding = key is null
             ? null
             : this.Bind(ForegroundProperty, this.GetResourceObservable(key));
+        if (key is null)
+        {
+            ClearValue(ForegroundProperty);
+        }
     }
+
+    private void ApplyAutomationName() => InteractionAssist.SetAutomationName(this, Text);
 }

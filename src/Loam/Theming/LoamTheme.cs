@@ -146,6 +146,10 @@ public sealed class LoamTheme : Styles
         {
             var color = (Color)prop.GetValue(scheme)!;
             dict[$"Loam.Color.{prop.Name}"] = new ImmutableSolidColorBrush(color);
+            dict[LoamTokens.ColorSchemeStateLayer(prop.Name, "Hover")] = new ImmutableSolidColorBrush(color.WithAlpha(stateLayer.HoverOpacity));
+            dict[LoamTokens.ColorSchemeStateLayer(prop.Name, "Focus")] = new ImmutableSolidColorBrush(color.WithAlpha(stateLayer.FocusOpacity));
+            dict[LoamTokens.ColorSchemeStateLayer(prop.Name, "Pressed")] = new ImmutableSolidColorBrush(color.WithAlpha(stateLayer.PressedOpacity));
+            dict[LoamTokens.ColorSchemeStateLayer(prop.Name, "Selected")] = new ImmutableSolidColorBrush(color.WithAlpha(stateLayer.SelectedOpacity));
         }
 
         dict[LoamTokens.TonalElevation(0)] = new ImmutableSolidColorBrush(scheme.Surface);

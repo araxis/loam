@@ -26,7 +26,7 @@ public sealed class DesignSystemView : UserControl
         Content = background;
     }
 
-    private static Border BuildToolbar()
+    private static Loam.Controls.AppBar BuildToolbar()
     {
         var title = new TextBlock
         {
@@ -55,9 +55,7 @@ public sealed class DesignSystemView : UserControl
         grid.Children.Add(presets);
         grid.Children.Add(toggle);
 
-        var bar = new Border { Height = 64, Child = grid };
-        bar.Bind(Border.BackgroundProperty, bar.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.AppbarBackground))));
-        bar.Bind(Border.BoxShadowProperty, bar.GetResourceObservable(LoamTokens.Elevation(4)));
+        var bar = new Loam.Controls.AppBar { Content = grid, Elevation = 4 };
         DockPanel.SetDock(bar, Dock.Top);
         return bar;
     }

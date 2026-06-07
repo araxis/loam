@@ -1,9 +1,16 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input.Platform;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Avalonia.Threading;
+using Loam;
+using Loam.Controls;
+using LoamIconButton = Loam.Controls.IconButton;
 
 namespace Loam.Gallery;
 
@@ -26,6 +33,12 @@ public sealed class CodeSampleView : UserControl
     private static readonly IBrush Accent = Brush("#38BDF8");
     private static readonly IBrush Warn = Brush("#F59E0B");
     private static readonly IBrush Danger = Brush("#F87171");
+    private static readonly TimeSpan CopyStatusDuration = TimeSpan.FromMilliseconds(1400);
+
+    private readonly string _copyText;
+    private LoamIconButton? _copyButton;
+    private TextBlock? _copyStatus;
+    private int _copyStatusVersion;
 
     private static readonly HashSet<string> Keywords =
     [
@@ -36,23 +49,25 @@ public sealed class CodeSampleView : UserControl
 
     private static readonly HashSet<string> Types =
     [
-        "Alert", "Avatar", "Badge", "BarChart", "Border", "ButtonGroup", "Card",
+        "Alert", "AppBar", "Autocomplete", "Avatar", "AvatarGroup", "Badge", "BarChart", "Border", "BreadcrumbItem", "Breadcrumbs", "ButtonGroup", "Card",
         "CardContent", "CardHeader", "CarouselItem", "Chip", "ChipSet", "Collapse",
-        "DataGrid", "DateTime", "DockPanel", "ExpansionPanel", "ExpansionPanels", "Fab",
-        "Field", "FileUpload", "Form", "Hidden", "IconButton", "Item", "LineChart",
-        "ListItem", "ListSubheader", "LoamButton", "LoamColor", "MonthCalendar", "NavGroup",
-        "NavLink", "NavMenu", "Pagination", "Paper", "PieChart", "Popover", "ProgressCircular",
-        "ProgressLinear", "Ripple", "Select", "SelectItem", "Skeleton", "Slider", "StackPanel",
-        "Step", "Stepper", "TableRow", "Text", "TextBlock", "TextBox", "TextField",
-        "Timeline", "TimelineItem", "ToggleGroup", "ToggleIconButton", "ToggleItem", "Variant",
+        "CheckBox", "Container", "DataGrid", "DatePicker", "DateRangePicker", "DateTime", "DialogService", "DockPanel", "Drawer", "DrawerMode", "ExpansionPanel", "ExpansionPanels", "Fab",
+        "Field", "FieldEditor", "FileUpload", "Form", "Grid", "Hidden", "IconButton", "Item", "Layout", "LineChart",
+        "Link", "ListItem", "ListSubheader", "LoamButton", "LoamColor", "LoamSize", "MainContent", "MaskedTextField", "Menu", "MenuItem", "MonthCalendar", "NavGroup",
+        "NavLink", "NavMenu", "NumericField", "Pagination", "Paper", "PieChart", "Popover", "ProgressCircular",
+        "ProgressLinear", "Radio", "Rating", "Ripple", "Select", "SelectItem", "Skeleton", "Slider", "StackPanel",
+        "SnackbarOptions", "SnackbarService", "Spacer", "Step", "Stepper", "TabItem", "TableRow", "Tabs", "Text", "TextBlock", "TextBox", "TextField",
+        "Switch", "TimePicker", "Timeline", "TimelineItem", "ToggleGroup", "ToggleIconButton", "ToggleItem", "Tooltip", "Variant", "WrapPanel",
     ];
 
     public CodeSampleView(string title, string code)
     {
-        Content = Build(title, Normalize(code));
+        var lines = Normalize(code);
+        _copyText = string.Join(Environment.NewLine, lines);
+        Content = Build(title, lines);
     }
 
-    private static Border Build(string title, string[] lines)
+    private Border Build(string title, string[] lines)
     {
         var rowStack = new StackPanel { Spacing = 0 };
         for (var i = 0; i < lines.Length; i++)
@@ -89,7 +104,7 @@ public sealed class CodeSampleView : UserControl
         };
     }
 
-    private static Border Header(string title)
+    private Border Header(string title)
     {
         var dots = new StackPanel
         {
@@ -134,14 +149,45 @@ public sealed class CodeSampleView : UserControl
             },
         };
 
+        _copyStatus = new TextBlock
+        {
+            MinWidth = 56,
+            Text = string.Empty,
+            FontFamily = CodeFont,
+            FontSize = 11,
+            Foreground = String,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsVisible = false,
+        };
+
+        _copyButton = new LoamIconButton
+        {
+            Icon = Icons.Material.Filled.ContentCopy,
+            Variant = Variant.Outlined,
+            Color = LoamColor.Info,
+            Size = LoamSize.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        AutomationProperties.SetName(_copyButton, "Copy code");
+        Tooltip.Set(_copyButton, "Copy code");
+        _copyButton.Click += OnCopyClicked;
+
+        var actions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { label, _copyButton, _copyStatus },
+        };
+
         var layout = new Avalonia.Controls.Grid
         {
             ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
             Margin = new Thickness(14, 0),
-            Children = { dots, name, label },
+            Children = { dots, name, actions },
         };
         Avalonia.Controls.Grid.SetColumn(name, 1);
-        Avalonia.Controls.Grid.SetColumn(label, 2);
+        Avalonia.Controls.Grid.SetColumn(actions, 2);
 
         var header = new Border
         {
@@ -153,6 +199,67 @@ public sealed class CodeSampleView : UserControl
         };
         DockPanel.SetDock(header, Dock.Top);
         return header;
+    }
+
+    private async void OnCopyClicked(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            if (clipboard is null)
+            {
+                ShowCopyState("Unavailable", LoamColor.Error, Icons.Material.Filled.Close, "Clipboard unavailable");
+                return;
+            }
+
+            await clipboard.SetTextAsync(_copyText);
+            ShowCopyState("Copied", LoamColor.Success, Icons.Material.Filled.Check, "Code copied");
+        }
+        catch (Exception)
+        {
+            ShowCopyState("Failed", LoamColor.Error, Icons.Material.Filled.Close, "Copy failed");
+        }
+    }
+
+    private void ShowCopyState(string text, LoamColor color, string icon, string automationName)
+    {
+        if (_copyButton is null || _copyStatus is null)
+        {
+            return;
+        }
+
+        _copyButton.Icon = icon;
+        _copyButton.Color = color;
+        AutomationProperties.SetName(_copyButton, automationName);
+
+        _copyStatus.Text = text;
+        _copyStatus.Foreground = color == LoamColor.Error ? Danger : String;
+        _copyStatus.IsVisible = true;
+
+        var version = ++_copyStatusVersion;
+        DispatcherTimer.RunOnce(() =>
+        {
+            if (version == _copyStatusVersion)
+            {
+                ResetCopyState();
+            }
+        }, CopyStatusDuration);
+    }
+
+    private void ResetCopyState()
+    {
+        if (_copyButton is not null)
+        {
+            _copyButton.Icon = Icons.Material.Filled.ContentCopy;
+            _copyButton.Color = LoamColor.Info;
+            AutomationProperties.SetName(_copyButton, "Copy code");
+        }
+
+        if (_copyStatus is not null)
+        {
+            _copyStatus.Text = string.Empty;
+            _copyStatus.IsVisible = false;
+        }
     }
 
     private static Border Dot(IBrush brush) => new()

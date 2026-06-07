@@ -39,6 +39,8 @@ public class ButtonGroup : TemplatedControl
     private const double Radius = 4;
 
     private StackPanel? _items;
+    private double _intrinsicMinWidth;
+    private double _intrinsicMinHeight;
 
     /// <summary>Creates the group.</summary>
     public ButtonGroup() => Items.CollectionChanged += OnItemsChanged;
@@ -130,6 +132,67 @@ public class ButtonGroup : TemplatedControl
             button.Margin = OverlapFor(i);
             _items.Children.Add(button);
         }
+
+        UpdateIntrinsicSize();
+        InvalidateMeasure();
+    }
+
+    /// <inheritdoc />
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        var desired = base.MeasureOverride(availableSize);
+        return new Size(Math.Max(desired.Width, _intrinsicMinWidth), Math.Max(desired.Height, _intrinsicMinHeight));
+    }
+
+    /// <inheritdoc />
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        var arrangedSize = new Size(Math.Max(finalSize.Width, _intrinsicMinWidth), Math.Max(finalSize.Height, _intrinsicMinHeight));
+        return base.ArrangeOverride(arrangedSize);
+    }
+
+    private void UpdateIntrinsicSize()
+    {
+        if (_items is null || Items.Count == 0)
+        {
+            _intrinsicMinWidth = 0;
+            _intrinsicMinHeight = 0;
+            return;
+        }
+
+        var unconstrained = new Size(double.PositiveInfinity, double.PositiveInfinity);
+        var width = 0d;
+        var height = 0d;
+        foreach (var button in Items)
+        {
+            button.Measure(unconstrained);
+            var desired = button.DesiredSize;
+            if (Vertical)
+            {
+                width = Math.Max(width, desired.Width);
+                height += desired.Height;
+            }
+            else
+            {
+                width += desired.Width;
+                height = Math.Max(height, desired.Height);
+            }
+        }
+
+        var overlap = Math.Max(0, Items.Count - 1);
+        if (Vertical)
+        {
+            height -= overlap;
+        }
+        else
+        {
+            width -= overlap;
+        }
+
+        _intrinsicMinWidth = Math.Ceiling(Math.Max(0, width));
+        _intrinsicMinHeight = Math.Ceiling(Math.Max(0, height));
+        _items.MinWidth = _intrinsicMinWidth;
+        _items.MinHeight = _intrinsicMinHeight;
     }
 
     private CornerRadius CornerFor(int index, int count)

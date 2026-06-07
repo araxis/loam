@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Threading;
 using Avalonia;
 using Avalonia.Animation;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -43,7 +45,7 @@ public class ProgressCircular : Control
 
     /// <summary>Identifies the <see cref="StrokeWidth"/> property.</summary>
     public static readonly StyledProperty<double> StrokeWidthProperty =
-        AvaloniaProperty.Register<ProgressCircular, double>(nameof(StrokeWidth), 3);
+        AvaloniaProperty.Register<ProgressCircular, double>(nameof(StrokeWidth));
 
     /// <summary>Identifies the <see cref="Indeterminate"/> property.</summary>
     public static readonly StyledProperty<bool> IndeterminateProperty =
@@ -53,16 +55,37 @@ public class ProgressCircular : Control
     public static readonly StyledProperty<double> SpinAngleProperty =
         AvaloniaProperty.Register<ProgressCircular, double>(nameof(SpinAngle));
 
+    /// <summary>Identifies the <see cref="Label"/> property.</summary>
+    public static readonly StyledProperty<string?> LabelProperty =
+        AvaloniaProperty.Register<ProgressCircular, string?>(nameof(Label));
+
+    /// <summary>Identifies the <see cref="ShowValue"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowValueProperty =
+        AvaloniaProperty.Register<ProgressCircular, bool>(nameof(ShowValue));
+
+    /// <summary>Identifies the <see cref="ValueText"/> property.</summary>
+    public static readonly StyledProperty<string?> ValueTextProperty =
+        AvaloniaProperty.Register<ProgressCircular, string?>(nameof(ValueText));
+
+    /// <summary>Identifies the <see cref="ValueTextFormat"/> property.</summary>
+    public static readonly StyledProperty<string> ValueTextFormatProperty =
+        AvaloniaProperty.Register<ProgressCircular, string>(nameof(ValueTextFormat), "{0:0}%");
+
     private IBrush? _accent;
     private IBrush? _track;
+    private IBrush? _text;
+    private IBrush? _disabled;
     private IDisposable? _accentSubscription;
     private IDisposable? _trackSubscription;
+    private IDisposable? _textSubscription;
+    private IDisposable? _disabledSubscription;
     private CancellationTokenSource? _spinCancellation;
 
     static ProgressCircular()
     {
         AffectsRender<ProgressCircular>(ValueProperty, MinimumProperty, MaximumProperty,
-            StrokeWidthProperty, IndeterminateProperty, SpinAngleProperty);
+            StrokeWidthProperty, IndeterminateProperty, SpinAngleProperty, ShowValueProperty,
+            ValueTextProperty, ValueTextFormatProperty, IsEnabledProperty);
         AffectsMeasure<ProgressCircular>(SizeProperty, StrokeWidthProperty);
     }
 
@@ -107,7 +130,7 @@ public class ProgressCircular : Control
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>Stroke thickness in pixels. Mirrors the reference API's <c>StrokeWidth</c>.</summary>
+    /// <summary>Stroke thickness in pixels. Set to zero to use the size-resolved default.</summary>
     public double StrokeWidth
     {
         get => GetValue(StrokeWidthProperty);
@@ -128,13 +151,50 @@ public class ProgressCircular : Control
         set => SetValue(SpinAngleProperty, value);
     }
 
+    /// <summary>Optional accessible label used for the progress indicator.</summary>
+    public string? Label
+    {
+        get => GetValue(LabelProperty);
+        set => SetValue(LabelProperty, value);
+    }
+
+    /// <summary>Shows generated value text in the center for determinate progress.</summary>
+    public bool ShowValue
+    {
+        get => GetValue(ShowValueProperty);
+        set => SetValue(ShowValueProperty, value);
+    }
+
+    /// <summary>Explicit value text. When unset, <see cref="ValueTextFormat"/> formats the percentage.</summary>
+    public string? ValueText
+    {
+        get => GetValue(ValueTextProperty);
+        set => SetValue(ValueTextProperty, value);
+    }
+
+    /// <summary>Format string for generated percent text. Receives the percentage as argument 0.</summary>
+    public string ValueTextFormat
+    {
+        get => GetValue(ValueTextFormatProperty);
+        set => SetValue(ValueTextFormatProperty, value);
+    }
+
     /// <summary>The pixel diameter for a <see cref="LoamSize"/>.</summary>
     public static double Diameter(LoamSize size) => size switch
     {
-        LoamSize.Small => 24,
-        LoamSize.Large => 56,
-        _ => 40,
+        LoamSize.ExtraSmall => 24,
+        LoamSize.Small => 32,
+        LoamSize.Large => 64,
+        LoamSize.ExtraLarge => 80,
+        _ => 48,
     };
+
+    /// <summary>The default stroke thickness for a <see cref="LoamSize"/>.</summary>
+    public static double DefaultStrokeWidth(LoamSize size) => Math.Round(Diameter(size) * 0.083333, 2);
+
+    /// <summary>The stroke thickness used for rendering.</summary>
+    public static double EffectiveStrokeWidth(LoamSize size, double strokeWidth) =>
+        strokeWidth > 0 ? strokeWidth : DefaultStrokeWidth(size);
 
     /// <summary>The clamped 0–1 progress fraction for the given value range.</summary>
     public static double Fraction(double value, double min, double max) =>
@@ -154,6 +214,8 @@ public class ProgressCircular : Control
         base.OnDetachedFromVisualTree(e);
         _accentSubscription?.Dispose();
         _trackSubscription?.Dispose();
+        _textSubscription?.Dispose();
+        _disabledSubscription?.Dispose();
         StopSpin();
     }
 
@@ -169,6 +231,19 @@ public class ProgressCircular : Control
         {
             StopSpin();
             StartSpin();
+            UpdateAutomation();
+        }
+        else if (change.Property == IsEnabledProperty)
+        {
+            StopSpin();
+            StartSpin();
+            InvalidateVisual();
+        }
+        else if (change.Property == ValueProperty || change.Property == MinimumProperty ||
+                 change.Property == MaximumProperty || change.Property == LabelProperty ||
+                 change.Property == ValueTextProperty || change.Property == ValueTextFormatProperty)
+        {
+            UpdateAutomation();
         }
     }
 
@@ -183,7 +258,7 @@ public class ProgressCircular : Control
     public override void Render(DrawingContext context)
     {
         var d = Diameter(Size);
-        var sw = StrokeWidth;
+        var sw = EffectiveStrokeWidth(Size, StrokeWidth);
         var radius = (d - sw) / 2;
         if (radius <= 0)
         {
@@ -191,18 +266,21 @@ public class ProgressCircular : Control
         }
 
         var center = new Point(d / 2, d / 2);
+        var accent = IsEnabled ? _accent : _disabled ?? _accent;
+        var track = IsEnabled ? _track : _disabled ?? _track;
+        var text = IsEnabled ? _text : _disabled ?? _text;
 
-        if (!Indeterminate && _track is not null)
+        if (!Indeterminate && track is not null)
         {
-            context.DrawEllipse(null, new Pen(_track, sw), center, radius, radius);
+            context.DrawEllipse(null, new Pen(track, sw), center, radius, radius);
         }
 
-        if (_accent is null)
+        if (accent is null)
         {
             return;
         }
 
-        var pen = new Pen(_accent, sw) { LineCap = PenLineCap.Round };
+        var pen = new Pen(accent, sw) { LineCap = PenLineCap.Round };
         if (Indeterminate)
         {
             context.DrawGeometry(null, pen, BuildArc(center, radius, SpinAngle, 90));
@@ -213,6 +291,11 @@ public class ProgressCircular : Control
             if (sweep > 0)
             {
                 context.DrawGeometry(null, pen, BuildArc(center, radius, -90, sweep));
+            }
+
+            if (ShowValue)
+            {
+                DrawValueText(context, center, d, text);
             }
         }
     }
@@ -247,21 +330,84 @@ public class ProgressCircular : Control
         _trackSubscription?.Dispose();
         _trackSubscription = this.GetResourceObservable(LoamTokens.Divider)
             .Subscribe(new BrushObserver(brush => { _track = brush; InvalidateVisual(); }));
+
+        _textSubscription?.Dispose();
+        _textSubscription = this.GetResourceObservable(LoamTokens.TextPrimary)
+            .Subscribe(new BrushObserver(brush => { _text = brush; InvalidateVisual(); }));
+
+        _disabledSubscription?.Dispose();
+        _disabledSubscription = this.GetResourceObservable(LoamTokens.TextDisabled)
+            .Subscribe(new BrushObserver(brush => { _disabled = brush; InvalidateVisual(); }));
+
+        UpdateAutomation();
+    }
+
+    private void DrawValueText(DrawingContext context, Point center, double diameter, IBrush? textBrush)
+    {
+        if (textBrush is null)
+        {
+            return;
+        }
+
+        var text = new FormattedText(
+            BuildValueText(),
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium),
+            Math.Max(10, Math.Min(18, diameter * 0.28)),
+            textBrush);
+        context.DrawText(text, new Point(center.X - text.Width / 2, center.Y - text.Height / 2));
+    }
+
+    private void UpdateAutomation()
+    {
+        InteractionAssist.SetAutomationName(this, Label, "Progress");
+        AutomationProperties.SetHelpText(this, Indeterminate ? "Indeterminate" : BuildValueText());
+    }
+
+    private string BuildValueText()
+    {
+        if (!string.IsNullOrWhiteSpace(ValueText))
+        {
+            return ValueText!;
+        }
+
+        if (Indeterminate)
+        {
+            return "Indeterminate";
+        }
+
+        var percent = Fraction(Value, Minimum, Maximum) * 100;
+        try
+        {
+            return string.Format(CultureInfo.CurrentCulture, ValueTextFormat, percent);
+        }
+        catch (FormatException)
+        {
+            return string.Format(CultureInfo.CurrentCulture, "{0:0}%", percent);
+        }
     }
 
     private void StartSpin()
     {
-        if (!Indeterminate || _spinCancellation is not null)
+        if (!IsEnabled || !Indeterminate || _spinCancellation is not null)
         {
             return;
         }
 
         _spinCancellation = new CancellationTokenSource();
+        var duration = InteractionAssist.DurationToken(this,
+            LoamTokens.MotionDuration(nameof(LoamMotion.ExtraLong4)),
+            TimeSpan.FromSeconds(1.2));
+        if (duration <= TimeSpan.Zero)
+        {
+            SpinAngle = -90;
+            return;
+        }
+
         var animation = new Animation
         {
-            Duration = InteractionAssist.DurationToken(this,
-                LoamTokens.MotionDuration(nameof(LoamMotion.ExtraLong4)),
-                TimeSpan.FromSeconds(1.2)),
+            Duration = duration,
             IterationCount = IterationCount.Infinite,
             Children =
             {

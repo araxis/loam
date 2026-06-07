@@ -25,10 +25,19 @@ public class ListItem : ContentControl
     public static readonly StyledProperty<bool> IsSelectedProperty =
         AvaloniaProperty.Register<ListItem, bool>(nameof(IsSelected));
 
+    /// <summary>Identifies the <see cref="SecondaryText"/> property.</summary>
+    public static readonly StyledProperty<string?> SecondaryTextProperty =
+        AvaloniaProperty.Register<ListItem, string?>(nameof(SecondaryText));
+
+    /// <summary>Identifies the <see cref="Action"/> property.</summary>
+    public static readonly StyledProperty<object?> ActionProperty =
+        AvaloniaProperty.Register<ListItem, object?>(nameof(Action));
+
     private Loam.Controls.Icon? _iconPart;
     private Border? _root;
     private bool _focused;
     private bool _hovered;
+    private bool _pressed;
     private IDisposable? _rootBackground;
 
     /// <summary>Creates the row.</summary>
@@ -69,6 +78,20 @@ public class ListItem : ContentControl
         set => SetValue(IsSelectedProperty, value);
     }
 
+    /// <summary>Optional secondary text rendered below the main content.</summary>
+    public string? SecondaryText
+    {
+        get => GetValue(SecondaryTextProperty);
+        set => SetValue(SecondaryTextProperty, value);
+    }
+
+    /// <summary>Optional trailing visual, usually an <see cref="IconButton"/> or status chip.</summary>
+    public object? Action
+    {
+        get => GetValue(ActionProperty);
+        set => SetValue(ActionProperty, value);
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(ListItem);
 
@@ -84,9 +107,32 @@ public class ListItem : ContentControl
             _root.Focusable = true;
             _root.PointerPressed += (_, args) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
+                _pressed = true;
+                UpdateState();
+                args.Pointer.Capture(_root);
                 Focus();
                 Activate();
                 args.Handled = true;
+            };
+            _root.PointerReleased += (_, args) =>
+            {
+                if (_pressed)
+                {
+                    _pressed = false;
+                    UpdateState();
+                }
+
+                args.Pointer.Capture(null);
+            };
+            _root.PointerCaptureLost += (_, _) =>
+            {
+                _pressed = false;
+                UpdateState();
             };
             _root.PointerEntered += (_, _) =>
             {
@@ -128,7 +174,7 @@ public class ListItem : ContentControl
         {
             UpdateState();
         }
-        else if (change.Property == ContentProperty)
+        else if (change.Property == ContentProperty || change.Property == SecondaryTextProperty)
         {
             UpdateAutomationName();
         }
@@ -192,15 +238,20 @@ public class ListItem : ContentControl
             _rootBackground = _root.Bind(Border.BackgroundProperty,
                 this.GetResourceObservable(LoamTokens.PaletteSelected(nameof(LoamPalette.Primary))));
         }
+        else if (_pressed)
+        {
+            _rootBackground = _root.Bind(Border.BackgroundProperty,
+                this.GetResourceObservable(LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), "Pressed")));
+        }
         else if (_focused)
         {
             _rootBackground = _root.Bind(Border.BackgroundProperty,
-                this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
+                this.GetResourceObservable(LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), "Focus")));
         }
         else if (_hovered)
         {
             _rootBackground = _root.Bind(Border.BackgroundProperty,
-                this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
+                this.GetResourceObservable(LoamTokens.ColorSchemeStateLayer(nameof(LoamColorScheme.OnSurface), "Hover")));
         }
         else
         {
@@ -208,7 +259,29 @@ public class ListItem : ContentControl
         }
     }
 
-    private void UpdateAutomationName() => InteractionAssist.SetAutomationName(this, Content, "List item");
+    private void UpdateAutomationName()
+    {
+        var secondary = SecondaryText?.Trim();
+        if (!string.IsNullOrWhiteSpace(secondary))
+        {
+            var primary = Content switch
+            {
+                string text => text.Trim(),
+                TextBlock textBlock => textBlock.Text?.Trim(),
+                ContentControl { Content: string text } => text.Trim(),
+                Control control => AutomationProperties.GetName(control)?.Trim(),
+                _ => Content?.ToString()?.Trim(),
+            };
+
+            if (!string.IsNullOrWhiteSpace(primary))
+            {
+                AutomationProperties.SetName(this, $"{primary} {secondary}");
+                return;
+            }
+        }
+
+        InteractionAssist.SetAutomationName(this, Content, SecondaryText, "List item");
+    }
 }
 
 /// <summary>A vertical container of <see cref="ListItem"/>s, mirroring the reference API's <c>List</c>.</summary>

@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Loam.Theming;
 
@@ -33,6 +34,9 @@ public class Hidden : Decorator
         AvaloniaProperty.Register<Hidden, HiddenMode>(nameof(Mode), HiddenMode.Down);
 
     private IDisposable? _widthSubscription;
+
+    /// <summary>Creates the hidden breakpoint container.</summary>
+    public Hidden() => AutomationProperties.SetName(this, "Hidden");
 
     /// <summary>The breakpoint the rule is relative to. Mirrors the reference API's <c>Breakpoint</c>.</summary>
     public Breakpoint Breakpoint

@@ -7,6 +7,2304 @@ Next.
 
 ---
 
+## 2026-06-07 — v2.0 — Gallery header and docs refresh
+
+**Done**
+- Moved the gallery theme control to the right side of the top bar and changed it to an icon-only `ToggleIconButton`.
+- Replaced the header's read-only status chips with local token-bound status pills so theme switching cannot clip the outlines in the tight top-bar layout.
+- Added light/dark mode icon paths and a warning icon to the curated built-in icon catalog.
+- Updated docs examples and size descriptions so public examples match the current icon catalog and five-size control scale.
+- Rebuilt the docs site; no extra image asset was added because the current docs issues were API accuracy issues, not missing visual explanation.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused gallery acceptance tests passed: 36 tests.
+- `git diff --check` passed.
+- `npm run docs:build` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 376 tests.
+- `dotnet pack src\Loam\Loam.csproj -c Release --no-build` created `Loam.2.0.0.nupkg`; archive inspection showed only `Loam.dll`, `Loam.xml`, `README.md`, and package metadata.
+
+**Next:** relaunch the Release gallery and visually confirm the top bar in light and dark; after that, continue with final release staging only after explicit approval.
+
+---
+
+## 2026-06-07 — v2.0 — Release readiness gate
+
+**Done**
+- Refreshed README and docs visible status text from the old test counts to the current verified suite count.
+- Replaced stale `v1` catalog wording in the docs overview/introduction/homepage with current v2.0 baseline language.
+- Ran a neutral-name/status scan over README/docs; remaining hits are technical API names such as `Icons.Material.*`, package-lock hashes, or literal color examples.
+- Built the release package artifact without publishing it.
+- Inspected the package archive and nuspec metadata.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 375 tests.
+- `dotnet pack src\Loam\Loam.csproj -c Release --no-build` created `Loam.2.0.0.nupkg`.
+- Package contents include `Loam.dll`, `Loam.xml`, `README.md`, and `Loam.nuspec`; nuspec reports version `2.0.0`, MIT license expression, repository metadata, project URL, and only the Avalonia dependency.
+- `npm run docs:build` passed; `npm ci` was not needed because `docs/node_modules` was already present.
+- Generated package/docs output stayed ignored and did not appear in `git ls-files --others --exclude-standard`.
+
+**Next:** relaunch the Release gallery for a final visual pass; if that passes, the next step is an explicit release commit/push/publish decision.
+
+---
+
+## 2026-06-07 — v2.0 — Tooltip acceptance panel
+
+**Done**
+- Added Tooltip as a dedicated `Feedback / Tooltip` gallery page instead of burying it inside Menu samples.
+- Extended `TooltipOptions` with placement, offsets, show-delay, between-show-delay, show-on-disabled, and service-enabled settings while preserving `Tooltip.Set(...)`.
+- Added `Tooltip.Clear(...)` to remove the attached tooltip and automation help text.
+- Removed Tooltip from the Menu page expected component metadata so Menu acceptance stays focused on menu behavior.
+- Added Tooltip regression tests for tokenized `Paper` content, title/padding/elevation/help text, attached placement/delay/disabled-service options, and clear behavior.
+- Added gallery acceptance checks for the Tooltip page and updated the component adaptation audit.
+
+**Verified**
+- Initial Release build was blocked by stale gallery PID `88736` locking `Loam.dll`; stopped the process and reran.
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Tooltip/gallery acceptance tests passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 375 tests.
+
+**Next:** relaunch Release gallery and visually check `Feedback / Tooltip`; if it passes, continue with the next visible issue or release-readiness gate.
+
+---
+
+## 2026-06-07 — v2.0 — ToggleGroup button-segment fix
+
+**Done**
+- Rebuilt `ToggleGroup` to render each option as a real Loam `Button` segment instead of custom borders, labels, state layers, and a bespoke equal-segment panel.
+- Reused the working connected-button approach from `ButtonGroup`: merged adjacent borders, pill outer corners, intrinsic strip measurement, and minimum width/height enforcement under constrained parents.
+- Updated ToggleGroup regression tests to assert real button segments, selected/outlined variants, size/typography propagation, automation help text, disabled keyboard suppression, and constrained-parent rendering.
+- Updated the component adaptation audit so ToggleGroup no longer claims the old custom segment-panel implementation.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused `InputTests` passed: 83 tests.
+- Focused ButtonGroup/gallery acceptance tests passed: 39 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 374 tests.
+- Release gallery launched for visual verification, PID `63212`.
+
+**Next:** visually confirm `ToggleGroup` on its component page and on `Start / Sizes`; if it passes, continue with Tooltip acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — Sizes page layout fix
+
+**Done**
+- Fixed `ToggleGroup` itself to compute and enforce intrinsic group minimum width/height from segment metrics, so valid labels do not clip under constrained parents.
+- Changed `ToggleGroup` to use a dedicated equal-segment layout panel across each group, so selected segments do not squeeze neighboring labels.
+- Added constrained-parent and equal-segment-width regression tests for extra-large `ToggleGroup` labels.
+- Reworked the `Start / Sizes` gallery page so each component family renders in a named wrapped sample lane instead of a cramped row of fixed cells.
+- Removed the framed sample-card treatment from size lanes so controls such as `ButtonGroup` render like their component pages instead of inside extra chrome.
+- Replaced the size lanes with a stable five-column comparison matrix, `Auto` columns, and local horizontal scrolling, so the page is driven by component desired sizes without fake component chrome.
+- Added `ToggleGroup` to the Sizes page expected component metadata.
+- Tightened gallery acceptance checks for the size matrix header plus `ButtonGroup` and `ToggleGroup` rows.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Input/gallery tests passed: 118 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 374 tests.
+- Release gallery launched for visual verification, latest PID `91788`.
+
+**Next:** visually verify `Start / Sizes`, then continue with Tooltip acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — ToggleGroup size clipping fix
+
+**Done**
+- Fixed `ToggleGroup` segment sizing to measure actual label text instead of using approximate glyph widths.
+- Updated the gallery size matrix so size-aware controls use minimum cells and can wrap instead of clipping wide valid controls.
+- Tightened the `ToggleGroup` unclipped-label regression test across all five sizes with the Day/Week/Month sample.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Input/gallery tests passed: 118 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 372 tests.
+- Release gallery launched for visual verification, PID `73468`.
+
+**Next:** visually verify the `ToggleGroup` size matrix, then continue with Tooltip acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — Snackbar service acceptance
+
+**Done**
+- Hardened `SnackbarService` so action, dismiss, Escape, timer, and queue trimming all share one idempotent cleanup path.
+- Queue trimming now invokes the toast cleanup callback instead of raw-removing visuals, so old timers are stopped deterministically.
+- Added snackbar automation help text for stack position, Escape dismissal, action text, and dismiss text.
+- Expanded the SnackbarService gallery panel with standard, action, persistent, positioned, and queue-limit examples.
+- Updated overlay docs, gallery acceptance checks, focused component tests, and the component adaptation audit.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused SnackbarService/gallery tests passed: 63 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 372 tests.
+- Release gallery launched for visual verification, PID `87144`.
+
+**Next:** visually verify SnackbarService in the Release gallery, then continue with Tooltip acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — Dialog service acceptance
+
+**Done**
+- Hardened `DialogInstance.Close` so repeated close attempts keep the first result and dismiss only once.
+- Extended `DialogOptions` with minimum width, maximum height, outer margin, and autofocus while preserving existing options.
+- Added dialog/backdrop/modal-layer automation names and help text for Escape and scrim dismissal behavior.
+- Moved built-in confirm/message-box actions to text-button styling and scheduled first enabled child focus after attach.
+- Expanded the DialogService gallery panel with confirm, message box, custom sized content, and persistent dismissal examples.
+- Updated overlay docs, gallery acceptance checks, focused component tests, and the component adaptation audit.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused DialogService/gallery tests passed: 62 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 371 tests.
+- Release gallery launched for visual verification, PID `31676`.
+
+**Next:** visually verify DialogService in the Release gallery, then continue with SnackbarService acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — Menu popup row acceptance
+
+**Done**
+- Hardened `Menu` so disabled triggers do not open and repeated opens replace the previous flyout cleanly.
+- Added open/closed automation help text, enabled-only first-row focus, Escape dismissal, and Up/Down keyboard navigation that skips disabled rows.
+- Rendered `ShortcutText` as trailing row content instead of secondary body text.
+- Added tokenized pressed state feedback to `ListItem`, preserving hover/focus/selected state ordering.
+- Expanded the Menu gallery panel with filled, outlined, persistent, disabled, divider, shortcut, disabled-row, and tooltip examples.
+- Updated Menu docs, gallery acceptance checks, focused component tests, and the component adaptation audit.
+
+**Verified**
+- `git diff --check` passed before full verification.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Menu/gallery tests passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 371 tests.
+
+**Next:** visually verify Menu in the Release gallery, then continue with DialogService acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — Popover live acceptance
+
+**Done**
+- Hardened `Popover` open/closed automation help text and Escape closing from the control/surface.
+- Suppressed trigger toggling while the trigger or popover is disabled, including direct disabled `Open = true` attempts.
+- Reattached trigger handlers when a popover re-enters the visual tree.
+- Lowered the generated popover surface to compact popup elevation and shape tokens.
+- Rebuilt the gallery panel with live trigger, open/close, disabled-trigger, and controlled-open button examples using direct component APIs.
+- Updated popover docs, gallery acceptance, focused component tests, and the component adaptation audit.
+
+**Verified**
+- `git diff --check` passed before verification.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Popover/gallery tests passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 369 tests.
+
+**Next:** visually verify Popover in the Release gallery, then continue with Menu popup row/hover/focus acceptance.
+
+---
+
+## 2026-06-07 — v2.0 — Overlay live acceptance
+
+**Done**
+- Hardened `Overlay` automation help text for visible/hidden and auto-close/manual modes.
+- Suppressed scrim and Escape auto-close callbacks while the overlay is disabled.
+- Rebuilt the gallery panel with separate live light auto-close, dark auto-close, manual close, and disabled auto-close examples.
+- Updated overlay docs, gallery acceptance, and the component adaptation audit.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused overlay/gallery tests passed: 25 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 367 tests.
+
+**Next:** visually verify Overlay in the Release gallery, then continue with Popover.
+
+---
+
+## 2026-06-07 — v2.0 — Collapse reduced-motion acceptance
+
+**Done**
+- Hardened `Collapse` so disabled, `Animated = false`, and zero-duration states resolve immediately without a height transition.
+- Updated automation help text to expose both expanded/collapsed and animated/static state.
+- Expanded the `Collapse` gallery panel with live animated, static, custom-duration, and zero-duration toggles, plus a disabled-static example.
+- Updated docs, gallery acceptance tests, and the component adaptation audit.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Collapse/gallery tests passed: 9 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 366 tests.
+
+**Next:** visually verify Collapse in the Release gallery, then continue with the next surface/feedback acceptance pass.
+
+---
+
+## 2026-06-07 — v2.0 — Progress sample cleanup and Skeleton acceptance
+
+**Done**
+- Removed leaked `CircularCase` and `LinearCase` gallery helpers from source-linked progress
+  samples so copyable code shows direct component construction.
+- Hardened `Skeleton` with public size metrics, disabled/static shimmer suppression, and refreshed
+  automation help text when `Animate` or `IsEnabled` changes.
+- Expanded the Skeleton gallery panel with presets, composition, five-size, static, disabled, and
+  custom circular examples using public component APIs.
+- Added Skeleton to the global Sizes page and updated docs plus the component audit.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused progress helper/Skeleton/gallery tests passed: 17 tests across the two focused runs.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 365 tests.
+
+**Next:** visually verify ProgressCircular, ProgressLinear, Skeleton, and Sizes in the Release
+gallery, then continue with Collapse.
+
+---
+
+## 2026-06-07 — v2.0 — ProgressLinear size and state acceptance
+
+**Done**
+- Added `ProgressLinear.Size` with five-size track metrics and named track/fill anatomy.
+- Tokenized active, track, and disabled brushes in the control and made disabled indeterminate
+  rendering static instead of animated.
+- Expanded the ProgressLinear gallery panel with determinate, indeterminate, custom value text,
+  disabled, disabled-indeterminate, and all five size examples using source-linked C#.
+- Added `ProgressLinear` to the global Sizes page and updated docs plus the component audit.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused ProgressLinear/gallery tests passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 363 tests.
+
+**Next:** visually verify ProgressLinear in the Release gallery, then continue with Skeleton.
+
+---
+
+## 2026-06-06 — v2.0 — ProgressCircular size and state acceptance
+
+**Done**
+- Rebased `ProgressCircular` to a 48 px medium baseline with five-size diameter coverage and
+  size-resolved default stroke width.
+- Added disabled static rendering with disabled-role brushes and no indeterminate animation while
+  disabled.
+- Expanded the ProgressCircular gallery panel with states, all five sizes, disabled, custom value
+  text, and static/custom-stroke examples using source-linked C#.
+- Updated ProgressCircular docs and component adaptation audit notes.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused ProgressCircular/gallery tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 360 tests.
+
+**Next:** visually verify ProgressCircular in the Release gallery, then continue with ProgressLinear.
+
+---
+
+## 2026-06-06 — v2.0 — Alert close affordance acceptance
+
+**Done**
+- Replaced Alert's generated close affordance internals with a real `IconButton`, preserving
+  `Closeable`, `CloseIcon`, `Close()`, and `Closed`.
+- Ensured generated close actions have a proper hit target, focusability, automation name/help text,
+  and button-family state feedback.
+- Added disabled close suppression coverage and expanded the Alert gallery panel with a disabled state.
+- Refreshed Alert docs to describe generated title, message, action, close, and compatibility content
+  paths.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Alert/gallery tests passed: 4 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 359 tests.
+
+**Next:** visually verify Alert in the Release gallery, then continue with ProgressCircular.
+
+---
+
+## 2026-06-06 — v2.0 — MonthCalendar keyboard and state acceptance
+
+**Done**
+- Added day-cell arrow and PageUp/PageDown keyboard navigation, including focus movement across
+  displayed month boundaries while respecting min/max disabled bounds.
+- Clipped day-cell state layers to the circular 40px target and removed the inactive month dropdown
+  chevron from the header.
+- Added automation names/help text for previous/next month actions.
+- Expanded the MonthCalendar gallery panel to show selected, range, and constrained states with
+  source-linked C#.
+- Updated picker docs to describe first-day-of-week, public month navigation, keyboard navigation,
+  range states, and disabled day behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused MonthCalendar/gallery tests passed: 8 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 359 tests.
+
+**Next:** visually verify MonthCalendar in the Release gallery, then continue with the next
+component panel.
+
+---
+
+## 2026-06-06 — v2.0 — DatePicker generated API consistency
+
+**Done**
+- Added `PickerTitle`, `CancelText`, `OkText`, `OpenPicker()`, `ClosePicker()`, `Clear()`, and
+  `DateSelected` to `DatePicker` so it matches the generated picker-family API pattern.
+- Hardened disabled DatePicker behavior so pointer, keyboard activation, and `OpenPicker()` no longer
+  open the generated calendar flyout when disabled.
+- Updated the DatePicker gallery panel and picker docs to show generated action labels and the pending
+  Cancel/OK commit workflow.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused DatePicker/gallery tests passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 357 tests.
+
+**Next:** visually verify DatePicker in the Release gallery, then continue with the next
+picker/control panel.
+
+---
+
+## 2026-06-06 — v2.0 — TimePicker commit actions acceptance
+
+**Done**
+- Replaced the generated TimePicker popup's single Close action with Cancel and OK actions.
+- Changed hour/minute row selection to update pending popup state first; OK commits to `Time` and
+  raises `TimeSelected`, while Cancel closes without changing the committed value.
+- Added `PickerTitle`, `CancelText`, `OkText`, `OpenPicker()`, `ClosePicker()`, `Clear()`, and disabled
+  open suppression so TimePicker matches the picker-family API pattern.
+- Updated the TimePicker gallery panel and picker docs to show generated action labels and the pending
+  commit workflow.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused TimePicker/gallery tests passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 356 tests.
+
+**Next:** visually verify TimePicker in the Release gallery, then continue with the next
+picker/control panel.
+
+---
+
+## 2026-06-06 — v2.0 — DateRangePicker disabled interaction acceptance
+
+**Done**
+- Hardened `DateRangePicker` disabled behavior so pointer, keyboard activation, and `OpenPicker()`
+  no longer open the generated flyout when the control is disabled.
+- Kept programmatic range updates intact and kept the existing pending-selection OK/Cancel workflow.
+- Refreshed DateRangePicker docs to describe variants, picker title/actions, open/close/clear methods,
+  `RangeSelected`, pending commit behavior, and disabled opening behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused DateRangePicker/gallery tests passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 354 tests.
+
+**Next:** visually verify DateRangePicker in the Release gallery, then continue with the next
+picker/control panel.
+
+---
+
+## 2026-06-06 — v2.0 — ColorPicker palette interaction acceptance
+
+**Done**
+- Hardened `ColorPicker` so disabled controls suppress pointer, keyboard, and `OpenPicker()` flyout
+  opening while preserving programmatic value updates.
+- Made generated palette swatches focusable, automation-named, keyboard selectable, and backed by
+  tokenized hover/focus/pressed state layers.
+- Refreshed ColorPicker picker docs to describe variants, custom palettes, open/close methods, value
+  change notification, and disabled opening behavior without implying hand-built internals.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused ColorPicker/gallery tests passed: 10 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 353 tests.
+
+**Next:** visually verify ColorPicker in the Release gallery, then continue with the next
+picker/control panel.
+
+---
+
+## 2026-06-06 — v2.0 — Form generated-state acceptance
+
+**Done**
+- Hardened generated `Form` submit/reset actions with named action parts, disabled-state propagation,
+  disabled handler suppression, and action help text.
+- Expanded the Form gallery panel to show generated default, validation-error, ready, disabled, and
+  five action-size states with source-linked C#.
+- Updated Form docs for spacing, action styling, alignment, submit/reset events, and disabled
+  generated-action behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Form/gallery tests passed: 13 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 351 tests.
+
+**Next:** visually verify the Form panel in the Release gallery, then continue with ColorPicker as
+the next picker/input component panel.
+
+---
+
+## 2026-06-06 — v2.0 — FileUpload size and disabled acceptance
+
+**Done**
+- Hardened generated `FileUpload` selection UI so selected-file chips and the generated clear action
+  inherit `FileUpload.Size`.
+- Disabled generated picker, chip remove, and clear actions when `FileUpload.IsEnabled` is false
+  while preserving programmatic `ShowSelection()` and `Clear()` behavior.
+- Expanded the FileUpload gallery panel with explicit five-size coverage and updated docs for the
+  public file upload API surface.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused FileUpload/gallery tests passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 350 tests.
+
+**Next:** visually verify the FileUpload panel in the Release gallery, then continue with Form as
+the next input component panel.
+
+---
+
+## 2026-06-06 — v2.0 — ToggleGroup state-layer and size acceptance
+
+**Done**
+- Added `ToggleGroup.Size` and projected all five size values through the shared button-family
+  density and typography tokens.
+- Rebuilt ToggleGroup segments with named `PART_Segment` and clipped `PART_StateLayer` surfaces
+  for hover, focus, pressed, and keyboard activation feedback.
+- Added disabled interaction suppression, selected/unselected segment help text, dynamic group
+  automation help text, and group-level keyboard navigation.
+- Fixed segment text rendering and alignment regressions by using stable native text measurement,
+  segment-specific padding, no label trimming/wrapping, and size-aware segment/text minimum widths
+  so labels cannot collapse or clip in the gallery or consumer apps.
+- Expanded the ToggleGroup gallery panel and the global Sizes page to show all five sizes.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused ToggleGroup tests passed: 6 tests, including segment label/width/clipping regression coverage.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 348 tests.
+
+**Next:** visually verify the ToggleGroup panel in the Release gallery, then continue with
+FileUpload as the next input component.
+
+---
+
+## 2026-06-06 — v2.0 — Rating state-layer acceptance
+
+**Done**
+- Rebuilt `Rating` stars as stable 40 px interaction targets with centered icons and per-star
+  state layers for hover, focus, pressed, and keyboard activation feedback.
+- Added dynamic rating automation help text plus selected/unselected help text for individual
+  star targets.
+- Hardened disabled and read-only paths so keyboard changes and state-layer feedback are
+  suppressed without changing the public `Rating` API.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Rating tests passed: 4 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 344 tests.
+
+**Next:** visually verify the Rating panel in the Release gallery, then continue with ToggleGroup
+as the next selection panel.
+
+---
+
+## 2026-06-06 — v2.0 — Slider state-layer acceptance
+
+**Done**
+- Added a named thumb-following `Slider` state layer so hover/focus/pressed feedback appears at
+  the active handle position.
+- Added value/range automation help text that refreshes when `Value`, `Minimum`, or `Maximum`
+  changes.
+- Added regression coverage for focus feedback, disabled state-layer clearing, disabled keyboard
+  suppression, and value/range automation.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Slider tests passed: 4 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 342 tests.
+
+**Next:** visually verify the Slider panel in the Release gallery, then continue with Rating as
+the next selection panel.
+
+---
+
+## 2026-06-06 — v2.0 — Radio and RadioGroup state-layer acceptance
+
+**Done**
+- Added a named mark-centered `Radio` state layer so hover/focus/pressed feedback appears around
+  the radio ring without changing label spacing.
+- Added content/value automation names and selected/unselected help text for `Radio`.
+- Hardened `RadioGroup` with focusability, stable automation help text, child rewiring after
+  content changes, and deterministic value-to-radio synchronization.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Radio/RadioGroup tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 340 tests.
+
+**Next:** visually verify the Radio and RadioGroup panels in the Release gallery, then continue
+with Slider as the next selection panel.
+
+---
+
+## 2026-06-06 — v2.0 — Switch state-layer acceptance
+
+**Done**
+- Added a named thumb-following `Switch` state layer so hover/focus/pressed feedback moves with
+  the handle while preserving the existing track/label layout.
+- Bound selected feedback through existing palette state tokens and unselected feedback through the
+  neutral on-surface state token, with disabled state-layer suppression.
+- Added automation naming/help text from switch content and on/off state, plus endpoint size
+  coverage for extra-small through extra-large geometry.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Switch tests passed: 3 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 336 tests.
+
+**Next:** visually verify the Switch panel in the Release gallery, then continue with Radio and
+RadioGroup as the next selection panels.
+
+---
+
+## 2026-06-06 — v2.0 — CheckBox state-layer acceptance
+
+**Done**
+- Added a named mark-centered `CheckBox` state layer so hover/focus/pressed feedback appears around
+  the checkbox glyph without widening the label spacing.
+- Bound selected state feedback through existing palette state tokens and unselected feedback through
+  the neutral on-surface state token.
+- Added automation naming/help text from checkbox content, with focused tests for focus feedback,
+  disabled suppression, and content updates.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused CheckBox tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 334 tests.
+
+**Next:** visually verify the CheckBox panel in the Release gallery, then continue with Switch as
+the next selection panel.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete automation acceptance
+
+**Done**
+- Added root automation name/help text for `Autocomplete`, sourced from label/helper text and
+  refreshed to error text when invalid.
+- Added automation names/help text for suggestion rows so popup options expose stable accessible
+  labels.
+- Added regression coverage for root automation, suggestion-row automation, and error help text
+  refresh.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Autocomplete tests passed: 14 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 332 tests.
+
+**Next:** visually verify the Autocomplete panel in the Release gallery, then continue with Select
+as the next input panel.
+
+---
+
+## 2026-06-06 — v2.0 — MaskedTextField live input masking
+
+**Done**
+- Hardened `MaskedTextField` live editor synchronization so focused text input is projected through
+  the active mask pattern after Avalonia completes the keypress caret update.
+- Kept the mask reentrancy guard exception-safe and normalized caret/selection to the end after
+  inserted literals such as phone/date separators.
+- Added regression coverage for live editor input, digit-by-digit keyboard typing, visible editor
+  text, public `Text`, and caret state.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused MaskedTextField tests passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 331 tests.
+
+**Next:** visually verify live typing on the MaskedTextField page in the Release gallery, then
+continue with Autocomplete as the next input panel.
+
+---
+
+## 2026-06-06 — v2.0 — MaskedTextField automation and gallery acceptance
+
+**Done**
+- Reworked the MaskedTextField gallery panel into a compact wrapping matrix of real
+  `MaskedTextField` instances covering phone, postal code, date, access code, product key,
+  partial input, error, and disabled states.
+- Added MaskedTextField automation name/help text so the root exposes its label and mask pattern,
+  including error text when the field is invalid.
+- Added focused component and gallery acceptance coverage for mask projection, pattern automation,
+  source-linked state samples, filled/text/outlined variants, secondary color, error, disabled, and
+  corrected outlined notch spacing.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused MaskedTextField/gallery tests passed: 4 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 329 tests.
+
+**Next:** visually verify the MaskedTextField page in the Release gallery, then continue with
+Autocomplete as the next input panel.
+
+---
+
+## 2026-06-06 — v2.0 — NumericField interaction and gallery acceptance
+
+**Done**
+- Reworked the NumericField gallery panel into a compact wrapping matrix of real `NumericField`
+  instances covering outlined, filled, text/underline, fractional step, max-bound, negative range,
+  error, and disabled states.
+- Hardened NumericField keyboard behavior so Up/Down adjust the value from the inner editor while
+  preserving min/max clamping and step behavior.
+- Added automation names/help text for the NumericField root and spinner controls, and disabled the
+  spinner targets when the control is disabled.
+- Added focused component and gallery acceptance coverage for keyboard adjustment, spinner
+  automation, source-linked state samples, variants, formatting, bounds, error, disabled, and
+  corrected outlined notch spacing.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused NumericField/gallery tests passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 327 tests.
+
+**Next:** visually verify the NumericField page in the Release gallery, then continue with
+MaskedTextField as the next input panel.
+
+---
+
+## 2026-06-06 — v2.0 — TextField gallery acceptance
+
+**Done**
+- Reworked the TextField gallery panel into a compact wrapping matrix of real `TextField`
+  instances covering outlined, filled, text/underline, adornments, always-floated label,
+  read-only, required error, and disabled states.
+- Kept the existing TextField public API unchanged because variants, label/helper/error text,
+  validation flags, adornments, read-only, disabled, shrink-label, and placeholder behavior already
+  cover the needed anatomy.
+- Added focused gallery acceptance coverage proving the panel uses real TextField labels and state
+  properties, and that outlined floated labels keep the corrected notch spacing.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused TextField/gallery tests passed: 11 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 325 tests.
+
+**Next:** visually verify the TextField page in the Release gallery, then continue with
+NumericField as the next input panel.
+
+---
+
+## 2026-06-06 — v2.0 — Field gallery acceptance
+
+**Done**
+- Expanded the Field gallery panel with real custom content states for phone entry, accent
+  swatch, grouped options, text/underline quick filter, error amount, and disabled token display.
+- Kept the existing Field public API unchanged because label, helper, error, variant, adornments,
+  inner padding, content, and disabled state already cover the needed anatomy.
+- Tightened focused component and gallery acceptance coverage for outlined notch spacing,
+  source-linked sample content, filled/text/outlined variants, error, disabled, adornments, and
+  chromeless focused inner TextBox behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused Field/gallery tests passed: 2 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 324 tests.
+
+**Next:** visually verify the Field page in the Release gallery, then continue with the next input
+or picker page that still needs richer component-panel acceptance.
+
+---
+
+## 2026-06-06 — v2.0 — TimePicker gallery ergonomics
+
+**Done**
+- Updated the TimePicker gallery panel so state labels such as Outlined, Filled,
+  Text / underline, Empty, Selected, 24-hour format, Minute step, Error, and Disabled are real
+  `TimePicker.Label` values instead of external sample text wrappers.
+- Kept the existing TimePicker public API unchanged because it already exposes label, helper, error,
+  variant, time format, minute step, selected time, and disabled state.
+- Added focused component and gallery acceptance coverage for label/helper/error rendering,
+  automation naming, source-linked state samples, and rejection of the old wrapper labels.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused TimePicker/gallery tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 324 tests.
+
+**Next:** visually verify the TimePicker page in the Release gallery, then continue with the next
+input or picker page that still shows sample-only anatomy.
+
+---
+
+## 2026-06-06 — v2.0 — Field floating-label alignment
+
+**Done**
+- Fixed shared outlined field floating-label alignment by reserving top notch space on the outlined
+  field border while keeping the label inside the control's layout bounds.
+- Restored the positive floating-label top offset so labels are not clipped, while filled and text
+  variants keep non-notched label positioning.
+- Added focused TextField and DatePicker coverage so field-style controls keep the corrected
+  floating-label position.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused field/picker/theme tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 323 tests.
+
+**Next:** visually verify DatePicker and TextField labels in the Release gallery, then continue
+with TimePicker gallery ergonomics.
+
+---
+
+## 2026-06-06 — v2.0 — DatePicker gallery ergonomics
+
+**Done**
+- Updated the DatePicker gallery panel so state labels such as Outlined, Filled,
+  Text / underline, Empty, Selected, Error, and Disabled are real `DatePicker.Label`
+  values instead of external sample text wrappers.
+- Kept the existing DatePicker public API unchanged because it already exposes label, helper,
+  error, variant, date format, constraints, and pending commit/cancel behavior.
+- Added focused component and gallery acceptance coverage for label/helper/error rendering,
+  automation naming, source-linked state samples, and rejection of the old wrapper labels.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused DatePicker/gallery tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 323 tests.
+
+**Next:** visually verify the DatePicker page in the Release gallery, then continue with TimePicker
+because it still has external sample labels in its state matrix.
+
+---
+
+## 2026-06-06 — v2.0 — DateRangePicker gallery ergonomics
+
+**Done**
+- Updated the DateRangePicker gallery panel so state labels such as Outlined, Filled,
+  Text / underline, Empty, Selected, Error, and Disabled are real `DateRangePicker.Label`
+  values instead of external sample text wrappers.
+- Kept the existing DateRangePicker public API unchanged because it already exposes label, helper,
+  error, variants, constraints, custom action text, and pending range commit/cancel behavior.
+- Added focused component and gallery acceptance coverage for label/helper/error rendering,
+  automation naming, source-linked state samples, and rejection of the old wrapper labels.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused DateRangePicker/gallery tests passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 322 tests.
+
+**Next:** visually verify the DateRangePicker page in the Release gallery, then continue with the
+next picker/input page that still uses external sample labels or helper text.
+
+---
+
+## 2026-06-06 — v2.0 — ColorPicker gallery ergonomics
+
+**Done**
+- Updated the ColorPicker gallery panel so state labels such as Outlined, Filled, Text, Alpha,
+  Error, and Disabled are real `ColorPicker.Label` values instead of external sample text wrappers.
+- Kept the existing ColorPicker public API unchanged because it already exposes label, helper, error,
+  alpha, value, variant, and custom palette anatomy.
+- Added focused component and gallery acceptance coverage for label/helper/error rendering,
+  automation naming, and source-linked state samples.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused ColorPicker/gallery tests passed: 8 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 321 tests.
+
+**Next:** visually verify the ColorPicker page in the Release gallery, then continue with the next
+picker/input page that still uses external sample labels or helper text.
+
+---
+
+## 2026-06-06 — v2.0 — FileUpload API ergonomics
+
+**Done**
+- Added generated `FileUpload` label, helper text, empty status text, selected status format, and
+  configurable upload button icon.
+- Updated the FileUpload gallery panel so labels/status/helper text live inside `FileUpload`
+  instances instead of external sample stacks.
+- Updated input docs for the generated FileUpload anatomy, remove/clear events, and selected status
+  formatting.
+- Added focused component and gallery acceptance coverage for label/helper/status rendering, button
+  icon binding, removable chips, clear action, and state variants.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused FileUpload/gallery tests passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 320 tests.
+
+**Next:** visually verify the FileUpload page in the Release gallery, then continue the
+component-by-component ergonomics sweep with ColorPicker or the next input component whose sample still
+builds labels/status externally.
+
+---
+
+## 2026-06-06 — v2.0 — Form API ergonomics
+
+**Done**
+- Added generated `Form` title/subtitle, helper text, success/error status text, and submit/reset
+  action icons while preserving raw `Child` compatibility.
+- Updated generated submit/reset behavior so validation and reset refresh the built-in status line.
+- Updated the Form gallery panel and input docs to use generated form anatomy instead of external
+  title/status stacks.
+- Tightened focused form and gallery acceptance coverage for generated anatomy, status switching,
+  action icons, field metrics, and reset behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused form/gallery tests passed: 2 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 319 tests.
+
+**Next:** visually verify the Form page in the Release gallery, then continue the
+component-by-component ergonomics sweep with the next input component whose sample still builds core
+anatomy outside the control.
+
+---
+
+## 2026-06-06 — v2.0 — Drawer generated content overlap fix
+
+**Done**
+- Wrapped generated `Drawer.Items` navigation in a vertical scroll viewport so compact drawer frames
+  cannot paint nav rows under the generated footer.
+- Increased the Drawer gallery preview frames so title, subtitle, navigation rows, and footer text
+  have enough room in the standard sample.
+- Added a focused regression test for generated drawer header/nav/footer layout in a compact height.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused shell/gallery tests passed: 22 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 319 tests.
+
+**Next:** visually verify the Drawer page in the Release gallery, then continue with form/input
+composition ergonomics if the shell samples pass.
+
+---
+
+## 2026-06-06 — v2.0 — Shell API ergonomics
+
+**Done**
+- Added generated `Drawer` title, subtitle, and footer text anatomy while preserving custom
+  `Header`, `Footer`, and raw `Content` compatibility.
+- Added generated `MainContent` page header anatomy with title, subtitle, custom header, custom
+  header actions, primary/secondary action text, action events, and automation help text.
+- Updated Layout, Drawer, and MainContent gallery panels to use generated shell APIs instead of
+  hand-built header/title/footer rows.
+- Added focused shell and gallery acceptance coverage for drawer header/footer generation,
+  mini-drawer hiding, main-content header actions, and generated shell samples.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused shell/gallery tests passed: 22 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 318 tests.
+
+**Next:** visually verify Layout, Drawer, and MainContent in the Release gallery, then continue the
+component-by-component ergonomics sweep with the next component whose sample still builds core anatomy
+outside the control.
+
+---
+
+## 2026-06-06 — v2.0 — Surface container API ergonomics
+
+**Done**
+- Added generated `Paper` anatomy for title, subtitle, body, compact padding, semantic color, and
+  shape tokens while preserving custom `Content` compatibility.
+- Added generated `Card` anatomy for body text plus primary/secondary action text and click events,
+  so standard cards no longer require hand-built internal rows.
+- Updated the Paper and Card gallery panels to use the generated APIs in source-linked code.
+- Added focused component and gallery acceptance coverage for generated surface/card anatomy, square
+  surfaces, no cast shadows, generated actions, and automation text.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed with zero warnings.
+- Focused surface/gallery tests passed: 29 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 316 tests.
+
+**Next:** visually verify Paper and Card in the Release gallery, then continue the
+component-by-component ergonomics sweep with shell surfaces or the next page that still forces users
+to assemble component internals by hand.
+
+---
+
+## 2026-06-06 — v2.0 — Loading feedback API ergonomics
+
+**Done**
+- Added generated `ProgressLinear` label/value text support with value formatting, explicit value text,
+  and automation help text.
+- Added generated `ProgressCircular` label/value text support, centered determinate value rendering, and
+  automation help text.
+- Added `SkeletonPreset`, `Skeleton.Preset`, `Size`, `Label`, and static factories for text lines,
+  avatars, buttons, thumbnails, and cards while preserving the old custom `Width`/`Height`/`Circle`
+  path.
+- Updated ProgressCircular, ProgressLinear, and Skeleton gallery panels to use the generated APIs in
+  source-linked code.
+- Added focused component and gallery acceptance coverage for the loading APIs.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- Focused loading/gallery tests passed: 16 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 314 tests.
+
+**Next:** visually verify ProgressCircular, ProgressLinear, and Skeleton in the Release gallery, then
+continue the component-by-component ergonomics sweep with surface containers (`Paper`/`Card`) or the
+next gallery page that still feels hand-built.
+
+---
+
+## 2026-06-06 — v2.0 — Feedback API ergonomics
+
+**Done**
+- Added generated `Alert` anatomy for title, message, trailing action, and close affordance while
+  preserving raw `Content` compatibility.
+- Added `Alert.Closeable`, `CloseIcon`, `Action`, `Title`, `Message`, `Close()`, and `Closed` so
+  standard alert layouts do not require hand-built rows.
+- Updated the Alert gallery panel to show generated anatomy, action, closeable alerts, variants,
+  semantic colors, and the raw content compatibility path in source-linked code.
+- Added focused alert component and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- Focused alert/gallery tests passed: 13 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 310 tests.
+
+**Next:** visually verify the Alert page in the Release gallery, then continue the component-by-component
+ergonomics sweep with the next weakest feedback/loading component API.
+
+---
+
+## 2026-06-06 — v2.0 — Data display API ergonomics
+
+**Done**
+- Added generated `TimelineItem` anatomy for title, subtitle, time/metadata text, and semantic color
+  while preserving custom `Content`.
+- Added generated `CarouselItem` slide anatomy for title, subtitle, and semantic color while preserving
+  custom `Content`.
+- Added `Carousel.GoTo` and `SelectedIndexChanged` so carousel navigation can be driven without
+  reaching into internal chrome.
+- Added `ExpansionPanels.AddPanel`, `ExpandPanel`, `CollapsePanel`, `ExpandAll`, and `CollapseAll`
+  helpers for common accordion/multi-expansion workflows.
+- Updated Timeline, Carousel, and ExpansionPanels gallery samples to use the new component APIs in
+  source-linked code.
+- Added focused data display and gallery acceptance coverage for the new APIs.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- Focused data/gallery tests passed: 18 tests.
+- `git diff --check` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 308 tests.
+
+**Next:** visually verify Timeline, Carousel, and ExpansionPanels in the Release gallery, then continue
+the component-by-component ergonomics sweep with the next control family that still needs generated
+anatomy or simpler public hooks.
+
+---
+
+## 2026-06-06 — v2.0 — Input and picker API ergonomics
+
+**Done**
+- Added `FileUpload` accept filters, selected-file chip removal, optional clear action, and removal/clear
+  events while preserving the existing `ButtonText`, `AllowMultiple`, `Files`, and `ShowSelection` APIs.
+- Added generated `Form` action styling knobs for size, submit/reset variants, colors, and action-row
+  alignment so standard forms do not need custom action footers.
+- Added `ColorPicker.Palette`, `OpenPicker`, `ClosePicker`, and value-change notification; an empty
+  palette continues to use the built-in default colors.
+- Changed `DateRangePicker` to use pending selection with generated cancel/OK actions before committing
+  `Start`/`End`, and added title/action text plus open/close/clear helpers.
+- Added `MonthCalendar.FirstDayOfWeek`, `PreviousMonth`, and `NextMonth`.
+- Updated FileUpload, Form, ColorPicker, DateRangePicker, and MonthCalendar gallery panels to show the
+  new real component APIs in source-linked samples.
+- Added focused component and gallery acceptance tests for the new behavior.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- Focused input/picker/gallery tests passed: 26 tests.
+- `git diff --check` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 305 tests.
+
+**Next:** visually verify FileUpload, Form, ColorPicker, DateRangePicker, and MonthCalendar in the
+Release gallery, then continue the component-by-component API ergonomics sweep with the next weakest
+remaining sample/component family.
+
+---
+
+## 2026-06-06 — v2.0 — Overlay component API ergonomics
+
+**Done**
+- Added menu row options for disabled rows, divider rows, shortcut text, menu width, and public
+  `OpenMenu`/`CloseMenu` methods.
+- Added `Popover.Trigger` so standard trigger-driven popovers no longer require manual click wiring.
+- Added snackbar positioning and explicit dismiss button options through `SnackbarPosition` and
+  `SnackbarOptions`.
+- Added `TooltipOptions` for title, elevation, padding, typography, color, and help text while keeping
+  `Tooltip.Set(control, text)` compatible.
+- Added dialog options for Escape dismissal, max width, and padding.
+- Updated Menu, Popover, DialogService, SnackbarService, and tooltip gallery samples to use the new
+  component APIs.
+- Added focused overlay component and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~OverlayTests|FullyQualifiedName~Overlay_gallery_pages_use_component_options"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 23 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 301 tests.
+
+**Next:** visually verify Menu, Popover, DialogService, SnackbarService, and tooltip behavior, then
+continue with input/picker API ergonomics for `FileUpload`, `Form`, `ColorPicker`, and range/calendar
+helpers.
+
+---
+
+## 2026-06-06 — v2.0 — Drawer generated-content toggle crash fix
+
+**Done**
+- Fixed generated `Drawer` content so `Open` toggles no longer rebuild header/footer content.
+- Changed generated drawer updates to retain the generated surface and update nav/header/footer in
+  place, avoiding already-parented control crashes when header/footer are controls.
+- Added regression coverage for temporary drawer open/close toggles, mini rebuilds with header/footer,
+  and the gallery Drawer page's `Toggle temporary` button.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~Drawer_toggle_open|FullyQualifiedName~Drawer_generated_content_rebuild|FullyQualifiedName~Shell_gallery_pages_use_generated_component_apis"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 3 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 295 tests.
+
+**Next:** retry the Drawer gallery toggle visually, then continue with overlay/component API
+ergonomics: `Menu`, `Popover`, `DialogService`, `SnackbarService`, and `Tooltip`.
+
+---
+
+## 2026-06-06 — v2.0 — Shell component API ergonomics
+
+**Done**
+- Added `AppBar.Subtitle` so standard generated app bars can show a two-line title stack without
+  custom toolbar grids.
+- Extended `AppBarAction` with `IsEnabled`, `Variant`, `Color`, and `Size` for generated trailing
+  actions.
+- Added stable shell automation names for `Layout` and `MainContent`.
+- Added `DrawerItem.IsEnabled`, `Label`, and `Color`, plus `NavLink.Label`, so generated drawer
+  items support disabled states and accessible mini-drawer labels.
+- Updated Shell/Layout, AppBar, Drawer, and MainContent gallery samples to use generated component
+  APIs, including navigation toggle callbacks, subtitles, disabled actions, disabled drawer items,
+  footer/header content, and mini labels.
+- Added focused shell API and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~ShellTests|FullyQualifiedName~Shell_gallery_pages_use_generated_component_apis|FullyQualifiedName~MainContent_gallery_sample_shows_shell_context"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 18 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 293 tests.
+
+**Next:** visually verify the shell pages, then continue with overlay/component API ergonomics:
+`Menu`, `Popover`, `DialogService`, `SnackbarService`, and `Tooltip`.
+
+---
+
+## 2026-06-06 — v2.0 — Timeline orientation and carousel automation fix
+
+**Done**
+- Added `Timeline.Orientation` with vertical default and horizontal rendering support.
+- Added horizontal Timeline gallery coverage with scrollable overflow for narrow surfaces.
+- Added `Carousel.AutoPlay` and `Carousel.AutoPlayInterval` so auto-advancing slides are a first-class
+  component capability.
+- Fixed Carousel previous/next arrow activation by wiring real button click events instead of relying
+  on pointer handling for template buttons.
+- Added auto-play, arrow-click, horizontal-timeline, and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~Carousel_prev_next|FullyQualifiedName~Carousel_auto_play|FullyQualifiedName~Timeline_horizontal|FullyQualifiedName~Timeline_carousel_gallery_pages_show_data_motion_states"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 4 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 290 tests.
+
+**Next:** visually verify Timeline horizontal mode and Carousel arrow/auto behavior, then continue
+with shell component API ergonomics: `AppBar`, `Drawer`, `Layout`, and `MainContent`.
+
+---
+
+## 2026-06-06 — v2.0 — Timeline and carousel state coverage
+
+**Done**
+- Added `Timeline` empty-state rendering and item-count automation help text from construction time.
+- Added timeline item-position help text and disabled opacity handling.
+- Hardened `Carousel` disabled behavior so programmatic, keyboard, and bullet navigation are
+  suppressed while disabled.
+- Added `Carousel` empty-slide rendering, selected-slide automation help text, bullet selected help
+  text, and chrome disabled state updates.
+- Replaced the Timeline and Carousel gallery pages with component-specific panels for default,
+  rich-content, empty, disabled, hidden-chrome, clamped-index, and selected-slide states.
+- Added focused component and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~Carousel|FullyQualifiedName~Timeline|FullyQualifiedName~Timeline_carousel_gallery_pages_show_data_motion_states"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 287 tests.
+
+**Next:** visually verify the Timeline and Carousel pages, then continue with shell component API
+ergonomics: `AppBar`, `Drawer`, `Layout`, and `MainContent`.
+
+---
+
+## 2026-06-06 — v2.0 — Tabs and reveal control coverage
+
+**Done**
+- Hardened `Tabs` selected-index clamping for invalid indexes and item removal.
+- Suppressed disabled tab header activation and added selected-tab automation help text.
+- Updated `ExpansionPanels` automation so accordion and multi-expansion state changes stay current.
+- Added `ExpansionPanel` and `Collapse` expanded/collapsed automation help text.
+- Replaced the Tabs, ExpansionPanels, and Collapse gallery pages with component-specific panels for
+  selected, secondary, clamped, disabled, empty, accordion, multi-expansion, static, animated, and
+  custom-duration states.
+- Added focused component and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~Tabs_clamp_selection|FullyQualifiedName~ExpansionPanels_multi_mode|FullyQualifiedName~ExpansionPanel_help_text|FullyQualifiedName~Collapse_exposes_automation_state|FullyQualifiedName~Tabs_expansion_collapse_gallery_pages_show_reveal_states"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 284 tests.
+
+**Next:** visually verify the Tabs, ExpansionPanels, and Collapse pages, then continue with
+secondary data motion panels: `Timeline` and `Carousel`.
+
+---
+
+## 2026-06-06 — v2.0 — Stepper and pagination workflow coverage
+
+**Done**
+- Added `Pagination` automation name and page-count help text.
+- Hardened disabled `Pagination` behavior so direct page/arrow click events cannot change selection.
+- Added selected-page automation naming and kept selected page clamping deterministic.
+- Added `Stepper` automation name and step-position help text.
+- Hardened `Stepper` active-index clamping for invalid indexes and step removal, disabled next/back
+  navigation, and empty-step action state.
+- Replaced the Stepper and Pagination gallery pages with component-specific panels for boundary,
+  windowed, secondary, clamped, empty, disabled, active, completed, and invalid-index states.
+- Added focused component and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~DataDisplayTests.Pagination|FullyQualifiedName~DataDisplayTests.Stepper|FullyQualifiedName~Stepper_pagination_gallery_pages_show_workflow_navigation_states"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 9 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 279 tests.
+
+**Next:** visually verify the Stepper and Pagination pages, then continue with reveal/data
+interaction panels: `Tabs`, `ExpansionPanels`, and `Collapse`.
+
+---
+
+## 2026-06-06 — v2.0 — Navigation primitive component panels
+
+**Done**
+- Added default automation naming for `Breadcrumbs` and `NavMenu`.
+- Fixed `NavGroup` so disabled groups no longer toggle from keyboard or header activation paths.
+- Replaced the navigation primitive gallery pages with component-specific panels covering breadcrumb
+  separators, href/disabled breadcrumb items, link colors/underline/href/disabled states, simple and
+  grouped menus, active/secondary/text-only/href/disabled nav links, and expanded/collapsed/disabled
+  nav groups.
+- Added focused navigation behavior and gallery acceptance coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~NavigationTests|FullyQualifiedName~Navigation_gallery_pages_show_component_specific_panels"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 12 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 276 tests.
+
+**Next:** visually verify the Navigation pages, then continue the component-by-component pass with
+data workflow controls: `Stepper` and `Pagination`.
+
+---
+
+## 2026-06-06 — v2.0 — Layout primitive component panels
+
+**Done**
+- Added default automation names for `Container`, `Grid`, `Item`, `Stack`, `Spacer`, `Hidden`, and
+  `ScrollToTop`, including the default scroll-to-top FAB.
+- Replaced the layout primitive gallery pages with component-specific panels for breakpoint caps,
+  gutters, fixed/responsive grid spans, item breakpoint fallback, vertical/row/custom stacks,
+  star/dock spacers, hidden breakpoint modes, and scroll-to-top behavior.
+- Added layout and gallery acceptance coverage for automation naming, item span fallback/clamping,
+  source-linked layout examples, and per-page component coverage.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~LayoutTests|FullyQualifiedName~Layout_gallery_pages_show_component_specific_panels"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 16 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 273 tests.
+
+**Next:** visually verify the Layout pages, then continue the component-by-component pass with
+navigation primitives: `Breadcrumbs`, `Link`, `NavMenu`, `NavLink`, and `NavGroup`.
+
+---
+
+## 2026-06-06 — v2.0 — Text, icon, and divider display coverage
+
+**Done**
+- Added automation naming for `Text`, `Icon`, and `Divider`.
+- Fixed `Text` and `Icon` color inheritance so switching from an explicit semantic color back to
+  `Inherit` clears the local foreground binding instead of keeping the old color.
+- Replaced the Text gallery page with display, headline, title, body, label, legacy alias, color,
+  alignment, and wrapping examples.
+- Replaced the Icon gallery page with color, five-size, and common-glyph examples.
+- Replaced the Divider gallery page with horizontal/vertical, full-width, inset, middle, and light
+  divider examples.
+- Added primitive and gallery acceptance coverage for the new states.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PrimitivesTests.Text|FullyQualifiedName~PrimitivesTests.Icon|FullyQualifiedName~PrimitivesTests.Divider|FullyQualifiedName~GalleryAcceptanceTests.Text_icon_divider"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 11 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 270 tests.
+
+**Next:** visually verify Text, Icon, and Divider pages, then continue with layout primitives:
+Container, Grid, Item, Stack, Spacer, Hidden, and ScrollToTop.
+
+---
+
+## 2026-06-06 — v2.0 — Badge and avatar display coverage
+
+**Done**
+- Added automation naming for `Badge`, `Avatar`, and `AvatarGroup` so passive display surfaces
+  expose useful names in headless/accessibility checks.
+- Replaced the Badge gallery page with values, dot, capped value, origins, overlap, bordered, and
+  hidden badge states.
+- Replaced the Avatar gallery page with separate variant, color, shape, icon, and five-size panels.
+- Replaced the AvatarGroup gallery page with overflow, compact, relaxed spacing, rounded, square,
+  and five-size group examples.
+- Added component and gallery acceptance coverage for the new states.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~DisplayTests.Badge|FullyQualifiedName~DisplayTests.Avatar|FullyQualifiedName~GalleryAcceptanceTests.Badge_avatar_gallery"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 9 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 266 tests.
+
+**Next:** visually verify Badge, Avatar, and AvatarGroup pages, then continue with Text, Icon, and
+Divider display surfaces.
+
+---
+
+## 2026-06-06 — v2.0 — Chip sizing regression correction
+
+**Done**
+- Fixed the Chip template overlay so the state layer no longer makes chips measure as full-width
+  controls inside wrapping gallery layouts.
+- Added regression coverage that verifies chips stay content-sized inside a `WrapPanel`.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~DisplayTests.Chip|FullyQualifiedName~GalleryAcceptanceTests.Chip_gallery"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 10 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 262 tests.
+
+**Next:** visually verify Chip and ChipSet again, then continue with Badge, Avatar, and AvatarGroup.
+
+---
+
+## 2026-06-06 — v2.0 — Chip and ChipSet state coverage
+
+**Done**
+- Added a token-driven state-layer overlay to `Chip`, with focus/hover/pressed feedback clipped to
+  the chip shape and cleared when disabled.
+- Replaced the Chip gallery page with a richer matrix covering variants, colors, icon, closeable,
+  label shape, all five sizes, and disabled states.
+- Replaced the ChipSet gallery page with single mandatory, multi-select, optional selection, and
+  disabled set examples.
+- Added component regression coverage for Chip state layers and gallery acceptance coverage for
+  Chip and ChipSet panels.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.Chip_gallery_pages_show_component_state_matrices|FullyQualifiedName~DisplayTests.Chip_focus_uses_token_state_layer_and_disabled_clears_it|FullyQualifiedName~DisplayTests.ChipSet"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 6 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 261 tests.
+
+**Next:** visually verify Chip and ChipSet pages, then continue with the next display surfaces:
+Badge, Avatar, and AvatarGroup.
+
+---
+
+## 2026-06-06 — v2.0 — Selection input gallery coverage
+
+**Done**
+- Replaced the CheckBox, Switch, Radio, RadioGroup, Slider, ToggleGroup, and Rating gallery pages
+  with richer state panels covering selected/unselected, disabled, colors, grouping, range values,
+  read-only/static states, and size matrices where the component exposes `Size`.
+- Fixed CheckBox indeterminate rendering so the mixed state uses the selected fill with a dash mark
+  instead of visually matching an unchecked box.
+- Added gallery acceptance coverage for the selection input panels and regression coverage for the
+  CheckBox indeterminate visual state.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.Selection_input_gallery_pages_show_state_matrices|FullyQualifiedName~InputTests.CheckBox_indeterminate_uses_filled_box_and_dash_mark"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 2 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 259 tests.
+
+**Next:** visually verify the selection input pages in the gallery, then continue with display
+selection surfaces such as Chip and ChipSet.
+
+---
+
+## 2026-06-06 — v2.0 — Color picker and file upload coverage
+
+**Done**
+- Added `Variant` support to `ColorPicker` so it can render outlined, filled, and text/underline
+  field chrome like the other field-based pickers.
+- Added `Variant`, `Color`, and `Size` to `FileUpload` and bound those properties to the internal
+  upload button, so users can style the component without rebuilding its internals.
+- Replaced the ColorPicker and FileUpload gallery pages with copyable state matrices covering
+  variants, selected/default values, alpha, multiple files, size examples, error where applicable,
+  and disabled states.
+- Added control-level and gallery acceptance coverage for the new states.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests.ColorPicker|FullyQualifiedName~InputTests.FileUpload|FullyQualifiedName~GalleryAcceptanceTests.ColorPicker_gallery|FullyQualifiedName~GalleryAcceptanceTests.FileUpload_gallery"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 9 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 257 tests.
+
+**Next:** visually verify ColorPicker and FileUpload in the gallery, then continue with remaining
+input components that still need richer state panels.
+
+---
+
+## 2026-06-06 — v2.0 — Time picker selected row style correction
+
+**Done**
+- Fixed TimePicker popup row state layers so hover/focus overlays use the same rounded pill shape as
+  selected rows instead of drawing square blocks inside the selected pill.
+- Hid the time-column scrollbars while preserving scrollable hour/minute columns, removing the
+  visible vertical tracks beside selected values.
+- Added regression coverage for hidden TimePicker column scrollbars, clipped rows, and rounded row
+  state layers.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests.TimePicker|FullyQualifiedName~GalleryAcceptanceTests.TimePicker_gallery"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 4 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 253 tests.
+
+**Next:** visually verify the TimePicker selected row in the gallery, then continue with ColorPicker
+and FileUpload state/variant coverage.
+
+---
+
+## 2026-06-06 — v2.0 — Time picker variants and sample coverage
+
+**Done**
+- Added `Variant` support to `TimePicker` so it can render outlined, filled, and text/underline
+  field chrome like the other field-based picker controls.
+- Replaced the TimePicker gallery sample's three-control demo with a copyable state matrix:
+  outlined, filled, text/underline, empty, selected, 24-hour format, minute step, floating label,
+  error, and disabled.
+- Added control-level variant coverage and gallery acceptance coverage for the TimePicker state
+  matrix.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.TimePicker_gallery|FullyQualifiedName~GalleryAcceptanceTests.DateRangePicker_gallery|FullyQualifiedName~GalleryAcceptanceTests.DatePicker_gallery|FullyQualifiedName~PickerTests.TimePicker|FullyQualifiedName~PickerTests.DateRangePicker_variant|FullyQualifiedName~PickerTests.DatePicker_variant|FullyQualifiedName~PickerTests.Date_and_time|FullyQualifiedName~OverlayTests.PopupSurface"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 14 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 253 tests.
+
+**Next:** visually verify TimePicker variants in the gallery, then continue with ColorPicker and
+FileUpload state/variant coverage.
+
+---
+
+## 2026-06-06 — v2.0 — Date range picker variants and sample coverage
+
+**Done**
+- Added `Variant` support to `DateRangePicker` so it can render outlined, filled, and text/underline
+  field chrome like the other field-based picker controls.
+- Replaced the DateRangePicker gallery sample's two-control demo with a copyable state matrix:
+  outlined, filled, text/underline, empty, selected, custom format, constrained, floating label,
+  error, and disabled.
+- Added control-level variant coverage and gallery acceptance coverage for the DateRangePicker
+  state matrix.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed after stopping the running gallery
+  process that had locked `Loam.dll`.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.DateRangePicker_gallery|FullyQualifiedName~GalleryAcceptanceTests.DatePicker_gallery|FullyQualifiedName~PickerTests.DateRangePicker|FullyQualifiedName~PickerTests.DatePicker_variant|FullyQualifiedName~PickerTests.Date_and_time|FullyQualifiedName~OverlayTests.PopupSurface"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 12 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 251 tests.
+
+**Next:** visually verify DateRangePicker variants in the gallery, then continue with TimePicker
+variant/state coverage.
+
+---
+
+## 2026-06-06 — v2.0 — Date picker sample copyability
+
+**Done**
+- Removed the local `DateCase` helper from the DatePicker gallery source-linked sample.
+- Rewrote the sample with normal inline `StackPanel`, `Text`, and `DatePicker` object initializers
+  so copied code does not imply a private gallery helper is part of the component library.
+- Added gallery acceptance coverage that the DatePicker source sample does not contain `DateCase`.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.DatePicker_gallery|FullyQualifiedName~PickerTests.DatePicker|FullyQualifiedName~PickerTests.Date_and_time|FullyQualifiedName~OverlayTests.PopupSurface"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 10 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 249 tests.
+
+**Next:** visually verify DatePicker source sample readability, then continue with DateRangePicker.
+
+---
+
+## 2026-06-06 — v2.0 — Picker popup shape correction
+
+**Done**
+- Reduced the shared picker popup shape from the extra-large dialog radius to the large surface
+  radius so anchored picker flyouts read less inflated beside their trigger fields.
+- Kept picker width, field variants, and calendar geometry unchanged.
+- Existing popup surface tests continue to assert the rendered picker paper root consumes the shared
+  shape token.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.DatePicker_gallery|FullyQualifiedName~PickerTests.DatePicker|FullyQualifiedName~PickerTests.Date_and_time|FullyQualifiedName~OverlayTests.PopupSurface"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 10 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 249 tests.
+
+**Next:** visually verify DatePicker popup radius, then continue with DateRangePicker variants.
+
+---
+
+## 2026-06-06 — v2.0 — Date picker visual variants
+
+**Done**
+- Added `Variant` to `DatePicker`, matching the existing field API for outlined, filled, and
+  text/underline chrome.
+- Wired DatePicker label layout and field chrome through `FieldChrome` for all variants.
+- Updated the DatePicker gallery matrix to show outlined, filled, and text/underline variants before
+  state examples.
+- Added regression coverage for DatePicker variant chrome and the gallery variant matrix.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.DatePicker_gallery|FullyQualifiedName~PickerTests.DatePicker|FullyQualifiedName~PickerTests.Date_and_time|FullyQualifiedName~OverlayTests.PopupSurface"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 10 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 249 tests.
+
+**Next:** visually verify DatePicker variants in the gallery, then continue with DateRangePicker.
+
+---
+
+## 2026-06-06 — v2.0 — Date picker gallery state matrix
+
+**Done**
+- Expanded the DatePicker gallery page from a short vertical sample into a wrapped state matrix.
+- Added empty, selected, custom format, constrained, floating-label, error, and disabled DatePicker
+  examples, each using the actual live control.
+- Aligned adjacent picker gallery page widths to the 360px picker field width.
+- Added gallery acceptance coverage for the DatePicker state matrix and source-linked code.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~GalleryAcceptanceTests.DatePicker_gallery|FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface"
+  --blame-hang --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false`
+  passed: 25 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 248 tests.
+
+**Next:** visually verify the DatePicker state matrix, then continue with DateRangePicker.
+
+---
+
+## 2026-06-06 — v2.0 — Date picker input-mode removal
+
+**Done**
+- Removed the invented DatePicker popup input mode and nested `TextField`.
+- Kept the calendar picker anatomy with label, headline, divider, calendar body, and Cancel/OK
+  actions.
+- Added regression coverage that the DatePicker popup contains no nested `TextField` and that picker
+  triggers keep outlined field chrome instead of underline-style chrome.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface" --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 24 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 247 tests.
+
+**Next:** visually verify the DatePicker trigger and popup, then continue with DateRangePicker.
+
+---
+
+## 2026-06-06 — v2.0 — Picker width and shape tightening
+
+**Done**
+- Made the shared picker shape an explicit `PopupSurface` token and added coverage that the rendered
+  `Paper` root actually receives that corner radius.
+- Aligned DatePicker and DateRangePicker default field widths to the 360px picker surface so the
+  standalone field/picker pairing reads as one component instead of mismatched widths.
+- Kept the picker surface at 360px because the seven-column calendar grid needs that width even
+  when the field is used in a narrower layout.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface" --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 24 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 247 tests.
+
+**Next:** visually verify DatePicker field/picker width and radius, then continue with DateRangePicker
+and TimePicker anatomy.
+
+---
+
+## 2026-06-06 — v2.0 — Date picker dialog anatomy correction
+
+**Done**
+- Reworked the actual `DatePicker` popup from a compact calendar dropdown into a full picker
+  surface with helper label, selected-date headline, input/calendar mode toggle, divider, calendar
+  body, and Cancel/OK actions.
+- Changed date selection to a pending value: choosing a day updates the popup headline, `OK` commits,
+  and `Cancel` closes without changing the field value.
+- Updated the month grid header to use a month selector row with previous/next actions on the right,
+  larger weekday/day typography, and the corrected extra-large picker container shape.
+- Added regression coverage for the full picker structure and pending Cancel/OK behavior.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface" --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 24 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 247 tests.
+
+**Next:** visually verify DatePicker against the reference anatomy, then continue with DateRangePicker
+and TimePicker.
+
+---
+
+## 2026-06-06 — v2.0 — Picker calendar layout alignment
+
+**Done**
+- Removed the extra shared picker paper padding and moved title/action spacing into the picker
+  content so the 360px popup surface does not squeeze calendar content.
+- Updated `MonthCalendar` to use a centered 336px calendar body, 56px month header, 48px weekday/day
+  slots, 40px circular day targets, and 42 stable day-grid cells.
+- Added regression coverage for picker surface spacing and calendar grid metrics.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface" --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 23 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 246 tests.
+
+**Next:** verify the picker popup in the Release gallery, then continue the component-by-component
+input/picker audit.
+
+---
+
+## 2026-06-06 — v2.0 — Picker row and calendar interaction states
+
+**Done**
+- Added focusability, automation names, keyboard activation, and tokenized hover/focus state layers
+  to `MonthCalendar` day cells.
+- Disabled out-of-range calendar days are now explicitly non-focusable, have disabled help text,
+  and do not respond to keyboard activation.
+- Hardened `TimePicker` hour/minute rows with stable 48px hit targets, automation names, selected
+  styling, and separate hover/focus state-layer overlays.
+- Added regression coverage for calendar keyboard selection, disabled days, real picker flyout
+  surfaces, and time row keyboard selection/state layers.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface" --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 22 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 245 tests.
+
+**Next:** visually inspect DatePicker, DateRangePicker, MonthCalendar, and TimePicker popup states in
+the Release gallery, then continue to ColorPicker/FileUpload or begin release-readiness cleanup.
+
+---
+
+## 2026-06-06 — v2.0 — Picker popup surface standardization
+
+**Done**
+- Added a shared picker popup contract in `PopupSurface`: 360px fixed width, 24/20/24/20 padding,
+  large shape, clipped paper, and a consistent title/body/actions stack.
+- Moved `DatePicker`, `DateRangePicker`, and `TimePicker` onto the shared picker popup surface
+  instead of one-off title, width, and padding layouts.
+- Added coverage that opens the real date, range, and time picker flyouts and verifies the shared
+  paper width, padding, clipping, and title/body structure.
+- Added coverage for shared picker content and updated the shared picker paper expectations.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~PickerTests|FullyQualifiedName~OverlayTests.PopupSurface" --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 19 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 242 tests.
+
+**Next:** visually inspect DatePicker, DateRangePicker, and TimePicker popups in the Release gallery,
+then tighten picker row/cell hover, selected, and keyboard states if needed.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete popup blink correction
+
+**Done**
+- Fixed the remaining Autocomplete blink/shrink while typing by keeping one popup paper, scroller,
+  and list alive while the popup is open.
+- Updating suggestions now replaces only row children; it no longer swaps the whole popup surface
+  on every keystroke.
+- Kept the open popup height stable while results narrow, so typing from many matches to fewer
+  matches does not visually shrink the dropdown during the same open session.
+- Added regression coverage that typing `a` then narrowing to `app` preserves the same popup paper,
+  same scroller, and 320px open height.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 13 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 240 tests.
+
+**Next:** visually retest Autocomplete typing in the Release gallery. The list should update
+without row text resizing and without popup shrink/flash during the same open session.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete fixed suggestion text metrics
+
+**Done**
+- Hard-locked Autocomplete suggestion row text metrics in the control: 16px font size, 24px line
+  height, normal weight, zero margin, and fixed 48px row height.
+- Stopped simple suggestion text from relying on typography resource rebinding while rows are
+  recreated during typing.
+- Updated regression coverage to assert actual row font metrics instead of checking a typography
+  enum value.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 13 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 240 tests.
+
+**Next:** visually retest Autocomplete typing in the Release gallery; if row text still appears to
+resize, capture the exact typed text and moment so the remaining issue can be isolated to rendering
+scale rather than component metrics.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete keyboard typing filter correction
+
+**Done**
+- Investigated `auto.mp4`; the failure was that after typing `app`, the popup could still show
+  the wider one-letter `a` result set.
+- Hardened Autocomplete to listen to the inner editor's `TextChanged` event and reattach if the
+  wrapped text editor is recreated by template application.
+- Removed the custom row template from the gallery Autocomplete demo so the sample validates the
+  component's own suggestion-row anatomy.
+- Added a keyboard-input regression using the headless text-input API: typing `a`, then `pp`, must
+  narrow the list to `Apple` and `Pineapple`.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 13 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 240 tests.
+
+**Next:** visually retest the gallery Autocomplete by typing `a`, `ap`, and `app`; the result list
+must narrow immediately and row text must stay stable.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete suggestion typography stability
+
+**Done**
+- Fixed Autocomplete suggestion text jumping between row text sizes while typing.
+- Normalized simple suggestion templates (`Text`/`TextBlock`) to the component's dropdown row
+  typography so row text stays consistent across filtered result updates.
+- Updated the gallery Autocomplete examples to use the same row typography as the component.
+- Added regression coverage for template-provided smaller text being normalized in suggestion rows.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 12 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 239 tests.
+
+**Next:** visually re-check Autocomplete typing in the Release gallery, especially `a`, `ap`,
+`App`, and `Gra`, then continue with DatePicker/TimePicker popup anatomy.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete current-text filtering correction
+
+**Done**
+- Fixed the case where typing `ap` could still show the previous one-letter `a` suggestion set.
+- Autocomplete now listens to the inner editor text as the source of truth, keeps the wrapper field
+  synchronized, and rejects stale queued suggestion renders if the editor text has changed.
+- Pending searches are invalidated when the popup closes so old results cannot reopen over a newer
+  empty, closed, or selected state.
+- Added a regression test matching the gallery data: `a` expands to many fruit rows, then `ap`
+  narrows to `Apple`, `Apricot`, `Grape`, and `Pineapple`.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 11 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 238 tests.
+
+**Next:** visually re-check Autocomplete with `a`, `ap`, `App`, `Gra`, and item selection in the
+Release gallery, then continue with DatePicker/TimePicker popup anatomy.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete opaque popup row correction
+
+**Done**
+- Fixed the `App` stacked Autocomplete case where the Country field text could still show through
+  the Fruit suggestions.
+- Changed suggestion rows to paint an opaque tonal popup surface by default, with hover/focus drawn
+  as a separate tokenized state-layer overlay instead of replacing the whole row background.
+- Added a regression test for Fruit `App` suggestions above a filled Country Autocomplete with
+  `Sweden` below it.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 10 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 237 tests.
+
+**Next:** visually re-check Fruit `App`, `Gra`, and selecting an item in the Release gallery, then
+continue with the next input/picker component panel.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete popup stacking correction
+
+**Done**
+- Raised an Autocomplete to the popover z-layer while its suggestion popup is open, then restored
+  its previous z-index when the popup closes.
+- Raised the suggestion surface itself to the popover layer so stacked controls below it cannot draw
+  their text through or over the menu.
+- Added a stacked Fruit/Country regression case covering the bleed-through scenario.
+- Disabled test collection parallelization for the headless UI test assembly, because the suite
+  creates Avalonia windows/popups on shared UI infrastructure and was racing across classes.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 9 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 236 tests.
+
+**Next:** visually inspect the Autocomplete page by typing `Gra` in Fruit with Country below it,
+then continue with the next input/picker component panel.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete menu row anatomy correction
+
+**Done**
+- Stopped Autocomplete from opening a full suggestion menu on empty focus; suggestions now open
+  after meaningful typed text.
+- Replaced the suggestion popup's `ListItem` rows with compact internal menu rows so list-item
+  margins/templates cannot overflow or paint text outside the popup surface.
+- Kept the same token-driven hover/focus state layers, explicit 48px row height, field-width
+  surface, and bounded clipped scroll region.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 8 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 235 tests.
+
+**Next:** visually inspect Autocomplete after typing one or more characters, then continue with the
+next input/picker component panel.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete popup anatomy correction
+
+**Done**
+- Replaced the loose autocomplete flyout with an anchored template popup, matching the field's
+  placement model used by other dropdown controls.
+- Forced suggestion surfaces, scroll area, and rows to the field width, with a bounded vertical
+  scroller instead of a small detached rectangle.
+- Locked suggestion row height, popup height, and scroll clipping so rows cannot paint outside the
+  menu surface when many suggestions are shown.
+- Added dismissal on the actual inner text editor losing focus so suggestions do not remain as
+  stray top-level surfaces after leaving the field or app context.
+- Added regression coverage for popup width, popup height, selection close, caret placement,
+  focus-loss close, and many-row overflow clipping.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 7 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 234 tests.
+
+**Next:** visually inspect Autocomplete in the Release gallery for popup alignment, width, close
+behavior, hover, and selection, then continue with the next input/picker panel.
+
+---
+
+## 2026-06-06 — v2.0 — Autocomplete text synchronization correction
+
+**Done**
+- Replaced the autocomplete inner field's two-way binding loop with guarded text/value
+  synchronization, so typing a partial suggestion updates `Value` without recursively rewriting
+  the field.
+- Updated suggestion selection to set the completed text, close the flyout, restore focus, and move
+  the inner text box caret/selection to the end of the chosen value.
+- Added regression coverage for partial typing, suggestion row activation, and caret placement after
+  selection.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests.Autocomplete" --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 5 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 232 tests
+  after `dotnet build-server shutdown` cleared stale build nodes.
+
+**Next:** visually inspect the Autocomplete page in the Release gallery, then continue with the next
+input/picker component panel.
+
+---
+
+## 2026-06-06 — v2.0 — Dropdown row state-layer correction
+
+**Done**
+- Added color-role state-layer resources for hover, focus, pressed, and selected states so
+  controls can bind neutral content overlays instead of reusing table colors.
+- Updated `ListItem` hover/focus rendering to use `OnSurface` state layers; Select, Menu, and
+  Autocomplete dropdown rows inherit the corrected hover behavior through the shared row control.
+- Added regression coverage proving hovered list/menu rows no longer use the table hover color.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~ThemingTests|FullyQualifiedName~FeedbackTests|FullyQualifiedName~InputTests"
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 67 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 230 tests.
+
+**Next:** visually inspect Select, Menu, and Autocomplete dropdown hover states in the Release
+gallery, then continue with the selection-control panels.
+
+---
+
+## 2026-06-06 — v2.0 — Field and popup surface adoption
+
+**Done**
+- Standardized menu/select/autocomplete popups through the shared popup-surface helper:
+  compact menu shape, no extra paper padding, deterministic tonal elevation, and clipped rounded
+  content.
+- Added a shared picker popup surface for date, date-range, time, and color pickers so these
+  controls no longer hand-build divergent popup chrome.
+- Hardened Select, Menu, and Autocomplete item picking with explicit row pointer activation, so a
+  clicked Select item updates value and closes reliably while keyboard activation remains intact.
+- Updated Select item anatomy so selected options use a real check icon plus selected row state
+  instead of decorating the display text.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --filter
+  "FullyQualifiedName~InputTests|FullyQualifiedName~OverlayTests|FullyQualifiedName~PickerTests"
+  -p:UseSharedCompilation=false /nodeReuse:false` passed: 75 tests.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 229 tests.
+
+**Next:** visually inspect Select, Menu, Autocomplete, DatePicker, TimePicker, DateRangePicker, and
+ColorPicker in the Release gallery, then continue with the selection-control component panels.
+
+---
+
+## 2026-06-06 — v2.0 — Component adoption button pilot
+
+**Done**
+- Added `ExtraSmall` and `ExtraLarge` to the public size scale and projected explicit
+  five-size interactive, button-container, button-padding, and icon-button-padding density
+  tokens.
+- Introduced shared button size metrics and applied them across `Button`, `IconButton`,
+  `ToggleIconButton`, `ButtonGroup`, and `Fab` so the button family has consistent height,
+  padding, icon spacing, shape, and minimum hit target behavior.
+- Corrected standard `Button` defaults to a restrained desktop scale
+  (`32/36/46/54/64`) instead of oversized expressive display heights; `Fab` keeps its
+  separate larger action scale.
+- Mapped button and floating action label typography by size so large sizes no longer reuse the
+  compact label scale.
+- Bound button ripple feedback to the resolved control foreground so press feedback is visible
+  across filled, outlined, text, tonal, icon, and floating action variants.
+- Extended size-aware display and selection controls plus the gallery size matrix to render all
+  five sizes, added a darker button configuration rail for visual scale review, and added neutral
+  source-reference acceptance metadata for every catalog page.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 226 tests.
+- Release gallery was launched for visual inspection.
+
+**Next:** use this button-family pattern for the next component panels: fields/pickers,
+selection controls, surfaces, shell, data, and charts should each get the same token, state,
+size, source-reference, and copyable-code treatment.
+
+---
+
+## 2026-06-05 — v2.0 — Full component design audit acceptance
+
+**Done**
+- Added internal gallery acceptance criteria for every component catalog page covering anatomy,
+  color roles, typography, shape, state layers, focus, press/ripple, disabled, selected/active,
+  error, open/dismiss, loading, empty, keyboard, automation, responsive behavior, density, size,
+  motion, light/dark rendering, and source-linked code where applicable.
+- Added gallery acceptance tests so high-risk families must carry the relevant state criteria:
+  buttons, inputs, pickers, data, navigation, shell, feedback, surfaces, and charts.
+- Strengthened foundation tests so every color-scheme role projects to resources in light and dark,
+  and every content/on-role pair meets the text contrast baseline.
+- Updated the component adaptation audit so the remaining field, action, surface, feedback, and
+  navigation rows are tracked as complete under the acceptance matrix.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 210 tests.
+
+**Next:** keep visual QA focused on individual pages that may still feel weak despite passing
+acceptance, especially dense forms, overlays, and picker popups.
+
+---
+
+## 2026-06-05 — v2.0 — Gallery form sample polish
+
+**Done**
+- Reworked the `Form` gallery page from a bare two-field stack into a framed form preview with a
+  title, guidance text, three realistic fields, fixed field width, validate/reset actions, and
+  status feedback.
+- Added a gallery acceptance test so the form sample keeps realistic field widths instead of
+  collapsing to natural label size.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 206 tests.
+- Visual QA captured the `Form` gallery page; the preview now reads as a real compact form and the
+  source sample matches it.
+
+**Next:** continue visual spot-checking individual pages for samples that feel too thin or
+toy-like even when they are technically correct.
+
+---
+
+## 2026-06-05 — v2.0 — Gallery page-specific samples
+
+**Done**
+- Split duplicated gallery routes into page-specific preview/source builders so sidebar pages no
+  longer reuse the same live content under different component names.
+- Added focused samples for Avatar vs AvatarGroup, CheckBox vs Switch, text-field variants,
+  selection controls, picker variants, feedback loaders, dialogs/snackbars, tabs/menu,
+  navigation controls, layout/shell controls, spacer, and PieChart/BarChart/LineChart.
+- Tightened gallery acceptance coverage so catalog pages must use distinct builder methods.
+- Expanded code-sample highlighting for the additional component types now exposed in focused
+  snippets.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 205 tests.
+- Visual QA captured AvatarGroup, Switch, PieChart, BarChart, and LineChart pages; each now shows
+  focused preview content and matching source.
+
+**Next:** review remaining broad overview pages for depth, not duplication, and add richer states
+where a focused page still feels too thin.
+
+---
+
+## 2026-06-05 — v2.0 — Gallery code copy action
+
+**Done**
+- Added a copy icon action to every gallery code sample header so source-linked C# samples can be
+  copied directly from the gallery.
+- Wired the action through Avalonia's clipboard API with transient copied/failed feedback and an
+  accessible automation name.
+- Added the built-in `ContentCopy` icon path and gallery acceptance coverage for the code-copy
+  button.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 205 tests.
+- Visual QA captured the `Field` gallery page; the code sample header keeps the filename, centered
+  `C#` badge, and copy icon action aligned.
+
+**Next:** consider whether code samples should also support direct text selection in addition to
+the whole-sample copy action.
+
+---
+
+## 2026-06-05 — v2.0 — Gallery size matrix and custom field chrome
+
+**Done**
+- Promoted the custom field `TextBox` reset path to public `FieldEditor.MakeChromeless(TextBox)`
+  and updated the gallery/docs to use the shared helper instead of duplicating field chrome reset
+  logic.
+- Removed redundant `PART_SwitchArea` naming and avoided highlighting bare `Icon` property names as
+  types in gallery code samples.
+- Fixed filled/text field floating labels so they no longer draw the outlined-field notch backing;
+  the `Price` filled numeric field now renders without the visible label patch.
+- Removed the repeated gallery header badges (`group`, `Tokenized`, `Sample`) so component pages
+  keep focus on the live preview and source sample.
+- Added a gallery `Sizes` page that renders all five public size examples for every
+  size-aware control surface: buttons, icon buttons, toggle icon buttons, button groups, FAB,
+  icons, avatars, avatar groups, chips, checkboxes, switches, radios, ratings, and circular
+  progress.
+- Removed the native focused border from the custom phone editor inside the `Field` gallery sample
+  so only the shared field chrome provides focus/error outline.
+- Made existing `Size` APIs visibly effective for `Switch`, `Chip`, and `Fab`.
+- Updated gallery code highlighting for the newly surfaced size-sample types.
+- Widened size-sample cells so connected controls such as `ButtonGroup` do not clip labels.
+
+**Verified**
+- `git diff --check` passed.
+- `dotnet build Loam.slnx -c Release` passed.
+- `dotnet test tests\Loam.Tests\Loam.Tests.csproj -c Release --no-build --blame-hang
+  --blame-hang-timeout 120s -p:UseSharedCompilation=false /nodeReuse:false` passed: 204 tests.
+- `npm run docs:build` in `docs` passed.
+- Visual QA captured the `Sizes` and `Field` gallery pages; size rows are readable and the custom
+  field sample no longer shows the stray native focused border.
+- Visual QA captured the `TextField` gallery page; filled labels render without the notch patch.
+
+**Next:** decide whether individual component pages should also duplicate their size rows, or keep
+the catalog-level `Sizes` page as the single acceptance surface.
+
+---
+
 ## 2026-06-05 — v2.0 — Release readiness and packaging
 
 **Done**

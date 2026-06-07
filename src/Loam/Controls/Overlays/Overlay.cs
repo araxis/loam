@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -38,6 +39,7 @@ public class Overlay : ContentControl
         Focusable = true;
         IsVisible = Visible;
         InteractionAssist.SetAutomationName(this, "Overlay");
+        ApplyVisibleState();
     }
 
     /// <summary>Whether the scrim is shown (two-way). Mirrors the reference API's <c>Visible</c>.</summary>
@@ -94,13 +96,17 @@ public class Overlay : ContentControl
         {
             ApplyScrim();
         }
+        else if (change.Property == AutoCloseProperty || change.Property == IsEnabledProperty)
+        {
+            ApplyVisibleState();
+        }
     }
 
     /// <inheritdoc />
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (e.Key == Key.Escape && Visible && AutoClose)
+        if (IsEnabled && e.Key == Key.Escape && Visible && AutoClose)
         {
             OnClick?.Invoke();
             Visible = false;
@@ -110,7 +116,7 @@ public class Overlay : ContentControl
 
     private void OnScrimPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!ReferenceEquals(e.Source, _scrim))
+        if (!IsEnabled || !ReferenceEquals(e.Source, _scrim))
         {
             return; // ignore clicks bubbling up from the centered content
         }
@@ -125,6 +131,10 @@ public class Overlay : ContentControl
     private void ApplyVisibleState()
     {
         IsVisible = Visible;
+        AutomationProperties.SetHelpText(
+            this,
+            $"{(Visible ? "Visible" : "Hidden")}, {(AutoClose ? "auto-close" : "manual close")}");
+
         if (Visible)
         {
             _restoreFocus = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement();

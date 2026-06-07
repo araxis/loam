@@ -88,8 +88,17 @@ public static class Icons
             /// <summary>Color palette.</summary>
             public const string Palette = "M12 3C7.03 3 3 6.58 3 11c0 3.31 2.69 6 6 6h1.5c.83 0 1.5.67 1.5 1.5S12.67 20 13.5 20H15c4.42 0 8-3.58 8-8.5C23 6.81 18.97 3 12 3zM6.5 11C5.67 11 5 10.33 5 9.5S5.67 8 6.5 8 8 8.67 8 9.5 7.33 11 6.5 11zM9.5 7C8.67 7 8 6.33 8 5.5S8.67 4 9.5 4 11 4.67 11 5.5 10.33 7 9.5 7zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 4 14.5 4 16 4.67 16 5.5 15.33 7 14.5 7zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 8 17.5 8 19 8.67 19 9.5 18.33 11 17.5 11z";
 
+            /// <summary>Dark theme mode.</summary>
+            public const string DarkMode = "M12 3c.38 0 .75.03 1.12.08-2.12 1.19-3.56 3.46-3.56 6.06 0 3.83 3.11 6.94 6.94 6.94 1.04 0 2.02-.23 2.9-.64C18.04 19.17 14.48 21 10.72 20.42 6.36 19.75 3 16 3 11.5 3 6.53 6.53 3 12 3z";
+
+            /// <summary>Light theme mode.</summary>
+            public const string LightMode = "M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5h-1v3h2V2h-1zm0 19h-1v3h2v-3h-1zM4.22 5.64l-.71.71 2.12 2.12 1.41-1.41-2.12-2.12-.7.7zM18.36 19.78l-.71.71 2.12 2.12 1.41-1.41-2.12-2.12-.7.7zM2 11v2h3v-2H2zm19 0v2h3v-2h-3zM5.64 19.78l-.71-.71-2.12 2.12 1.41 1.41 2.12-2.12-.7-.7zM19.78 5.64l-.71-.71-2.12 2.12 1.41 1.41 2.12-2.12-.7-.7z";
+
             /// <summary>Information circle.</summary>
             public const string Info = "M11 17h2v-6h-2v6zm1-14C6.48 3 2 7.48 2 13s4.48 10 10 10 10-4.48 10-10S17.52 3 12 3zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-10h2V7h-2v4z";
+
+            /// <summary>Warning triangle.</summary>
+            public const string Warning = "M1 21h22L12 2 1 21zm13-3h-2v-2h2v2zm0-4h-2v-4h2v4z";
 
             /// <summary>Progress activity.</summary>
             public const string ProgressActivity = "M12 2v4c3.31 0 6 2.69 6 6h4c0-5.52-4.48-10-10-10zm0 18c-4.41 0-8-3.59-8-8S7.59 4 12 4V2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10h-4c0 4.41-3.59 8-8 8z";
@@ -180,6 +189,9 @@ public static class Icons
 
             /// <summary>Cloud upload.</summary>
             public const string CloudUpload = "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z";
+
+            /// <summary>Copy content.</summary>
+            public const string ContentCopy = "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z";
         }
     }
 }

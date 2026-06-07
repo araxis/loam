@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -24,7 +25,11 @@ public class AvatarGroup : TemplatedControl
     private StackPanel? _items;
 
     /// <summary>Creates the group.</summary>
-    public AvatarGroup() => Items.CollectionChanged += OnItemsChanged;
+    public AvatarGroup()
+    {
+        Items.CollectionChanged += OnItemsChanged;
+        InteractionAssist.SetAutomationName(this, "Avatar group");
+    }
 
     /// <summary>The avatars in the cluster.</summary>
     public ObservableCollection<Avatar> Items { get; } = new();
@@ -95,5 +100,7 @@ public class AvatarGroup : TemplatedControl
                 Margin = shown == 0 ? default : new Thickness(Spacing, 0, 0, 0),
             });
         }
+
+        InteractionAssist.SetAutomationName(this, $"Avatar group, {Items.Count} items");
     }
 }

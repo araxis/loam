@@ -1,8 +1,10 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Loam;
 using Loam.Controls;
 using Loam.Theming;
@@ -18,6 +20,15 @@ public sealed class ComponentsView : UserControl
     [
         LoamColor.Default, LoamColor.Primary, LoamColor.Secondary, LoamColor.Tertiary,
         LoamColor.Info, LoamColor.Success, LoamColor.Warning, LoamColor.Error, LoamColor.Dark,
+    ];
+
+    private static readonly LoamSize[] Sizes =
+    [
+        LoamSize.ExtraSmall,
+        LoamSize.Small,
+        LoamSize.Medium,
+        LoamSize.Large,
+        LoamSize.ExtraLarge,
     ];
 
     private readonly IReadOnlyList<GalleryPage> _pages;
@@ -78,8 +89,35 @@ public sealed class ComponentsView : UserControl
 
     private static Border BuildTopBar()
     {
+        static Border StatusPill(string name, string text)
+        {
+            var label = new Text
+            {
+                Text = text,
+                Typo = Typo.LabelMedium,
+                Color = LoamColor.Primary,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            var pill = new Border
+            {
+                Name = name,
+                MinHeight = 32,
+                Padding = new Thickness(12, 0),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(1),
+                ClipToBounds = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = label,
+            };
+            pill.Bind(Border.BorderBrushProperty, pill.GetResourceObservable(LoamTokens.ColorPrimary));
+            pill.Bind(Border.CornerRadiusProperty, pill.GetResourceObservable(LoamTokens.ShapeFull));
+            return pill;
+        }
+
         var brand = new StackPanel
         {
+            Name = "PART_HeaderBrand",
             Orientation = Orientation.Horizontal,
             Spacing = 12,
             VerticalAlignment = VerticalAlignment.Center,
@@ -87,28 +125,50 @@ public sealed class ComponentsView : UserControl
             {
                 new Icon { Data = Icons.Material.Filled.Widgets, Color = LoamColor.Primary, Size = LoamSize.Medium },
                 new Text { Text = "Loam Gallery", Typo = Typo.H6, VerticalAlignment = VerticalAlignment.Center },
-                new Chip { Text = "component lab", Variant = Variant.Outlined, Color = LoamColor.Primary, Size = LoamSize.Small },
+                StatusPill("PART_HeaderStatusComponentLab", "component lab"),
+                StatusPill("PART_HeaderStatusLiveControls", "live controls"),
             },
         };
 
-        var theme = new LoamButton
+        var theme = new ToggleIconButton
         {
-            Content = "Theme",
-            StartIcon = Icons.Material.Filled.Settings,
+            Icon = Icons.Material.Filled.DarkMode,
+            ToggledIcon = Icons.Material.Filled.LightMode,
+            Toggled = Application.Current?.ActualThemeVariant == ThemeVariant.Dark,
             Variant = Variant.Outlined,
             Color = LoamColor.Primary,
             Size = LoamSize.Small,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
         };
+        AutomationProperties.SetName(theme, "Toggle theme");
+        AutomationProperties.SetHelpText(theme, "Switch between light and dark gallery themes.");
+        Tooltip.Set(theme, "Toggle theme");
         theme.Click += (_, _) => ToggleTheme();
 
-        brand.Margin = new Thickness(24, 0);
-        brand.Children.Add(new Chip { Text = "live controls", Color = LoamColor.Success, Size = LoamSize.Small });
-        brand.Children.Add(theme);
+        var actions = new StackPanel
+        {
+            Name = "PART_HeaderActions",
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { theme },
+        };
+
+        var layout = new Avalonia.Controls.Grid
+        {
+            Margin = new Thickness(24, 0),
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { brand, actions },
+        };
+        Avalonia.Controls.Grid.SetColumn(actions, 2);
 
         var bar = new Border
         {
             Height = 72,
-            Child = brand,
+            Child = layout,
             BorderThickness = new Thickness(0, 0, 0, 1),
         };
         bar.Bind(Border.BackgroundProperty, bar.GetResourceObservable(LoamTokens.Surface));
@@ -133,6 +193,34 @@ public sealed class ComponentsView : UserControl
         Family,
     }
 
+    internal enum GalleryAcceptanceCriterion
+    {
+        Anatomy,
+        ColorRoles,
+        Typography,
+        Shape,
+        Stroke,
+        Elevation,
+        StateLayer,
+        FocusVisible,
+        RippleOrPress,
+        Disabled,
+        SelectedOrActive,
+        Error,
+        OpenOrDismiss,
+        Loading,
+        Empty,
+        Keyboard,
+        Automation,
+        Responsive,
+        Density,
+        SizeVariants,
+        Motion,
+        LightDark,
+        SourceReference,
+        SourceLinkedCode,
+    }
+
     internal sealed record GalleryPage(
         string Group,
         string Title,
@@ -141,7 +229,9 @@ public sealed class ComponentsView : UserControl
         string Code,
         string BuilderMethod,
         GallerySampleKind SampleKind,
-        IReadOnlyList<string> ExpectedComponentNames)
+        string SourceReference,
+        IReadOnlyList<string> ExpectedComponentNames,
+        IReadOnlyList<GalleryAcceptanceCriterion> AcceptanceCriteria)
     {
         internal string Route => $"{Group}/{Title}";
     }
@@ -183,12 +273,263 @@ public sealed class ComponentsView : UserControl
             GallerySourceCode.ForMethod(builderMethod),
             builderMethod,
             sampleKind,
-            expected);
+            SourceReferenceFor(group, title),
+            expected,
+            AcceptanceFor(group, title));
+    }
+
+    private static string SourceReferenceFor(string group, string title) => (group, title) switch
+    {
+        ("Buttons", "Button" or "IconButton" or "ToggleIconButton" or "ButtonGroup" or "Fab") =>
+            "source/API: button defaults, state layers, and component tokens",
+        ("Inputs", _) or ("Pickers", _) =>
+            "source/API: field anatomy, popup behavior, and component tokens",
+        ("Feedback", _) or ("Surfaces", _) or ("Shell", _) =>
+            "source/API: surface, overlay, motion, and elevation tokens",
+        ("Data", _) or ("Navigation", _) =>
+            "source/API: interaction, keyboard, and state tokens",
+        ("Charts", _) =>
+            "source/API: chart surface and theme role tokens",
+        _ => "source/API: component anatomy and tokens",
+    };
+
+    private static GalleryAcceptanceCriterion[] AcceptanceFor(string group, string title)
+    {
+        var criteria = new SortedSet<GalleryAcceptanceCriterion>
+        {
+            GalleryAcceptanceCriterion.Anatomy,
+            GalleryAcceptanceCriterion.ColorRoles,
+            GalleryAcceptanceCriterion.Typography,
+            GalleryAcceptanceCriterion.Shape,
+            GalleryAcceptanceCriterion.Responsive,
+            GalleryAcceptanceCriterion.LightDark,
+            GalleryAcceptanceCriterion.SourceReference,
+            GalleryAcceptanceCriterion.SourceLinkedCode,
+        };
+
+        void Add(params GalleryAcceptanceCriterion[] values)
+        {
+            foreach (var value in values)
+            {
+                criteria.Add(value);
+            }
+        }
+
+        switch (group)
+        {
+            case "Start":
+                Add(GalleryAcceptanceCriterion.Density, GalleryAcceptanceCriterion.SizeVariants);
+                break;
+            case "Display":
+                Add(GalleryAcceptanceCriterion.Density);
+                if (title is "Chip" or "ChipSet")
+                {
+                    Add(
+                        GalleryAcceptanceCriterion.StateLayer,
+                        GalleryAcceptanceCriterion.FocusVisible,
+                        GalleryAcceptanceCriterion.RippleOrPress,
+                        GalleryAcceptanceCriterion.Disabled,
+                        GalleryAcceptanceCriterion.SelectedOrActive,
+                        GalleryAcceptanceCriterion.Keyboard,
+                        GalleryAcceptanceCriterion.Automation,
+                        GalleryAcceptanceCriterion.SizeVariants);
+                }
+
+                if (title is "Badge")
+                {
+                    Add(GalleryAcceptanceCriterion.StateLayer, GalleryAcceptanceCriterion.Automation);
+                }
+
+                if (title is "Avatar" or "AvatarGroup" or "Icon")
+                {
+                    Add(GalleryAcceptanceCriterion.SizeVariants, GalleryAcceptanceCriterion.Automation);
+                }
+
+                break;
+            case "Buttons":
+                Add(
+                    GalleryAcceptanceCriterion.StateLayer,
+                    GalleryAcceptanceCriterion.FocusVisible,
+                    GalleryAcceptanceCriterion.RippleOrPress,
+                    GalleryAcceptanceCriterion.Disabled,
+                    GalleryAcceptanceCriterion.Keyboard,
+                    GalleryAcceptanceCriterion.Automation,
+                    GalleryAcceptanceCriterion.Density,
+                    GalleryAcceptanceCriterion.SizeVariants);
+                if (title is "ToggleIconButton" or "ButtonGroup")
+                {
+                    Add(GalleryAcceptanceCriterion.SelectedOrActive);
+                }
+
+                if (title is "Menu")
+                {
+                    Add(GalleryAcceptanceCriterion.OpenOrDismiss, GalleryAcceptanceCriterion.Elevation, GalleryAcceptanceCriterion.Motion);
+                }
+
+                break;
+            case "Inputs":
+                Add(
+                    GalleryAcceptanceCriterion.StateLayer,
+                    GalleryAcceptanceCriterion.FocusVisible,
+                    GalleryAcceptanceCriterion.Disabled,
+                    GalleryAcceptanceCriterion.Keyboard,
+                    GalleryAcceptanceCriterion.Automation,
+                    GalleryAcceptanceCriterion.Density,
+                    GalleryAcceptanceCriterion.Stroke);
+                if (title is "Field" or "TextField" or "NumericField" or "MaskedTextField" or "Autocomplete" or "Select" or "Form")
+                {
+                    Add(GalleryAcceptanceCriterion.Error);
+                }
+
+                if (title is "Autocomplete" or "Select" or "FileUpload")
+                {
+                    Add(GalleryAcceptanceCriterion.OpenOrDismiss, GalleryAcceptanceCriterion.Elevation, GalleryAcceptanceCriterion.Motion);
+                }
+
+                if (title is "CheckBox" or "Switch" or "Radio" or "RadioGroup" or "Slider" or "Rating" or "ToggleGroup")
+                {
+                    Add(GalleryAcceptanceCriterion.SelectedOrActive, GalleryAcceptanceCriterion.SizeVariants);
+                }
+
+                break;
+            case "Pickers":
+                Add(
+                    GalleryAcceptanceCriterion.StateLayer,
+                    GalleryAcceptanceCriterion.FocusVisible,
+                    GalleryAcceptanceCriterion.Disabled,
+                    GalleryAcceptanceCriterion.Keyboard,
+                    GalleryAcceptanceCriterion.Automation,
+                    GalleryAcceptanceCriterion.Density,
+                    GalleryAcceptanceCriterion.Stroke,
+                    GalleryAcceptanceCriterion.OpenOrDismiss,
+                    GalleryAcceptanceCriterion.Elevation,
+                    GalleryAcceptanceCriterion.Motion);
+                if (title is "DatePicker" or "DateRangePicker" or "TimePicker")
+                {
+                    Add(GalleryAcceptanceCriterion.Error);
+                }
+
+                if (title is "MonthCalendar")
+                {
+                    Add(GalleryAcceptanceCriterion.SelectedOrActive);
+                }
+
+                break;
+            case "Feedback":
+                Add(GalleryAcceptanceCriterion.Automation, GalleryAcceptanceCriterion.Motion);
+                if (title is "ProgressCircular" or "ProgressLinear" or "Skeleton")
+                {
+                    Add(GalleryAcceptanceCriterion.Loading);
+                }
+
+                if (title is "Overlay" or "Popover" or "DialogService" or "SnackbarService")
+                {
+                    Add(
+                        GalleryAcceptanceCriterion.OpenOrDismiss,
+                        GalleryAcceptanceCriterion.FocusVisible,
+                        GalleryAcceptanceCriterion.Keyboard,
+                        GalleryAcceptanceCriterion.Elevation,
+                        GalleryAcceptanceCriterion.StateLayer);
+                }
+
+                if (title is "Tooltip")
+                {
+                    Add(
+                        GalleryAcceptanceCriterion.OpenOrDismiss,
+                        GalleryAcceptanceCriterion.FocusVisible,
+                        GalleryAcceptanceCriterion.Keyboard,
+                        GalleryAcceptanceCriterion.Elevation);
+                }
+
+                break;
+            case "Data":
+                Add(
+                    GalleryAcceptanceCriterion.StateLayer,
+                    GalleryAcceptanceCriterion.FocusVisible,
+                    GalleryAcceptanceCriterion.Keyboard,
+                    GalleryAcceptanceCriterion.Automation,
+                    GalleryAcceptanceCriterion.Density,
+                    GalleryAcceptanceCriterion.SelectedOrActive);
+                if (title is "SimpleTable" or "DataGrid" or "TreeView")
+                {
+                    Add(GalleryAcceptanceCriterion.Empty);
+                }
+
+                if (title is "Collapse" or "ExpansionPanels" or "Carousel")
+                {
+                    Add(GalleryAcceptanceCriterion.Motion);
+                }
+
+                break;
+            case "Navigation":
+                Add(
+                    GalleryAcceptanceCriterion.StateLayer,
+                    GalleryAcceptanceCriterion.FocusVisible,
+                    GalleryAcceptanceCriterion.Keyboard,
+                    GalleryAcceptanceCriterion.Automation,
+                    GalleryAcceptanceCriterion.Density,
+                    GalleryAcceptanceCriterion.SelectedOrActive);
+                if (title is "NavGroup")
+                {
+                    Add(GalleryAcceptanceCriterion.OpenOrDismiss, GalleryAcceptanceCriterion.Motion);
+                }
+
+                break;
+            case "Layout":
+                Add(GalleryAcceptanceCriterion.Density);
+                if (title is "ScrollToTop")
+                {
+                    Add(
+                        GalleryAcceptanceCriterion.StateLayer,
+                        GalleryAcceptanceCriterion.FocusVisible,
+                        GalleryAcceptanceCriterion.RippleOrPress,
+                        GalleryAcceptanceCriterion.Keyboard,
+                        GalleryAcceptanceCriterion.Automation,
+                        GalleryAcceptanceCriterion.Motion);
+                }
+
+                break;
+            case "Shell":
+                Add(
+                    GalleryAcceptanceCriterion.StateLayer,
+                    GalleryAcceptanceCriterion.FocusVisible,
+                    GalleryAcceptanceCriterion.Keyboard,
+                    GalleryAcceptanceCriterion.Automation,
+                    GalleryAcceptanceCriterion.Density,
+                    GalleryAcceptanceCriterion.Elevation,
+                    GalleryAcceptanceCriterion.OpenOrDismiss,
+                    GalleryAcceptanceCriterion.Motion);
+                break;
+            case "Surfaces":
+                Add(GalleryAcceptanceCriterion.Elevation, GalleryAcceptanceCriterion.Density);
+                if (title is "List")
+                {
+                    Add(
+                        GalleryAcceptanceCriterion.StateLayer,
+                        GalleryAcceptanceCriterion.FocusVisible,
+                        GalleryAcceptanceCriterion.Keyboard,
+                        GalleryAcceptanceCriterion.Automation,
+                        GalleryAcceptanceCriterion.SelectedOrActive);
+                }
+
+                if (title is "Ripple")
+                {
+                    Add(GalleryAcceptanceCriterion.StateLayer, GalleryAcceptanceCriterion.RippleOrPress, GalleryAcceptanceCriterion.Motion);
+                }
+
+                break;
+            case "Charts":
+                Add(GalleryAcceptanceCriterion.Automation, GalleryAcceptanceCriterion.Empty);
+                break;
+        }
+
+        return criteria.ToArray();
     }
 
     private static IReadOnlyList<GalleryPage> BuildPageCatalog() =>
     [
         Family("Start", "Overview", "A composed screen built from the same public controls used on the component pages.", BuildOverview, "Alert", "Button", "IconButton", "TextField", "Select", "ProgressLinear", "Timeline", "PieChart", "LineChart"),
+        Family("Start", "Sizes", "Five-size rendering for every size-aware control.", BuildSizeMatrix, "Button", "IconButton", "ToggleIconButton", "ButtonGroup", "ToggleGroup", "Fab", "Icon", "Avatar", "AvatarGroup", "Chip", "CheckBox", "Switch", "Radio", "Rating", "ProgressCircular", "ProgressLinear", "Skeleton"),
 
         Page("Display", "Text", "Typography, color, spacing, and alignment.", BuildText),
         Page("Display", "Icon", "Vector icon rendering with semantic colors and sizes.", BuildIcons),
@@ -196,51 +537,52 @@ public sealed class ComponentsView : UserControl
         Page("Display", "Chip", "Compact labels, icons, close affordances, and variants.", BuildChips),
         Page("Display", "ChipSet", "Selectable single and multi-select chip groups.", BuildChipSet),
         Page("Display", "Badge", "Numeric and dot badges positioned around child content.", BuildBadges),
-        Family("Display", "Avatar", "Initials, icon avatars, sizes, colors, and shapes.", BuildAvatars, "Avatar", "AvatarGroup"),
-        Family("Display", "AvatarGroup", "Grouped avatars with overflow count behavior.", BuildAvatars, "Avatar", "AvatarGroup"),
+        Page("Display", "Avatar", "Initials, icon avatars, sizes, colors, and shapes.", BuildAvatar),
+        Page("Display", "AvatarGroup", "Grouped avatars with overflow count behavior.", BuildAvatarGroup),
 
         Page("Buttons", "Button", "Filled, outlined, text, color, size, disabled, and icon buttons.", BuildButtons),
         Page("Buttons", "IconButton", "Icon-only actions in default, filled, and outlined variants.", BuildIconButtons),
         Page("Buttons", "ToggleIconButton", "Two-state icon action with a separate toggled color.", BuildToggleIconButton),
         Page("Buttons", "ButtonGroup", "Connected button segments with shared variant and color.", BuildButtonGroup),
         Page("Buttons", "Fab", "Floating action buttons with icon-only and label modes.", BuildFabs),
-        Family("Buttons", "Menu", "Button-anchored menu rows.", BuildTabsMenu, "Menu", "MenuItem", "Tabs", "Tooltip", "Button"),
+        Family("Buttons", "Menu", "Button-anchored menu rows.", BuildMenu, "Menu", "MenuItem"),
 
         Page("Inputs", "Field", "A reusable field shell for custom input-like content.", BuildField),
-        Family("Inputs", "TextField", "Text, numeric, masked, and autocomplete field examples.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
-        Family("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
-        Family("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
-        Family("Inputs", "Autocomplete", "Text entry with filtered suggestions.", BuildTextFields, "TextField", "NumericField", "MaskedTextField", "Autocomplete"),
+        Page("Inputs", "TextField", "Text field variants, adornments, helper text, and error state.", BuildTextField),
+        Page("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.", BuildNumericField),
+        Page("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.", BuildMaskedTextField),
+        Page("Inputs", "Autocomplete", "Text entry with filtered suggestions.", BuildAutocomplete),
         Page("Inputs", "Select", "Single and multi-select dropdowns.", BuildSelect),
-        Family("Inputs", "CheckBox", "Checkbox states, colors, and disabled rendering.", BuildInputs, "CheckBox", "Switch"),
-        Family("Inputs", "Switch", "On/off switch states and colors.", BuildInputs, "CheckBox", "Switch"),
-        Family("Inputs", "Radio", "Radio choices coordinated by a radio group.", BuildRadioSlider, "Radio", "RadioGroup", "Slider"),
-        Family("Inputs", "RadioGroup", "Grouped single-choice selection.", BuildRadioSlider, "Radio", "RadioGroup", "Slider"),
-        Family("Inputs", "Slider", "Pointer-driven range selection.", BuildRadioSlider, "Radio", "RadioGroup", "Slider"),
+        Page("Inputs", "CheckBox", "Checkbox states, colors, and disabled rendering.", BuildCheckBox),
+        Page("Inputs", "Switch", "On/off switch states and colors.", BuildSwitch),
+        Page("Inputs", "Radio", "Radio choices coordinated by a radio group.", BuildRadio),
+        Page("Inputs", "RadioGroup", "Grouped single-choice selection.", BuildRadioGroup),
+        Page("Inputs", "Slider", "Pointer-driven range selection.", BuildSlider),
         Page("Inputs", "Rating", "Interactive and read-only star ratings.", BuildRating),
         Page("Inputs", "ToggleGroup", "Segmented single selection.", BuildToggleGroup),
         Page("Inputs", "FileUpload", "Platform file picking and selected-name chips.", BuildFileUpload),
         Page("Inputs", "Form", "Lightweight validation over text-field descendants.", BuildFormDemo),
 
-        Family("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDateTimePickers, "DatePicker", "TimePicker"),
-        Family("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildDateTimePickers, "DatePicker", "TimePicker"),
+        Page("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDatePicker),
+        Page("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildTimePicker),
         Page("Pickers", "DateRangePicker", "Two-click date range selection.", BuildDateRangePicker),
         Page("Pickers", "ColorPicker", "Swatch picker with hex display.", BuildColorPicker),
         Page("Pickers", "MonthCalendar", "Standalone month grid used by date pickers.", BuildMonthCalendar),
 
         Page("Feedback", "Alert", "Contextual message banners across variants and severities.", BuildAlert),
-        Family("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.", BuildProgress, "ProgressCircular", "ProgressLinear", "Skeleton"),
-        Family("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.", BuildProgress, "ProgressCircular", "ProgressLinear", "Skeleton"),
-        Family("Feedback", "Skeleton", "Animated and static loading placeholders.", BuildProgress, "ProgressCircular", "ProgressLinear", "Skeleton"),
+        Page("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.", BuildProgressCircular),
+        Page("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.", BuildProgressLinear),
+        Page("Feedback", "Skeleton", "Animated and static loading placeholders.", BuildSkeleton),
         Page("Feedback", "Overlay", "Auto-closing scrim over local content.", BuildOverlayScrim),
         Page("Feedback", "Popover", "Anchored floating content.", BuildPopover),
-        Family("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildOverlays, "DialogService", "SnackbarService", "Button"),
-        Family("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildOverlays, "DialogService", "SnackbarService", "Button"),
+        Page("Feedback", "Tooltip", "Attached contextual help on focusable targets.", BuildTooltip),
+        Page("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildDialogService),
+        Page("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildSnackbarService),
 
         Page("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.", BuildTable),
         Page("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.", BuildDataGrid),
         Page("Data", "TreeView", "Nested rows with selection and expansion.", BuildTreeView),
-        Family("Data", "Tabs", "Header strip and selected content region.", BuildTabsMenu, "Tabs", "Menu", "Tooltip", "Button"),
+        Page("Data", "Tabs", "Header strip and selected content region.", BuildTabs),
         Page("Data", "ExpansionPanels", "Accordion-style expandable content.", BuildExpansionPanels),
         Page("Data", "Collapse", "Animated and static content reveal.", BuildCollapse),
         Page("Data", "Timeline", "Vertical event sequence.", BuildTimeline),
@@ -248,33 +590,33 @@ public sealed class ComponentsView : UserControl
         Page("Data", "Stepper", "Multi-step workflow navigation.", BuildStepper),
         Page("Data", "Pagination", "Page buttons with boundary and ellipsis behavior.", BuildPagination),
 
-        Family("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
-        Family("Navigation", "Link", "Clickable text link variants.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
-        Family("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
-        Family("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
-        Family("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavigation, "Breadcrumbs", "Link", "NavMenu", "NavLink", "NavGroup"),
+        Page("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildBreadcrumbs),
+        Page("Navigation", "Link", "Clickable text link variants.", BuildLink),
+        Page("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavMenu),
+        Page("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavLink),
+        Page("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavGroup),
 
-        Family("Layout", "Container", "Centered and width-capped content regions.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
-        Family("Layout", "Grid", "Responsive 12-column layout with item spans.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
-        Family("Layout", "Item", "Grid child span settings across breakpoints.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
-        Family("Layout", "Stack", "Spaced row and column layout.", BuildLayoutSamples, "Container", "Grid", "Item", "Stack"),
-        Family("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildList, "List", "ListSubheader", "ListItem", "Spacer"),
+        Page("Layout", "Container", "Centered and width-capped content regions.", BuildContainer),
+        Page("Layout", "Grid", "Responsive 12-column layout with item spans.", BuildGridLayout),
+        Page("Layout", "Item", "Grid child span settings across breakpoints.", BuildItemLayout),
+        Page("Layout", "Stack", "Spaced row and column layout.", BuildStackLayout),
+        Page("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildSpacer),
         Page("Layout", "Hidden", "Breakpoint-based visibility.", BuildHidden),
         Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildScrollToTop),
 
-        Family("Shell", "Layout", "App shell composition with bar, drawer, and content.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
-        Family("Shell", "AppBar", "Elevated top application bar.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
-        Family("Shell", "Drawer", "Docked or temporary side navigation.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
-        Family("Shell", "MainContent", "Scrollable main content region.", BuildShellPreview, "Layout", "AppBar", "Drawer", "MainContent"),
+        Page("Shell", "Layout", "App shell composition with bar, drawer, and content.", BuildShellLayout),
+        Page("Shell", "AppBar", "Elevated top application bar.", BuildAppBar),
+        Page("Shell", "Drawer", "Docked or temporary side navigation.", BuildDrawer),
+        Page("Shell", "MainContent", "Scrollable main content region.", BuildMainContent),
 
         Page("Surfaces", "Paper", "Elevation, outlined, square, and filled surfaces.", BuildPaper),
         Page("Surfaces", "Card", "Header, media, content, and actions.", BuildCard),
-        Family("Surfaces", "List", "List rows, subheaders, and spacer-driven toolbar layout.", BuildList, "List", "ListSubheader", "ListItem", "Spacer"),
+        Family("Surfaces", "List", "List rows, subheaders, secondary text, and trailing actions.", BuildList, "List", "ListSubheader", "ListItem", "Badge", "IconButton"),
         Page("Surfaces", "Ripple", "Pointer feedback effect.", BuildRipple),
 
-        Family("Charts", "PieChart", "Pie and donut chart rendering.", BuildCharts, "PieChart", "BarChart", "LineChart"),
-        Family("Charts", "BarChart", "Bar chart rendering from numeric values.", BuildCharts, "PieChart", "BarChart", "LineChart"),
-        Family("Charts", "LineChart", "Line and area chart rendering.", BuildCharts, "PieChart", "BarChart", "LineChart"),
+        Page("Charts", "PieChart", "Pie and donut chart rendering.", BuildPieChart),
+        Page("Charts", "BarChart", "Bar chart rendering from numeric values.", BuildBarChart),
+        Page("Charts", "LineChart", "Line and area chart rendering.", BuildLineChart),
     ];
 
     private NavMenu BuildSideMenu()
@@ -320,25 +662,16 @@ public sealed class ComponentsView : UserControl
         breadcrumbs.Items.Add(new BreadcrumbItem(page.Group));
         breadcrumbs.Items.Add(new BreadcrumbItem(page.Title));
 
-        var header = new Avalonia.Controls.Grid
+        var header = new StackPanel
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Spacing = 10,
             Children =
             {
-                new StackPanel
-                {
-                    Spacing = 10,
-                    Children =
-                    {
-                        breadcrumbs,
-                        new Text { Text = page.Title, Typo = Typo.H4 },
-                        new Text { Text = page.Description, Typo = Typo.Body1, Color = LoamColor.Default, Opacity = 0.72, TextWrapping = TextWrapping.Wrap, MaxWidth = 620 },
-                    },
-                },
-                PageBadges(page),
+                breadcrumbs,
+                new Text { Text = page.Title, Typo = Typo.H4 },
+                new Text { Text = page.Description, Typo = Typo.Body1, Color = LoamColor.Default, Opacity = 0.72, TextWrapping = TextWrapping.Wrap, MaxWidth = 620 },
             },
         };
-        Avalonia.Controls.Grid.SetColumn(header.Children[1], 1);
 
         return new StackPanel
         {
@@ -348,22 +681,19 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static WrapPanel PageBadges(GalleryPage page) =>
-        new()
-        {
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Bottom,
-            MaxWidth = 320,
-            Children =
+    private static Paper BuildPreviewPanel(GalleryPage page)
+    {
+        var preview = page.Build();
+        Control body = page.Route == "Start/Sizes"
+            ? new ScrollViewer
             {
-                new Chip { Text = page.Group, Color = LoamColor.Primary, Margin = new Thickness(0, 0, 8, 8) },
-                new Chip { Text = "Tokenized", Variant = Variant.Outlined, Color = LoamColor.Success, Margin = new Thickness(0, 0, 8, 8) },
-                new Chip { Text = "Sample", Variant = Variant.Outlined, Color = LoamColor.Info, Margin = new Thickness(0, 0, 8, 8) },
-            },
-        };
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Content = preview,
+            }
+            : preview;
 
-    private static Paper BuildPreviewPanel(GalleryPage page) =>
-        new()
+        return new Paper
         {
             Elevation = 1,
             Padding = new Thickness(0),
@@ -375,11 +705,12 @@ public sealed class ComponentsView : UserControl
                     new Border
                     {
                         Padding = new Thickness(28),
-                        Child = page.Build(),
+                        Child = body,
                     },
                 },
             },
         };
+    }
 
     private static Border PanelHeader(string title, string meta)
     {
@@ -423,6 +754,7 @@ public sealed class ComponentsView : UserControl
     private static string IconForPage(string title) => title switch
     {
         "Overview" => Icons.Material.Filled.Dashboard,
+        "Sizes" => Icons.Material.Filled.FormatSize,
 
         "Text" => Icons.Material.Filled.FormatSize,
         "Icon" => Icons.Material.Filled.Widgets,
@@ -578,13 +910,380 @@ public sealed class ComponentsView : UserControl
         return board;
     }
 
+    private static StackPanel BuildSizeMatrix()
+    {
+        var allSizes = new[] { LoamSize.ExtraSmall, LoamSize.Small, LoamSize.Medium, LoamSize.Large, LoamSize.ExtraLarge };
+
+        static AvatarGroup AvatarGroupFor(LoamSize size)
+        {
+            var group = new AvatarGroup { Max = 2, Spacing = size switch { LoamSize.ExtraLarge => -18, LoamSize.Large => -12, LoamSize.ExtraSmall => -6, _ => -8 } };
+            group.Items.Add(new Avatar { Content = "A", Size = size, Color = LoamColor.Primary });
+            group.Items.Add(new Avatar { Content = "B", Size = size, Color = LoamColor.Secondary });
+            group.Items.Add(new Avatar { Content = "C", Size = size, Color = LoamColor.Info });
+            return group;
+        }
+
+        ColumnDefinitions MatrixColumns() => new("132,Auto,Auto,Auto,Auto,Auto");
+
+        Avalonia.Controls.Grid HeaderRow()
+        {
+            var row = new Avalonia.Controls.Grid
+            {
+                Name = "PART_SizeMatrixHeader",
+                ColumnDefinitions = MatrixColumns(),
+                Margin = new Thickness(0, 0, 0, 4),
+            };
+
+            foreach (var size in allSizes)
+            {
+                var header = new Text
+                {
+                    Text = size.ToString(),
+                    Typo = Typo.Caption,
+                    Color = LoamColor.Secondary,
+                    Margin = new Thickness(0, 0, 24, 0),
+                };
+                Avalonia.Controls.Grid.SetColumn(header, Array.IndexOf(allSizes, size) + 1);
+                row.Children.Add(header);
+            }
+
+            return row;
+        }
+
+        Avalonia.Controls.Grid SizeRow(string label, Func<LoamSize, Control> build)
+        {
+            var row = new Avalonia.Controls.Grid
+            {
+                Name = $"PART_SizeRow_{label}",
+                ColumnDefinitions = MatrixColumns(),
+                MinHeight = 78,
+                Margin = new Thickness(0, 0, 0, 16),
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+
+            row.Children.Add(new Text
+            {
+                Text = label,
+                Typo = Typo.Subtitle2,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 24, 0),
+            });
+
+            for (var i = 0; i < allSizes.Length; i++)
+            {
+                var size = allSizes[i];
+                var cell = new StackPanel
+                {
+                    Name = $"PART_SizeCell_{label}_{size}",
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 24, 0),
+                    Children = { build(size) },
+                };
+                Avalonia.Controls.Grid.SetColumn(cell, i + 1);
+                row.Children.Add(cell);
+            }
+
+            return row;
+        }
+
+        var matrix = new StackPanel
+        {
+            Name = "PART_SizeMatrix",
+            Spacing = 0,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                HeaderRow(),
+                SizeRow("IconButton", size => new IconButton { Icon = Icons.Material.Filled.Settings, Size = size, Variant = Variant.Outlined, Color = LoamColor.Primary }),
+                SizeRow("ToggleIconButton", size => new ToggleIconButton { Icon = Icons.Material.Filled.FavoriteBorder, ToggledIcon = Icons.Material.Filled.Favorite, Toggled = size is LoamSize.Large or LoamSize.ExtraLarge, Size = size, Color = LoamColor.Error }),
+                SizeRow("ButtonGroup", size =>
+                {
+                    var group = new ButtonGroup { Size = size, Variant = Variant.Outlined, Color = LoamColor.Primary };
+                    group.Items.Add(new LoamButton { Content = "Day" });
+                    group.Items.Add(new LoamButton { Content = "Week" });
+                    group.Items.Add(new LoamButton { Content = "Month" });
+                    return group;
+                }),
+                SizeRow("ToggleGroup", size =>
+                {
+                    var group = new ToggleGroup { Size = size, SelectedValue = "week" };
+                    group.Items.Add(new ToggleItem("Day", "day"));
+                    group.Items.Add(new ToggleItem("Week", "week"));
+                    group.Items.Add(new ToggleItem("Month", "month"));
+                    return group;
+                }),
+                SizeRow("Fab", size => new Fab { Label = size.ToString(), StartIcon = Icons.Material.Filled.Add, Size = size, Color = LoamColor.Secondary }),
+                SizeRow("Icon", size => new Icon { Data = Icons.Material.Filled.Widgets, Size = size, Color = LoamColor.Primary }),
+                SizeRow("Avatar", size => new Avatar { Content = size.ToString()[0].ToString(), Size = size, Color = LoamColor.Primary }),
+                SizeRow("AvatarGroup", AvatarGroupFor),
+                SizeRow("Chip", size => new Chip { Text = size.ToString(), Icon = Icons.Material.Filled.Label, Size = size, Color = LoamColor.Info }),
+                SizeRow("CheckBox", size => new Loam.Controls.CheckBox { Content = size.ToString(), Size = size, IsChecked = true, Color = LoamColor.Primary }),
+                SizeRow("Switch", size => new Switch { Content = size.ToString(), Size = size, IsChecked = true, Color = LoamColor.Success }),
+                SizeRow("Radio", size => new Radio { Content = size.ToString(), Size = size, IsChecked = true, Color = LoamColor.Primary }),
+                SizeRow("Rating", size => new Rating { Size = size, SelectedValue = 3, Color = LoamColor.Warning }),
+                SizeRow("ProgressCircular", size => new ProgressCircular { Size = size, Indeterminate = false, Value = 64, Color = LoamColor.Primary }),
+                SizeRow("ProgressLinear", size => new ProgressLinear { Size = size, Value = 64, Label = size.ToString(), ShowValue = true, Color = LoamColor.Primary }),
+                SizeRow("Skeleton", size => new StackPanel
+                {
+                    Spacing = 8,
+                    Children =
+                    {
+                        Skeleton.TextLine(180, size, animate: false, label: $"{size} text loading"),
+                        Skeleton.Button(132, size, animate: false, label: $"{size} action loading"),
+                    },
+                }),
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                matrix,
+            },
+        };
+    }
+
+    private static Border BuildButtonConfigurationRail()
+    {
+        var textBrush = new SolidColorBrush(Color.Parse("#F4EFF8"));
+        var mutedBrush = new SolidColorBrush(Color.Parse("#CAC4D0"));
+        var lineBrush = new SolidColorBrush(Color.Parse("#484450"));
+        var dotBrush = new SolidColorBrush(Color.Parse("#383440"));
+
+        Text RailText(string value, Typo typo, IBrush brush, double opacity = 1) => new()
+        {
+            Text = value,
+            Typo = typo,
+            Color = LoamColor.Inherit,
+            Foreground = brush,
+            Opacity = opacity,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Border Dot() => new()
+        {
+            Width = 1,
+            Height = 1,
+            Background = dotBrush,
+            Opacity = 0.7,
+        };
+
+        var dotGrid = new UniformGrid { Columns = 56, Rows = 7, Opacity = 0.62 };
+        for (var i = 0; i < 392; i++)
+        {
+            dotGrid.Children.Add(Dot());
+        }
+
+        var samples = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 18,
+            VerticalAlignment = VerticalAlignment.Bottom,
+        };
+
+        foreach (var size in Sizes)
+        {
+            samples.Children.Add(new StackPanel
+            {
+                MinWidth = size switch
+                {
+                    LoamSize.ExtraSmall => 74,
+                    LoamSize.Small => 78,
+                    LoamSize.Large => 118,
+                    LoamSize.ExtraLarge => 156,
+                    _ => 104,
+                },
+                Spacing = 10,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Children =
+                {
+                    RailText(SizeLabel(size), Typo.Caption, mutedBrush, 0.86),
+                    new LoamButton
+                    {
+                        Content = SizeLabel(size),
+                        Size = size,
+                        Variant = Variant.Filled,
+                        Color = LoamColor.Primary,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                    },
+                },
+            });
+        }
+
+        var axis = new Avalonia.Controls.Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var marker = new Border
+        {
+            Width = 18,
+            Height = 18,
+            CornerRadius = new CornerRadius(9),
+            BorderThickness = new Thickness(1),
+            BorderBrush = mutedBrush,
+            Child = RailText("1", Typo.LabelSmall, mutedBrush),
+        };
+        var baseline = new Border
+        {
+            Height = 1,
+            Background = lineBrush,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0, 0, 0),
+        };
+        Avalonia.Controls.Grid.SetColumn(baseline, 1);
+        axis.Children.Add(marker);
+        axis.Children.Add(baseline);
+
+        var rail = new Avalonia.Controls.Grid
+        {
+            MinHeight = 218,
+            Children =
+            {
+                dotGrid,
+                new StackPanel
+                {
+                    Spacing = 14,
+                    Margin = new Thickness(40, 24, 40, 28),
+                    Children =
+                    {
+                        new Border
+                        {
+                            Height = 134,
+                            Child = samples,
+                        },
+                        axis,
+                    },
+                },
+            },
+        };
+
+        return new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#141218")),
+            CornerRadius = new CornerRadius(22),
+            Padding = new Thickness(24),
+            MaxWidth = 980,
+            Child = new StackPanel
+            {
+                Spacing = 18,
+                Children =
+                {
+                    RailText("Configurations", Typo.H5, textBrush),
+                    new ScrollViewer
+                    {
+                        HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                        Content = rail,
+                    },
+                    BuildButtonVariantRail(textBrush, mutedBrush),
+                },
+            },
+        };
+    }
+
+    private static Avalonia.Controls.Grid BuildButtonVariantRail(IBrush textBrush, IBrush mutedBrush)
+    {
+        var grid = new Avalonia.Controls.Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("112,*"),
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto"),
+            Margin = new Thickness(0, 4, 0, 0),
+        };
+
+        void AddRow(int rowIndex, string label, params Control[] controls)
+        {
+            var caption = new Text
+            {
+                Text = label,
+                Typo = Typo.Caption,
+                Color = LoamColor.Inherit,
+                Foreground = mutedBrush,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Avalonia.Controls.Grid.SetRow(caption, rowIndex);
+            grid.Children.Add(caption);
+
+            var strip = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+            foreach (var control in controls)
+            {
+                control.Margin = new Thickness(0, 0, 10, 10);
+                strip.Children.Add(control);
+            }
+
+            Avalonia.Controls.Grid.SetColumn(strip, 1);
+            Avalonia.Controls.Grid.SetRow(strip, rowIndex);
+            grid.Children.Add(strip);
+        }
+
+        AddRow(0, "Variant",
+            new LoamButton { Content = "Filled", Variant = Variant.Filled, Color = LoamColor.Primary },
+            new LoamButton { Content = "Outlined", Variant = Variant.Outlined, Color = LoamColor.Primary },
+            new LoamButton { Content = "Text", Variant = Variant.Text, Color = LoamColor.Primary });
+
+        AddRow(1, "Icon",
+            new LoamButton { Content = "Create", StartIcon = Icons.Material.Filled.Add, Variant = Variant.Filled, Color = LoamColor.Primary },
+            new LoamButton { Content = "Open", EndIcon = Icons.Material.Filled.ArrowForward, Variant = Variant.Text, Color = LoamColor.Primary });
+
+        AddRow(2, "State",
+            new LoamButton { Content = "Available", Variant = Variant.Filled, Color = LoamColor.Primary },
+            new LoamButton { Content = "Disabled", Variant = Variant.Filled, Color = LoamColor.Primary, IsEnabled = false });
+
+        return grid;
+    }
+
+    private static string SizeLabel(LoamSize size) => size switch
+    {
+        LoamSize.ExtraSmall => "Extra small",
+        LoamSize.ExtraLarge => "Extra large",
+        _ => size.ToString(),
+    };
+
     private static StackPanel BuildAlert()
     {
         var stack = new StackPanel { Spacing = 12, MaxWidth = 620, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Alert { Color = LoamColor.Info, Icon = Icons.Material.Filled.Settings, Content = "Text-tint alert keeps the page calm." });
-        stack.Children.Add(new Alert { Color = LoamColor.Success, Variant = Variant.Filled, Icon = Icons.Material.Filled.Check, Content = "Filled success alert." });
-        stack.Children.Add(new Alert { Color = LoamColor.Warning, Variant = Variant.Outlined, Icon = Icons.Material.Filled.Star, Content = "Outlined warning alert." });
-        stack.Children.Add(new Alert { Color = LoamColor.Error, Content = "Error alert without an icon." });
+        stack.Children.Add(new Alert
+        {
+            Color = LoamColor.Info,
+            Icon = Icons.Material.Filled.Settings,
+            Title = "Configuration saved",
+            Message = "Generated title and message regions keep alert anatomy inside the component.",
+            Action = new LoamButton { Content = "View", Variant = Variant.Text, Color = LoamColor.Info, Size = LoamSize.Small },
+        });
+        stack.Children.Add(new Alert
+        {
+            Color = LoamColor.Success,
+            Variant = Variant.Filled,
+            Icon = Icons.Material.Filled.Check,
+            Title = "Build completed",
+            Message = "Filled alerts keep icon, text, action and close affordances aligned.",
+            Closeable = true,
+        });
+        stack.Children.Add(new Alert
+        {
+            Color = LoamColor.Warning,
+            Variant = Variant.Outlined,
+            Icon = Icons.Material.Filled.Star,
+            Title = "Review required",
+            Message = "Outlined alerts use tokenized border and foreground roles.",
+            Action = new LoamButton { Content = "Open", Variant = Variant.Text, Color = LoamColor.Warning, Size = LoamSize.Small },
+            Closeable = true,
+        });
+        stack.Children.Add(new Alert { Color = LoamColor.Error, Title = "Validation failed", Message = "Error alert without a leading icon." });
+        stack.Children.Add(new Alert
+        {
+            Color = LoamColor.Info,
+            Title = "Disabled",
+            Message = "Disabled alerts dim generated text, icon, action and close regions.",
+            Closeable = true,
+            IsEnabled = false,
+        });
+        stack.Children.Add(new Alert { Color = LoamColor.Default, Content = "Compatibility path: raw Content still renders." });
         return stack;
     }
 
@@ -641,43 +1340,236 @@ public sealed class ComponentsView : UserControl
         };
     }
 
+    private static StackPanel BuildContainer()
+    {
+        Loam.Controls.Container ContainerExample(string label, Breakpoint breakpoint, bool gutters)
+        {
+            return new Loam.Controls.Container
+            {
+                Width = 780,
+                MaxWidthBreakpoint = breakpoint,
+                Gutters = gutters,
+                Child = new Paper
+                {
+                    Height = 64,
+                    Elevation = 0,
+                    Outlined = true,
+                    Padding = new Thickness(16),
+                    Content = new Text { Text = label, Typo = Typo.Body2 },
+                },
+            };
+        }
+
+        return new StackPanel
+        {
+            Spacing = 16,
+            Children =
+            {
+                new Text { Text = "Breakpoint caps", Typo = Typo.Subtitle2 },
+                ContainerExample("MaxWidthBreakpoint = Breakpoint.Sm", Breakpoint.Sm, gutters: true),
+                ContainerExample("MaxWidthBreakpoint = Breakpoint.Md", Breakpoint.Md, gutters: true),
+                ContainerExample("MaxWidthBreakpoint = Breakpoint.Lg", Breakpoint.Lg, gutters: true),
+                new Text { Text = "No gutters", Typo = Typo.Subtitle2 },
+                ContainerExample("Gutters = false", Breakpoint.Md, gutters: false),
+            },
+        };
+    }
+
+    private static StackPanel BuildGridLayout()
+    {
+        var spanGrid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 780 };
+        foreach (var (label, span) in new[] { ("xs12", 12), ("xs6", 6), ("xs4", 4), ("xs3", 3) })
+        {
+            spanGrid.Children.Add(new Item
+            {
+                Xs = span,
+                Child = new Paper
+                {
+                    Height = 56,
+                    Elevation = 0,
+                    Outlined = true,
+                    Padding = new Thickness(12),
+                    Content = new Text { Text = label, Typo = Typo.Body2 },
+                },
+            });
+        }
+
+        var responsiveGrid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 780 };
+        for (var i = 1; i <= 6; i++)
+        {
+            responsiveGrid.Children.Add(new Item
+            {
+                Xs = 12,
+                Sm = 6,
+                Md = 4,
+                Child = new Paper
+                {
+                    Height = 72,
+                    Elevation = 1,
+                    Padding = new Thickness(12),
+                    Content = new Text { Text = $"Item {i}\nxs12 / sm6 / md4", Typo = Typo.Body2 },
+                },
+            });
+        }
+
+        responsiveGrid.Children.Add(new Paper
+        {
+            Height = 56,
+            Elevation = 0,
+            Outlined = true,
+            Padding = new Thickness(12),
+            Content = new Text { Text = "Non-Item child spans 12 columns", Typo = Typo.Body2 },
+        });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            Children =
+            {
+                new Text { Text = "Fixed spans", Typo = Typo.Subtitle2 },
+                spanGrid,
+                new Text { Text = "Responsive spans", Typo = Typo.Subtitle2 },
+                responsiveGrid,
+            },
+        };
+    }
+
+    private static StackPanel BuildItemLayout()
+    {
+        var grid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 780 };
+        grid.Children.Add(new Item { Xs = 12, Sm = 12, Md = 8, Lg = 8, Child = new Paper { Height = 72, Elevation = 1, Padding = new Thickness(12), Content = new Text { Text = "Main\nxs12 / md8", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Item { Xs = 12, Sm = 12, Md = 4, Lg = 4, Child = new Paper { Height = 72, Elevation = 1, Padding = new Thickness(12), Content = new Text { Text = "Side\nxs12 / md4", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Item { Xs = 6, Sm = 4, Md = 3, Lg = 2, Xl = 2, Xxl = 1, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "xs6 / sm4 / md3 / lg2 / xxl1", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Item { Xs = 6, Sm = 4, Md = 3, Lg = 2, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "breakpoint fallback", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Item { Xs = 12, Sm = 4, Md = 6, Lg = 4, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "mixed item span", Typo = Typo.Body2 } } });
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                new Text { Text = "Item breakpoint props", Typo = Typo.Subtitle2 },
+                grid,
+            },
+        };
+    }
+
+    private static StackPanel BuildStackLayout()
+    {
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Vertical stack", Typo = Typo.Subtitle2 },
+                new Stack
+                {
+                    Children =
+                    {
+                        new Chip { Text = "Default" },
+                        new Chip { Text = "Vertical" },
+                        new Chip { Text = "Spacing = 8" },
+                    },
+                },
+                new Text { Text = "Row stack", Typo = Typo.Subtitle2 },
+                new Stack
+                {
+                    Row = true,
+                    Children =
+                    {
+                        new LoamButton { Content = "One", Variant = Variant.Filled, Color = LoamColor.Primary },
+                        new LoamButton { Content = "Two", Variant = Variant.Outlined, Color = LoamColor.Primary },
+                        new LoamButton { Content = "Three", Variant = Variant.Text, Color = LoamColor.Primary },
+                    },
+                },
+                new Text { Text = "Custom spacing", Typo = Typo.Subtitle2 },
+                new Stack
+                {
+                    Row = true,
+                    Spacing = 16,
+                    Children =
+                    {
+                        new Chip { Text = "Spacing" },
+                        new Chip { Text = "16" },
+                        new Chip { Text = "Wrap-ready" },
+                    },
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildSpacer()
+    {
+        var toolbar = new Avalonia.Controls.Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
+            Width = 480,
+            Children =
+            {
+                new LoamButton { Content = "Back", Variant = Variant.Text, Color = LoamColor.Primary },
+                new Spacer(),
+                new LoamButton { Content = "Continue", Variant = Variant.Filled, Color = LoamColor.Primary },
+            },
+        };
+        Avalonia.Controls.Grid.SetColumn(toolbar.Children[1], 1);
+        Avalonia.Controls.Grid.SetColumn(toolbar.Children[2], 2);
+
+        var dockLeft = new Text { Text = "Leading", VerticalAlignment = VerticalAlignment.Center };
+        var dockRight = new Text { Text = "Trailing", VerticalAlignment = VerticalAlignment.Center };
+        DockPanel.SetDock(dockLeft, Dock.Left);
+        DockPanel.SetDock(dockRight, Dock.Right);
+        var dock = new DockPanel
+        {
+            Width = 480,
+            Height = 48,
+            LastChildFill = true,
+            Children =
+            {
+                dockLeft,
+                dockRight,
+                new Spacer(),
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Star column spacer", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = toolbar },
+                new Text { Text = "Dock fill spacer", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = dock },
+            },
+        };
+    }
+
     private static StackPanel BuildShellPreview()
     {
-        static NavMenu BuildNav(bool compact)
+        static void AddShellItems(Drawer drawer, string first)
         {
-            var nav = new NavMenu { Width = compact ? 52 : 148 };
-            nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Home, Content = compact ? string.Empty : "Dashboard", IsActive = true });
-            nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Search, Content = compact ? string.Empty : "Search" });
-            nav.Children.Add(new NavLink { Icon = Icons.Material.Filled.Settings, Content = compact ? string.Empty : "Settings" });
-            return nav;
+            drawer.Items.Add(new DrawerItem { Icon = Icons.Material.Filled.Home, Text = first, IsActive = true });
+            drawer.Items.Add(new DrawerItem { Icon = Icons.Material.Filled.Search, Text = "Search" });
+            drawer.Items.Add(new DrawerItem { Icon = Icons.Material.Filled.Settings, Text = "Settings" });
         }
 
         static Border Frame(string title, Drawer drawer)
         {
             drawer.DrawerWidth = 148;
             drawer.MiniWidth = 52;
-            drawer.Content = new Border { Padding = new Thickness(8), Child = BuildNav(drawer.Mini) };
-
-            var toolbar = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                VerticalAlignment = VerticalAlignment.Center,
-                Children =
-                {
-                    new Icon { Data = Icons.Material.Filled.Menu, Color = LoamColor.Inherit },
-                    new Text { Text = title, Typo = Typo.Subtitle1, Color = LoamColor.Inherit },
-                },
-            };
+            AddShellItems(drawer, title);
 
             var content = new MainContent
             {
+                Title = "Content",
+                Subtitle = "Generated page header",
                 Content = new StackPanel
                 {
                     Spacing = 10,
                     Children =
                     {
-                        new Text { Text = "Content", Typo = Typo.Subtitle1 },
                         new Alert { Color = LoamColor.Info, Content = "Tokenized shell" },
                         new ProgressLinear { Value = drawer.Mode == DrawerMode.Temporary ? 68 : 46, Width = 120 },
                     },
@@ -686,7 +1578,13 @@ public sealed class ComponentsView : UserControl
 
             var shell = new Layout
             {
-                AppBar = new AppBar { Dense = true, Color = LoamColor.Primary, Content = toolbar },
+                AppBar = new AppBar
+                {
+                    Dense = true,
+                    Color = LoamColor.Primary,
+                    Title = title,
+                    NavigationIcon = Icons.Material.Filled.Menu,
+                },
                 Drawer = drawer,
                 Content = content,
             };
@@ -732,18 +1630,326 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildText()
+    private static Border BuildShellLayout()
     {
-        var stack = new StackPanel { Spacing = 2 };
-        foreach (var typo in new[] { Typo.H4, Typo.H6, Typo.Subtitle1, Typo.Body1, Typo.Body2, Typo.Caption })
+        var drawer = new Drawer
         {
-            stack.Children.Add(new Text { Text = $"{typo} · The quick brown fox", Typo = typo });
+            DrawerWidth = 148,
+            Items =
+            {
+                new DrawerItem { Icon = Icons.Material.Filled.Home, Text = "Dashboard", IsActive = true },
+                new DrawerItem { Icon = Icons.Material.Filled.Search, Text = "Search" },
+                new DrawerItem { Icon = Icons.Material.Filled.Settings, Text = "Settings" },
+            },
+        };
+
+        var shell = new Layout
+        {
+            AppBar = new AppBar
+            {
+                Dense = true,
+                Color = LoamColor.Primary,
+                Title = "Layout shell",
+                Subtitle = "Generated app bar, drawer, and content",
+                NavigationIcon = Icons.Material.Filled.Menu,
+                NavigationAction = () => drawer.Toggle(),
+                Actions =
+                {
+                    new AppBarAction
+                    {
+                        Icon = Icons.Material.Filled.Settings,
+                        Label = "Settings",
+                    },
+                },
+            },
+            Drawer = drawer,
+            Content = new MainContent
+            {
+                Title = "Main content",
+                Subtitle = "Generated page header inside the shell body",
+                Content = new StackPanel
+                {
+                    Spacing = 10,
+                    Children =
+                    {
+                        new Alert { Color = LoamColor.Info, Content = "Layout coordinates generated app-bar, drawer, and content APIs." },
+                    },
+                },
+            },
+        };
+
+        return new Border { Width = 360, Height = 260, ClipToBounds = true, Child = shell };
+    }
+
+    private static StackPanel BuildAppBar()
+    {
+        return new StackPanel
+        {
+            Spacing = 16,
+            Children =
+            {
+                new AppBar
+                {
+                    Color = LoamColor.Primary,
+                    Title = "Primary app bar",
+                    Subtitle = "Configured from properties",
+                    NavigationIcon = Icons.Material.Filled.Menu,
+                    NavigationAction = () => { },
+                    Actions =
+                    {
+                        new AppBarAction
+                        {
+                            Icon = Icons.Material.Filled.Settings,
+                            Label = "Settings",
+                            OnClick = () => { },
+                        },
+                        new AppBarAction
+                        {
+                            Icon = Icons.Material.Filled.Search,
+                            Label = "Search",
+                            Color = LoamColor.Inherit,
+                            Size = LoamSize.Small,
+                            OnClick = () => { },
+                        },
+                        new AppBarAction
+                        {
+                            Icon = Icons.Material.Filled.Delete,
+                            Label = "Delete disabled",
+                            IsEnabled = false,
+                        },
+                    },
+                },
+                new AppBar
+                {
+                    Dense = true,
+                    Elevation = 0,
+                    Color = LoamColor.Default,
+                    Title = "Dense app bar",
+                    Subtitle = "No custom toolbar required",
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildDrawer()
+    {
+        static Drawer DrawerSample(string title, Drawer drawer)
+        {
+            drawer.DrawerWidth = 156;
+            drawer.MiniWidth = 56;
+            drawer.Title = title;
+            drawer.Subtitle = drawer.Mode == DrawerMode.Temporary ? "Overlay navigation" : "Side navigation";
+            drawer.FooterText = "Generated Drawer.Items";
+            drawer.Items.Add(new DrawerItem { Icon = Icons.Material.Filled.Home, Text = "Overview", Label = "Overview", IsActive = true });
+            drawer.Items.Add(new DrawerItem { Icon = Icons.Material.Filled.Settings, Text = "Settings", Label = "Settings" });
+            drawer.Items.Add(new DrawerItem { Icon = Icons.Material.Filled.Delete, Text = "Disabled", Label = "Disabled item", IsEnabled = false, Color = LoamColor.Error });
+            return drawer;
         }
 
-        stack.Children.Add(new Text { Text = "Primary colored body text", Typo = Typo.Body1, Color = LoamColor.Primary });
-        stack.Children.Add(new Text { Text = "Error colored body text", Typo = Typo.Body1, Color = LoamColor.Error });
-        stack.Children.Add(new Text { Text = "Centered text alignment", Typo = Typo.Body2, Align = TextAlignment.Center, Width = 320 });
-        return stack;
+        var temporary = DrawerSample("Temporary", new Drawer { Mode = DrawerMode.Temporary, Open = true });
+        var toggle = new LoamButton
+        {
+            Content = "Toggle temporary",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+            StartIcon = Icons.Material.Filled.Menu,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        toggle.Click += (_, _) => temporary.Toggle();
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                toggle,
+                new WrapPanel
+                {
+                    Children =
+                    {
+                        new Border { Width = 180, Height = 260, ClipToBounds = true, Margin = new Thickness(0, 0, 16, 16), Child = DrawerSample("Docked", new Drawer()) },
+                        new Border { Width = 88, Height = 260, ClipToBounds = true, Margin = new Thickness(0, 0, 16, 16), Child = DrawerSample("Mini", new Drawer { Mini = true }) },
+                        new Border { Width = 220, Height = 260, ClipToBounds = true, Child = temporary },
+                    },
+                },
+            },
+        };
+    }
+
+    private static Border BuildMainContent()
+    {
+        var drawer = new Drawer
+        {
+            DrawerWidth = 156,
+            Items =
+            {
+                new DrawerItem { Icon = Icons.Material.Filled.Home, Text = "Overview", Label = "Overview", IsActive = true },
+                new DrawerItem { Icon = Icons.Material.Filled.BarChart, Text = "Reports", Label = "Reports" },
+                new DrawerItem { Icon = Icons.Material.Filled.Settings, Text = "Settings", Label = "Settings" },
+            },
+        };
+
+        var content = new MainContent
+        {
+            Padding = new Thickness(20),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Title = "Main content region",
+            Subtitle = "MainContent owns the scrollable work area below the app bar and beside the drawer, keeping page padding and body content independent from shell chrome.",
+            SecondaryActionText = "Export",
+            PrimaryActionText = "Review",
+            Content = new StackPanel
+            {
+                Spacing = 14,
+                Children =
+                {
+                    new WrapPanel
+                    {
+                        Children =
+                        {
+                            new Chip { Text = "Pinned", Color = LoamColor.Primary, Size = LoamSize.Small, Margin = new Thickness(0, 0, 8, 0) },
+                            new Chip { Text = "3 updates", Variant = Variant.Outlined, Color = LoamColor.Secondary, Size = LoamSize.Small },
+                        },
+                    },
+                    new ProgressLinear { Value = 64, Width = 300 },
+                    new Alert { Color = LoamColor.Success, Content = "Scrollable content keeps its padding while the shell stays fixed." },
+                    new StackPanel
+                    {
+                        Spacing = 4,
+                        Children =
+                        {
+                            new ListItem { Icon = Icons.Material.Filled.Article, Content = "Acceptance notes", IsSelected = true },
+                            new ListItem { Icon = Icons.Material.Filled.Check, Content = "Verified component states" },
+                            new ListItem { Icon = Icons.Material.Filled.Person, Content = "Assigned reviewers" },
+                            new ListItem { Icon = Icons.Material.Filled.Article, Content = "Release checklist" },
+                        },
+                    },
+                },
+            },
+        };
+
+        var shell = new Layout
+        {
+            AppBar = new AppBar
+            {
+                Dense = true,
+                Color = LoamColor.Primary,
+                Elevation = 1,
+                Title = "Project workspace",
+                Subtitle = "Shell component API",
+                NavigationIcon = Icons.Material.Filled.Menu,
+                NavigationAction = () => drawer.Toggle(),
+                Actions =
+                {
+                    new AppBarAction { Icon = Icons.Material.Filled.Settings, Label = "Settings" },
+                    new AppBarAction { Icon = Icons.Material.Filled.Search, Label = "Search", Size = LoamSize.Small },
+                },
+            },
+            Drawer = drawer,
+            Content = content,
+        };
+
+        var frame = new Border
+        {
+            Width = 640,
+            Height = 460,
+            ClipToBounds = true,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Child = shell,
+        };
+        frame.Bind(Border.BorderBrushProperty, frame.GetResourceObservable(LoamTokens.ColorOutlineVariant));
+        return frame;
+    }
+
+    private static StackPanel BuildText()
+    {
+        var displayRoles = new StackPanel { Spacing = 6 };
+        foreach (var (role, label) in new[]
+        {
+            (Typo.DisplayLarge, "Display large"),
+            (Typo.DisplayMedium, "Display medium"),
+            (Typo.DisplaySmall, "Display small"),
+        })
+        {
+            displayRoles.Children.Add(new Text { Text = $"{label} - component headline", Typo = role });
+        }
+
+        var contentRoles = new StackPanel { Spacing = 5 };
+        foreach (var (role, label) in new[]
+        {
+            (Typo.HeadlineLarge, "Headline large"),
+            (Typo.HeadlineMedium, "Headline medium"),
+            (Typo.HeadlineSmall, "Headline small"),
+            (Typo.TitleLarge, "Title large"),
+            (Typo.TitleMedium, "Title medium"),
+            (Typo.TitleSmall, "Title small"),
+            (Typo.BodyLarge, "Body large"),
+            (Typo.BodyMedium, "Body medium"),
+            (Typo.BodySmall, "Body small"),
+            (Typo.LabelLarge, "Label large"),
+            (Typo.LabelMedium, "Label medium"),
+            (Typo.LabelSmall, "Label small"),
+        })
+        {
+            contentRoles.Children.Add(new Text { Text = $"{label} - The quick brown fox", Typo = role });
+        }
+
+        var legacyAliases = new WrapPanel();
+        foreach (var typo in new[] { Typo.H4, Typo.H6, Typo.Subtitle1, Typo.Body1, Typo.Body2, Typo.Caption, Typo.Overline })
+        {
+            legacyAliases.Children.Add(new Text
+            {
+                Text = typo.ToString(),
+                Typo = typo,
+                Color = LoamColor.Secondary,
+                Margin = new Thickness(0, 0, 18, 10),
+            });
+        }
+
+        var colorSamples = new WrapPanel();
+        foreach (var color in new[] { LoamColor.Default, LoamColor.Primary, LoamColor.Secondary, LoamColor.Tertiary, LoamColor.Success, LoamColor.Warning, LoamColor.Error })
+        {
+            colorSamples.Children.Add(new Text
+            {
+                Text = color.ToString(),
+                Typo = Typo.BodyMedium,
+                Color = color,
+                Margin = new Thickness(0, 0, 18, 10),
+            });
+        }
+
+        var alignment = new StackPanel
+        {
+            Spacing = 6,
+            Width = 420,
+            Children =
+            {
+                new Text { Text = "Left aligned body text", Typo = Typo.BodyMedium, Align = TextAlignment.Left },
+                new Text { Text = "Centered label text", Typo = Typo.LabelLarge, Align = TextAlignment.Center },
+                new Text { Text = "Right aligned helper text", Typo = Typo.BodySmall, Align = TextAlignment.Right, Color = LoamColor.Secondary },
+                new Text { Text = "Wrapped body text keeps readable line length and uses token typography for repeated application content.", Typo = Typo.BodyMedium, TextWrapping = TextWrapping.Wrap, MaxWidth = 360, GutterBottom = true },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Display roles", Typo = Typo.Subtitle2 },
+                displayRoles,
+                new Text { Text = "Content roles", Typo = Typo.Subtitle2 },
+                contentRoles,
+                new Text { Text = "Legacy aliases", Typo = Typo.Subtitle2 },
+                legacyAliases,
+                new Text { Text = "Colors", Typo = Typo.Subtitle2 },
+                colorSamples,
+                new Text { Text = "Alignment and wrapping", Typo = Typo.Subtitle2 },
+                alignment,
+            },
+        };
     }
 
     private static StackPanel BuildButtonGroup()
@@ -761,6 +1967,18 @@ public sealed class ComponentsView : UserControl
         filled.Items.Add(new LoamButton { Content = "Week" });
         filled.Items.Add(new LoamButton { Content = "Month" });
         stack.Children.Add(filled);
+
+        var sizeRows = new StackPanel { Spacing = 8 };
+        foreach (var size in Sizes)
+        {
+            var group = new ButtonGroup { Variant = Variant.Outlined, Color = LoamColor.Primary, Size = size };
+            group.Items.Add(new LoamButton { Content = "Day" });
+            group.Items.Add(new LoamButton { Content = "Week" });
+            group.Items.Add(new LoamButton { Content = "Month" });
+            sizeRows.Children.Add(group);
+        }
+
+        stack.Children.Add(Labeled("Sizes", sizeRows));
 
         var favorites = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
         favorites.Children.Add(new Text { Text = "Toggle icon button:", VerticalAlignment = VerticalAlignment.Center });
@@ -788,6 +2006,30 @@ public sealed class ComponentsView : UserControl
             ToggledColor = LoamColor.Error,
         });
 
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new ToggleIconButton
+            {
+                Icon = Icons.Material.Filled.FavoriteBorder,
+                ToggledIcon = Icons.Material.Filled.Favorite,
+                Toggled = size is LoamSize.Large or LoamSize.ExtraLarge,
+                Color = LoamColor.Default,
+                ToggledColor = LoamColor.Error,
+                Size = size,
+                Margin = new Thickness(0, 0, 8, 8),
+            });
+        }
+
         return new StackPanel
         {
             Spacing = 12,
@@ -795,6 +2037,7 @@ public sealed class ComponentsView : UserControl
             Children =
             {
                 favorites,
+                Labeled("Sizes", sizes),
                 new Text { Text = "The toggled state swaps the glyph and can tint it independently.", Typo = Typo.Body2, Color = LoamColor.Secondary },
             },
         };
@@ -821,20 +2064,24 @@ public sealed class ComponentsView : UserControl
             stack.Children.Add(Labeled(variant.ToString(), row));
         }
 
-        var sizes = new WrapPanel();
-        foreach (var size in new[] { LoamSize.Small, LoamSize.Medium, LoamSize.Large })
+        stack.Children.Add(BuildButtonConfigurationRail());
+
+        var iconSizes = new WrapPanel();
+        foreach (var size in Sizes)
         {
-            sizes.Children.Add(new LoamButton
+            iconSizes.Children.Add(new LoamButton
             {
                 Content = size.ToString(),
-                Variant = Variant.Filled,
+                StartIcon = Icons.Material.Filled.Check,
+                EndIcon = Icons.Material.Filled.ArrowForward,
+                Variant = Variant.Outlined,
                 Color = LoamColor.Primary,
                 Size = size,
                 Margin = new Thickness(0, 0, 8, 8),
             });
         }
 
-        stack.Children.Add(Labeled("Sizes", sizes));
+        stack.Children.Add(Labeled("Icon sizes", iconSizes));
 
         var disabled = new WrapPanel();
         foreach (var variant in new[] { Variant.Filled, Variant.Outlined, Variant.Text })
@@ -874,7 +2121,7 @@ public sealed class ComponentsView : UserControl
 
     private static WrapPanel BuildIcons()
     {
-        var wrap = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+        var colorIcons = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
         (string Data, LoamColor Color)[] icons =
         [
             (Icons.Material.Filled.Home, LoamColor.Default),
@@ -886,10 +2133,76 @@ public sealed class ComponentsView : UserControl
         ];
         foreach (var (data, color) in icons)
         {
-            wrap.Children.Add(new Icon { Data = data, Color = color, Size = LoamSize.Large, Margin = new Thickness(0, 0, 14, 0) });
+            colorIcons.Children.Add(new Icon { Data = data, Color = color, Size = LoamSize.Large, Margin = new Thickness(0, 0, 18, 12) });
         }
 
-        return wrap;
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(0, 0, 22, 12),
+                Children =
+                {
+                    new Icon { Data = Icons.Material.Filled.Settings, Color = LoamColor.Primary, Size = size },
+                    new Text { Text = size.ToString(), Typo = Typo.Caption },
+                },
+            });
+        }
+
+        var contentIcons = new WrapPanel();
+        foreach (var (label, data) in new[]
+        {
+            ("Home", Icons.Material.Filled.Home),
+            ("Favorite", Icons.Material.Filled.Favorite),
+            ("Calendar", Icons.Material.Filled.CalendarToday),
+            ("Upload", Icons.Material.Filled.CloudUpload),
+            ("Article", Icons.Material.Filled.Article),
+            ("Chart", Icons.Material.Filled.ShowChart),
+        })
+        {
+            contentIcons.Children.Add(new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(0, 0, 24, 12),
+                Children =
+                {
+                    new Icon { Data = data, Color = LoamColor.Default, Size = LoamSize.Large },
+                    new Text { Text = label, Typo = Typo.Caption },
+                },
+            });
+        }
+
+        return new WrapPanel
+        {
+            Children =
+            {
+                new StackPanel
+                {
+                    Spacing = 18,
+                    MaxWidth = 760,
+                    Children =
+                    {
+                        new Text { Text = "Colors", Typo = Typo.Subtitle2 },
+                        colorIcons,
+                        new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                        sizes,
+                        new Text { Text = "Common glyphs", Typo = Typo.Subtitle2 },
+                        contentIcons,
+                    },
+                },
+            },
+        };
     }
 
     private static WrapPanel BuildIconButtons()
@@ -902,16 +2215,201 @@ public sealed class ComponentsView : UserControl
 
         wrap.Children.Add(new IconButton { Icon = Icons.Material.Filled.Add, Color = LoamColor.Primary, Variant = Variant.Filled, Margin = new Thickness(8, 0, 4, 0) });
         wrap.Children.Add(new IconButton { Icon = Icons.Material.Filled.Edit, Color = LoamColor.Primary, Variant = Variant.Outlined });
-        return wrap;
+        var sizes = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
+        foreach (var size in Sizes)
+        {
+            sizes.Children.Add(new IconButton
+            {
+                Icon = Icons.Material.Filled.Settings,
+                Color = LoamColor.Primary,
+                Variant = Variant.Outlined,
+                Size = size,
+                Margin = new Thickness(0, 0, 8, 8),
+            });
+        }
+
+        return new WrapPanel
+        {
+            Children =
+            {
+                Labeled("Variants", wrap),
+                Labeled("Sizes", sizes),
+            },
+        };
     }
 
     private static WrapPanel BuildFabs()
     {
         var wrap = new WrapPanel();
-        wrap.Children.Add(new Fab { Label = "Add", StartIcon = Icons.Material.Filled.Add, Color = LoamColor.Primary, Margin = new Thickness(0, 0, 12, 0) });
-        wrap.Children.Add(new Fab { StartIcon = Icons.Material.Filled.Edit, Color = LoamColor.Secondary, Margin = new Thickness(0, 0, 12, 0) });
-        wrap.Children.Add(new Fab { Label = "Save", StartIcon = Icons.Material.Filled.Check, Color = LoamColor.Success });
+        foreach (var size in Sizes)
+        {
+            wrap.Children.Add(new Fab
+            {
+                Label = size.ToString(),
+                StartIcon = Icons.Material.Filled.Add,
+                Color = LoamColor.Primary,
+                Size = size,
+                Margin = new Thickness(0, 0, 12, 12),
+            });
+        }
+
+        wrap.Children.Add(new Fab { StartIcon = Icons.Material.Filled.Edit, Color = LoamColor.Secondary, Margin = new Thickness(0, 0, 12, 12) });
+        wrap.Children.Add(new Fab { Label = "Save", StartIcon = Icons.Material.Filled.Check, Color = LoamColor.Success, Margin = new Thickness(0, 0, 12, 12) });
         return wrap;
+    }
+
+    private static StackPanel BuildAvatar()
+    {
+        var margin = new Thickness(0, 0, 16, 12);
+        var variants = new WrapPanel();
+        variants.Children.Add(new Avatar { Content = "AB", Color = LoamColor.Primary, Margin = margin });
+        variants.Children.Add(new Avatar { Content = "OL", Variant = Variant.Outlined, Color = LoamColor.Primary, Margin = margin });
+        variants.Children.Add(new Avatar { Content = "TX", Variant = Variant.Text, Color = LoamColor.Secondary, Margin = margin });
+        variants.Children.Add(new Avatar { Content = new Icon { Data = Icons.Material.Filled.Person, Color = LoamColor.Inherit }, Color = LoamColor.Info, Margin = margin });
+
+        var colors = new WrapPanel();
+        colors.Children.Add(new Avatar { Content = "PR", Color = LoamColor.Primary, Margin = margin });
+        colors.Children.Add(new Avatar { Content = "SE", Color = LoamColor.Secondary, Margin = margin });
+        colors.Children.Add(new Avatar { Content = "TE", Color = LoamColor.Tertiary, Margin = margin });
+        colors.Children.Add(new Avatar { Content = "SU", Color = LoamColor.Success, Margin = margin });
+        colors.Children.Add(new Avatar { Content = "WA", Color = LoamColor.Warning, Margin = margin });
+        colors.Children.Add(new Avatar { Content = "ER", Color = LoamColor.Error, Margin = margin });
+
+        var shapes = new WrapPanel();
+        shapes.Children.Add(new Avatar { Content = "CI", Color = LoamColor.Primary, Margin = margin });
+        shapes.Children.Add(new Avatar { Content = "RO", Rounded = true, Color = LoamColor.Secondary, Margin = margin });
+        shapes.Children.Add(new Avatar { Content = "SQ", Square = true, Color = LoamColor.Dark, Margin = margin });
+        shapes.Children.Add(new Avatar { Content = "OS", Variant = Variant.Outlined, Square = true, Color = LoamColor.Primary, Margin = margin });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Spacing = 4,
+                Margin = margin,
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption },
+                    new Avatar { Content = size.ToString()[0].ToString(), Size = size, Color = LoamColor.Primary },
+                },
+            });
+        }
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Variants", Typo = Typo.Subtitle2 },
+                variants,
+                new Text { Text = "Colors", Typo = Typo.Subtitle2 },
+                colors,
+                new Text { Text = "Shapes", Typo = Typo.Subtitle2 },
+                shapes,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+            },
+        };
+    }
+
+    private static StackPanel BuildAvatarGroup()
+    {
+        var overflow = new AvatarGroup { Max = 3, Spacing = -10, HorizontalAlignment = HorizontalAlignment.Left };
+        overflow.Items.Add(new Avatar { Content = "AB", Color = LoamColor.Primary });
+        overflow.Items.Add(new Avatar { Content = "CD", Color = LoamColor.Secondary });
+        overflow.Items.Add(new Avatar { Content = "EF", Color = LoamColor.Info });
+        overflow.Items.Add(new Avatar { Content = "GH", Color = LoamColor.Success });
+        overflow.Items.Add(new Avatar { Content = "IJ", Color = LoamColor.Warning });
+
+        var compact = new AvatarGroup { Max = 2, Spacing = -6, HorizontalAlignment = HorizontalAlignment.Left };
+        compact.Items.Add(new Avatar { Content = "A", Size = LoamSize.Small, Color = LoamColor.Primary });
+        compact.Items.Add(new Avatar { Content = "B", Size = LoamSize.Small, Color = LoamColor.Secondary });
+        compact.Items.Add(new Avatar { Content = "C", Size = LoamSize.Small, Color = LoamColor.Info });
+
+        var relaxed = new AvatarGroup { Max = 4, Spacing = 6, HorizontalAlignment = HorizontalAlignment.Left };
+        relaxed.Items.Add(new Avatar { Content = "AL", Color = LoamColor.Primary });
+        relaxed.Items.Add(new Avatar { Content = "BE", Color = LoamColor.Secondary });
+        relaxed.Items.Add(new Avatar { Content = "CY", Color = LoamColor.Tertiary });
+        relaxed.Items.Add(new Avatar { Content = "DI", Color = LoamColor.Success });
+
+        var rounded = new AvatarGroup { Max = 3, Spacing = -8, HorizontalAlignment = HorizontalAlignment.Left };
+        rounded.Items.Add(new Avatar { Content = "RO", Rounded = true, Color = LoamColor.Primary });
+        rounded.Items.Add(new Avatar { Content = "UN", Rounded = true, Color = LoamColor.Secondary });
+        rounded.Items.Add(new Avatar { Content = "DE", Rounded = true, Color = LoamColor.Info });
+        rounded.Items.Add(new Avatar { Content = "D", Rounded = true, Color = LoamColor.Success });
+
+        var square = new AvatarGroup { Max = 3, Spacing = -8, HorizontalAlignment = HorizontalAlignment.Left };
+        square.Items.Add(new Avatar { Content = "SQ", Square = true, Color = LoamColor.Primary });
+        square.Items.Add(new Avatar { Content = "UA", Square = true, Color = LoamColor.Secondary });
+        square.Items.Add(new Avatar { Content = "RE", Square = true, Color = LoamColor.Info });
+        square.Items.Add(new Avatar { Content = "D", Square = true, Color = LoamColor.Success });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            var group = new AvatarGroup
+            {
+                Max = 2,
+                Spacing = size switch { LoamSize.ExtraLarge => -18, LoamSize.Large => -12, LoamSize.ExtraSmall => -6, _ => -8 },
+                Margin = new Thickness(0, 0, 28, 16),
+            };
+            group.Items.Add(new Avatar { Content = "A", Size = size, Color = LoamColor.Primary });
+            group.Items.Add(new Avatar { Content = "B", Size = size, Color = LoamColor.Secondary });
+            group.Items.Add(new Avatar { Content = "C", Size = size, Color = LoamColor.Info });
+
+            sizes.Children.Add(new StackPanel
+            {
+                Spacing = 4,
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption },
+                    group,
+                },
+            });
+        }
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Overflow", Typo = Typo.Subtitle2 },
+                overflow,
+                new Text { Text = "Compact", Typo = Typo.Subtitle2 },
+                compact,
+                new Text { Text = "Relaxed spacing", Typo = Typo.Subtitle2 },
+                relaxed,
+                new Text { Text = "Rounded", Typo = Typo.Subtitle2 },
+                rounded,
+                new Text { Text = "Square", Typo = Typo.Subtitle2 },
+                square,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+            },
+        };
     }
 
     private static WrapPanel BuildAvatars()
@@ -935,18 +2433,69 @@ public sealed class ComponentsView : UserControl
         return wrap;
     }
 
-    private static WrapPanel BuildChips()
+    private static StackPanel BuildChips()
     {
-        var m = new Thickness(0, 0, 8, 8);
-        var wrap = new WrapPanel();
-        wrap.Children.Add(new Chip { Text = "Filled", Color = LoamColor.Primary, Margin = m });
-        wrap.Children.Add(new Chip { Text = "Outlined", Variant = Variant.Outlined, Color = LoamColor.Primary, Margin = m });
-        wrap.Children.Add(new Chip { Text = "Text", Variant = Variant.Text, Color = LoamColor.Secondary, Margin = m });
-        wrap.Children.Add(new Chip { Text = "With icon", Icon = Icons.Material.Filled.Star, Color = LoamColor.Warning, Margin = m });
-        wrap.Children.Add(new Chip { Text = "Closeable", Color = LoamColor.Info, Closeable = true, Margin = m });
-        wrap.Children.Add(new Chip { Text = "Error", Color = LoamColor.Error, Margin = m });
-        wrap.Children.Add(new Chip { Text = "Disabled", Color = LoamColor.Primary, IsEnabled = false, Margin = m });
-        return wrap;
+        var margin = new Thickness(0, 0, 12, 12);
+        var variants = new WrapPanel();
+        variants.Children.Add(new Chip { Text = "Filled", Color = LoamColor.Primary, Margin = margin });
+        variants.Children.Add(new Chip { Text = "Outlined", Variant = Variant.Outlined, Color = LoamColor.Primary, Margin = margin });
+        variants.Children.Add(new Chip { Text = "Text", Variant = Variant.Text, Color = LoamColor.Secondary, Margin = margin });
+        variants.Children.Add(new Chip { Text = "Label shape", Label = true, Variant = Variant.Outlined, Color = LoamColor.Tertiary, Margin = margin });
+        variants.Children.Add(new Chip { Text = "With icon", Icon = Icons.Material.Filled.Star, Color = LoamColor.Warning, Margin = margin });
+        variants.Children.Add(new Chip { Text = "Closeable", Color = LoamColor.Info, Closeable = true, Margin = margin });
+
+        var colors = new WrapPanel();
+        colors.Children.Add(new Chip { Text = "Primary", Color = LoamColor.Primary, Margin = margin });
+        colors.Children.Add(new Chip { Text = "Secondary", Color = LoamColor.Secondary, Margin = margin });
+        colors.Children.Add(new Chip { Text = "Tertiary", Color = LoamColor.Tertiary, Margin = margin });
+        colors.Children.Add(new Chip { Text = "Success", Color = LoamColor.Success, Margin = margin });
+        colors.Children.Add(new Chip { Text = "Warning", Color = LoamColor.Warning, Margin = margin });
+        colors.Children.Add(new Chip { Text = "Error", Color = LoamColor.Error, Margin = margin });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new Chip
+            {
+                Text = size.ToString(),
+                Icon = Icons.Material.Filled.Label,
+                Size = size,
+                Color = LoamColor.Primary,
+                Margin = margin,
+            });
+        }
+
+        var disabled = new WrapPanel();
+        disabled.Children.Add(new Chip { Text = "Disabled filled", Color = LoamColor.Primary, IsEnabled = false, Margin = margin });
+        disabled.Children.Add(new Chip { Text = "Disabled outlined", Variant = Variant.Outlined, Color = LoamColor.Primary, IsEnabled = false, Margin = margin });
+        disabled.Children.Add(new Chip { Text = "Disabled closeable", Color = LoamColor.Secondary, Closeable = true, IsEnabled = false, Margin = margin });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Variants", Typo = Typo.Subtitle2 },
+                variants,
+                new Text { Text = "Colors", Typo = Typo.Subtitle2 },
+                colors,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
     }
 
     private static StackPanel BuildChipSet()
@@ -954,38 +2503,91 @@ public sealed class ComponentsView : UserControl
         var set = new ChipSet { Selectable = true, Mandatory = true, SelectedIndex = 0, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var label in new[] { "All", "Active", "Archived", "Draft" })
         {
-            set.Items.Add(new Chip { Text = label, Color = LoamColor.Primary });
+            set.Items.Add(new Chip { Text = label, Color = LoamColor.Primary, Icon = label == "All" ? Icons.Material.Filled.Check : null });
         }
 
         var multi = new ChipSet { Selectable = true, MultiSelect = true, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var label in new[] { "Open", "Assigned", "Overdue" })
         {
-            multi.Items.Add(new Chip { Text = label, Color = LoamColor.Secondary });
+            multi.Items.Add(new Chip { Text = label, Color = LoamColor.Secondary, Closeable = label == "Assigned" });
         }
 
         multi.SelectedIndexes.Add(0);
         multi.SelectedIndexes.Add(2);
 
+        var optional = new ChipSet { Selectable = true, HorizontalAlignment = HorizontalAlignment.Left };
+        foreach (var label in new[] { "Design", "Build", "Verify" })
+        {
+            optional.Items.Add(new Chip { Text = label, Color = LoamColor.Tertiary, Variant = Variant.Outlined });
+        }
+
+        var disabled = new ChipSet
+        {
+            Selectable = true,
+            SelectedIndex = 1,
+            IsEnabled = false,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        foreach (var label in new[] { "Email", "Push", "SMS" })
+        {
+            disabled.Items.Add(new Chip { Text = label, Color = LoamColor.Primary });
+        }
+
         return new StackPanel
         {
-            Spacing = 12,
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                Labeled("Single", set),
-                Labeled("Multi", multi),
+                new Text { Text = "Single mandatory", Typo = Typo.Subtitle2 },
+                set,
+                new Text { Text = "Multi-select", Typo = Typo.Subtitle2 },
+                multi,
+                new Text { Text = "Optional selection", Typo = Typo.Subtitle2 },
+                optional,
+                new Text { Text = "Disabled set", Typo = Typo.Subtitle2 },
+                disabled,
             },
         };
     }
 
-    private static WrapPanel BuildBadges()
+    private static StackPanel BuildBadges()
     {
-        var m = new Thickness(0, 8, 28, 8);
-        var wrap = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
-        wrap.Children.Add(new Badge { Value = 4, Color = LoamColor.Error, Margin = m, Content = new Icon { Data = Icons.Material.Filled.Favorite, Color = LoamColor.Default, Size = LoamSize.Large } });
-        wrap.Children.Add(new Badge { Value = 150, Max = 99, Color = LoamColor.Primary, Margin = m, Content = new Icon { Data = Icons.Material.Filled.Home, Color = LoamColor.Default, Size = LoamSize.Large } });
-        wrap.Children.Add(new Badge { Dot = true, Color = LoamColor.Success, Margin = m, Content = new Icon { Data = Icons.Material.Filled.Person, Color = LoamColor.Default, Size = LoamSize.Large } });
-        wrap.Children.Add(new Badge { Value = 7, Overlap = true, Color = LoamColor.Secondary, Margin = m, Content = new Avatar { Content = "AB", Color = LoamColor.Primary } });
-        return wrap;
+        var margin = new Thickness(0, 8, 32, 12);
+        var values = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+        values.Children.Add(new Badge { Value = 4, Color = LoamColor.Error, Margin = margin, Content = new Icon { Data = Icons.Material.Filled.Favorite, Color = LoamColor.Default, Size = LoamSize.Large } });
+        values.Children.Add(new Badge { Value = 150, Max = 99, Color = LoamColor.Primary, Margin = margin, Content = new Icon { Data = Icons.Material.Filled.Home, Color = LoamColor.Default, Size = LoamSize.Large } });
+        values.Children.Add(new Badge { Value = "NEW", Color = LoamColor.Secondary, Margin = margin, Content = new Icon { Data = Icons.Material.Filled.Chat, Color = LoamColor.Default, Size = LoamSize.Large } });
+        values.Children.Add(new Badge { Dot = true, Color = LoamColor.Success, Margin = margin, Content = new Icon { Data = Icons.Material.Filled.Person, Color = LoamColor.Default, Size = LoamSize.Large } });
+
+        var origins = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+        origins.Children.Add(new Badge { Value = 1, Origin = BadgeOrigin.TopLeft, Color = LoamColor.Primary, Margin = margin, Content = new Avatar { Content = "TL", Color = LoamColor.Secondary } });
+        origins.Children.Add(new Badge { Value = 2, Origin = BadgeOrigin.TopRight, Color = LoamColor.Primary, Margin = margin, Content = new Avatar { Content = "TR", Color = LoamColor.Secondary } });
+        origins.Children.Add(new Badge { Value = 3, Origin = BadgeOrigin.BottomLeft, Color = LoamColor.Primary, Margin = margin, Content = new Avatar { Content = "BL", Color = LoamColor.Secondary } });
+        origins.Children.Add(new Badge { Value = 4, Origin = BadgeOrigin.BottomRight, Color = LoamColor.Primary, Margin = margin, Content = new Avatar { Content = "BR", Color = LoamColor.Secondary } });
+
+        var surfaces = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+        surfaces.Children.Add(new Badge { Value = 7, Overlap = true, Color = LoamColor.Secondary, Margin = margin, Content = new Avatar { Content = "AB", Color = LoamColor.Primary } });
+        surfaces.Children.Add(new Badge { Value = 12, Bordered = true, Color = LoamColor.Error, Margin = margin, Content = new Avatar { Content = "PL", Color = LoamColor.Primary } });
+        surfaces.Children.Add(new Badge { Dot = true, Bordered = true, Color = LoamColor.Warning, Margin = margin, Content = new Avatar { Content = "QA", Color = LoamColor.Success } });
+        surfaces.Children.Add(new Badge { Value = 0, Visible = false, Color = LoamColor.Primary, Margin = margin, Content = new Avatar { Content = "HD", Color = LoamColor.Secondary } });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Values", Typo = Typo.Subtitle2 },
+                values,
+                new Text { Text = "Origins", Typo = Typo.Subtitle2 },
+                origins,
+                new Text { Text = "Surface behavior", Typo = Typo.Subtitle2 },
+                surfaces,
+            },
+        };
     }
 
     private static Avalonia.Controls.Grid Labeled(string label, Control content)
@@ -997,6 +2599,112 @@ public sealed class ComponentsView : UserControl
         grid.Children.Add(caption);
         grid.Children.Add(content);
         return grid;
+    }
+
+    private static StackPanel BuildCheckBox()
+    {
+        var margin = new Thickness(0, 0, 24, 12);
+        var states = new WrapPanel();
+        states.Children.Add(new Loam.Controls.CheckBox { Content = "Checked", Color = LoamColor.Primary, IsChecked = true, Margin = margin });
+        states.Children.Add(new Loam.Controls.CheckBox { Content = "Unchecked", Color = LoamColor.Primary, IsChecked = false, Margin = margin });
+        states.Children.Add(new Loam.Controls.CheckBox { Content = "Indeterminate", Color = LoamColor.Secondary, IsThreeState = true, IsChecked = null, Margin = margin });
+        states.Children.Add(new Loam.Controls.CheckBox { Content = "Success", Color = LoamColor.Success, IsChecked = true, Margin = margin });
+        states.Children.Add(new Loam.Controls.CheckBox { Content = "Error", Color = LoamColor.Error, IsChecked = true, Margin = margin });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new Loam.Controls.CheckBox
+            {
+                Content = size.ToString(),
+                Color = LoamColor.Primary,
+                Size = size,
+                IsChecked = true,
+                Margin = new Thickness(0, 0, 12, 8),
+            });
+        }
+
+        var disabled = new WrapPanel();
+        disabled.Children.Add(new Loam.Controls.CheckBox { Content = "Disabled checked", IsChecked = true, IsEnabled = false, Margin = margin });
+        disabled.Children.Add(new Loam.Controls.CheckBox { Content = "Disabled unchecked", IsChecked = false, IsEnabled = false, Margin = margin });
+        disabled.Children.Add(new Loam.Controls.CheckBox { Content = "Disabled mixed", IsThreeState = true, IsChecked = null, IsEnabled = false, Margin = margin });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "States", Typo = Typo.Subtitle2 },
+                states,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildSwitch()
+    {
+        var margin = new Thickness(0, 0, 24, 12);
+        var states = new WrapPanel();
+        states.Children.Add(new Switch { Content = "On", Color = LoamColor.Primary, IsChecked = true, Margin = margin });
+        states.Children.Add(new Switch { Content = "Off", Color = LoamColor.Primary, IsChecked = false, Margin = margin });
+        states.Children.Add(new Switch { Content = "Success", Color = LoamColor.Success, IsChecked = true, Margin = margin });
+        states.Children.Add(new Switch { Content = "Warning", Color = LoamColor.Warning, IsChecked = true, Margin = margin });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new Switch
+            {
+                Content = size.ToString(),
+                Color = LoamColor.Success,
+                Size = size,
+                IsChecked = true,
+                Margin = new Thickness(0, 0, 12, 8),
+            });
+        }
+
+        var disabled = new WrapPanel();
+        disabled.Children.Add(new Switch { Content = "Disabled on", IsChecked = true, IsEnabled = false, Margin = margin });
+        disabled.Children.Add(new Switch { Content = "Disabled off", IsChecked = false, IsEnabled = false, Margin = margin });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "States", Typo = Typo.Subtitle2 },
+                states,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
     }
 
     private static StackPanel BuildInputs()
@@ -1020,17 +2728,13 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildField()
     {
-        static TextBox InnerTextBox(string text, string? watermark = null) => new()
-        {
-            Text = text,
-            PlaceholderText = watermark,
-            BorderBrush = Brushes.Transparent,
-            BorderThickness = default,
-            Background = Brushes.Transparent,
-            Padding = default,
-            MinHeight = 24,
-            VerticalContentAlignment = VerticalAlignment.Center,
-        };
+        static TextBox InnerTextBox(string text, string? watermark = null) =>
+            FieldEditor.MakeChromeless(new TextBox
+            {
+                Text = text,
+                PlaceholderText = watermark,
+                VerticalContentAlignment = VerticalAlignment.Center,
+            });
 
         var phone = new Field
         {
@@ -1082,6 +2786,15 @@ public sealed class ComponentsView : UserControl
             },
         };
 
+        var search = new Field
+        {
+            Label = "Quick filter",
+            Variant = Variant.Text,
+            HelperText = "Underline variant for custom editors.",
+            Content = InnerTextBox("Component audit"),
+            EndAdornment = new Icon { Data = Icons.Material.Filled.Search, Size = LoamSize.Small },
+        };
+
         var invalid = new Field
         {
             Label = "Custom amount",
@@ -1091,12 +2804,120 @@ public sealed class ComponentsView : UserControl
             Content = InnerTextBox("0"),
         };
 
+        var disabled = new Field
+        {
+            Label = "Read-only token",
+            IsEnabled = false,
+            HelperText = "Disabled custom field shell.",
+            Content = new Text { Text = "LOAM-2.0" },
+        };
+
         return new StackPanel
         {
             Spacing = 18,
             MaxWidth = 380,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { phone, color, options, invalid },
+            Children = { phone, color, options, search, invalid, disabled },
+        };
+    }
+
+    private static StackPanel BuildMenu()
+    {
+        var primary = new Loam.Controls.Menu { Content = "Account", Variant = Variant.Filled, Color = LoamColor.Primary, MenuWidth = 220 };
+        primary.Items.Add(new Loam.Controls.MenuItem { Text = "Profile", Icon = Icons.Material.Filled.Person });
+        primary.Items.Add(new Loam.Controls.MenuItem { Text = "Settings", Icon = Icons.Material.Filled.Settings, ShortcutText = "Ctrl+," });
+        primary.Items.Add(new Loam.Controls.MenuItem { IsDivider = true });
+        primary.Items.Add(new Loam.Controls.MenuItem { Text = "Billing disabled", Icon = Icons.Material.Filled.VisibilityOff, IsEnabled = false });
+        primary.Items.Add(new Loam.Controls.MenuItem { Text = "Sign out", Icon = Icons.Material.Filled.ArrowBack, ShortcutText = "Shift+Q" });
+
+        var danger = new Loam.Controls.Menu { Content = "Danger", Variant = Variant.Outlined, Color = LoamColor.Error };
+        danger.Items.Add(new Loam.Controls.MenuItem { Text = "Archive", Icon = Icons.Material.Filled.Check });
+        danger.Items.Add(new Loam.Controls.MenuItem { Text = "Delete", Icon = Icons.Material.Filled.Delete });
+
+        var persistent = new Loam.Controls.Menu
+        {
+            Content = "Keep open",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Secondary,
+            MenuWidth = 200,
+            CloseOnItemClick = false,
+        };
+        persistent.Items.Add(new Loam.Controls.MenuItem { Text = "Mark reviewed", Icon = Icons.Material.Filled.Check, ShortcutText = "R" });
+        persistent.Items.Add(new Loam.Controls.MenuItem { Text = "Schedule follow-up", Icon = Icons.Material.Filled.Schedule, ShortcutText = "S" });
+
+        var disabled = new Loam.Controls.Menu
+        {
+            Content = "Disabled",
+            Variant = Variant.Outlined,
+            IsEnabled = false,
+            MenuWidth = 180,
+        };
+        disabled.Items.Add(new Loam.Controls.MenuItem { Text = "Unavailable", Icon = Icons.Material.Filled.VisibilityOff });
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Triggers", Typo = Typo.TitleSmall },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 10,
+                    Children = { primary, danger, persistent, disabled },
+                },
+                new Alert
+                {
+                    Color = LoamColor.Info,
+                    Content = "Menus expose tokenized rows, dividers, trailing shortcuts, disabled states, keyboard navigation, and public open/close APIs.",
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildTabs()
+    {
+        var tabs = new Tabs { Color = LoamColor.Primary, Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
+        tabs.Items.Add(new Loam.Controls.TabItem("Overview", new Text { Text = "Overview content.", Typo = Typo.Body1, Margin = new Thickness(0, 8) }));
+        tabs.Items.Add(new Loam.Controls.TabItem("Details", new Text { Text = "Details content.", Typo = Typo.Body1, Margin = new Thickness(0, 8) }));
+        tabs.Items.Add(new Loam.Controls.TabItem("Settings", new Text { Text = "Settings content.", Typo = Typo.Body1, Margin = new Thickness(0, 8) }));
+
+        var secondary = new Tabs { Color = LoamColor.Secondary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+        secondary.Items.Add(new Loam.Controls.TabItem("Open", new Text { Text = "Open items." }));
+        secondary.Items.Add(new Loam.Controls.TabItem("Assigned", new Text { Text = "Assigned items." }));
+        secondary.Items.Add(new Loam.Controls.TabItem("Done", new Text { Text = "Completed items." }));
+        secondary.SelectedIndex = 1;
+
+        var clamped = new Tabs { Color = LoamColor.Tertiary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+        clamped.Items.Add(new Loam.Controls.TabItem("First", new Text { Text = "Invalid SelectedIndex clamps into range." }));
+        clamped.Items.Add(new Loam.Controls.TabItem("Last", new Text { Text = "The last available tab is selected." }));
+        clamped.SelectedIndex = 99;
+
+        var disabled = new Tabs { Color = LoamColor.Primary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left, IsEnabled = false };
+        disabled.Items.Add(new Loam.Controls.TabItem("Queued", new Text { Text = "Disabled tab strips keep content stable." }));
+        disabled.Items.Add(new Loam.Controls.TabItem("Paused", new Text { Text = "Header activation is suppressed." }));
+        disabled.SelectedIndex = 1;
+
+        var empty = new Tabs { Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default tabs", Typo = Typo.Subtitle2 },
+                tabs,
+                new Text { Text = "Secondary selected", Typo = Typo.Subtitle2 },
+                secondary,
+                new Text { Text = "Clamped SelectedIndex", Typo = Typo.Subtitle2 },
+                clamped,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
+                empty,
+            },
         };
     }
 
@@ -1117,6 +2938,222 @@ public sealed class ComponentsView : UserControl
 
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { menu, tooltipButton } };
         return new StackPanel { Spacing = 16, Children = { tabs, row } };
+    }
+
+    private static StackPanel BuildDialogService()
+    {
+        var confirm = new LoamButton { Content = "Confirm delete", Variant = Variant.Filled, Color = LoamColor.Primary };
+        confirm.Click += async (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                var confirmed = await DialogService.For(control)
+                    .ConfirmAsync("Delete item?", "This action cannot be undone.", "Delete", "Cancel");
+                SnackbarService.For(control).Add(confirmed ? "Item deleted" : "Cancelled", confirmed ? LoamColor.Error : LoamColor.Default);
+            }
+        };
+
+        var messageBox = new LoamButton { Content = "Message box", Variant = Variant.Outlined, Color = LoamColor.Secondary };
+        messageBox.Click += async (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                var answer = await DialogService.For(control)
+                    .MessageBoxAsync("Save changes?", "Your changes will be lost otherwise.", "Save", "Discard", "Cancel");
+                var text = answer switch { true => "Saved", false => "Discarded", _ => "Cancelled" };
+                SnackbarService.For(control).Add(text, LoamColor.Info);
+            }
+        };
+
+        var custom = new LoamButton { Content = "Custom dialog", Variant = Variant.Outlined, Color = LoamColor.Primary };
+        custom.Click += async (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                var result = await DialogService.For(control).ShowAsync(
+                    "Edit project",
+                    instance =>
+                    {
+                        var name = new TextField
+                        {
+                            Label = "Project",
+                            Text = "Project Loam",
+                            HelperText = "Custom content can use regular Loam controls.",
+                            Width = 320,
+                        };
+                        var cancel = new LoamButton { Content = "Cancel", Variant = Variant.Text, Color = LoamColor.Primary };
+                        cancel.Click += (_, _) => instance.Cancel();
+                        var save = new LoamButton { Content = "Save", Variant = Variant.Text, Color = LoamColor.Primary };
+                        save.Click += (_, _) => instance.Ok(name.Text);
+
+                        return new StackPanel
+                        {
+                            Spacing = 20,
+                            Children =
+                            {
+                                name,
+                                new StackPanel
+                                {
+                                    Orientation = Orientation.Horizontal,
+                                    Spacing = 8,
+                                    HorizontalAlignment = HorizontalAlignment.Right,
+                                    Children = { cancel, save },
+                                },
+                            },
+                        };
+                    },
+                    new DialogOptions
+                    {
+                        Width = 360,
+                        MaxWidth = 420,
+                        MinWidth = 320,
+                        MaxHeight = 480,
+                        Margin = new Thickness(24),
+                        Padding = new Thickness(24),
+                        DismissOnEscape = true,
+                        AutoFocus = true,
+                    });
+                SnackbarService.For(control).Add(result.Canceled ? "Edit cancelled" : $"Saved {result.DataAs<string>()}", LoamColor.Info);
+            }
+        };
+
+        var persistent = new LoamButton { Content = "Persistent dialog", Variant = Variant.Text, Color = LoamColor.Secondary };
+        persistent.Click += async (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                await DialogService.For(control).ShowAsync(
+                    "Review required",
+                    instance =>
+                    {
+                        var close = new LoamButton { Content = "Close", Variant = Variant.Text, Color = LoamColor.Primary };
+                        close.Click += (_, _) => instance.Cancel();
+                        return new StackPanel
+                        {
+                            Spacing = 20,
+                            Children =
+                            {
+                                new Text { Text = "Backdrop and Escape dismissal are disabled for this dialog.", Typo = Typo.Body1 },
+                                new StackPanel
+                                {
+                                    Orientation = Orientation.Horizontal,
+                                    Spacing = 8,
+                                    HorizontalAlignment = HorizontalAlignment.Right,
+                                    Children = { close },
+                                },
+                            },
+                        };
+                    },
+                    new DialogOptions
+                    {
+                        Width = 360,
+                        MaxWidth = 420,
+                        DismissOnScrimClick = false,
+                        DismissOnEscape = false,
+                    });
+            }
+        };
+
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var button in new[] { confirm, messageBox, custom, persistent })
+        {
+            button.Margin = new Thickness(0, 0, 10, 10);
+            actions.Children.Add(button);
+        }
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                actions,
+                new Alert { Color = LoamColor.Info, Content = "Dialogs restore focus, support Escape/backdrop options, and return typed results." },
+            },
+        };
+    }
+
+    private static StackPanel BuildSnackbarService()
+    {
+        var success = new LoamButton { Content = "Show snackbar", Variant = Variant.Filled, Color = LoamColor.Success };
+        success.Click += (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                SnackbarService.For(control).Add("Saved successfully", LoamColor.Success);
+            }
+        };
+
+        var action = new LoamButton { Content = "Action snackbar", Variant = Variant.Outlined, Color = LoamColor.Info };
+        action.Click += (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                var snackbar = SnackbarService.For(control);
+                snackbar.Position = SnackbarPosition.BottomCenter;
+                snackbar.Add(new SnackbarOptions("Item archived")
+                {
+                    Severity = LoamColor.Info,
+                    ActionText = "Undo",
+                    DismissText = "Dismiss",
+                    Position = SnackbarPosition.BottomCenter,
+                    Action = () => snackbar.Add("Archive undone", LoamColor.Success),
+                    Duration = TimeSpan.FromSeconds(8),
+                });
+            }
+        };
+
+        var persistent = new LoamButton { Content = "Persistent snackbar", Variant = Variant.Outlined, Color = LoamColor.Warning };
+        persistent.Click += (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                SnackbarService.For(control).Add(new SnackbarOptions("Waiting for approval")
+                {
+                    Severity = LoamColor.Warning,
+                    DismissText = "Close",
+                    Duration = Timeout.InfiniteTimeSpan,
+                    Position = SnackbarPosition.TopCenter,
+                });
+            }
+        };
+
+        var queue = new LoamButton { Content = "Queue limit", Variant = Variant.Text, Color = LoamColor.Secondary };
+        queue.Click += (sender, _) =>
+        {
+            if (sender is Control control)
+            {
+                var snackbar = SnackbarService.For(control);
+                snackbar.Position = SnackbarPosition.BottomLeft;
+                for (var i = 1; i <= 4; i++)
+                {
+                    snackbar.Add(new SnackbarOptions($"Queue item {i}")
+                    {
+                        Duration = Timeout.InfiniteTimeSpan,
+                        MaxVisible = 2,
+                        Position = SnackbarPosition.BottomLeft,
+                    });
+                }
+            }
+        };
+
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var button in new[] { success, action, persistent, queue })
+        {
+            button.Margin = new Thickness(0, 0, 10, 10);
+            actions.Children.Add(button);
+        }
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                actions,
+                new Alert { Color = LoamColor.Success, Content = "Snackbar actions, dismiss buttons, placement, persistent duration, and queue limits are component options." },
+            },
+        };
     }
 
     private static StackPanel BuildOverlays()
@@ -1191,6 +3228,154 @@ public sealed class ComponentsView : UserControl
         };
     }
 
+    private static StackPanel BuildRadio()
+    {
+        var margin = new Thickness(0, 0, 24, 12);
+        var states = new WrapPanel();
+        states.Children.Add(new Radio { GroupName = "radio-states-a", Content = "Selected", Color = LoamColor.Primary, IsChecked = true, Margin = margin });
+        states.Children.Add(new Radio { GroupName = "radio-states-b", Content = "Unselected", Color = LoamColor.Primary, IsChecked = false, Margin = margin });
+        states.Children.Add(new Radio { GroupName = "radio-states-c", Content = "Secondary", Color = LoamColor.Secondary, IsChecked = true, Margin = margin });
+        states.Children.Add(new Radio { GroupName = "radio-states-d", Content = "Error", Color = LoamColor.Error, IsChecked = true, Margin = margin });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new Radio
+            {
+                GroupName = $"radio-size-{size}",
+                Content = size.ToString(),
+                Color = LoamColor.Primary,
+                Size = size,
+                IsChecked = true,
+                Margin = new Thickness(0, 0, 12, 8),
+            });
+        }
+
+        var disabled = new WrapPanel();
+        disabled.Children.Add(new Radio { GroupName = "radio-disabled-a", Content = "Disabled selected", IsChecked = true, IsEnabled = false, Margin = margin });
+        disabled.Children.Add(new Radio { GroupName = "radio-disabled-b", Content = "Disabled unselected", IsChecked = false, IsEnabled = false, Margin = margin });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "States", Typo = Typo.Subtitle2 },
+                states,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildRadioGroup()
+    {
+        var shipping = new RadioGroup
+        {
+            Value = "express",
+            Child = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new Radio { Value = "standard", Content = "Standard", Color = LoamColor.Primary },
+                    new Radio { Value = "express", Content = "Express", Color = LoamColor.Primary },
+                    new Radio { Value = "pickup", Content = "Pickup", Color = LoamColor.Primary },
+                },
+            },
+        };
+
+        var disabled = new RadioGroup
+        {
+            Value = "email",
+            IsEnabled = false,
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 16,
+                Children =
+                {
+                    new Radio { Value = "email", Content = "Email" },
+                    new Radio { Value = "sms", Content = "SMS" },
+                },
+            },
+        };
+
+        var notification = new RadioGroup
+        {
+            Value = "push",
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 16,
+                Children =
+                {
+                    new Radio { Value = "push", Content = "Push", Color = LoamColor.Secondary },
+                    new Radio { Value = "email", Content = "Email", Color = LoamColor.Secondary },
+                    new Radio { Value = "sms", Content = "SMS", Color = LoamColor.Secondary },
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Vertical group", Typo = Typo.Subtitle2 },
+                shipping,
+                new Text { Text = "Horizontal group", Typo = Typo.Subtitle2 },
+                notification,
+                new Text { Text = "Disabled group", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildSlider()
+    {
+        var primary = new Loam.Controls.Slider { Value = 40, Width = 360, Color = LoamColor.Primary };
+        var customRange = new Loam.Controls.Slider { Value = 72, Minimum = 20, Maximum = 120, Width = 360, Color = LoamColor.Secondary };
+        var warning = new Loam.Controls.Slider { Value = 30, Width = 360, Color = LoamColor.Warning };
+        var zero = new Loam.Controls.Slider { Value = 0, Width = 360, Color = LoamColor.Primary };
+        var disabled = new Loam.Controls.Slider { Value = 70, Width = 360, IsEnabled = false };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default range", Typo = Typo.Subtitle2 },
+                primary,
+                new Text { Text = "Custom min and max", Typo = Typo.Subtitle2 },
+                customRange,
+                new Text { Text = "Color states", Typo = Typo.Subtitle2 },
+                warning,
+                new Text { Text = "Zero value", Typo = Typo.Subtitle2 },
+                zero,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
     private static StackPanel BuildRadioSlider()
     {
         var group = new RadioGroup
@@ -1245,13 +3430,344 @@ public sealed class ComponentsView : UserControl
         };
     }
 
+    private static StackPanel BuildTextField()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        var fields = new WrapPanel
+        {
+            Children =
+            {
+                new TextField
+                {
+                    Label = "Outlined",
+                    Placeholder = "Type here...",
+                    HelperText = "Helper text stays below the field.",
+                    Variant = Variant.Outlined,
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Filled",
+                    Variant = Variant.Filled,
+                    Text = "Prefilled value",
+                    HelperText = "Filled container style.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Text / underline",
+                    Variant = Variant.Text,
+                    Text = "Component audit",
+                    HelperText = "Underline field style.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Budget",
+                    StartAdornment = new TextBlock { Text = "$" },
+                    EndAdornment = new TextBlock { Text = "USD" },
+                    Text = "2,500",
+                    HelperText = "Start and end adornments.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Always floated",
+                    ShrinkLabel = true,
+                    Placeholder = "Optional note",
+                    HelperText = "Label remains above an empty field.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Read-only",
+                    Text = "Generated by workflow",
+                    ReadOnly = true,
+                    HelperText = "Focusable but not editable.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Email",
+                    Variant = Variant.Outlined,
+                    Text = "not-an-email",
+                    Required = true,
+                    Error = true,
+                    ErrorText = "Enter a valid email.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new TextField
+                {
+                    Label = "Disabled",
+                    Text = "Archived project",
+                    IsEnabled = false,
+                    HelperText = "Unavailable while archived.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 6,
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                fields,
+            },
+        };
+    }
+
+    private static StackPanel BuildNumericField()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        var fields = new WrapPanel
+        {
+            Children =
+            {
+                new NumericField
+                {
+                    Label = "Quantity",
+                    Minimum = 0,
+                    Maximum = 99,
+                    Value = 3,
+                    HelperText = "Whole-number bounds.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Price",
+                    Variant = Variant.Filled,
+                    Minimum = 0,
+                    Step = 0.5,
+                    Value = 9.5,
+                    Format = "0.00",
+                    HelperText = "Formatted filled field.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Text / underline",
+                    Variant = Variant.Text,
+                    Minimum = 0,
+                    Maximum = 100,
+                    Step = 5,
+                    Value = 45,
+                    HelperText = "Underline numeric entry.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Step 0.25",
+                    Minimum = 0,
+                    Maximum = 2,
+                    Step = 0.25,
+                    Value = 1.25,
+                    Format = "0.00",
+                    Color = LoamColor.Secondary,
+                    HelperText = "Fine-grained spinner step.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Maximum",
+                    Minimum = 0,
+                    Maximum = 10,
+                    Value = 10,
+                    HelperText = "At maximum bound.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Temperature",
+                    Minimum = -40,
+                    Maximum = 120,
+                    Step = 0.5,
+                    Value = -3.5,
+                    Format = "0.0",
+                    HelperText = "Negative values with decimal step.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Amount",
+                    Value = 0,
+                    Error = true,
+                    ErrorText = "Enter a value greater than zero.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new NumericField
+                {
+                    Label = "Disabled",
+                    Value = 12,
+                    IsEnabled = false,
+                    HelperText = "Unavailable while archived.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 6,
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                fields,
+            },
+        };
+    }
+
+    private static StackPanel BuildMaskedTextField()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        var fields = new WrapPanel
+        {
+            Children =
+            {
+                new MaskedTextField
+                {
+                    Label = "Phone",
+                    Pattern = "(###) ###-####",
+                    Placeholder = "(555) 123-4567",
+                    HelperText = "Digit mask with inserted separators.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Postal code",
+                    Pattern = "#####",
+                    Text = "90210",
+                    HelperText = "Five digits.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Date",
+                    Pattern = "##/##/####",
+                    Text = "06052026",
+                    Variant = Variant.Filled,
+                    HelperText = "Filled date mask.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Access code",
+                    Pattern = "AAA-###",
+                    Text = "abc123",
+                    Variant = Variant.Text,
+                    HelperText = "Letters and numbers.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Product key",
+                    Pattern = "***-***",
+                    Text = "A7Z9Q1",
+                    Color = LoamColor.Secondary,
+                    HelperText = "Alphanumeric mask.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Partial phone",
+                    Pattern = "(###) ###-####",
+                    Text = "55512",
+                    HelperText = "Partial input keeps typed progress.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Invalid",
+                    Pattern = "###-###",
+                    Text = "12",
+                    Error = true,
+                    ErrorText = "Complete the pattern.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+                new MaskedTextField
+                {
+                    Label = "Disabled",
+                    Pattern = "#####",
+                    Text = "10101",
+                    IsEnabled = false,
+                    HelperText = "Unavailable while archived.",
+                    Width = 320,
+                    Margin = itemMargin,
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 6,
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                fields,
+            },
+        };
+    }
+
+    private static StackPanel BuildAutocomplete()
+    {
+        var fruit = new Autocomplete { Label = "Fruit", Placeholder = "Start typing...", HelperText = "Suggestions use the same field chrome" };
+        foreach (var name in new[] { "Apple", "Apricot", "Banana", "Blueberry", "Cherry", "Grape", "Mango", "Orange", "Peach", "Pineapple" })
+        {
+            fruit.Items.Add(name);
+        }
+
+        fruit.SearchFunc = text => fruit.Items.Where(item => item.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
+        var country = new Autocomplete { Label = "Country", Placeholder = "Type a country", Value = "Sweden", Variant = Variant.Filled };
+        foreach (var name in new[] { "Denmark", "Finland", "Norway", "Sweden" })
+        {
+            country.Items.Add(name);
+        }
+
+        country.SearchFunc = text => country.Items.Where(item => item.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 360,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { fruit, country },
+        };
+    }
+
     private static StackPanel BuildTextFields()
     {
-        var stack = new StackPanel { Spacing = 18, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new TextField { Label = "Outlined", Placeholder = "Type here…", HelperText = "We never share this", Variant = Variant.Outlined });
+        var stack = new StackPanel { Spacing = 12, MaxWidth = 320, HorizontalAlignment = HorizontalAlignment.Left };
+        stack.Children.Add(new TextField { Label = "Project", Placeholder = "Type here…", HelperText = "We never share this", Variant = Variant.Outlined });
         stack.Children.Add(new TextField { Label = "Filled", Variant = Variant.Filled, Text = "Prefilled value" });
-        stack.Children.Add(new TextField { Label = "Underline", Variant = Variant.Text, Placeholder = "Search" });
-        stack.Children.Add(new TextField { Label = "Budget", StartAdornment = new TextBlock { Text = "$" }, EndAdornment = new TextBlock { Text = "USD" }, FloatingLabel = true });
+        stack.Children.Add(new TextField { Label = "Search", Variant = Variant.Text, Text = "Component audit" });
+        stack.Children.Add(new TextField { Label = "Budget", StartAdornment = new TextBlock { Text = "$" }, EndAdornment = new TextBlock { Text = "USD" }, Text = "2,500" });
         stack.Children.Add(new TextField { Label = "Email", Variant = Variant.Outlined, Text = "not-an-email", Error = true, ErrorText = "Enter a valid email" });
         stack.Children.Add(new NumericField { Label = "Quantity", Minimum = 0, Maximum = 99, Value = 3, HelperText = "0-99" });
         stack.Children.Add(new NumericField { Label = "Price", Variant = Variant.Filled, Minimum = 0, Step = 0.5, Value = 9.5, Format = "0.00" });
@@ -1264,14 +3780,30 @@ public sealed class ComponentsView : UserControl
         }
 
         fruit.SearchFunc = text => fruit.Items.Where(item => item.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
-        fruit.ItemTemplate = name => new Text { Text = name, Typo = Typo.Body2 };
-
         stack.Children.Add(fruit);
         return stack;
     }
 
     private static StackPanel BuildToggleGroup()
     {
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        ToggleGroup CreateGroup(LoamSize size, object? selectedValue)
+        {
+            var result = new ToggleGroup { Size = size, HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = selectedValue };
+            result.Items.Add(new ToggleItem("Day", "day"));
+            result.Items.Add(new ToggleItem("Week", "week"));
+            result.Items.Add(new ToggleItem("Month", "month"));
+            return result;
+        }
+
         var group = new ToggleGroup { HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = "week" };
         group.Items.Add(new ToggleItem("Day", "day"));
         group.Items.Add(new ToggleItem("Week", "week"));
@@ -1291,79 +3823,1007 @@ public sealed class ComponentsView : UserControl
         disabled.Items.Add(new ToggleItem("Open", "open"));
         disabled.Items.Add(new ToggleItem("Closed", "closed"));
 
+        var noSelection = new ToggleGroup { HorizontalAlignment = HorizontalAlignment.Left };
+        noSelection.Items.Add(new ToggleItem("Draft", "draft"));
+        noSelection.Items.Add(new ToggleItem("Review", "review"));
+        noSelection.Items.Add(new ToggleItem("Done", "done"));
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(0, 0, 24, 12),
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption },
+                    CreateGroup(size, "week"),
+                },
+            });
+        }
+
         return new StackPanel
         {
-            Spacing = 12,
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                Labeled("Schedule", group),
-                Labeled("Priority", priority),
-                Labeled("Disabled", disabled),
+                new Text { Text = "Selected", Typo = Typo.Subtitle2 },
+                group,
+                new Text { Text = "Color", Typo = Typo.Subtitle2 },
+                priority,
+                new Text { Text = "No selection", Typo = Typo.Subtitle2 },
+                noSelection,
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                sizes,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
             },
         };
     }
 
     private static StackPanel BuildRating()
     {
-        var stack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left };
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(0, 0, 24, 12),
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption },
+                    new Rating { SelectedValue = 3, Size = size },
+                },
+            });
+        }
+
+        var stack = new StackPanel { Spacing = 18, MaxWidth = 760, HorizontalAlignment = HorizontalAlignment.Left };
+        stack.Children.Add(new Text { Text = "States", Typo = Typo.Subtitle2 });
         stack.Children.Add(new Rating { SelectedValue = 3 });
         stack.Children.Add(new Rating { SelectedValue = 4, MaxValue = 6, Color = LoamColor.Primary });
         stack.Children.Add(new Rating { SelectedValue = 5, ReadOnly = true, Size = LoamSize.Small });
         stack.Children.Add(new Rating { SelectedValue = 2, IsEnabled = false });
+        stack.Children.Add(new Text { Text = "Sizes", Typo = Typo.Subtitle2 });
+        stack.Children.Add(sizes);
         return stack;
     }
 
     private static StackPanel BuildPopover()
     {
-        var toggle = new LoamButton { Content = "Toggle popover", Variant = Variant.Filled, Color = LoamColor.Primary };
-        var popover = new Popover
+        var detailsTrigger = new LoamButton
         {
-            Target = toggle,
-            Placement = Avalonia.Controls.PlacementMode.Bottom,
-            Open = true,
+            Content = "Open details",
+            Variant = Variant.Filled,
+            Color = LoamColor.Primary,
+        };
+        var detailsPopover = new Popover
+        {
+            Trigger = detailsTrigger,
+            Placement = Avalonia.Controls.PlacementMode.BottomEdgeAlignedLeft,
             Content = new StackPanel
             {
-                Width = 220,
-                Spacing = 6,
+                Width = 236,
+                Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Popover", Typo = Typo.Subtitle1 },
-                    new Text { Text = "Light-dismiss and Escape close.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                    new Text { Text = "Project details", Typo = Typo.Subtitle1 },
+                    new Text { Text = "Anchored content uses a compact elevated surface.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                    new LoamButton
+                    {
+                        Content = "Review",
+                        Variant = Variant.Text,
+                        Color = LoamColor.Primary,
+                        Size = LoamSize.Small,
+                    },
                 },
             },
         };
-        toggle.Click += (_, _) => popover.Open = !popover.Open;
+
+        var actionTrigger = new LoamButton
+        {
+            Content = "Open actions",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+        };
+        var actionPopover = new Popover
+        {
+            Trigger = actionTrigger,
+            Placement = Avalonia.Controls.PlacementMode.RightEdgeAlignedTop,
+            Open = true,
+        };
+        var dismissAction = new LoamButton
+        {
+            Content = "Close",
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+            Size = LoamSize.Small,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        dismissAction.Click += (_, _) => actionPopover.Open = false;
+        actionPopover.Content = new StackPanel
+        {
+            Width = 220,
+            Spacing = 10,
+            Children =
+            {
+                new Text { Text = "Quick actions", Typo = Typo.Subtitle1 },
+                new Text { Text = "Escape, light-dismiss, or the action closes this flyout.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                dismissAction,
+            },
+        };
+
+        var disabledTrigger = new LoamButton
+        {
+            Content = "Disabled trigger",
+            Variant = Variant.Filled,
+            Color = LoamColor.Primary,
+            IsEnabled = false,
+        };
+        var disabledPopover = new Popover
+        {
+            Trigger = disabledTrigger,
+            Placement = Avalonia.Controls.PlacementMode.Bottom,
+            Content = new StackPanel
+            {
+                Width = 200,
+                Spacing = 8,
+                Children =
+                {
+                    new Text { Text = "Disabled", Typo = Typo.Subtitle1 },
+                    new Text { Text = "This stays closed while the trigger is disabled.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                },
+            },
+        };
+
+        var controlledTrigger = new LoamButton
+        {
+            Content = "Controlled open",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+        };
+        var controlledPopover = new Popover
+        {
+            Trigger = controlledTrigger,
+            Placement = Avalonia.Controls.PlacementMode.BottomEdgeAlignedLeft,
+            Open = true,
+        };
+        var controlledClose = new LoamButton
+        {
+            Content = "Close controlled",
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+            Size = LoamSize.Small,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        controlledClose.Click += (_, _) => controlledPopover.Open = false;
+        controlledPopover.Content = new StackPanel
+        {
+            Width = 232,
+            Spacing = 10,
+            Children =
+            {
+                new Text { Text = "Controlled state", Typo = Typo.Subtitle1 },
+                new Text { Text = "Set Open from app state and still keep Escape and light-dismiss.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                controlledClose,
+            },
+        };
 
         return new StackPanel
         {
-            Spacing = 8,
+            Spacing = 16,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                toggle,
-                popover,
-                new Border { Height = 72 },
+                new WrapPanel
+                {
+                    Children =
+                    {
+                        new StackPanel
+                        {
+                            Width = 280,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Trigger", Typo = Typo.Subtitle2 },
+                                detailsTrigger,
+                                detailsPopover,
+                                new Border { Height = 112 },
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 300,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Open and close", Typo = Typo.Subtitle2 },
+                                actionTrigger,
+                                actionPopover,
+                                new Border { Height = 132 },
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 280,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                                disabledTrigger,
+                                disabledPopover,
+                                new Border { Height = 88 },
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 280,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Controlled", Typo = Typo.Subtitle2 },
+                                controlledTrigger,
+                                controlledPopover,
+                                new Border { Height = 132 },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildTooltip()
+    {
+        var standard = new LoamButton
+        {
+            Content = "Standard",
+            Variant = Variant.Filled,
+            Color = LoamColor.Primary,
+        };
+        Tooltip.Set(standard, "Quick context for this action", new TooltipOptions
+        {
+            HelpText = "Quick context tooltip",
+        });
+
+        var rich = new LoamButton
+        {
+            Content = "Rich tooltip",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Secondary,
+        };
+        Tooltip.Set(rich, "Shows title, custom padding, color, and elevation.", new TooltipOptions
+        {
+            Title = "Details",
+            Elevation = 5,
+            Padding = new Thickness(12, 8),
+            Color = LoamColor.Secondary,
+            Placement = PlacementMode.BottomEdgeAlignedLeft,
+            VerticalOffset = 8,
+            HelpText = "Rich tooltip with title",
+        });
+
+        var delayed = new LoamButton
+        {
+            Content = "Delayed bottom",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+        };
+        Tooltip.Set(delayed, "Uses placement and show delay options.", new TooltipOptions
+        {
+            Placement = PlacementMode.Bottom,
+            HorizontalOffset = 4,
+            VerticalOffset = 10,
+            ShowDelay = 250,
+            BetweenShowDelay = 100,
+            HelpText = "Delayed tooltip",
+        });
+
+        var disabled = new LoamButton
+        {
+            Content = "Disabled target",
+            Variant = Variant.Filled,
+            Color = LoamColor.Primary,
+            IsEnabled = false,
+        };
+        Tooltip.Set(disabled, "Disabled controls can still expose help.", new TooltipOptions
+        {
+            ShowOnDisabled = true,
+            HelpText = "Disabled target tooltip",
+        });
+
+        var serviceDisabled = new LoamButton
+        {
+            Content = "Service disabled",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Error,
+        };
+        Tooltip.Set(serviceDisabled, "This tooltip is registered but the service is disabled.", new TooltipOptions
+        {
+            ServiceEnabled = false,
+            HelpText = "Tooltip service disabled",
+        });
+
+        var cleared = new LoamButton
+        {
+            Content = "Cleared",
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        Tooltip.Set(cleared, "This tooltip is removed by Clear.");
+        Tooltip.Clear(cleared);
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new WrapPanel
+                {
+                    Children =
+                    {
+                        new StackPanel
+                        {
+                            Width = 240,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Standard", Typo = Typo.Subtitle2 },
+                                standard,
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 260,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Rich surface", Typo = Typo.Subtitle2 },
+                                rich,
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 260,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Placement and delay", Typo = Typo.Subtitle2 },
+                                delayed,
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 260,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Disabled target", Typo = Typo.Subtitle2 },
+                                disabled,
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 260,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Suppressed", Typo = Typo.Subtitle2 },
+                                serviceDisabled,
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Width = 220,
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 16),
+                            Children =
+                            {
+                                new Text { Text = "Cleared", Typo = Typo.Subtitle2 },
+                                cleared,
+                            },
+                        },
+                    },
+                },
             },
         };
     }
 
     private static StackPanel BuildOverlayScrim()
     {
-        var overlay = new Overlay { DarkBackground = true, AutoClose = true, Visible = true, Content = new ProgressCircular() };
+        var lightOverlay = new Overlay { AutoClose = true };
+        var lightClose = new Loam.Controls.Button
+        {
+            Content = "Done",
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        lightClose.Click += (_, _) => lightOverlay.Visible = false;
+        lightOverlay.Content = new Paper
+        {
+            Elevation = 3,
+            Compact = true,
+            Title = "Light overlay",
+            Body = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new ProgressCircular { Label = "Loading", Size = LoamSize.Small },
+                    lightClose,
+                },
+            },
+        };
 
-        var region = new Panel { Width = 320, Height = 160, HorizontalAlignment = HorizontalAlignment.Left };
-        region.Children.Add(new Paper
+        var lightRegion = new Panel { Width = 320, Height = 180, HorizontalAlignment = HorizontalAlignment.Left };
+        lightRegion.Children.Add(new Paper
         {
             Elevation = 1,
-            Content = new Text { Text = "Local content behind the scrim." },
+            Title = "Light auto-close",
+            Body = "Click the scrim or press Escape.",
             Padding = new Thickness(16),
         });
-        region.Children.Add(overlay);
+        lightRegion.Children.Add(lightOverlay);
 
-        var show = new Loam.Controls.Button { Content = "Show overlay", Variant = Variant.Filled, Color = LoamColor.Primary };
-        show.Click += (_, _) => overlay.Visible = true;
+        var showLight = new Loam.Controls.Button { Content = "Show light overlay", Variant = Variant.Filled, Color = LoamColor.Primary };
+        showLight.Click += (_, _) => lightOverlay.Visible = true;
 
-        return new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left, Children = { show, region } };
+        var darkOverlay = new Overlay { AutoClose = true, DarkBackground = true };
+        var darkClose = new Loam.Controls.Button
+        {
+            Content = "Dismiss",
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+        };
+        darkClose.Click += (_, _) => darkOverlay.Visible = false;
+        darkOverlay.Content = new Paper
+        {
+            Elevation = 3,
+            Compact = true,
+            Title = "Dark overlay",
+            Body = new StackPanel
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new ProgressCircular { Label = "Syncing", Size = LoamSize.Small, Color = LoamColor.Secondary },
+                    darkClose,
+                },
+            },
+        };
+
+        var darkRegion = new Panel { Width = 320, Height = 180, HorizontalAlignment = HorizontalAlignment.Left };
+        darkRegion.Children.Add(new Paper
+        {
+            Elevation = 1,
+            Title = "Dark auto-close",
+            Body = "Darker scrim over the same local surface.",
+            Padding = new Thickness(16),
+        });
+        darkRegion.Children.Add(darkOverlay);
+
+        var showDark = new Loam.Controls.Button { Content = "Show dark overlay", Variant = Variant.Filled, Color = LoamColor.Secondary };
+        showDark.Click += (_, _) => darkOverlay.Visible = true;
+
+        var manualOverlay = new Overlay { AutoClose = false, DarkBackground = true };
+        var manualClose = new Loam.Controls.Button
+        {
+            Content = "Close manually",
+            Variant = Variant.Filled,
+            Color = LoamColor.Primary,
+        };
+        manualClose.Click += (_, _) => manualOverlay.Visible = false;
+        manualOverlay.Content = new Paper
+        {
+            Elevation = 3,
+            Compact = true,
+            Title = "Manual overlay",
+            Body = manualClose,
+        };
+
+        var manualRegion = new Panel { Width = 320, Height = 180, HorizontalAlignment = HorizontalAlignment.Left };
+        manualRegion.Children.Add(new Paper
+        {
+            Elevation = 1,
+            Title = "Manual close",
+            Body = "Scrim clicks stay ignored until the action closes it.",
+            Padding = new Thickness(16),
+        });
+        manualRegion.Children.Add(manualOverlay);
+
+        var showManual = new Loam.Controls.Button { Content = "Show manual overlay", Variant = Variant.Outlined, Color = LoamColor.Primary };
+        showManual.Click += (_, _) => manualOverlay.Visible = true;
+
+        var disabledOverlay = new Overlay
+        {
+            Visible = true,
+            AutoClose = true,
+            DarkBackground = true,
+            IsEnabled = false,
+            Content = new Paper
+            {
+                Elevation = 3,
+                Compact = true,
+                Title = "Disabled overlay",
+                Body = "Auto-close is suppressed.",
+            },
+        };
+
+        var disabledRegion = new Panel { Width = 320, Height = 180, HorizontalAlignment = HorizontalAlignment.Left };
+        disabledRegion.Children.Add(new Paper
+        {
+            Elevation = 1,
+            Title = "Disabled auto-close",
+            Body = "The overlay remains visible while disabled.",
+            Padding = new Thickness(16),
+        });
+        disabledRegion.Children.Add(disabledOverlay);
+
+        var rows = new WrapPanel { HorizontalAlignment = HorizontalAlignment.Left };
+        rows.Children.Add(new StackPanel
+        {
+            Width = 340,
+            Spacing = 10,
+            Margin = new Thickness(0, 0, 20, 20),
+            Children = { showLight, lightRegion },
+        });
+        rows.Children.Add(new StackPanel
+        {
+            Width = 340,
+            Spacing = 10,
+            Margin = new Thickness(0, 0, 20, 20),
+            Children = { showDark, darkRegion },
+        });
+        rows.Children.Add(new StackPanel
+        {
+            Width = 340,
+            Spacing = 10,
+            Margin = new Thickness(0, 0, 20, 20),
+            Children = { showManual, manualRegion },
+        });
+        rows.Children.Add(new StackPanel
+        {
+            Width = 340,
+            Spacing = 10,
+            Margin = new Thickness(0, 0, 20, 20),
+            Children = { new Text { Text = "Disabled state", Typo = Typo.Subtitle2 }, disabledRegion },
+        });
+
+        return new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left, Children = { rows } };
+    }
+
+    private static StackPanel BuildProgressCircular()
+    {
+        var activity = new WrapPanel();
+        activity.Children.Add(new StackPanel
+        {
+            Width = 132,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 12, 12),
+            Children =
+            {
+                new Text { Text = "Indeterminate", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressCircular
+                {
+                    Label = "Loading",
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        });
+        activity.Children.Add(new StackPanel
+        {
+            Width = 132,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 12, 12),
+            Children =
+            {
+                new Text { Text = "Secondary", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressCircular
+                {
+                    Label = "Sync",
+                    Color = LoamColor.Secondary,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        });
+        activity.Children.Add(new StackPanel
+        {
+            Width = 132,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 12, 12),
+            Children =
+            {
+                new Text { Text = "Determinate", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressCircular
+                {
+                    Label = "Upload",
+                    Indeterminate = false,
+                    Value = 70,
+                    ShowValue = true,
+                    Color = LoamColor.Success,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        });
+        activity.Children.Add(new StackPanel
+        {
+            Width = 132,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 12, 12),
+            Children =
+            {
+                new Text { Text = "Custom text", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressCircular
+                {
+                    Label = "Import",
+                    Indeterminate = false,
+                    Value = 33,
+                    ValueText = "Step 2",
+                    ShowValue = true,
+                    Size = LoamSize.Large,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Width = 132,
+                Spacing = 8,
+                Margin = new Thickness(0, 0, 12, 12),
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new ProgressCircular
+                    {
+                        Label = $"{size} progress",
+                        Size = size,
+                        Indeterminate = false,
+                        Value = 64,
+                        Color = LoamColor.Primary,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    },
+                },
+            });
+        }
+
+        var disabled = new WrapPanel();
+        disabled.Children.Add(new StackPanel
+        {
+            Width = 132,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 12, 12),
+            Children =
+            {
+                new Text { Text = "Disabled", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressCircular
+                {
+                    Label = "Disabled progress",
+                    Indeterminate = false,
+                    Value = 45,
+                    ShowValue = true,
+                    Color = LoamColor.Warning,
+                    IsEnabled = false,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        });
+        disabled.Children.Add(new StackPanel
+        {
+            Width = 132,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 12, 12),
+            Children =
+            {
+                new Text { Text = "Static", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressCircular
+                {
+                    Label = "Static progress",
+                    Indeterminate = false,
+                    Value = 100,
+                    ShowValue = true,
+                    Color = LoamColor.Info,
+                    StrokeWidth = 6,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            },
+        });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Labeled("States", activity),
+                Labeled("Sizes", sizes),
+                Labeled("Disabled", disabled),
+            },
+        };
+    }
+
+    private static StackPanel BuildProgressLinear()
+    {
+        var states = new WrapPanel();
+        states.Children.Add(new StackPanel
+        {
+            Width = 360,
+            Spacing = 6,
+            Margin = new Thickness(0, 0, 16, 14),
+            Children =
+            {
+                new Text { Text = "Determinate", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressLinear
+                {
+                    Label = "Upload",
+                    ShowValue = true,
+                    Value = 60,
+                    Width = 360,
+                    Color = LoamColor.Primary,
+                },
+            },
+        });
+        states.Children.Add(new StackPanel
+        {
+            Width = 360,
+            Spacing = 6,
+            Margin = new Thickness(0, 0, 16, 14),
+            Children =
+            {
+                new Text { Text = "Indeterminate", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressLinear
+                {
+                    Label = "Loading records",
+                    ShowValue = true,
+                    Indeterminate = true,
+                    Width = 360,
+                    Color = LoamColor.Info,
+                },
+            },
+        });
+        states.Children.Add(new StackPanel
+        {
+            Width = 360,
+            Spacing = 6,
+            Margin = new Thickness(0, 0, 16, 14),
+            Children =
+            {
+                new Text { Text = "Custom value text", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressLinear
+                {
+                    Label = "Import",
+                    ShowValue = true,
+                    Value = 50,
+                    ValueText = "Step 2 of 4",
+                    Width = 360,
+                    Color = LoamColor.Success,
+                },
+            },
+        });
+        states.Children.Add(new StackPanel
+        {
+            Width = 360,
+            Spacing = 6,
+            Margin = new Thickness(0, 0, 16, 14),
+            Children =
+            {
+                new Text { Text = "Disabled", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressLinear
+                {
+                    Label = "Disabled sync",
+                    ShowValue = true,
+                    Value = 75,
+                    Width = 360,
+                    IsEnabled = false,
+                },
+            },
+        });
+        states.Children.Add(new StackPanel
+        {
+            Width = 360,
+            Spacing = 6,
+            Margin = new Thickness(0, 0, 16, 14),
+            Children =
+            {
+                new Text { Text = "Disabled indeterminate", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                new ProgressLinear
+                {
+                    Label = "Queued",
+                    ShowValue = true,
+                    Indeterminate = true,
+                    Width = 360,
+                    Color = LoamColor.Secondary,
+                    IsEnabled = false,
+                },
+            },
+        });
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Width = 300,
+                Spacing = 6,
+                Margin = new Thickness(0, 0, 16, 14),
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new ProgressLinear
+                    {
+                        Label = $"{size} progress",
+                        ShowValue = true,
+                        Size = size,
+                        Value = 64,
+                        Width = 300,
+                        Color = LoamColor.Primary,
+                    },
+                },
+            });
+        }
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Labeled("States", states),
+                Labeled("Sizes", sizes),
+            },
+        };
+    }
+
+    private static StackPanel BuildSkeleton()
+    {
+        var presets = new WrapPanel();
+        presets.Children.Add(Skeleton.TextLine(220, LoamSize.Medium, label: "Title loading"));
+        presets.Children.Add(Skeleton.TextLine(160, LoamSize.Small, animate: false, label: "Subtitle loading"));
+        presets.Children.Add(Skeleton.Avatar(LoamSize.Medium, label: "Avatar loading"));
+        presets.Children.Add(Skeleton.Button(132, LoamSize.Medium, label: "Action loading"));
+        presets.Children.Add(Skeleton.Thumbnail(128, 84, label: "Thumbnail loading"));
+        presets.Children.Add(Skeleton.Card(260, 96, animate: false, label: "Card loading"));
+
+        var article = new StackPanel
+        {
+            Width = 300,
+            Spacing = 10,
+            Children =
+            {
+                Skeleton.TextLine(220, LoamSize.Large, label: "Article title loading"),
+                Skeleton.TextLine(180, LoamSize.Small, label: "Article metadata loading"),
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 12,
+                    Children =
+                    {
+                        Skeleton.Avatar(LoamSize.Medium, label: "Author loading"),
+                        new StackPanel
+                        {
+                            Spacing = 8,
+                            Children =
+                            {
+                                Skeleton.TextLine(160, LoamSize.Medium, label: "Author name loading"),
+                                Skeleton.TextLine(96, LoamSize.Small, animate: false, label: "Author status loading"),
+                            },
+                        },
+                    },
+                },
+                Skeleton.Thumbnail(300, 140, label: "Article media loading"),
+                Skeleton.Button(132, LoamSize.Medium, label: "Primary action loading"),
+            },
+        };
+
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        var sizes = new WrapPanel();
+        foreach (var size in allSizes)
+        {
+            sizes.Children.Add(new StackPanel
+            {
+                Width = 220,
+                Spacing = 8,
+                Margin = new Thickness(0, 0, 16, 14),
+                Children =
+                {
+                    new Text { Text = size.ToString(), Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    Skeleton.TextLine(180, size, animate: false, label: $"{size} text loading"),
+                    Skeleton.Avatar(size, animate: false, label: $"{size} avatar loading"),
+                    Skeleton.Button(132, size, animate: false, label: $"{size} button loading"),
+                },
+            });
+        }
+
+        var states = new WrapPanel();
+        states.Children.Add(Skeleton.TextLine(180, LoamSize.Medium, label: "Animated loading"));
+        states.Children.Add(Skeleton.TextLine(180, LoamSize.Medium, animate: false, label: "Static loading"));
+        states.Children.Add(new Skeleton
+        {
+            Preset = SkeletonPreset.Text,
+            Width = 180,
+            Size = LoamSize.Medium,
+            IsEnabled = false,
+            Label = "Disabled loading",
+        });
+        states.Children.Add(new Skeleton
+        {
+            Width = 48,
+            Height = 48,
+            Circle = true,
+            Animate = false,
+            Label = "Custom circular loading",
+        });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Labeled("Presets", presets),
+                Labeled("Composition", article),
+                Labeled("Sizes", sizes),
+                Labeled("States", states),
+            },
+        };
     }
 
     private static StackPanel BuildProgress()
@@ -1389,6 +4849,161 @@ public sealed class ComponentsView : UserControl
         stack.Children.Add(Labeled("Skeletons", skeletons));
 
         return stack;
+    }
+
+    private static StackPanel BuildBreadcrumbs()
+    {
+        var defaultCrumbs = new Breadcrumbs();
+        defaultCrumbs.Items.Add(new BreadcrumbItem("Home", () => { }));
+        defaultCrumbs.Items.Add(new BreadcrumbItem("Components", () => { }));
+        defaultCrumbs.Items.Add(new BreadcrumbItem("Navigation"));
+
+        var customSeparator = new Breadcrumbs { Separator = ">" };
+        customSeparator.Items.Add(new BreadcrumbItem("Workspace", () => { }));
+        customSeparator.Items.Add(new BreadcrumbItem("Projects", () => { }));
+        customSeparator.Items.Add(new BreadcrumbItem("Gallery"));
+
+        var mixedCrumbs = new Breadcrumbs();
+        mixedCrumbs.Items.Add(new BreadcrumbItem { Text = "Docs", Href = "https://example.com/docs" });
+        mixedCrumbs.Items.Add(new BreadcrumbItem { Text = "Archived", Disabled = true });
+        mixedCrumbs.Items.Add(new BreadcrumbItem("Release notes"));
+
+        var deepCrumbs = new Breadcrumbs();
+        deepCrumbs.Items.Add(new BreadcrumbItem("Workspace", () => { }));
+        deepCrumbs.Items.Add(new BreadcrumbItem("Projects", () => { }));
+        deepCrumbs.Items.Add(new BreadcrumbItem("Gallery", () => { }));
+        deepCrumbs.Items.Add(new BreadcrumbItem("Breadcrumbs"));
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default trail", Typo = Typo.Subtitle2 },
+                defaultCrumbs,
+                new Text { Text = "Custom separator", Typo = Typo.Subtitle2 },
+                customSeparator,
+                new Text { Text = "Href and disabled item", Typo = Typo.Subtitle2 },
+                mixedCrumbs,
+                new Text { Text = "Deep trail", Typo = Typo.Subtitle2 },
+                deepCrumbs,
+            },
+        };
+    }
+
+    private static StackPanel BuildLink()
+    {
+        var clicked = new Text
+        {
+            Text = "No link clicked",
+            Typo = Typo.Caption,
+            Color = LoamColor.Secondary,
+        };
+
+        return new StackPanel
+        {
+            Spacing = 14,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "States and colors", Typo = Typo.Subtitle2 },
+                new Link { Text = "Hover underline", OnClick = () => clicked.Text = "Hover underline clicked" },
+                new Link { Text = "Always underline", Underline = true, Color = LoamColor.Secondary, OnClick = () => clicked.Text = "Always underline clicked" },
+                new Link { Text = "Success link", Color = LoamColor.Success, OnClick = () => clicked.Text = "Success link clicked" },
+                new Link { Text = "External href", Href = "https://example.com", Underline = true },
+                new Link { Text = "Disabled link", IsEnabled = false },
+                clicked,
+            },
+        };
+    }
+
+    private static StackPanel BuildNavMenu()
+    {
+        var primaryMenu = new NavMenu { Width = 280, Spacing = 2 };
+        primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Home, Content = "Dashboard", IsActive = true });
+        primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Search, Content = "Search" });
+        primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Settings, Content = "Settings" });
+        primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.VisibilityOff, Content = "Locked", IsEnabled = false });
+
+        var groupedMenu = new NavMenu { Width = 280, Spacing = 4 };
+        groupedMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Article, Content = "Overview", IsActive = true });
+        var reports = new NavGroup { Title = "Reports", Icon = Icons.Material.Filled.ShowChart, Expanded = true };
+        reports.Items.Add(new NavLink { Icon = Icons.Material.Filled.PieChart, Content = "Revenue" });
+        reports.Items.Add(new NavLink { Icon = Icons.Material.Filled.BarChart, Content = "Usage" });
+        groupedMenu.Children.Add(reports);
+        groupedMenu.Children.Add(new NavGroup { Title = "Archived", Icon = Icons.Material.Filled.VisibilityOff, IsEnabled = false });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Simple menu", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = primaryMenu },
+                new Text { Text = "Grouped menu", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = groupedMenu },
+            },
+        };
+    }
+
+    private static StackPanel BuildNavLink()
+    {
+        var links = new NavMenu { Width = 280, Spacing = 4 };
+        links.Children.Add(new NavLink { Icon = Icons.Material.Filled.Home, Content = "Active", IsActive = true });
+        links.Children.Add(new NavLink { Icon = Icons.Material.Filled.Search, Content = "Idle" });
+        links.Children.Add(new NavLink { Icon = Icons.Material.Filled.Settings, Content = "Secondary active", Color = LoamColor.Secondary, IsActive = true });
+        links.Children.Add(new NavLink { Content = "Text only" });
+        links.Children.Add(new NavLink { Icon = Icons.Material.Filled.Article, Content = "Href target", Href = "https://example.com" });
+        links.Children.Add(new NavLink { Icon = Icons.Material.Filled.VisibilityOff, Content = "Disabled", IsEnabled = false });
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Rows", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = links },
+            },
+        };
+    }
+
+    private static StackPanel BuildNavGroup()
+    {
+        var expanded = new NavGroup { Title = "Expanded group", Icon = Icons.Material.Filled.Settings, Expanded = true };
+        expanded.Items.Add(new NavLink { Icon = Icons.Material.Filled.Person, Content = "Users", IsActive = true });
+        expanded.Items.Add(new NavLink { Icon = Icons.Material.Filled.Favorite, Content = "Roles" });
+
+        var collapsed = new NavGroup { Title = "Collapsed group", Icon = Icons.Material.Filled.ShowChart };
+        collapsed.Items.Add(new NavLink { Icon = Icons.Material.Filled.PieChart, Content = "Revenue" });
+        collapsed.Items.Add(new NavLink { Icon = Icons.Material.Filled.BarChart, Content = "Usage" });
+
+        var disabled = new NavGroup { Title = "Disabled group", Icon = Icons.Material.Filled.VisibilityOff, IsEnabled = false };
+        disabled.Items.Add(new NavLink { Content = "Hidden child" });
+
+        var nav = new NavMenu
+        {
+            Width = 300,
+            Children =
+            {
+                expanded,
+                collapsed,
+                disabled,
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Expanded, collapsed, and disabled", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 316, Content = nav },
+            },
+        };
     }
 
     private static StackPanel BuildNavigation()
@@ -1439,116 +5054,405 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildPagination()
     {
-        var stack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Pagination { Count = 10, Selected = 1 });
-        stack.Children.Add(new Pagination { Count = 12, Selected = 6, Color = LoamColor.Secondary });
-        return stack;
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Boundary pages", Typo = Typo.Subtitle2 },
+                new Pagination { Count = 10, Selected = 1 },
+                new Text { Text = "Windowed pages", Typo = Typo.Subtitle2 },
+                new Pagination { Count = 24, Selected = 12, BoundaryCount = 2, MiddleCount = 5 },
+                new Text { Text = "Secondary color", Typo = Typo.Subtitle2 },
+                new Pagination { Count = 12, Selected = 6, Color = LoamColor.Secondary },
+                new Text { Text = "Clamped selected page", Typo = Typo.Subtitle2 },
+                new Pagination { Count = 7, Selected = 99, MiddleCount = 3 },
+                new Text { Text = "Empty and disabled", Typo = Typo.Subtitle2 },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 20,
+                    Children =
+                    {
+                        new Pagination { Count = 0, Selected = 0 },
+                        new Pagination { Count = 8, Selected = 4, IsEnabled = false },
+                    },
+                },
+            },
+        };
     }
 
-    private static Stepper BuildStepper()
+    private static StackPanel BuildStepper()
     {
-        var stepper = new Stepper { MaxWidth = 480, HorizontalAlignment = HorizontalAlignment.Left };
-        stepper.Steps.Add(new Step("Account", new Text { Text = "Create your account credentials." }));
-        stepper.Steps.Add(new Step("Profile", new Text { Text = "Tell us a little about yourself." }));
-        stepper.Steps.Add(new Step("Review", new Text { Text = "Confirm everything looks right." }));
-        return stepper;
+        var active = new Stepper { Width = 520 };
+        active.Steps.Add(new Step("Account", new Text { Text = "Create your account credentials." }) { Completed = true });
+        active.Steps.Add(new Step("Profile", new Text { Text = "Tell us a little about yourself." }));
+        active.Steps.Add(new Step("Review", new Text { Text = "Confirm everything looks right." }));
+        active.ActiveIndex = 1;
+
+        var completed = new Stepper { Width = 520 };
+        completed.Steps.Add(new Step("Account", new Text { Text = "Account details captured." }) { Completed = true });
+        completed.Steps.Add(new Step("Profile", new Text { Text = "Profile details captured." }) { Completed = true });
+        completed.Steps.Add(new Step("Review", new Text { Text = "Ready to finish." }));
+        completed.ActiveIndex = 2;
+
+        var clamped = new Stepper { Width = 520 };
+        clamped.Steps.Add(new Step("Start", new Text { Text = "Invalid ActiveIndex clamps to an available step." }));
+        clamped.Steps.Add(new Step("Finish", new Text { Text = "The final step remains reachable." }));
+        clamped.ActiveIndex = 99;
+
+        var disabled = new Stepper { Width = 520, IsEnabled = false };
+        disabled.Steps.Add(new Step("Queued", new Text { Text = "Disabled steppers suppress navigation actions." }) { Completed = true });
+        disabled.Steps.Add(new Step("Paused", new Text { Text = "Actions remain visible but disabled." }));
+        disabled.ActiveIndex = 1;
+
+        var empty = new Stepper { Width = 520 };
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Active step", Typo = Typo.Subtitle2 },
+                active,
+                new Text { Text = "Completed steps", Typo = Typo.Subtitle2 },
+                completed,
+                new Text { Text = "Clamped ActiveIndex", Typo = Typo.Subtitle2 },
+                clamped,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
+                empty,
+            },
+        };
     }
 
     private static StackPanel BuildCollapse()
     {
-        var collapse = new Collapse
+        var animated = new Collapse
         {
             Duration = TimeSpan.FromMilliseconds(220),
             Child = new Paper
             {
                 Elevation = 1,
                 Padding = new Thickness(16),
-                Content = new Text { Text = "This content slides in and out of view when toggled." },
+                Content = new Text { Text = "Animated details slide in and out when the button is pressed." },
             },
         };
 
-        var toggle = new Loam.Controls.Button { Content = "Toggle details", Variant = Variant.Outlined, Color = LoamColor.Primary };
-        toggle.Click += (_, _) => collapse.Expanded = !collapse.Expanded;
+        var animatedToggle = new Loam.Controls.Button
+        {
+            Content = "Show animated details",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+        };
+        animatedToggle.Click += (_, _) =>
+        {
+            animated.Expanded = !animated.Expanded;
+            animatedToggle.Content = animated.Expanded ? "Hide animated details" : "Show animated details";
+        };
 
-        var staticCollapse = new Collapse
+        var staticReveal = new Collapse
         {
             Animated = false,
+            Child = new Paper
+            {
+                Elevation = 0,
+                Outlined = true,
+                Padding = new Thickness(16),
+                Content = new Text { Text = "Static content jumps directly to the final open or closed height." },
+            },
+        };
+
+        var staticToggle = new Loam.Controls.Button
+        {
+            Content = "Show static details",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Secondary,
+        };
+        staticToggle.Click += (_, _) =>
+        {
+            staticReveal.Expanded = !staticReveal.Expanded;
+            staticToggle.Content = staticReveal.Expanded ? "Hide static details" : "Show static details";
+        };
+
+        var customDuration = new Collapse
+        {
+            Duration = TimeSpan.FromMilliseconds(320),
+            Child = new Paper
+            {
+                Elevation = 0,
+                Outlined = true,
+                Padding = new Thickness(16),
+                Content = new Text { Text = "Custom-duration content uses a longer reveal timing." },
+            },
+        };
+
+        var customToggle = new Loam.Controls.Button
+        {
+            Content = "Show custom-duration details",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Tertiary,
+        };
+        customToggle.Click += (_, _) =>
+        {
+            customDuration.Expanded = !customDuration.Expanded;
+            customToggle.Content = customDuration.Expanded
+                ? "Hide custom-duration details"
+                : "Show custom-duration details";
+        };
+
+        var disabled = new Collapse
+        {
+            IsEnabled = false,
             Expanded = true,
-            Child = new Text { Text = "Static reveal mode is available for reduced motion needs.", Color = LoamColor.Secondary },
+            Child = new Paper
+            {
+                Elevation = 0,
+                Outlined = true,
+                Padding = new Thickness(16),
+                Content = new Text { Text = "Disabled reveal keeps the content visible without motion." },
+            },
+        };
+        var disabledButton = new Loam.Controls.Button
+        {
+            Content = "Disabled reveal remains open",
+            Variant = Variant.Outlined,
+            IsEnabled = false,
+        };
+
+        var zeroDuration = new Collapse
+        {
+            Duration = TimeSpan.Zero,
+            Child = new Paper
+            {
+                Elevation = 0,
+                Outlined = true,
+                Padding = new Thickness(16),
+                Content = new Text { Text = "Zero-duration content opens and closes immediately." },
+            },
+        };
+
+        var instantToggle = new Loam.Controls.Button
+        {
+            Content = "Show instant details",
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+        };
+        instantToggle.Click += (_, _) =>
+        {
+            zeroDuration.Expanded = !zeroDuration.Expanded;
+            instantToggle.Content = zeroDuration.Expanded ? "Hide instant details" : "Show instant details";
         };
 
         return new StackPanel
         {
-            Spacing = 12,
-            MaxWidth = 420,
+            Spacing = 18,
+            MaxWidth = 520,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { toggle, collapse, staticCollapse },
-        };
-    }
-
-    private static Timeline BuildTimeline()
-    {
-        var timeline = new Timeline { MaxWidth = 420, HorizontalAlignment = HorizontalAlignment.Left };
-        timeline.Items.Add(new TimelineItem("Order placed - 9:24 AM", LoamColor.Primary));
-        timeline.Items.Add(new TimelineItem("Payment confirmed - 9:25 AM", LoamColor.Success));
-        timeline.Items.Add(new TimelineItem("Shipped - 2:10 PM", LoamColor.Info));
-        timeline.Items.Add(new TimelineItem("Out for delivery", LoamColor.Warning));
-        return timeline;
-    }
-
-    private static ExpansionPanels BuildExpansionPanels()
-    {
-        var panels = new ExpansionPanels { MaxWidth = 480, HorizontalAlignment = HorizontalAlignment.Left };
-        panels.Panels.Add(new ExpansionPanel
-        {
-            Header = "Shipping address",
-            Content = new Text { Text = "Where should we deliver your order?", Margin = new Thickness(0, 4) },
-            IsExpanded = true,
-        });
-        panels.Panels.Add(new ExpansionPanel
-        {
-            Header = "Billing details",
-            Content = new Text { Text = "Card and invoice information.", Margin = new Thickness(0, 4) },
-        });
-        panels.Panels.Add(new ExpansionPanel
-        {
-            Header = "Delivery options",
-            Content = new Text { Text = "Standard, express, or pickup.", Margin = new Thickness(0, 4) },
-        });
-        panels.Panels.Add(new ExpansionPanel
-        {
-            Header = "Locked review",
-            Content = new Text { Text = "Disabled panels keep a stable header surface.", Margin = new Thickness(0, 4) },
-            IsEnabled = false,
-        });
-        return panels;
-    }
-
-    private static Loam.Controls.Carousel BuildCarousel()
-    {
-        static Border Slide(string label, LoamColor color) => new()
-        {
-            Child = new Text
+            Children =
             {
-                Text = label,
-                Typo = Typo.H5,
-                Color = color,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
+                new Text { Text = "Animated reveal", Typo = Typo.Subtitle2 },
+                animatedToggle,
+                animated,
+                new Text { Text = "Static reveal", Typo = Typo.Subtitle2 },
+                staticToggle,
+                staticReveal,
+                new Text { Text = "Custom duration", Typo = Typo.Subtitle2 },
+                customToggle,
+                customDuration,
+                new Text { Text = "Disabled static", Typo = Typo.Subtitle2 },
+                disabledButton,
+                disabled,
+                new Text { Text = "Zero duration", Typo = Typo.Subtitle2 },
+                instantToggle,
+                zeroDuration,
             },
         };
+    }
 
+    private static StackPanel BuildTimeline()
+    {
+        var timeline = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
+        timeline.Items.Add(new TimelineItem("Order placed", "Customer submitted checkout.", "9:24 AM", LoamColor.Primary));
+        timeline.Items.Add(new TimelineItem("Payment confirmed", "Authorization completed.", "9:25 AM", LoamColor.Success));
+        timeline.Items.Add(new TimelineItem("Packed", "Warehouse prepared the shipment.", "10:40 AM", LoamColor.Secondary));
+        timeline.Items.Add(new TimelineItem("Out for delivery", "Courier is heading to the customer.", "11:15 AM", LoamColor.Warning));
+
+        var rich = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
+        rich.Items.Add(new TimelineItem(new StackPanel
+        {
+            Spacing = 4,
+            Children =
+            {
+                new Text { Text = "Review finished", Typo = Typo.Subtitle2 },
+                new Text { Text = "Keyboard and automation checks passed.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+            },
+        }, LoamColor.Success));
+        rich.Items.Add(new TimelineItem(new StackPanel
+        {
+            Spacing = 4,
+            Children =
+            {
+                new Text { Text = "Visual QA", Typo = Typo.Subtitle2 },
+                new Chip { Text = "In progress", Color = LoamColor.Info, Size = LoamSize.Small },
+            },
+        }, LoamColor.Info));
+
+        var horizontal = new Timeline
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        horizontal.Items.Add(new TimelineItem("Queued", "Waiting", color: LoamColor.Secondary));
+        horizontal.Items.Add(new TimelineItem("Running", "Active checks", color: LoamColor.Info));
+        horizontal.Items.Add(new TimelineItem("Verified", "All gates passed", color: LoamColor.Success));
+        horizontal.Items.Add(new TimelineItem("Published", "Ready", color: LoamColor.Primary));
+
+        var empty = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
+        var disabled = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left, IsEnabled = false };
+        disabled.Items.Add(new TimelineItem("Locked event", "Read-only event metadata.", color: LoamColor.Primary));
+        disabled.Items.Add(new TimelineItem("Read-only state", "Interaction disabled.", color: LoamColor.Secondary));
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default sequence", Typo = Typo.Subtitle2 },
+                timeline,
+                new Text { Text = "Rich content", Typo = Typo.Subtitle2 },
+                rich,
+                new Text { Text = "Horizontal", Typo = Typo.Subtitle2 },
+                new ScrollViewer
+                {
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    Content = horizontal,
+                },
+                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
+                empty,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildExpansionPanels()
+    {
+        var accordion = new ExpansionPanels { Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
+        accordion.AddPanel("Shipping address", new Text { Text = "Where should we deliver your order?", Margin = new Thickness(0, 4) }, isExpanded: true);
+        accordion.AddPanel("Billing details", new Text { Text = "Card and invoice information.", Margin = new Thickness(0, 4) });
+        accordion.AddPanel("Delivery options", new Text { Text = "Standard, express, or pickup.", Margin = new Thickness(0, 4) });
+
+        var multi = new ExpansionPanels { Width = 520, MultiExpansion = true, HorizontalAlignment = HorizontalAlignment.Left };
+        multi.AddPanel("Scope", new Text { Text = "Multiple sections may stay open.", Margin = new Thickness(0, 4) });
+        multi.AddPanel("Risks", new Text { Text = "Second section remains open in multi mode.", Margin = new Thickness(0, 4) });
+        multi.AddPanel("Notes", new Text { Text = "Additional content can be reviewed independently.", Margin = new Thickness(0, 4) });
+        multi.ExpandAll();
+
+        var disabled = new ExpansionPanels { Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
+        disabled.AddPanel(
+            "Locked review",
+            new Text { Text = "Disabled panels keep a stable header surface.", Margin = new Thickness(0, 4) },
+            isEnabled: false);
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Accordion", Typo = Typo.Subtitle2 },
+                accordion,
+                new Text { Text = "MultiExpansion", Typo = Typo.Subtitle2 },
+                multi,
+                new Text { Text = "Disabled panel", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildCarousel()
+    {
         var carousel = new Loam.Controls.Carousel
         {
             Width = 380,
-            Height = 200,
+            Height = 220,
             SelectedIndex = 1,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        carousel.Items.Add(new CarouselItem(Slide("First slide", LoamColor.Primary)));
-        carousel.Items.Add(new CarouselItem(Slide("Second slide", LoamColor.Secondary)));
-        carousel.Items.Add(new CarouselItem(Slide("Third slide", LoamColor.Info)));
-        return carousel;
+        carousel.Items.Add(new CarouselItem("Intake", "Collect requirements and owners.", LoamColor.Primary));
+        carousel.Items.Add(new CarouselItem("Review", "Check keyboard, focus, and states.", LoamColor.Secondary));
+        carousel.Items.Add(new CarouselItem("Ship", "Move verified changes forward.", LoamColor.Info));
+
+        var chromeHidden = new Loam.Controls.Carousel
+        {
+            Width = 380,
+            Height = 180,
+            ShowArrows = false,
+            ShowBullets = false,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        chromeHidden.Items.Add(new CarouselItem("Static slide", "Chrome disabled.", LoamColor.Secondary));
+        chromeHidden.Items.Add(new CarouselItem("Hidden chrome", "Content remains readable.", LoamColor.Primary));
+
+        var auto = new Loam.Controls.Carousel
+        {
+            Width = 380,
+            Height = 180,
+            AutoPlay = true,
+            AutoPlayInterval = TimeSpan.FromSeconds(2),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        auto.Items.Add(new CarouselItem("Auto first", "Advances while attached.", LoamColor.Primary));
+        auto.Items.Add(new CarouselItem("Auto second", "Uses the public interval.", LoamColor.Info));
+        auto.Items.Add(new CarouselItem("Auto third", "Stops when disabled.", LoamColor.Success));
+
+        var clamped = new Loam.Controls.Carousel
+        {
+            Width = 380,
+            Height = 180,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        clamped.Items.Add(new CarouselItem("First", "Index clamps to an available slide.", LoamColor.Primary));
+        clamped.Items.Add(new CarouselItem("Clamped last", "SelectedIndex stays deterministic.", LoamColor.Tertiary));
+        clamped.GoTo(99);
+
+        var empty = new Loam.Controls.Carousel { Width = 380, Height = 120, HorizontalAlignment = HorizontalAlignment.Left };
+        var disabled = new Loam.Controls.Carousel
+        {
+            Width = 380,
+            Height = 180,
+            IsEnabled = false,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        disabled.Items.Add(new CarouselItem("Disabled first", "Navigation is suppressed.", LoamColor.Primary));
+        disabled.Items.Add(new CarouselItem("Disabled second", "State remains stable.", LoamColor.Secondary));
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default carousel", Typo = Typo.Subtitle2 },
+                carousel,
+                new Text { Text = "Chrome hidden", Typo = Typo.Subtitle2 },
+                chromeHidden,
+                new Text { Text = "Auto play", Typo = Typo.Subtitle2 },
+                auto,
+                new Text { Text = "GoTo clamped", Typo = Typo.Subtitle2 },
+                clamped,
+                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
+                empty,
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
     }
 
     private static Loam.Controls.TreeView BuildTreeView()
@@ -1702,74 +5606,717 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildFileUpload()
     {
-        var upload = new FileUpload { ButtonText = "Attach files", AllowMultiple = true };
-        var status = new Text { Typo = Typo.Caption, Color = LoamColor.Secondary };
-        upload.FilesSelected += files => status.Text = $"{files.Count} file(s) selected";
-        return new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Left, Children = { upload, status } };
+        FileUpload SizeSample(string label, LoamSize size)
+        {
+            var upload = new FileUpload
+            {
+                Label = label,
+                HelperText = "Generated chips and clear action follow the upload size.",
+                EmptyText = "No file selected",
+                ButtonText = $"Upload {label.ToLowerInvariant()}",
+                Width = 360,
+                Margin = new Thickness(0, 0, 24, 24),
+                Size = size,
+                Variant = Variant.Outlined,
+                ShowRemoveButtons = true,
+                ShowClearButton = true,
+            };
+            upload.ShowSelection([$"{label.ToLowerInvariant()}-file.txt"]);
+            return upload;
+        }
+
+        var single = new FileUpload
+        {
+            Label = "Filled",
+            HelperText = "Single document, remove and clear actions enabled.",
+            EmptyText = "No invoice selected",
+            SelectedTextFormat = "{0} invoice selected",
+            ButtonText = "Choose invoice",
+            Width = 360,
+            Margin = new Thickness(0, 0, 24, 24),
+            AllowMultiple = false,
+            Variant = Variant.Filled,
+            ShowRemoveButtons = true,
+            ShowClearButton = true,
+            AcceptedFileTypes =
+            [
+                new FilePickerFileType("Documents") { Patterns = ["*.pdf", "*.docx"] },
+            ],
+        };
+        single.ShowSelection(new List<string> { "invoice-0626.pdf" });
+
+        var multiple = new FileUpload
+        {
+            Label = "Multiple files",
+            HelperText = "Evidence files with removable chips and a clear action.",
+            EmptyText = "No evidence attached",
+            SelectedTextFormat = "{0} evidence files selected",
+            ButtonText = "Attach evidence",
+            Width = 360,
+            Margin = new Thickness(0, 0, 24, 24),
+            AllowMultiple = true,
+            Variant = Variant.Outlined,
+            Color = LoamColor.Secondary,
+            ShowRemoveButtons = true,
+            ShowClearButton = true,
+            ClearText = "Remove all",
+            AcceptedFileTypes =
+            [
+                new FilePickerFileType("Evidence") { Patterns = ["*.md", "*.png", "*.csv"] },
+            ],
+        };
+        multiple.ShowSelection(new List<string> { "brief.md", "screenshot.png", "metrics.csv" });
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        new FileUpload
+                        {
+                            Label = "Outlined",
+                            HelperText = "Images only, multiple selection allowed.",
+                            EmptyText = "No images attached",
+                            ButtonText = "Attach files",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Variant = Variant.Outlined,
+                            Color = LoamColor.Primary,
+                            AllowMultiple = true,
+                            AcceptedFileTypes =
+                            [
+                                new FilePickerFileType("Images") { Patterns = ["*.png", "*.jpg", "*.jpeg"] },
+                            ],
+                        },
+                        single,
+                        new FileUpload
+                        {
+                            Label = "Text",
+                            HelperText = "Text action with removable selected-file chips.",
+                            EmptyText = "Nothing selected yet",
+                            ButtonText = "Browse",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Variant = Variant.Text,
+                            Color = LoamColor.Primary,
+                            AllowMultiple = true,
+                            ShowRemoveButtons = true,
+                        },
+                        multiple,
+                        new FileUpload
+                        {
+                            Label = "Small",
+                            HelperText = "Compact upload action.",
+                            EmptyText = "No avatar selected",
+                            ButtonText = "Upload avatar",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Size = LoamSize.Small,
+                            Variant = Variant.Outlined,
+                        },
+                        new FileUpload
+                        {
+                            Label = "Large",
+                            HelperText = "Large filled action for larger upload surfaces.",
+                            EmptyText = "No package selected",
+                            ButtonText = "Upload package",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Size = LoamSize.Large,
+                            Variant = Variant.Filled,
+                            Color = LoamColor.Primary,
+                        },
+                        new FileUpload
+                        {
+                            Label = "Disabled",
+                            HelperText = "Disabled upload action keeps label and status visible.",
+                            EmptyText = "Archived uploads are locked",
+                            ButtonText = "Archived upload",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            IsEnabled = false,
+                        },
+                    },
+                },
+                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        SizeSample("ExtraSmall", LoamSize.ExtraSmall),
+                        SizeSample("Small", LoamSize.Small),
+                        SizeSample("Medium", LoamSize.Medium),
+                        SizeSample("Large", LoamSize.Large),
+                        SizeSample("ExtraLarge", LoamSize.ExtraLarge),
+                    },
+                },
+            },
+        };
     }
 
     private static StackPanel BuildFormDemo()
     {
-        var name = new TextField { Label = "Name", Required = true };
-        var email = new TextField
+        Form AccessForm(string title, LoamSize actionSize = LoamSize.Small, bool filled = false, bool disabled = false)
         {
-            Label = "Email",
-            Required = true,
-            Validation = value => value?.Contains('@', StringComparison.Ordinal) == true ? null : "Enter a valid email",
-        };
-        var form = new Form
-        {
-            Child = new StackPanel
+            var name = new TextField
             {
-                Spacing = 14,
-                Children = { name, email },
-            },
-        };
-        var status = new Text { Typo = Typo.Caption, Color = LoamColor.Secondary };
-        var validate = new LoamButton { Content = "Validate", Variant = Variant.Filled, Color = LoamColor.Primary };
-        validate.Click += (_, _) =>
+                Label = "Full name",
+                Placeholder = "Ada Lovelace",
+                HelperText = "Required",
+                Required = true,
+                Text = filled ? "Ada Lovelace" : null,
+            };
+
+            var email = new TextField
+            {
+                Label = "Email",
+                Placeholder = "name@example.com",
+                HelperText = "Used for notifications",
+                Required = true,
+                Text = filled ? "ada@example.com" : null,
+                Validation = value => value?.Contains('@', StringComparison.Ordinal) == true ? null : "Enter a valid email",
+            };
+
+            var role = new TextField
+            {
+                Label = "Role",
+                Text = "Design systems",
+                HelperText = "Optional",
+                Variant = Variant.Filled,
+            };
+
+            var form = new Form
+            {
+                Title = title,
+                Subtitle = "Validate required fields before inviting a collaborator.",
+                HelperText = "Fill the required fields and validate.",
+                SuccessText = "Ready to submit.",
+                ErrorText = "Review the highlighted fields.",
+                FieldWidth = 320,
+                SubmitText = "Validate",
+                ResetText = "Reset",
+                SubmitIcon = Icons.Material.Filled.Check,
+                ResetIcon = Icons.Material.Filled.Close,
+                ActionSize = actionSize,
+                SubmitVariant = Variant.Filled,
+                SubmitColor = LoamColor.Primary,
+                ResetVariant = Variant.Outlined,
+                ResetColor = LoamColor.Secondary,
+                ActionsHorizontalAlignment = HorizontalAlignment.Right,
+                IsEnabled = !disabled,
+                Children = { name, email, role },
+            };
+            form.ResetAction = _ => role.Text = "Design systems";
+            return form;
+        }
+
+        Paper Frame(Form form)
         {
-            status.Text = form.Validate() ? "Ready to submit" : "Review the highlighted fields";
-            status.Color = form.IsValid ? LoamColor.Success : LoamColor.Error;
+            return new Paper
+            {
+                Outlined = true,
+                Elevation = 0,
+                Padding = new Thickness(24),
+                Width = 420,
+                Margin = new Thickness(0, 0, 24, 24),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Content = form,
+            };
+        }
+
+        var standard = AccessForm("Project access");
+        var invalid = AccessForm("Validation error");
+        invalid.Validate();
+        var ready = AccessForm("Ready state", filled: true);
+        ready.Validate();
+        var disabled = AccessForm("Disabled", disabled: true);
+        var actionSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
         };
+
+        var sizeSamples = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var size in actionSizes)
+        {
+            sizeSamples.Children.Add(Frame(AccessForm(size.ToString(), actionSize: size, filled: true)));
+        }
 
         return new StackPanel
         {
-            Spacing = 14,
-            MaxWidth = 360,
+            Spacing = 18,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { form, validate, status },
+            Children =
+            {
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        Frame(standard),
+                        Frame(invalid),
+                        Frame(ready),
+                        Frame(disabled),
+                    },
+                },
+                new Text { Text = "Action sizes", Typo = Typo.Subtitle2 },
+                sizeSamples,
+            },
         };
     }
 
     private static StackPanel BuildColorPicker()
     {
-        var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Theme color", HelperText = "Default palette" });
-        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Accent", Value = Avalonia.Media.Color.Parse("#FF9800"), ShowAlpha = true });
-        stack.Children.Add(new Loam.Controls.ColorPicker { Label = "Error state", Error = true, ErrorText = "Choose a visible color" });
-        return stack;
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Outlined",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Variant = Variant.Outlined,
+                            HelperText = "Default palette",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Custom palette",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Value = Color.Parse("#2E7D32"),
+                            Palette =
+                            {
+                                Color.Parse("#6750A4"),
+                                Color.Parse("#2E7D32"),
+                                Color.Parse("#B3261E"),
+                                Color.Parse("#006A6A"),
+                                Color.Parse("#795900"),
+                            },
+                            HelperText = "Palette collection overrides defaults",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Filled",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Variant = Variant.Filled,
+                            Value = Color.Parse("#6750A4"),
+                            HelperText = "Filled field style",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Text / underline",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Variant = Variant.Text,
+                            Value = Color.Parse("#FF9800"),
+                            HelperText = "Underline field style",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Default value",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            HelperText = "Uses the component default value",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Alpha",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
+                            ShowAlpha = true,
+                            HelperText = "Shows #AARRGGBB",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Error",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Value = Color.Parse("#F7F2FA"),
+                            Error = true,
+                            ErrorText = "Choose a visible color",
+                        },
+                        new Loam.Controls.ColorPicker
+                        {
+                            Label = "Disabled",
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Value = Color.Parse("#607D8B"),
+                            IsEnabled = false,
+                            HelperText = "Read-only state",
+                        },
+                    },
+                },
+            },
+        };
     }
 
     private static StackPanel BuildDateRangePicker()
     {
-        var stack = new StackPanel { Spacing = 18, MaxWidth = 320, HorizontalAlignment = HorizontalAlignment.Left };
-        stack.Children.Add(new Loam.Controls.DateRangePicker { Label = "Trip dates", Placeholder = "Pick start and end" });
-        stack.Children.Add(new Loam.Controls.DateRangePicker
+        return new StackPanel
         {
-            Label = "Reporting period",
-            Start = new DateTime(2026, 6, 1),
-            End = new DateTime(2026, 6, 30),
-            MinDate = new DateTime(2026, 6, 1),
-            MaxDate = new DateTime(2026, 7, 31),
-            DateFormat = "MMM d",
-        });
-        return stack;
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Outlined",
+                            Variant = Variant.Outlined,
+                            Placeholder = "Pick start and end",
+                            PickerTitle = "Select trip range",
+                            HelperText = "Pick dates, then confirm with OK",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Filled",
+                            Variant = Variant.Filled,
+                            Start = new DateTime(2026, 6, 8),
+                            End = new DateTime(2026, 6, 19),
+                            HelperText = "Filled field style",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Text / underline",
+                            Variant = Variant.Text,
+                            Start = new DateTime(2026, 6, 15),
+                            End = new DateTime(2026, 6, 20),
+                            HelperText = "Underline field style",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Empty",
+                            Placeholder = "Select range",
+                            HelperText = "No start or end selected",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Selected",
+                            Start = new DateTime(2026, 6, 1),
+                            End = new DateTime(2026, 6, 30),
+                            HelperText = "Both dates selected",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Custom format",
+                            Start = new DateTime(2026, 7, 2),
+                            End = new DateTime(2026, 7, 16),
+                            DateFormat = "MMM d",
+                            CancelText = "Dismiss",
+                            OkText = "Apply",
+                            HelperText = "Short month/day display",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Constrained",
+                            Start = new DateTime(2026, 6, 10),
+                            End = new DateTime(2026, 6, 14),
+                            MinDate = new DateTime(2026, 6, 1),
+                            MaxDate = new DateTime(2026, 7, 31),
+                            HelperText = "Limited to June and July",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Floating label",
+                            ShrinkLabel = true,
+                            Placeholder = "Choose dates",
+                            HelperText = "Label remains visible while empty",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Error",
+                            Start = new DateTime(2026, 6, 1),
+                            Error = true,
+                            ErrorText = "Choose an end date",
+                        },
+                        new Loam.Controls.DateRangePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Disabled",
+                            Start = new DateTime(2026, 5, 1),
+                            End = new DateTime(2026, 5, 31),
+                            IsEnabled = false,
+                            HelperText = "Read-only state",
+                        },
+                    },
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildDatePicker()
+    {
+        var wrap = new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Outlined",
+                    Variant = Variant.Outlined,
+                    Placeholder = "Select a date",
+                    HelperText = "Bordered field style",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Filled",
+                    Variant = Variant.Filled,
+                    Date = new DateTime(2026, 6, 8),
+                    HelperText = "Filled container style",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Text / underline",
+                    Variant = Variant.Text,
+                    Date = new DateTime(2026, 6, 9),
+                    HelperText = "Underline field style",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Empty",
+                    Placeholder = "Select a date",
+                    HelperText = "Calendar opens from the field",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Selected",
+                    Date = new DateTime(2026, 6, 30),
+                    HelperText = "Default date format",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Custom format",
+                    PickerTitle = "Select invoice date",
+                    Date = new DateTime(2026, 7, 14),
+                    DateFormat = "ddd, MMM d yyyy",
+                    CancelText = "Dismiss",
+                    OkText = "Apply",
+                    HelperText = "Formatted display text",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Constrained",
+                    Date = new DateTime(2026, 6, 12),
+                    MinDate = new DateTime(2026, 6, 1),
+                    MaxDate = new DateTime(2026, 8, 31),
+                    HelperText = "Only summer dates are enabled",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Floating label",
+                    Placeholder = "Pick later",
+                    ShrinkLabel = true,
+                    HelperText = "Label remains above the field",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Error",
+                    Date = new DateTime(2026, 6, 1),
+                    Error = true,
+                    ErrorText = "Choose a later date",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Disabled",
+                    Date = new DateTime(2026, 7, 4),
+                    IsEnabled = false,
+                    HelperText = "Unavailable while archived",
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { wrap },
+        };
+    }
+
+    private static StackPanel BuildTimePicker()
+    {
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Outlined",
+                            Variant = Variant.Outlined,
+                            Placeholder = "Select a time",
+                            HelperText = "Bordered field style",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Filled",
+                            Variant = Variant.Filled,
+                            Time = new TimeSpan(8, 30, 0),
+                            HelperText = "Filled field style",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Text / underline",
+                            Variant = Variant.Text,
+                            Time = new TimeSpan(13, 0, 0),
+                            HelperText = "Underline field style",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Empty",
+                            Placeholder = "Select a time",
+                            HelperText = "No time selected",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Selected",
+                            Time = new TimeSpan(9, 30, 0),
+                            HelperText = "Default local time format",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "24-hour format",
+                            Time = new TimeSpan(21, 45, 0),
+                            TimeFormat = "HH:mm",
+                            HelperText = "Custom time display",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Minute step",
+                            PickerTitle = "Select reminder time",
+                            Time = new TimeSpan(10, 15, 0),
+                            TimeFormat = "HH:mm",
+                            MinuteStep = 15,
+                            CancelText = "Dismiss",
+                            OkText = "Apply",
+                            HelperText = "Quarter-hour choices",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Floating label",
+                            ShrinkLabel = true,
+                            Placeholder = "Select a time",
+                            HelperText = "Label remains visible while empty",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Error",
+                            Error = true,
+                            ErrorText = "Choose a time",
+                        },
+                        new Loam.Controls.TimePicker
+                        {
+                            Width = 360,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Label = "Disabled",
+                            Time = new TimeSpan(16, 45, 0),
+                            IsEnabled = false,
+                            HelperText = "Read-only state",
+                        },
+                    },
+                },
+            },
+        };
     }
 
     private static StackPanel BuildDateTimePickers()
     {
-        var stack = new StackPanel { Spacing = 18, MaxWidth = 280, HorizontalAlignment = HorizontalAlignment.Left };
+        var stack = new StackPanel { Spacing = 18, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
         stack.Children.Add(new Loam.Controls.DatePicker { Label = "Start date", MinDate = DateTime.Today, MaxDate = DateTime.Today.AddMonths(6), HelperText = "Resting label until active" });
         stack.Children.Add(new Loam.Controls.DatePicker { Label = "Due date", Date = new DateTime(2026, 6, 30), DateFormat = "ddd, MMM d yyyy" });
         stack.Children.Add(new Loam.Controls.TimePicker { Label = "Reminder", TimeFormat = "t", ShrinkLabel = true });
@@ -1780,27 +6327,77 @@ public sealed class ComponentsView : UserControl
     private static StackPanel BuildMonthCalendar()
     {
         var selected = new Text { Typo = Typo.Caption, Color = LoamColor.Secondary };
-        var calendar = new MonthCalendar
+        var selectedCalendar = new MonthCalendar
         {
             DisplayMonth = new DateTime(2026, 6, 1),
             SelectedDate = new DateTime(2026, 6, 4),
-            RangeStart = new DateTime(2026, 6, 10),
-            RangeEnd = new DateTime(2026, 6, 16),
+            FirstDayOfWeek = DayOfWeek.Monday,
         };
         selected.Text = "Selected: Jun 4, 2026";
-        calendar.DateSelected += date =>
+        selectedCalendar.DateSelected += date =>
         {
-            calendar.SelectedDate = date;
+            selectedCalendar.SelectedDate = date;
             selected.Text = $"Selected: {date:MMM d, yyyy}";
         };
 
         return new StackPanel
         {
-            Spacing = 12,
+            Spacing = 16,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Paper { Elevation = 1, Padding = new Thickness(14), Content = calendar },
+                new WrapPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Children =
+                    {
+                        new StackPanel
+                        {
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Children =
+                            {
+                                new Text { Text = "Selected", Typo = Typo.Subtitle2 },
+                                selectedCalendar,
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Children =
+                            {
+                                new Text { Text = "Range", Typo = Typo.Subtitle2 },
+                                new MonthCalendar
+                                {
+                                    DisplayMonth = new DateTime(2026, 6, 1),
+                                    SelectedDate = new DateTime(2026, 6, 16),
+                                    RangeStart = new DateTime(2026, 6, 10),
+                                    RangeEnd = new DateTime(2026, 6, 16),
+                                    FirstDayOfWeek = DayOfWeek.Monday,
+                                },
+                            },
+                        },
+                        new StackPanel
+                        {
+                            Spacing = 8,
+                            Margin = new Thickness(0, 0, 24, 24),
+                            Children =
+                            {
+                                new Text { Text = "Constrained", Typo = Typo.Subtitle2 },
+                                new MonthCalendar
+                                {
+                                    DisplayMonth = new DateTime(2026, 6, 1),
+                                    SelectedDate = new DateTime(2026, 6, 14),
+                                    MinDate = new DateTime(2026, 6, 10),
+                                    MaxDate = new DateTime(2026, 6, 20),
+                                    FirstDayOfWeek = DayOfWeek.Monday,
+                                },
+                            },
+                        },
+                    },
+                },
                 selected,
             },
         };
@@ -1846,16 +6443,28 @@ public sealed class ComponentsView : UserControl
     {
         return new StackPanel
         {
-            Spacing = 8,
+            Spacing = 12,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Resize the window — the chip below hides at Sm and narrower.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+                new Text { Text = "Breakpoint rules", Typo = Typo.Subtitle2 },
                 new Hidden
                 {
                     Breakpoint = Breakpoint.Sm,
                     Mode = HiddenMode.Down,
                     Child = new Chip { Text = "Visible on Md and wider", Color = LoamColor.Primary },
+                },
+                new Hidden
+                {
+                    Breakpoint = Breakpoint.Md,
+                    Mode = HiddenMode.Up,
+                    Child = new Chip { Text = "Visible below Md", Color = LoamColor.Secondary },
+                },
+                new Hidden
+                {
+                    Breakpoint = Breakpoint.Lg,
+                    Mode = HiddenMode.Only,
+                    Child = new Chip { Text = "Hidden only at Lg", Color = LoamColor.Warning },
                 },
             },
         };
@@ -1893,7 +6502,7 @@ public sealed class ComponentsView : UserControl
 
         return new Panel
         {
-            Width = 380,
+            Width = 420,
             Height = 250,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children = { scroller, scrollToTop },
@@ -1904,9 +6513,22 @@ public sealed class ComponentsView : UserControl
     {
         var list = new List();
         var status = new Text { Text = "Activate a row with pointer or keyboard.", Typo = Typo.Caption, Color = LoamColor.Secondary };
-        var inbox = new ListItem { Icon = Icons.Material.Filled.Home, Content = "Inbox", IsSelected = true };
+        var inbox = new ListItem
+        {
+            Icon = Icons.Material.Filled.Home,
+            Content = "Inbox",
+            SecondaryText = "24 unread",
+            Action = new Badge { Value = 24 },
+            IsSelected = true,
+        };
         inbox.Activated += (_, _) => status.Text = "Inbox activated";
-        var starred = new ListItem { Icon = Icons.Material.Filled.Star, Content = "Starred" };
+        var starred = new ListItem
+        {
+            Icon = Icons.Material.Filled.Star,
+            Content = "Starred",
+            SecondaryText = "Saved project notes",
+            Action = new IconButton { Icon = Icons.Material.Filled.Settings, Size = LoamSize.Small },
+        };
         starred.Activated += (_, _) => status.Text = "Starred activated";
 
         list.Children.Add(new ListSubheader { Text = "MAILBOXES" });
@@ -1916,23 +6538,12 @@ public sealed class ComponentsView : UserControl
         list.Children.Add(new ListItem { Icon = Icons.Material.Filled.Person, Content = "Personal" });
         list.Children.Add(new ListItem { Icon = Icons.Material.Filled.Settings, Content = "Disabled", IsEnabled = false });
 
-        // Spacer pushes the trailing button to the right edge of a DockPanel row.
-        var title = new Text { Text = "Toolbar", VerticalAlignment = VerticalAlignment.Center };
-        var action = new IconButton { Icon = Icons.Material.Filled.Settings };
-        DockPanel.SetDock(action, Dock.Right);
-        var bar = new Paper
-        {
-            Elevation = 1,
-            Padding = new Thickness(8, 4),
-            Content = new DockPanel { LastChildFill = true, Children = { title, action, new Spacer() } },
-        };
-
         return new StackPanel
         {
             Spacing = 16,
             MaxWidth = 280,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { new Paper { Elevation = 1, Content = list }, status, bar },
+            Children = { new Paper { Elevation = 1, Content = list }, status },
         };
     }
 
@@ -1950,6 +6561,149 @@ public sealed class ComponentsView : UserControl
         };
         border.Bind(Border.BackgroundProperty, border.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.BackgroundGray))));
         return border;
+    }
+
+    private static StackPanel BuildPieChart()
+    {
+        var split = new[] { 40d, 25d, 20d, 15d };
+        var explicitColors = new[]
+        {
+            Color.Parse("#355C7D"),
+            Color.Parse("#6C5B7B"),
+            Color.Parse("#C06C84"),
+            Color.Parse("#F67280"),
+        };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Paper
+                {
+                    Outlined = true,
+                    Elevation = 0,
+                    Padding = new Thickness(16),
+                    Content = new StackPanel
+                    {
+                        Spacing = 10,
+                        Children =
+                        {
+                            new Text { Text = "Themed pie", Typo = Typo.Subtitle2 },
+                            new PieChart { Width = 180, Height = 180, Values = split },
+                            new ChartLegend { Labels = { "Planning", "Build", "Review" } },
+                        },
+                    },
+                },
+                new Paper
+                {
+                    Outlined = true,
+                    Elevation = 0,
+                    Padding = new Thickness(16),
+                    Content = new StackPanel
+                    {
+                        Spacing = 10,
+                        Children =
+                        {
+                            new Text { Text = "Explicit donut", Typo = Typo.Subtitle2 },
+                            new PieChart { Width = 180, Height = 180, Values = split, Donut = true, Colors = explicitColors },
+                            new ChartLegend { Colors = explicitColors, Labels = { "Alpha", "Beta", "Stable" } },
+                        },
+                    },
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildBarChart()
+    {
+        var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Paper
+                {
+                    Outlined = true,
+                    Elevation = 0,
+                    Padding = new Thickness(16),
+                    Content = new StackPanel
+                    {
+                        Spacing = 10,
+                        Children =
+                        {
+                            new Text { Text = "Themed bars", Typo = Typo.Subtitle2 },
+                            new Text { Text = "Grid and baseline colors come from outline roles.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                            new BarChart { Width = 320, Height = 180, Values = revenue },
+                        },
+                    },
+                },
+                new Paper
+                {
+                    Outlined = true,
+                    Elevation = 0,
+                    Padding = new Thickness(16),
+                    Content = new StackPanel
+                    {
+                        Spacing = 10,
+                        Children =
+                        {
+                            new Text { Text = "No data", Typo = Typo.Subtitle2 },
+                            new BarChart { Width = 320, Height = 180, Values = [0d, -2d, 0d] },
+                        },
+                    },
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildLineChart()
+    {
+        var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Paper
+                {
+                    Outlined = true,
+                    Elevation = 0,
+                    Padding = new Thickness(16),
+                    Content = new StackPanel
+                    {
+                        Spacing = 10,
+                        Children =
+                        {
+                            new Text { Text = "Line", Typo = Typo.Subtitle2 },
+                            new LineChart { Width = 320, Height = 180, Values = revenue },
+                        },
+                    },
+                },
+                new Paper
+                {
+                    Outlined = true,
+                    Elevation = 0,
+                    Padding = new Thickness(16),
+                    Content = new StackPanel
+                    {
+                        Spacing = 10,
+                        Children =
+                        {
+                            new Text { Text = "Area", Typo = Typo.Subtitle2 },
+                            new Text { Text = "Area fill follows the first resolved series color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                            new LineChart { Width = 320, Height = 180, Values = revenue, Area = true },
+                        },
+                    },
+                },
+            },
+        };
     }
 
     private static StackPanel BuildCharts()
@@ -1984,47 +6738,6 @@ public sealed class ComponentsView : UserControl
             },
         };
 
-        Control Legend(params Control[] rows)
-        {
-            var stack = new StackPanel { Spacing = 6 };
-            foreach (var row in rows)
-            {
-                stack.Children.Add(row);
-            }
-
-            return stack;
-        }
-
-        Control TokenLegendRow(string token, string label)
-        {
-            var swatch = new Border { Width = 12, Height = 12, CornerRadius = new CornerRadius(6), VerticalAlignment = VerticalAlignment.Center };
-            swatch.Bind(Border.BackgroundProperty, swatch.GetResourceObservable(token));
-            return new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children = { swatch, new Text { Text = label, Typo = Typo.Caption } },
-            };
-        }
-
-        Control ColorLegendRow(Color color, string label) => new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Children =
-            {
-                new Border
-                {
-                    Width = 12,
-                    Height = 12,
-                    CornerRadius = new CornerRadius(6),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Background = new SolidColorBrush(color),
-                },
-                new Text { Text = label, Typo = Typo.Caption },
-            },
-        };
-
         return new StackPanel
         {
             Children =
@@ -2037,31 +6750,22 @@ public sealed class ComponentsView : UserControl
                             "Themed pie",
                             "Default series colors resolve from the active theme.",
                             new PieChart { Width = 180, Height = 180, Values = split },
-                            Legend(
-                                TokenLegendRow(LoamTokens.ColorPrimary, "Planning"),
-                                TokenLegendRow(LoamTokens.ColorSecondary, "Build"),
-                                TokenLegendRow(LoamTokens.ColorTertiary, "Review"))),
+                            new ChartLegend { Labels = { "Planning", "Build", "Review" } }),
                         ChartPanel(
                             "Themed donut",
                             "The center hole uses the current surface role.",
                             new PieChart { Width = 180, Height = 180, Values = split, Donut = true },
-                            Legend(
-                                TokenLegendRow(LoamTokens.ColorPrimary, "Desktop"),
-                                TokenLegendRow(LoamTokens.ColorSecondary, "Browser"),
-                                TokenLegendRow(LoamTokens.ColorTertiary, "Mobile"))),
+                            new ChartLegend { Labels = { "Desktop", "Browser", "Mobile" } }),
                         ChartPanel(
                             "Themed bars",
                             "Grid and baseline colors come from outline roles.",
                             new BarChart { Width = 280, Height = 160, Values = revenue },
-                            Legend(
-                                TokenLegendRow(LoamTokens.ColorPrimary, "Q1"),
-                                TokenLegendRow(LoamTokens.ColorSecondary, "Q2"),
-                                TokenLegendRow(LoamTokens.ColorTertiary, "Q3"))),
+                            new ChartLegend { Labels = { "Q1", "Q2", "Q3" } }),
                         ChartPanel(
                             "Line and area",
                             "Area fill follows the first resolved series color.",
                             new LineChart { Width = 280, Height = 160, Values = revenue, Area = true },
-                            Legend(TokenLegendRow(LoamTokens.ColorPrimary, "Release readiness"))),
+                            new ChartLegend { Labels = { "Release readiness" } }),
                     },
                 },
                 new WrapPanel
@@ -2072,15 +6776,12 @@ public sealed class ComponentsView : UserControl
                             "Explicit colors",
                             "Custom series colors still override theme roles.",
                             new PieChart { Width = 180, Height = 180, Values = split, Donut = true, Colors = explicitColors },
-                            Legend(
-                                ColorLegendRow(explicitColors[0], "Alpha"),
-                                ColorLegendRow(explicitColors[1], "Beta"),
-                                ColorLegendRow(explicitColors[2], "Stable"))),
+                            new ChartLegend { Colors = explicitColors, Labels = { "Alpha", "Beta", "Stable" } }),
                         ChartPanel(
                             "No data",
                             "Empty and zero-only charts render a visible empty state.",
                             new BarChart { Width = 280, Height = 160, Values = [0d, -2d, 0d] },
-                            Legend(new Text { Text = "No data", Typo = Typo.Caption, Color = LoamColor.Secondary })),
+                            new ChartLegend { ShowSwatches = false, Labels = { "No data" } }),
                     },
                 },
             },
@@ -2089,43 +6790,21 @@ public sealed class ComponentsView : UserControl
 
     private static Card BuildCard()
     {
-        var actions = new CardActions
-        {
-            Child = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new LoamButton { Content = "Share", Variant = Variant.Text, Color = LoamColor.Primary },
-                    new LoamButton { Content = "Learn more", Variant = Variant.Text, Color = LoamColor.Primary },
-                },
-            },
-        };
-
         return new Card
         {
-            Width = 340,
+            Width = 360,
+            Elevation = 1,
+            Outlined = true,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Content = new StackPanel
-            {
-                Children =
-                {
-                    new CardHeader
-                    {
-                        Avatar = new Avatar { Content = "PL", Color = LoamColor.Primary },
-                        Title = "Project Loam",
-                        Subtitle = "Updated today",
-                        Action = new IconButton { Icon = Icons.Material.Filled.Settings },
-                    },
-                    new CardMedia { MediaHeight = 160 },
-                    new CardContent
-                    {
-                        Child = new Text { Text = "reference components, mapped to Avalonia in pure C#. This card composes header, media, content, and actions." },
-                    },
-                    actions,
-                },
-            },
+            HeaderAvatar = new Avatar { Content = "PL", Color = LoamColor.Primary },
+            Title = "Release board",
+            Subtitle = "Updated today",
+            HeaderAction = new IconButton { Icon = Icons.Material.Filled.Settings },
+            ShowMedia = true,
+            MediaHeight = 96,
+            BodyText = "Inputs, pickers, and surfaces are ready for review.",
+            SecondaryActionText = "Details",
+            PrimaryActionText = "Open",
         };
     }
 
@@ -2133,34 +6812,43 @@ public sealed class ComponentsView : UserControl
     {
         var wrap = new WrapPanel();
 
-        Paper Make(string label)
+        Paper Make(string title, string subtitle)
         {
             return new Paper
             {
                 Width = 130,
                 Height = 88,
                 Margin = new Thickness(0, 0, 16, 16),
-                Content = new Text { Text = label, Margin = new Thickness(12) },
+                Title = title,
+                Subtitle = subtitle,
+                Compact = true,
             };
         }
 
-        wrap.Children.Add(Make("Elevation 1"));
+        wrap.Children.Add(Make("Elevation 1", "Default"));
 
-        var e4 = Make("Elevation 4");
+        var e4 = Make("Elevation 4", "Tonal");
         e4.Elevation = 4;
         wrap.Children.Add(e4);
 
-        var e8 = Make("Elevation 8");
+        var e8 = Make("Elevation 8", "Clamped");
         e8.Elevation = 8;
+        e8.Shape = SurfaceShape.Large;
         wrap.Children.Add(e8);
 
-        var outlined = Make("Outlined");
+        var outlined = Make("Outlined", "Stroke");
         outlined.Outlined = true;
         wrap.Children.Add(outlined);
 
-        var square = Make("Square");
+        var square = Make("Square", "No radius");
+        square.Elevation = 4;
         square.Square = true;
         wrap.Children.Add(square);
+
+        var colored = Make("Colored", "Role tint");
+        colored.Color = LoamColor.Primary;
+        colored.Shape = SurfaceShape.ExtraLarge;
+        wrap.Children.Add(colored);
 
         return wrap;
     }
@@ -2169,29 +6857,52 @@ public sealed class ComponentsView : UserControl
     {
         var horizontal = new StackPanel
         {
-            Spacing = 8,
+            Spacing = 12,
+            Width = 520,
             Children =
             {
-                new Text { Text = "Above the divider", Typo = Typo.Body2 },
+                new Text { Text = "Full width", Typo = Typo.BodyMedium },
                 new Divider(),
-                new Text { Text = "Below the divider", Typo = Typo.Body2 },
+                new Text { Text = "Inset", Typo = Typo.BodyMedium },
+                new Divider { DividerType = DividerType.Inset },
+                new Text { Text = "Middle inset", Typo = Typo.BodyMedium },
+                new Divider { DividerType = DividerType.Middle },
+                new Text { Text = "Light", Typo = Typo.BodyMedium },
+                new Divider { Light = true },
             },
         };
 
         var vertical = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Height = 28,
-            Spacing = 12,
-            Margin = new Thickness(0, 16, 0, 0),
+            Height = 72,
+            Spacing = 16,
+            VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                new Text { Text = "Left", Typo = Typo.Body2 },
+                new Text { Text = "Full", Typo = Typo.BodyMedium, VerticalAlignment = VerticalAlignment.Center },
                 new Divider { Vertical = true },
-                new Text { Text = "Right", Typo = Typo.Body2 },
+                new Text { Text = "Inset", Typo = Typo.BodyMedium, VerticalAlignment = VerticalAlignment.Center },
+                new Divider { Vertical = true, DividerType = DividerType.Inset },
+                new Text { Text = "Middle", Typo = Typo.BodyMedium, VerticalAlignment = VerticalAlignment.Center },
+                new Divider { Vertical = true, DividerType = DividerType.Middle },
+                new Text { Text = "Light", Typo = Typo.BodyMedium, VerticalAlignment = VerticalAlignment.Center },
+                new Divider { Vertical = true, Light = true },
             },
         };
 
-        return new StackPanel { Children = { horizontal, vertical } };
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Horizontal", Typo = Typo.Subtitle2 },
+                horizontal,
+                new Text { Text = "Vertical", Typo = Typo.Subtitle2 },
+                vertical,
+            },
+        };
     }
 }

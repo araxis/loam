@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Loam;
 using Loam.Theming;
@@ -23,6 +24,9 @@ public class Container : Decorator
 
     static Container() =>
         AffectsMeasure<Container>(MaxWidthBreakpointProperty, GuttersProperty);
+
+    /// <summary>Creates the container.</summary>
+    public Container() => AutomationProperties.SetName(this, "Container");
 
     /// <summary>The breakpoint the content width is capped at. Mirrors the reference API's <c>MaxWidth</c>.</summary>
     public Breakpoint MaxWidthBreakpoint

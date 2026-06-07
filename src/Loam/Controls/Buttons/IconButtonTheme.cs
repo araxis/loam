@@ -22,9 +22,9 @@ internal static class IconButtonTheme
             {
                 new Setter(TemplatedControl.TemplateProperty, BuildTemplate()),
                 ButtonStyles.Dyn(TemplatedControl.CornerRadiusProperty, LoamTokens.ShapeFull),
-                ButtonStyles.Dyn(TemplatedControl.PaddingProperty, LoamTokens.DensityIconButtonPaddingMedium),
-                ButtonStyles.Dyn(Layoutable.MinWidthProperty, LoamTokens.DensityInteractiveMedium),
-                ButtonStyles.Dyn(Layoutable.MinHeightProperty, LoamTokens.DensityInteractiveMedium),
+                ButtonStyles.Dyn(TemplatedControl.PaddingProperty, ButtonSizeMetrics.IconButtonPaddingToken(LoamSize.Medium)),
+                ButtonStyles.Dyn(Layoutable.MinWidthProperty, ButtonSizeMetrics.IconButtonContainerToken(LoamSize.Medium)),
+                ButtonStyles.Dyn(Layoutable.MinHeightProperty, ButtonSizeMetrics.IconButtonContainerToken(LoamSize.Medium)),
                 new Setter(TemplatedControl.BackgroundProperty, Brushes.Transparent),
                 new Setter(TemplatedControl.BorderThicknessProperty, new Thickness(0)),
                 ButtonStyles.Dyn(TemplatedControl.ForegroundProperty, LoamTokens.TextPrimary),
@@ -33,22 +33,24 @@ internal static class IconButtonTheme
             },
         };
 
-        theme.Add(SizeStyle(LoamSize.Small, LoamTokens.DensityIconButtonPaddingSmall, LoamTokens.DensityInteractiveSmall));
-        theme.Add(SizeStyle(LoamSize.Large, LoamTokens.DensityIconButtonPaddingLarge, LoamTokens.DensityInteractiveLarge));
+        foreach (var size in ButtonSizeMetrics.All)
+        {
+            theme.Add(SizeStyle(size));
+        }
 
         ButtonStyles.AddColorMatrix(theme);
         ButtonStyles.AddDisabled(theme);
         return theme;
     }
 
-    private static Style SizeStyle(LoamSize size, string paddingToken, string minSizeToken) =>
+    private static Style SizeStyle(LoamSize size) =>
         new(x => x.Nesting().PropertyEquals(Button.SizeProperty, size))
         {
             Setters =
             {
-                ButtonStyles.Dyn(TemplatedControl.PaddingProperty, paddingToken),
-                ButtonStyles.Dyn(Layoutable.MinWidthProperty, minSizeToken),
-                ButtonStyles.Dyn(Layoutable.MinHeightProperty, minSizeToken),
+                ButtonStyles.Dyn(TemplatedControl.PaddingProperty, ButtonSizeMetrics.IconButtonPaddingToken(size)),
+                ButtonStyles.Dyn(Layoutable.MinWidthProperty, ButtonSizeMetrics.IconButtonContainerToken(size)),
+                ButtonStyles.Dyn(Layoutable.MinHeightProperty, ButtonSizeMetrics.IconButtonContainerToken(size)),
             },
         };
 
@@ -68,8 +70,7 @@ internal static class IconButtonTheme
                 AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.StatePressedOpacity));
             ripple.Bind(Ripple.DurationProperty,
                 AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.MotionDurationShort3));
-            ripple.Bind(Ripple.RippleBrushProperty,
-                AC.ResourceNodeExtensions.GetResourceObservable(button, LoamTokens.ColorOnSurface));
+            ripple.Bind(Ripple.RippleBrushProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
 
             var border = new AC.Border { Child = ripple }.Named("PART_Root", scope);
             border.Bind(AC.Border.BackgroundProperty, button.GetObservable(TemplatedControl.BackgroundProperty));

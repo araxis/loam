@@ -203,7 +203,7 @@ public class Field : ContentControl
             _labelForeground?.Dispose();
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(muted));
         }
-        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, _label?.IsVisible == true);
+        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, _label?.IsVisible == true, Variant);
 
         if (_helper is not null)
         {

@@ -10,6 +10,7 @@ public sealed class DialogInstance
 {
     private readonly TaskCompletionSource<DialogResult> _completion;
     private readonly Action _dismiss;
+    private bool _closed;
 
     internal DialogInstance(TaskCompletionSource<DialogResult> completion, Action dismiss)
     {
@@ -20,6 +21,12 @@ public sealed class DialogInstance
     /// <summary>Closes the dialog with the given result.</summary>
     public void Close(DialogResult result)
     {
+        if (_closed)
+        {
+            return;
+        }
+
+        _closed = true;
         _dismiss();
         _completion.TrySetResult(result);
     }

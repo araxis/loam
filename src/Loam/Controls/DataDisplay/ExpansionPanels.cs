@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -21,7 +23,11 @@ public class ExpansionPanels : TemplatedControl
     private StackPanel? _stack;
 
     /// <summary>Creates the container.</summary>
-    public ExpansionPanels() => Panels.CollectionChanged += OnPanelsChanged;
+    public ExpansionPanels()
+    {
+        AutomationProperties.SetName(this, "Expansion panels");
+        Panels.CollectionChanged += OnPanelsChanged;
+    }
 
     /// <summary>The contained panels.</summary>
     public ObservableCollection<ExpansionPanel> Panels { get; } = new();
@@ -31,6 +37,76 @@ public class ExpansionPanels : TemplatedControl
     {
         get => GetValue(MultiExpansionProperty);
         set => SetValue(MultiExpansionProperty, value);
+    }
+
+    /// <summary>Adds a panel and returns it for further customization.</summary>
+    public ExpansionPanel AddPanel(object? header, object? content, bool isExpanded = false, bool isEnabled = true)
+    {
+        var panel = new ExpansionPanel
+        {
+            Header = header,
+            Content = content,
+            IsExpanded = isExpanded,
+            IsEnabled = isEnabled,
+        };
+        Panels.Add(panel);
+        return panel;
+    }
+
+    /// <summary>Expands the panel at <paramref name="index"/> when it exists.</summary>
+    public void ExpandPanel(int index)
+    {
+        if (index < 0 || index >= Panels.Count)
+        {
+            return;
+        }
+
+        Panels[index].IsExpanded = true;
+    }
+
+    /// <summary>Collapses the panel at <paramref name="index"/> when it exists.</summary>
+    public void CollapsePanel(int index)
+    {
+        if (index < 0 || index >= Panels.Count)
+        {
+            return;
+        }
+
+        Panels[index].IsExpanded = false;
+        UpdateAutomation();
+    }
+
+    /// <summary>Collapses every panel.</summary>
+    public void CollapseAll()
+    {
+        foreach (var panel in Panels)
+        {
+            panel.IsExpanded = false;
+        }
+
+        UpdateAutomation();
+    }
+
+    /// <summary>Expands all panels in multi-expansion mode, or the first panel in accordion mode.</summary>
+    public void ExpandAll()
+    {
+        if (Panels.Count == 0)
+        {
+            return;
+        }
+
+        if (!MultiExpansion)
+        {
+            ExpandPanel(0);
+            return;
+        }
+
+        foreach (var panel in Panels)
+        {
+            panel.IsExpanded = true;
+        }
+
+        UpdateAutomation();
     }
 
     /// <inheritdoc />
@@ -44,7 +120,27 @@ public class ExpansionPanels : TemplatedControl
         Rebuild();
     }
 
-    private void OnPanelsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+    /// <inheritdoc />
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == MultiExpansionProperty)
+        {
+            EnforceAccordion();
+            UpdateAutomation();
+        }
+        else if (change.Property == IsEnabledProperty)
+        {
+            Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        }
+    }
+
+    private void OnPanelsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        Rebuild();
+        EnforceAccordion();
+        UpdateAutomation();
+    }
 
     private void Rebuild()
     {
@@ -67,22 +163,61 @@ public class ExpansionPanels : TemplatedControl
             panel.PropertyChanged += OnPanelPropertyChanged;
             _subscribed.Add(panel);
         }
+
+        EnforceAccordion();
+        UpdateAutomation();
     }
 
     private void OnPanelPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property != ExpansionPanel.IsExpandedProperty || MultiExpansion ||
-            !e.GetNewValue<bool>() || sender is not ExpansionPanel expanded)
+        if (e.Property != ExpansionPanel.IsExpandedProperty)
         {
             return;
         }
 
-        foreach (var panel in Panels)
+        if (!MultiExpansion && e.GetNewValue<bool>() && sender is ExpansionPanel expanded)
         {
-            if (!ReferenceEquals(panel, expanded))
+            foreach (var panel in Panels)
             {
-                panel.IsExpanded = false;
+                if (!ReferenceEquals(panel, expanded))
+                {
+                    panel.IsExpanded = false;
+                }
             }
         }
+
+        UpdateAutomation();
+    }
+
+    private void EnforceAccordion()
+    {
+        if (MultiExpansion)
+        {
+            return;
+        }
+
+        var seenExpanded = false;
+        foreach (var panel in Panels)
+        {
+            if (!panel.IsExpanded)
+            {
+                continue;
+            }
+
+            if (!seenExpanded)
+            {
+                seenExpanded = true;
+                continue;
+            }
+
+            panel.IsExpanded = false;
+        }
+    }
+
+    private void UpdateAutomation()
+    {
+        var mode = MultiExpansion ? "multi expansion" : "accordion";
+        var expanded = Panels.Count(panel => panel.IsExpanded);
+        AutomationProperties.SetHelpText(this, $"{Panels.Count} panels, {expanded} expanded, {mode}");
     }
 }

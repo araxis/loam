@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using Loam;
+using Loam.Controls.Internal;
 
 namespace Loam.Controls;
 
@@ -37,6 +38,9 @@ public class Avatar : ContentControl
     private IDisposable? _backgroundBinding;
     private IDisposable? _foregroundBinding;
     private IDisposable? _borderBinding;
+
+    /// <summary>Creates the avatar.</summary>
+    public Avatar() => InteractionAssist.SetAutomationName(this, "Avatar");
 
     /// <summary>Visual style. Mirrors the reference API's <c>Variant</c>.</summary>
     public Variant Variant
@@ -94,11 +98,22 @@ public class Avatar : ContentControl
         {
             ApplyVisual();
         }
+        else if (change.Property == ContentProperty)
+        {
+            ApplyAutomationName();
+        }
     }
 
     private void ApplyVisual()
     {
-        var px = Size switch { LoamSize.Small => 32d, LoamSize.Large => 56d, _ => 40d };
+        var px = Size switch
+        {
+            LoamSize.ExtraSmall => 24d,
+            LoamSize.Small => 32d,
+            LoamSize.Large => 56d,
+            LoamSize.ExtraLarge => 72d,
+            _ => 40d,
+        };
         Width = px;
         Height = px;
 
@@ -140,4 +155,6 @@ public class Avatar : ContentControl
             }
         }
     }
+
+    private void ApplyAutomationName() => InteractionAssist.SetAutomationName(this, Content, "Avatar");
 }

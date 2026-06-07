@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -50,6 +51,7 @@ public class Tabs : TemplatedControl
     private readonly List<(Border Root, Text Label, Border Underline)> _headerControls = new();
     private StackPanel? _headers;
     private ContentControl? _content;
+    private bool _coercing;
 
     /// <summary>Creates the tabs.</summary>
     public Tabs()
@@ -94,6 +96,7 @@ public class Tabs : TemplatedControl
         base.OnPropertyChanged(change);
         if (change.Property == SelectedIndexProperty)
         {
+            CoerceSelectedIndex();
             UpdateActive();
             ShowContent();
         }
@@ -101,9 +104,20 @@ public class Tabs : TemplatedControl
         {
             Rebuild();
         }
+        else if (change.Property == IsEnabledProperty)
+        {
+            UpdateActive();
+            Opacity = IsEnabled ? 1 : InteractionAssist.DisabledOpacity(this);
+        }
     }
 
-    private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+    private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        Rebuild();
+        CoerceSelectedIndex();
+        UpdateActive();
+        ShowContent();
+    }
 
     private void Rebuild()
     {
@@ -137,11 +151,21 @@ public class Tabs : TemplatedControl
             InteractionAssist.SetAutomationName(root, Items[i].Header);
             root.PointerPressed += (_, _) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 root.Focus();
                 SelectedIndex = index;
             };
             root.KeyDown += (_, args) =>
             {
+                if (!IsEnabled)
+                {
+                    return;
+                }
+
                 if (InteractionAssist.IsActivationKey(args.Key))
                 {
                     SelectedIndex = index;
@@ -169,14 +193,39 @@ public class Tabs : TemplatedControl
         ShowContent();
     }
 
+    private void CoerceSelectedIndex()
+    {
+        if (_coercing)
+        {
+            return;
+        }
+
+        var value = Items.Count <= 0 ? 0 : Math.Clamp(SelectedIndex, 0, Items.Count - 1);
+        if (value == SelectedIndex)
+        {
+            return;
+        }
+
+        _coercing = true;
+        try
+        {
+            SelectedIndex = value;
+        }
+        finally
+        {
+            _coercing = false;
+        }
+    }
+
     private void UpdateActive()
     {
         for (var i = 0; i < _headerControls.Count; i++)
         {
             var active = i == SelectedIndex;
+            _headerControls[i].Root.IsEnabled = IsEnabled;
             _headerControls[i].Label.Color = active ? Color : LoamColor.Default;
             _headerControls[i].Underline.IsVisible = active;
-            if (!active && _headerControls[i].Root.IsFocused)
+            if (IsEnabled && !active && _headerControls[i].Root.IsFocused)
             {
                 var accentName = Color is LoamColor.Default or LoamColor.Inherit
                     ? nameof(LoamPalette.Primary)
@@ -188,6 +237,8 @@ public class Tabs : TemplatedControl
                 _headerControls[i].Root.Background = null;
             }
         }
+
+        AutomationProperties.SetHelpText(this, Items.Count == 0 ? "No tabs" : $"Tab {SelectedIndex + 1} of {Items.Count}");
     }
 
     private void ShowContent()
@@ -196,11 +247,15 @@ public class Tabs : TemplatedControl
         {
             _content.Content = Items[SelectedIndex].Content;
         }
+        else if (_content is not null)
+        {
+            _content.Content = null;
+        }
     }
 
     private void MoveSelection(int currentIndex, int direction)
     {
-        if (_headerControls.Count == 0)
+        if (!IsEnabled || _headerControls.Count == 0)
         {
             return;
         }

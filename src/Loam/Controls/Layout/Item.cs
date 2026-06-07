@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Loam;
 
@@ -33,6 +34,9 @@ public class Item : Decorator
     static Item() =>
         // Invalidating the item's measure bubbles up to re-run the parent Grid's layout.
         AffectsMeasure<Item>(XsProperty, SmProperty, MdProperty, LgProperty, XlProperty, XxlProperty);
+
+    /// <summary>Creates the grid item.</summary>
+    public Item() => AutomationProperties.SetName(this, "Grid item");
 
     /// <summary>Columns at the extra-small breakpoint (1–12).</summary>
     public int Xs { get => GetValue(XsProperty); set => SetValue(XsProperty, value); }

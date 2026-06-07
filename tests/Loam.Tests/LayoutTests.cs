@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Automation;
 using Avalonia.Headless.XUnit;
 using Avalonia.Layout;
 using Avalonia.Threading;
@@ -67,6 +68,30 @@ public class LayoutTests
     }
 
     [Fact]
+    public void Item_resolves_spans_with_fallback_and_clamping()
+    {
+        new Item { Xs = 6 }.ResolveSpan(Breakpoint.Md).ShouldBe(6);
+        new Item { Md = 16 }.ResolveSpan(Breakpoint.Md).ShouldBe(12);
+        new Item { Md = -1 }.ResolveSpan(Breakpoint.Md).ShouldBe(12);
+        new Item { Sm = 4, Lg = 2 }.ResolveSpan(Breakpoint.Xl).ShouldBe(2);
+    }
+
+    [Fact]
+    public void Layout_primitives_expose_default_automation_names()
+    {
+        AutomationProperties.GetName(new Container()).ShouldBe("Container");
+        AutomationProperties.GetName(new Loam.Controls.Grid()).ShouldBe("Grid layout");
+        AutomationProperties.GetName(new Item()).ShouldBe("Grid item");
+        AutomationProperties.GetName(new Stack()).ShouldBe("Stack");
+        AutomationProperties.GetName(new Spacer()).ShouldBe("Spacer");
+        AutomationProperties.GetName(new Hidden()).ShouldBe("Hidden");
+
+        var scrollToTop = new ScrollToTop();
+        AutomationProperties.GetName(scrollToTop).ShouldBe("Scroll to top");
+        AutomationProperties.GetName(scrollToTop.Child.ShouldBeOfType<Fab>()).ShouldBe("Scroll to top");
+    }
+
+    [Fact]
     public void Breakpoint_from_width_thresholds()
     {
         Breakpoints.FromWidth(500).ShouldBe(Breakpoint.Xs);
@@ -106,6 +131,51 @@ public class LayoutTests
         collapse.Expanded = true;
         Dispatcher.UIThread.RunJobs();
         collapse.MaxHeight.ShouldBe(double.PositiveInfinity);
+    }
+
+    [AvaloniaFact]
+    public void Collapse_exposes_automation_state()
+    {
+        var collapse = new Collapse { Child = new Border { Height = 40, Width = 100 } };
+        Show(collapse);
+
+        AutomationProperties.GetName(collapse).ShouldBe("Collapse");
+        AutomationProperties.GetHelpText(collapse).ShouldBe("Collapsed, animated");
+
+        collapse.Expanded = true;
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetHelpText(collapse).ShouldBe("Expanded, animated");
+    }
+
+    [AvaloniaFact]
+    public void Collapse_zero_duration_and_disabled_state_are_static()
+    {
+        var zeroDuration = new Collapse
+        {
+            Duration = TimeSpan.Zero,
+            Child = new Border { Height = 40, Width = 100 },
+        };
+        Show(zeroDuration);
+
+        zeroDuration.Transitions.ShouldBeNull();
+        zeroDuration.Expanded = true;
+        Dispatcher.UIThread.RunJobs();
+
+        zeroDuration.MaxHeight.ShouldBe(double.PositiveInfinity);
+        AutomationProperties.GetHelpText(zeroDuration).ShouldBe("Expanded, static");
+
+        var disabled = new Collapse
+        {
+            IsEnabled = false,
+            Expanded = true,
+            Child = new Border { Height = 40, Width = 100 },
+        };
+        Show(disabled);
+
+        disabled.Transitions.ShouldBeNull();
+        disabled.MaxHeight.ShouldBe(double.PositiveInfinity);
+        AutomationProperties.GetHelpText(disabled).ShouldBe("Expanded, static");
     }
 
     [AvaloniaFact]

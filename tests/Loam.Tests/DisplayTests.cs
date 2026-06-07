@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -22,6 +23,12 @@ public class DisplayTests
     {
         control.ApplyTemplate();
         return control.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Root");
+    }
+
+    private static Border StateLayer(Control control)
+    {
+        control.ApplyTemplate();
+        return control.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_StateLayer");
     }
 
     private static void Show(Control content)
@@ -49,6 +56,27 @@ public class DisplayTests
     }
 
     [AvaloniaFact]
+    public void Avatar_shapes_sizes_and_automation_names()
+    {
+        var rounded = new Avatar { Content = "RO", Rounded = true };
+        var square = new Avatar { Content = "SQ", Square = true };
+        var large = new Avatar { Content = "XL", Size = LoamSize.ExtraLarge };
+        Show(new StackPanel { Children = { rounded, square, large } });
+
+        rounded.ApplyTemplate();
+        square.ApplyTemplate();
+        large.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Root(rounded).CornerRadius.ShouldBe(new CornerRadius(8));
+        Root(square).CornerRadius.ShouldBe(new CornerRadius(0));
+        large.Width.ShouldBe(72);
+        large.Height.ShouldBe(72);
+        AutomationProperties.GetName(rounded).ShouldBe("RO");
+        AutomationProperties.GetName(square).ShouldBe("SQ");
+    }
+
+    [AvaloniaFact]
     public void Chip_filled_primary_colors_and_shows_text()
     {
         Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
@@ -59,6 +87,44 @@ public class DisplayTests
         chip.GetVisualDescendants().OfType<Text>().First().Text.ShouldBe("Tag");
         var close = chip.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Close");
         close.IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Chip_size_changes_height_padding_and_icon_scale()
+    {
+        var small = new Chip { Text = "Small", Icon = Icons.Material.Filled.Label, Size = LoamSize.Small };
+        Show(small);
+        small.Height.ShouldBe(28d);
+        Root(small).Padding.ShouldBe(new Thickness(8, 0));
+        small.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Icon").Size.ShouldBe(LoamSize.Small);
+
+        var medium = new Chip { Text = "Medium", Icon = Icons.Material.Filled.Label, Size = LoamSize.Medium };
+        Show(medium);
+        medium.Height.ShouldBe(32d);
+        Root(medium).Padding.ShouldBe(new Thickness(10, 0));
+
+        var large = new Chip { Text = "Large", Icon = Icons.Material.Filled.Label, Size = LoamSize.Large };
+        Show(large);
+        large.Height.ShouldBe(40d);
+        Root(large).Padding.ShouldBe(new Thickness(14, 0));
+        large.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Icon").Size.ShouldBe(LoamSize.Medium);
+    }
+
+    [AvaloniaFact]
+    public void Chip_stays_content_sized_inside_wrap_panel()
+    {
+        var chip = new Chip { Text = "Filled", Color = LoamColor.Primary };
+        var panel = new WrapPanel
+        {
+            Width = 720,
+            Children = { chip },
+        };
+        Show(panel);
+        chip.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        Root(chip).Bounds.Width.ShouldBeLessThan(160);
+        chip.Bounds.Width.ShouldBeLessThan(160);
     }
 
     [AvaloniaFact]
@@ -79,6 +145,30 @@ public class DisplayTests
         chip.RaiseEvent(key);
         key.Handled.ShouldBeTrue();
         closed.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Chip_focus_uses_token_state_layer_and_disabled_clears_it()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var chip = new Chip { Text = "Tag", Color = LoamColor.Primary };
+        Show(chip);
+        chip.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var stateLayer = StateLayer(chip);
+        stateLayer.CornerRadius.ShouldBe(Root(chip).CornerRadius);
+
+        chip.Focus();
+        Dispatcher.UIThread.RunJobs();
+
+        var focused = stateLayer.Background.ShouldBeAssignableTo<ISolidColorBrush>();
+        focused!.Color.A.ShouldBeGreaterThan((byte)0);
+
+        chip.IsEnabled = false;
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)stateLayer.Background!).Color.A.ShouldBe((byte)0);
     }
 
     [AvaloniaFact]
@@ -127,6 +217,43 @@ public class DisplayTests
     }
 
     [AvaloniaFact]
+    public void Badge_origin_bordered_hidden_and_automation_states()
+    {
+        var badge = new Badge
+        {
+            Value = 8,
+            Origin = BadgeOrigin.BottomLeft,
+            Bordered = true,
+            Content = new Icon { Data = Icons.Material.Filled.Notifications, Size = LoamSize.Large },
+        };
+        var hidden = new Badge
+        {
+            Value = 0,
+            Visible = false,
+            Content = new Icon { Data = Icons.Material.Filled.Chat, Size = LoamSize.Large },
+        };
+        var dot = new Badge
+        {
+            Dot = true,
+            Content = new Icon { Data = Icons.Material.Filled.Person, Size = LoamSize.Large },
+        };
+        Show(new StackPanel { Children = { badge, hidden, dot } });
+        badge.ApplyTemplate();
+        hidden.ApplyTemplate();
+        dot.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var indicator = badge.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Badge");
+        indicator.HorizontalAlignment.ShouldBe(HorizontalAlignment.Left);
+        indicator.VerticalAlignment.ShouldBe(VerticalAlignment.Bottom);
+        indicator.BorderThickness.ShouldBe(new Thickness(2));
+        AutomationProperties.GetName(badge).ShouldBe("Badge 8");
+
+        hidden.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Badge").IsVisible.ShouldBeFalse();
+        AutomationProperties.GetName(dot).ShouldBe("Badge dot");
+    }
+
+    [AvaloniaFact]
     public void AvatarGroup_collapses_overflow_into_surplus()
     {
         var group = new AvatarGroup { Max = 4 };
@@ -142,6 +269,28 @@ public class DisplayTests
         var panel = group.GetVisualDescendants().OfType<StackPanel>().First(p => p.Name == "PART_Items");
         panel.Children.Count.ShouldBe(5);
         panel.Children[4].ShouldBeOfType<Avatar>().Content.ShouldBe("+2");
+    }
+
+    [AvaloniaFact]
+    public void AvatarGroup_applies_spacing_shape_size_and_automation_name()
+    {
+        var group = new AvatarGroup { Max = 2, Spacing = -6 };
+        group.Items.Add(new Avatar { Content = "A", Size = LoamSize.Small, Rounded = true });
+        group.Items.Add(new Avatar { Content = "B", Size = LoamSize.Small, Rounded = true });
+        group.Items.Add(new Avatar { Content = "C", Size = LoamSize.Small, Rounded = true });
+        Show(group);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var panel = group.GetVisualDescendants().OfType<StackPanel>().First(p => p.Name == "PART_Items");
+        panel.Children.Count.ShouldBe(3);
+        panel.Children[1].ShouldBeOfType<Avatar>().Margin.ShouldBe(new Thickness(-6, 0, 0, 0));
+
+        var surplus = panel.Children[2].ShouldBeOfType<Avatar>();
+        surplus.Content.ShouldBe("+1");
+        surplus.Size.ShouldBe(LoamSize.Small);
+        surplus.Rounded.ShouldBeTrue();
+        AutomationProperties.GetName(group).ShouldBe("Avatar group, 3 items");
     }
 
     [AvaloniaFact]
@@ -235,6 +384,44 @@ public class DisplayTests
         header.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_Subtitle").Text.ShouldBe("Updated today");
         header.GetVisualDescendants().OfType<Avalonia.Controls.Presenters.ContentPresenter>()
             .First(p => p.Name == "PART_Avatar").IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Card_builds_standard_anatomy_from_slots()
+    {
+        var card = new Card
+        {
+            Title = "Release board",
+            Subtitle = "Updated today",
+            HeaderAvatar = new Avatar { Content = "PL" },
+            HeaderAction = new IconButton { Icon = Icons.Material.Filled.Settings },
+            ShowMedia = true,
+            MediaHeight = 96,
+            Body = new Text { Text = "Component audit" },
+            Actions =
+            {
+                new Loam.Controls.Button { Content = "Details" },
+                new Loam.Controls.Button { Content = "Open", Variant = Variant.Filled },
+            },
+        };
+        Show(card);
+        card.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        card.GetVisualDescendants().OfType<CardHeader>().ShouldHaveSingleItem();
+        var media = card.GetVisualDescendants().OfType<CardMedia>().Single();
+        media.MediaHeight.ShouldBe(96);
+        card.GetVisualDescendants().OfType<CardContent>().ShouldHaveSingleItem();
+        card.GetVisualDescendants().OfType<CardActions>().ShouldHaveSingleItem();
+        card.GetVisualDescendants().OfType<Text>()
+            .Any(text => string.Equals(text.Text, "Release board", StringComparison.Ordinal))
+            .ShouldBeTrue();
+        card.GetVisualDescendants().OfType<Text>()
+            .Any(text => string.Equals(text.Text, "Component audit", StringComparison.Ordinal))
+            .ShouldBeTrue();
+        card.GetVisualDescendants().OfType<Loam.Controls.Button>()
+            .Select(button => button.Content?.ToString())
+            .ShouldContain("Open");
     }
 
     [AvaloniaFact]

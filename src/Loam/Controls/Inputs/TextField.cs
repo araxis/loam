@@ -317,7 +317,7 @@ public class TextField : TemplatedControl
             _textBox.PlaceholderText = resting ? null : Placeholder;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, floating);
+        FieldChrome.ApplyLabelLayout(this, _inputBorder, _labelHost, floating, Variant);
 
         if (_helper is not null)
         {

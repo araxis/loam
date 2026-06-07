@@ -119,7 +119,7 @@ public class NavGroup : TemplatedControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (InteractionAssist.IsActivationKey(e.Key))
+        if (IsEnabled && InteractionAssist.IsActivationKey(e.Key))
         {
             Toggle();
             e.Handled = true;
@@ -128,7 +128,15 @@ public class NavGroup : TemplatedControl
 
     private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => RebuildItems();
 
-    private void Toggle() => Expanded = !Expanded;
+    private void Toggle()
+    {
+        if (!IsEnabled)
+        {
+            return;
+        }
+
+        Expanded = !Expanded;
+    }
 
     private void UpdateHeader()
     {

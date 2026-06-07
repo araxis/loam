@@ -19,6 +19,7 @@ internal static class AppBarTheme
             {
                 new Setter(TemplatedControl.TemplateProperty, BuildTemplate()),
                 new Setter(TemplatedControl.PaddingProperty, new Thickness(8, 0)),
+                new Setter(ContentControl.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch),
                 new Setter(ContentControl.VerticalContentAlignmentProperty, VerticalAlignment.Center),
                 new Setter(Layoutable.HorizontalAlignmentProperty, HorizontalAlignment.Stretch),
             },
@@ -28,9 +29,9 @@ internal static class AppBarTheme
         new((appBar, scope) =>
         {
             var presenter = new ContentPresenter().Named("PART_ContentPresenter", scope);
-            presenter.Bind(ContentPresenter.ContentProperty, appBar.GetObservable(ContentControl.ContentProperty));
             presenter.Bind(ContentPresenter.ContentTemplateProperty, appBar.GetObservable(ContentControl.ContentTemplateProperty));
             presenter.Bind(ContentPresenter.PaddingProperty, appBar.GetObservable(TemplatedControl.PaddingProperty));
+            presenter.Bind(ContentPresenter.HorizontalContentAlignmentProperty, appBar.GetObservable(ContentControl.HorizontalContentAlignmentProperty));
             presenter.Bind(ContentPresenter.VerticalContentAlignmentProperty, appBar.GetObservable(ContentControl.VerticalContentAlignmentProperty));
 
             return new Border { Child = presenter }.Named("PART_Root", scope);

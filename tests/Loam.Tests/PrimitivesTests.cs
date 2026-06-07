@@ -1,12 +1,15 @@
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Loam;
 using Loam.Controls;
+using Loam.Theming;
 using Shouldly;
 using Xunit;
 
@@ -50,6 +53,93 @@ public class PrimitivesTests
     }
 
     [AvaloniaFact]
+    public void Paper_elevation_uses_tonal_surface_without_cast_shadow()
+    {
+        var paper = new Paper { Elevation = 8 };
+        Show(paper);
+        var border = Root(paper);
+
+        border.BoxShadow.Count.ShouldBe(0);
+        ((ISolidColorBrush)border.Background!).Color.ShouldBe(Color.Parse("#E6E0E9"));
+    }
+
+    [AvaloniaFact]
+    public void Paper_generated_anatomy_uses_shape_color_compact_and_automation()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var paper = new Paper
+        {
+            Title = "Surface title",
+            Subtitle = "Supporting text",
+            Body = "Body copy",
+            Compact = true,
+            Shape = SurfaceShape.Large,
+            Color = LoamColor.Primary,
+        };
+        Show(paper);
+
+        var root = Root(paper);
+        root.CornerRadius.ShouldBe(LoamShape.Default.Large);
+        ((ISolidColorBrush)root.Background!).Color.ShouldNotBe(Color.Parse("#F7F2FA"));
+
+        paper.GetVisualDescendants().OfType<Text>()
+            .Any(text => string.Equals(text.Text, "Surface title", StringComparison.Ordinal))
+            .ShouldBeTrue();
+        paper.GetVisualDescendants().OfType<Text>()
+            .Any(text => string.Equals(text.Text, "Supporting text", StringComparison.Ordinal))
+            .ShouldBeTrue();
+        paper.GetVisualDescendants().OfType<ContentControl>()
+            .Any(content => string.Equals(content.Content as string, "Body copy", StringComparison.Ordinal))
+            .ShouldBeTrue();
+
+        AutomationProperties.GetName(paper).ShouldBe("Surface title");
+        AutomationProperties.GetHelpText(paper).ShouldBe("Compact surface");
+    }
+
+    [AvaloniaFact]
+    public void Card_generated_anatomy_exposes_body_text_and_action_events()
+    {
+        var primaryClicked = false;
+        var secondaryClicked = false;
+        var card = new Card
+        {
+            Title = "Release board",
+            Subtitle = "Updated today",
+            HeaderAvatar = new Avatar { Content = "PL" },
+            HeaderAction = new IconButton { Icon = Icons.Material.Filled.Settings },
+            ShowMedia = true,
+            MediaHeight = 96,
+            BodyText = "Inputs, pickers, and surfaces are ready for review.",
+            SecondaryActionText = "Details",
+            PrimaryActionText = "Open",
+        };
+        card.PrimaryActionClick += (_, _) => primaryClicked = true;
+        card.SecondaryActionClick += (_, _) => secondaryClicked = true;
+
+        Show(card);
+        card.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        card.GetVisualDescendants().OfType<CardHeader>().ShouldHaveSingleItem();
+        card.GetVisualDescendants().OfType<CardMedia>().Single().MediaHeight.ShouldBe(96);
+        card.GetVisualDescendants().OfType<Text>()
+            .Any(text => string.Equals(text.Text, card.BodyText, StringComparison.Ordinal))
+            .ShouldBeTrue();
+
+        var generatedButtons = card.GetVisualDescendants().OfType<Loam.Controls.Button>().ToArray();
+        var details = generatedButtons.Single(button => string.Equals(button.Content as string, "Details", StringComparison.Ordinal));
+        var open = generatedButtons.Single(button => string.Equals(button.Content as string, "Open", StringComparison.Ordinal));
+
+        details.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        open.RaiseEvent(new RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+
+        secondaryClicked.ShouldBeTrue();
+        primaryClicked.ShouldBeTrue();
+        AutomationProperties.GetName(details).ShouldBe("Details");
+        AutomationProperties.GetName(open).ShouldBe("Open");
+    }
+
+    [AvaloniaFact]
     public void Text_typo_drives_font_size_and_weight()
     {
         var text = new Text { Text = "hi", Typo = Typo.H6 };
@@ -78,10 +168,38 @@ public class PrimitivesTests
     }
 
     [AvaloniaFact]
+    public void Text_exposes_automation_name_and_inherit_clears_foreground()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var text = new Text { Text = "Status", Color = LoamColor.Primary };
+        Show(text);
+
+        AutomationProperties.GetName(text).ShouldBe("Status");
+        ((ISolidColorBrush)text.Foreground!).Color.ShouldBe(Color.Parse("#6750A4"));
+
+        text.Color = LoamColor.Inherit;
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)text.Foreground!).Color.ShouldNotBe(Color.Parse("#6750A4"));
+    }
+
+    [AvaloniaFact]
     public void Divider_orientation_sets_thickness()
     {
         new Divider().Height.ShouldBe(1d);
         new Divider { Vertical = true }.Width.ShouldBe(1d);
+    }
+
+    [Fact]
+    public void Divider_type_sets_insets_and_automation_name()
+    {
+        var horizontal = new Divider { DividerType = DividerType.Middle };
+        horizontal.Margin.ShouldBe(new Thickness(16, 0, 16, 0));
+        AutomationProperties.GetName(horizontal).ShouldBe("Divider");
+
+        var vertical = new Divider { Vertical = true, DividerType = DividerType.Inset };
+        vertical.Margin.ShouldBe(new Thickness(0, 16, 0, 0));
+        vertical.Width.ShouldBe(1d);
     }
 
     [AvaloniaFact]
@@ -104,12 +222,38 @@ public class PrimitivesTests
         ((ISolidColorBrush)Root(button).Background!).Color.A.ShouldBe((byte)0);
     }
 
+    [AvaloniaFact]
+    public void Fab_applies_five_size_styles()
+    {
+        var extraSmall = new Fab { Label = "ExtraSmall", Size = LoamSize.ExtraSmall };
+        Show(extraSmall);
+        extraSmall.MinHeight.ShouldBe(40d);
+        Root(extraSmall).Padding.ShouldBe(new Thickness(12, 0));
+
+        var small = new Fab { Label = "Small", Size = LoamSize.Small };
+        Show(small);
+        small.MinHeight.ShouldBe(48d);
+        Root(small).Padding.ShouldBe(new Thickness(16, 0));
+
+        var large = new Fab { Label = "Large", Size = LoamSize.Large };
+        Show(large);
+        large.MinHeight.ShouldBe(96d);
+        Root(large).Padding.ShouldBe(new Thickness(32, 0));
+
+        var extraLarge = new Fab { Label = "ExtraLarge", Size = LoamSize.ExtraLarge };
+        Show(extraLarge);
+        extraLarge.MinHeight.ShouldBe(136d);
+        Root(extraLarge).Padding.ShouldBe(new Thickness(48, 0));
+    }
+
     [Fact]
     public void Icon_pixel_size_maps_per_size()
     {
+        Icon.PixelSize(LoamSize.ExtraSmall).ShouldBe(18d);
         Icon.PixelSize(LoamSize.Small).ShouldBe(20d);
         Icon.PixelSize(LoamSize.Medium).ShouldBe(24d);
         Icon.PixelSize(LoamSize.Large).ShouldBe(32d);
+        Icon.PixelSize(LoamSize.ExtraLarge).ShouldBe(40d);
     }
 
     [AvaloniaFact]
@@ -135,6 +279,22 @@ public class PrimitivesTests
         Show(icon);
 
         ((ISolidColorBrush)icon.Foreground!).Color.ShouldBe(Color.Parse("#6750A4"));
+    }
+
+    [AvaloniaFact]
+    public void Icon_exposes_automation_name_and_inherit_clears_foreground()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var icon = new Icon { Data = Icons.Material.Filled.Home, Color = LoamColor.Primary };
+        Show(icon);
+
+        AutomationProperties.GetName(icon).ShouldBe("Icon");
+        ((ISolidColorBrush)icon.Foreground!).Color.ShouldBe(Color.Parse("#6750A4"));
+
+        icon.Color = LoamColor.Inherit;
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)icon.Foreground!).Color.ShouldNotBe(Color.Parse("#6750A4"));
     }
 
     [AvaloniaFact]
@@ -165,6 +325,42 @@ public class PrimitivesTests
         Dispatcher.UIThread.RunJobs();
 
         iconButton.GetVisualDescendants().OfType<Ripple>().ShouldNotBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Button_family_applies_all_size_metrics()
+    {
+        foreach (var size in new[] { LoamSize.ExtraSmall, LoamSize.Small, LoamSize.Medium, LoamSize.Large, LoamSize.ExtraLarge })
+        {
+            var button = new Loam.Controls.Button { Content = size.ToString(), Size = size };
+            Show(button);
+            button.MinHeight.ShouldBe(size switch
+            {
+                LoamSize.ExtraSmall => 32d,
+                LoamSize.Small => 36d,
+                LoamSize.Large => 54d,
+                LoamSize.ExtraLarge => 64d,
+                _ => 46d,
+            }, size.ToString());
+            button.FontSize.ShouldBe(size switch
+            {
+                LoamSize.ExtraSmall => 11d,
+                LoamSize.Small => 12d,
+                LoamSize.ExtraLarge => 16d,
+                _ => 14d,
+            }, size.ToString());
+
+            var iconButton = new IconButton { Icon = Icons.Material.Filled.Settings, Size = size };
+            Show(iconButton);
+            iconButton.MinHeight.ShouldBe(size switch
+            {
+                LoamSize.ExtraSmall => 32d,
+                LoamSize.Small => 36d,
+                LoamSize.Large => 56d,
+                LoamSize.ExtraLarge => 64d,
+                _ => 48d,
+            }, size.ToString());
+        }
     }
 
     [AvaloniaFact]
@@ -225,6 +421,46 @@ public class PrimitivesTests
         Dispatcher.UIThread.RunJobs();
 
         Root(group.Items[2]).BorderThickness.ShouldBe(new Thickness(0));
+    }
+
+    [AvaloniaFact]
+    public void ButtonGroup_keeps_connected_strip_unclipped_in_constrained_parent()
+    {
+        var group = new ButtonGroup { Variant = Variant.Outlined, Color = LoamColor.Primary, Size = LoamSize.ExtraLarge };
+        group.Items.Add(new Loam.Controls.Button { Content = "Day" });
+        group.Items.Add(new Loam.Controls.Button { Content = "Week" });
+        group.Items.Add(new Loam.Controls.Button { Content = "Month" });
+        var host = new Avalonia.Controls.Grid { ColumnDefinitions = new ColumnDefinitions("260") };
+        host.Children.Add(group);
+        Show(host);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var strip = group.GetVisualDescendants().OfType<StackPanel>()
+            .Single(panel => panel.Name == "PART_Items");
+        strip.MinWidth.ShouldBeGreaterThan(260);
+        strip.Bounds.Width.ShouldBeGreaterThan(260);
+        group.Items.Select(item => Root(item).Bounds.Width).Sum().ShouldBeGreaterThan(260);
+    }
+
+    [AvaloniaFact]
+    public void ButtonGroup_vertical_keeps_connected_strip_unclipped_in_constrained_parent()
+    {
+        var group = new ButtonGroup { Variant = Variant.Outlined, Color = LoamColor.Primary, Size = LoamSize.Large, Vertical = true };
+        group.Items.Add(new Loam.Controls.Button { Content = "Day" });
+        group.Items.Add(new Loam.Controls.Button { Content = "Week" });
+        group.Items.Add(new Loam.Controls.Button { Content = "Month" });
+        var host = new Avalonia.Controls.Grid { RowDefinitions = new RowDefinitions("120") };
+        host.Children.Add(group);
+        Show(host);
+        group.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var strip = group.GetVisualDescendants().OfType<StackPanel>()
+            .Single(panel => panel.Name == "PART_Items");
+        strip.MinHeight.ShouldBeGreaterThan(120);
+        strip.Bounds.Height.ShouldBeGreaterThan(120);
+        group.Items.Select(item => Root(item).Bounds.Height).Sum().ShouldBeGreaterThan(120);
     }
 
     [AvaloniaFact]
