@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 3 — Collision tooling: global-usings snippet (Phase 3 core complete)
+
+**Done**
+- Added a documented one-file **`GlobalUsings.cs`** recipe to `docs/guide/csharp-ui.md`: a single
+  `global using Button = Loam.Controls.Button;` (etc.) makes the bare restyle names resolve to Loam
+  project-wide, removing the per-file `using LoamX = …` friction REVIEW flagged. Documented the
+  trade-off (qualify Avalonia's control in the rare file that needs it) and that net-new concepts
+  (`ResponsiveGrid`/`Col`/`Paper`/`Chip`) never clash.
+- This satisfies the PLAN's "GlobalUsings snippet" collision aid. A full Roslyn rename/collision
+  analyzer remains an optional, heavier future item (ADR-0008).
+
+**Verified**
+- Docs-only change; `npm run docs:build` passed. (No code/test impact; suite stays at 405.)
+
+**Phase 3 core is complete:** `AppBar` custom-actions slot, explicit generated-vs-custom content
+precedence (+ debug warning), and the global-usings collision aid. Remaining Phase 3 is the optional
+analyzer.
+
+**Next:** Phase 4 — component churn & packaging: drop thin wrappers (`Stack` → `StackPanel`),
+consolidate the table story (`SimpleTable` vs `DataGrid<T>`), and extract `Loam.Charts`/`Loam.Pickers`/
+`Loam.Data` satellites (ADR-0009); plus add `NavigationRail`/`BottomNavigation`/`CommandPalette`.
+
+---
+
 ## 2026-06-07 — v3 Phase 3 — Generated-vs-custom content precedence
 
 **Done**

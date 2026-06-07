@@ -49,7 +49,7 @@ picking the project up cold. Read this file first.
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 3 in progress** (branch `work/vnext`, version
+- **Phase:** **v3 (vNext) — Phase 3 core complete; Phase 4 next** (branch `work/vnext`, version
   `3.0.0-preview.1`). Phases 0 (scaffold), 1 (theme consistency), and 2 (theming power) are done. The
   v3 roadmap and its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and
   [`REVIEW.md`](../REVIEW.md).
@@ -58,8 +58,11 @@ picking the project up cold. Read this file first.
   switch (`LoamDensity.Compact` + `SetDensity`), and a high-contrast variant (`LoamContrast`). Runtime
   theming API: `SetSeed`/`SetPrimary`/`SetPalette`/`SetDensity`/`SetData`. Builds clean; **401 tests
   pass**; demo visually confirmed light + dark.
-- **Next:** Phase 3 — naming & ergonomics. Done: `AppBar.CustomActions` (arbitrary `Control`s);
-  generated-vs-custom content precedence (explicit rule + debug-only `DualContent` warning on
-  `Paper`/`Card`/`Drawer`). Remaining: collision tooling (GlobalUsings snippet / analyzer for the
-  restyle names). (Optional later: CAM16/HCT upgrade; wire/remove the orphaned `DesignSystemView`.)
+- **Phase 3 core done:** `AppBar.CustomActions`, generated-vs-custom content precedence (+ debug-only
+  `DualContent` warning), and a global-usings collision aid (docs). Optional remainder: a Roslyn
+  rename/collision analyzer.
+- **Next:** Phase 4 — component churn & packaging: drop thin wrappers (`Stack`→`StackPanel`),
+  consolidate the table story, extract `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites (ADR-0009),
+  add `NavigationRail`/`BottomNavigation`/`CommandPalette`. (Optional: CAM16/HCT upgrade; wire/remove
+  the orphaned `DesignSystemView`.)
 - **Last updated:** 2026-06-07

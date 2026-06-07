@@ -69,6 +69,26 @@ var button = new Loam.Controls.Button { Content = "Go" };
 Inside the Loam library itself the local type always wins, so this only matters in your app code that
 imports both namespaces.
 
+### Avoid per-file aliases with one global-usings file
+
+Rather than adding `using LoamButton = …` to every file, drop a single **`GlobalUsings.cs`** in your
+project. A `global using` **alias** makes the bare name resolve to the Loam type across the whole
+project, with no per-file aliasing and no ambiguity:
+
+```csharp
+// GlobalUsings.cs — alias only the restyled types you actually use.
+global using Button = Loam.Controls.Button;
+global using Text = Loam.Controls.Text;
+global using Card = Loam.Controls.Card;
+global using Menu = Loam.Controls.Menu;
+global using CheckBox = Loam.Controls.CheckBox;
+global using Slider = Loam.Controls.Slider;
+```
+
+Now `new Button { … }` means Loam's button everywhere. The trade-off: in the rare file that needs the
+Avalonia control, qualify it (`new Avalonia.Controls.Button()`). Alias only what you use both ways —
+net-new Loam concepts (e.g. `ResponsiveGrid`, `Col`, `Paper`, `Chip`) never clash and need nothing.
+
 ## Binding to theme tokens
 
 For custom controls, resolve Loam tokens through dynamic-resource observables — exactly how Loam's own
