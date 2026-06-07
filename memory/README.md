@@ -50,10 +50,10 @@ picking the project up cold. Read this file first.
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 4 in progress** (branch `work/vnext`, version
-  `3.0.0-preview.1`). Phases 0 (scaffold), 1 (theme consistency), and 2 (theming power) are done. The
-  v3 roadmap and its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and
-  [`REVIEW.md`](../REVIEW.md).
+- **Phase:** **v3 (vNext) — Phases 0–3 done; Phase 4 additive done (package split deferred)** (branch
+  `work/vnext`, version `3.0.0-preview.1`). The v3 roadmap and its driving review live at the repo root
+  in [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md). Migration guide:
+  [`docs/migration/v2-to-v3.md`](../docs/migration/v2-to-v3.md).
 - **Latest:** **Phase 2 (theming power) complete.** Material You seed→scheme generator (ADR-0012;
   CIELAB tonal palettes, accessible by construction), a live gallery seed picker, a one-call density
   switch (`LoamDensity.Compact` + `SetDensity`), and a high-contrast variant (`LoamContrast`). Runtime
@@ -65,7 +65,11 @@ picking the project up cold. Read this file first.
 - **Phase 4 so far:** deprecated `Stack`→`StackPanel` (`LOAM0003`); table strategy decided
   (ADR-0013: `DataGrid<T>` recommended); added `NavigationRail`, `BottomNavigation`, `CommandPalette`
   (M3). **414 tests.**
-- **Next:** Phase 4 remaining — the package split into `Loam.Charts`/`Loam.Pickers`/`Loam.Data`
-  satellites (ADR-0009), the last and biggest Phase 4 item.
-  (Optional: CAM16/HCT upgrade; wire/remove the orphaned `DesignSystemView`/`LayoutView`.)
+- **Phase 6 polish:** migration guide brought in sync with reality (Phases 1–3 ✅, delivered-features
+  summary); README test count refreshed. **414 tests.**
+- **Next (maintainer-directed):** the **package split** is deferred (ADR-0009; needs satellite
+  theme-registration design). Open options: Phase 5 — DataGrid maturity (grouping is the main gap;
+  sort/filter/page/virtualize/edit already exist); more Phase 6 (visual-regression snapshots,
+  positioning docs) toward `3.0.0`. (Optional: CAM16/HCT upgrade; wire/remove orphaned
+  `DesignSystemView`/`LayoutView`.)
 - **Last updated:** 2026-06-07

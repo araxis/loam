@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 6 — Migration-guide accuracy pass (deferring package split)
+
+**Decision:** per maintainer direction, defer the Phase 4 **package split** (`Loam.Charts`/
+`Loam.Pickers`/`Loam.Data`) — it's the biggest, riskiest v3 change and has a theme-registration
+coupling to design first. Keep the single assembly for now and consolidate (Phase 6).
+
+**Done**
+- Brought `docs/migration/v2-to-v3.md` in sync with reality (it's a living record): phase tags in
+  "What v3 is about" now read Phases 1–3 ✅ done, Phase 4 in progress (split deferred). Replaced the
+  stale "Coming in later phases" list with an accurate **Delivered in this preview** summary
+  (theme bridge, Material You + high-contrast + density, AppBar slot/content-precedence/global-usings,
+  NavigationRail/BottomNavigation/CommandPalette) plus a trimmed **Coming** list (package split,
+  DataGrid maturity, release).
+- Refreshed the README status/test count (377 → **414**) and v3 framing.
+
+**Verified**
+- `npm run docs:build` passed. Docs-only change; suite unchanged at 414.
+
+**Next:** Phase 5 — DataGrid maturity (grouping is the main remaining gap; sort/filter/page/virtualize/
+edit already exist), or continue Phase 6 (visual-regression snapshots, positioning docs) before the
+`3.0.0` release. Package split remains deferred (ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 4 — CommandPalette (additive)
 
 **Done**

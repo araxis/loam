@@ -19,11 +19,12 @@ v3 keeps the things people like about Loam — pure-C# authoring, runtime themin
 component API — and fixes the rough edges found while building real apps on v2:
 
 1. **Theme consistency end-to-end** so base Avalonia chrome (scrollbars, tooltips, menus, window,
-   text selection) reads as Material, not Fluent. _(Phase 1 — planned.)_
-2. **Material You** tonal scheme generation from a single seed color. _(Phase 2 — planned.)_
+   text selection) reads as Material, not Fluent. _(Phase 1 — ✅ done.)_
+2. **Material You** tonal scheme generation from a single seed color. _(Phase 2 — ✅ done.)_
 3. **Naming & ergonomics**: stop shadowing `Avalonia.Controls` for net-new concepts, and smooth the
-   daily collision friction. _(Phase 3 — in progress; see the rename map below.)_
-4. **Modular packaging**: a lean core plus optional satellite packages. _(Phase 4 — planned.)_
+   daily collision friction. _(Phase 3 — ✅ done; see the rename map below.)_
+4. **Modular packaging**: a lean core plus optional satellite packages. _(Phase 4 — in progress; new
+   shell controls landed, the package split is deferred.)_
 
 ## Breaking-change & deprecation policy
 
@@ -114,15 +115,24 @@ Mechanical migration:
 `Spacing`, the `Xs`…`Xxl` span properties, `ResolveSpan(...)`, and the automation names are all
 unchanged — `ResponsiveGrid`/`Col` are behaviour-identical to the v2 `Grid`/`Item`.
 
+## Delivered in this preview
+
+Beyond the renames above, `3.0.0-preview.1` also ships these (no migration needed — additive or
+internal; see the docs site for each):
+
+- **Base-chrome theme bridge** so stray Avalonia controls (scrollbars, tooltips, menus, window
+  background, text selection, expanders) read as Material in light & dark _(Phase 1)_.
+- **Material You** seed → light+dark scheme generation (`LoamTheme.SetSeed`), a **high-contrast**
+  variant (`LoamContrast`), and a one-call **density** switch (`LoamDensity.Compact` + `SetDensity`)
+  _(Phase 2)_.
+- **`AppBar.CustomActions`** slot, explicit generated-vs-custom **content precedence** (+ debug
+  warning), and a **global-usings** collision aid _(Phase 3)_.
+- New shell controls: **`NavigationRail`**, **`BottomNavigation`**, and **`CommandPalette`** _(Phase 4)_.
+
 ## Coming in later phases
 
-These are tracked in [`PLAN.md`](https://github.com/araxis/loam/blob/main/PLAN.md); this guide will gain
-a concrete section for each as it ships.
+Tracked in [`PLAN.md`](https://github.com/araxis/loam/blob/main/PLAN.md):
 
-- **Theme bridge** for base Avalonia primitives + `SystemAccentColor*` mapping _(Phase 1)_.
-- **Material You** seed → full light/dark scheme generator _(Phase 2)_.
-- **`AppBar` custom-actions slot**, generated-vs-custom content precedence, collision tooling
-  (global-usings / analyzer) _(Phase 3)_.
-- **`Stack` removal**, table consolidation, and the **package split** into `Loam.Charts` /
-  `Loam.Pickers` / `Loam.Data` _(Phase 4)_.
+- **Package split** into `Loam.Charts` / `Loam.Pickers` / `Loam.Data` satellites _(Phase 4, ADR-0009)_.
 - **DataGrid maturity**: grouping, inline edit, virtualization, frozen columns _(Phase 5)_.
+- **Docs, migration polish, visual-regression tests, and the `3.0.0` release** _(Phase 6)_.
