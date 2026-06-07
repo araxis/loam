@@ -7,6 +7,28 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 3 — AppBar custom-actions slot
+
+**Done**
+- Added `AppBar.CustomActions` (`AvaloniaList<Control>`) — a trailing slot for arbitrary live controls
+  (toggles, search fields, stateful actions), rendered before the icon-only `Actions`. Solves the
+  REVIEW finding that `AppBar.Actions` only accepted immutable `AppBarAction`.
+- Re-host safety: the trailing strip is now a stable instance panel, detached from its previous parent
+  and cleared on each rebuild, so live `CustomActions` controls re-host without reparenting errors
+  (mirrors `MainContent`'s header-row approach). `MainContent.Actions` was already `Control`-typed.
+- Documented `Actions` vs `CustomActions` vs `Content` in `docs/components/layout.md`.
+- Added `ShellTests`: custom + icon actions render together; live controls survive repeated rebuilds.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **403 passed**, 0 failed.
+
+**Next:** Phase 3 remaining — generated-vs-custom content precedence (explicit slots + debug warning
+when both `Content` and generated props are set on `Paper`/`Card`/`Drawer`); collision tooling
+(GlobalUsings snippet / analyzer for the restyle names).
+
+---
+
 ## 2026-06-07 — v3 Phase 2 — High-contrast variant (Phase 2 complete)
 
 **Done**

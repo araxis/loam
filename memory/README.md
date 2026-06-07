@@ -49,7 +49,7 @@ picking the project up cold. Read this file first.
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 2 complete; starting Phase 3** (branch `work/vnext`, version
+- **Phase:** **v3 (vNext) — Phase 3 in progress** (branch `work/vnext`, version
   `3.0.0-preview.1`). Phases 0 (scaffold), 1 (theme consistency), and 2 (theming power) are done. The
   v3 roadmap and its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and
   [`REVIEW.md`](../REVIEW.md).
@@ -58,8 +58,8 @@ picking the project up cold. Read this file first.
   switch (`LoamDensity.Compact` + `SetDensity`), and a high-contrast variant (`LoamContrast`). Runtime
   theming API: `SetSeed`/`SetPrimary`/`SetPalette`/`SetDensity`/`SetData`. Builds clean; **401 tests
   pass**; demo visually confirmed light + dark.
-- **Next:** Phase 3 — naming & ergonomics: `AppBar` custom-actions slot (arbitrary `Control`s),
-  generated-vs-custom content precedence (explicit slots + debug warning), collision tooling
-  (GlobalUsings/analyzer). (Optional later: CAM16/HCT upgrade for exact M3 fidelity; wire/remove the
-  orphaned `DesignSystemView`.)
+- **Next:** Phase 3 — naming & ergonomics. Done: `AppBar.CustomActions` (arbitrary `Control`s).
+  Remaining: generated-vs-custom content precedence (explicit slots + debug warning on `Paper`/`Card`/
+  `Drawer`), collision tooling (GlobalUsings/analyzer). (Optional later: CAM16/HCT upgrade; wire/remove
+  the orphaned `DesignSystemView`.)
 - **Last updated:** 2026-06-07

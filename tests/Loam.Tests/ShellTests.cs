@@ -234,6 +234,53 @@ public class ShellTests
     }
 
     [AvaloniaFact]
+    public void AppBar_renders_custom_actions_alongside_icon_actions()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var toggle = new Switch { Name = "PART_CustomToggle" };
+        var bar = new AppBar
+        {
+            Width = 640,
+            Title = "Inbox",
+            CustomActions = { toggle },
+            Actions =
+            {
+                new AppBarAction { Icon = Icons.Material.Filled.Search, Label = "Search" },
+            },
+        };
+        Show(bar);
+        bar.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        bar.GetVisualDescendants().OfType<Switch>()
+            .Any(s => s.Name == "PART_CustomToggle").ShouldBeTrue();
+        bar.GetVisualDescendants().OfType<IconButton>()
+            .Any(button => AutomationProperties.GetName(button) == "Search").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void AppBar_custom_actions_survive_rebuilds_without_reparenting_errors()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        var search = new TextBox { Name = "PART_Search", Width = 160 };
+        var bar = new AppBar { Width = 640, Title = "Files" };
+        Show(bar);
+        bar.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        bar.CustomActions.Add(search);
+        Dispatcher.UIThread.RunJobs();
+        bar.GetVisualDescendants().OfType<TextBox>().Any(t => t.Name == "PART_Search").ShouldBeTrue();
+
+        // A further rebuild must re-host the same live control without throwing.
+        bar.Actions.Add(new AppBarAction { Icon = Icons.Material.Filled.Add, Label = "Add" });
+        Dispatcher.UIThread.RunJobs();
+        bar.GetVisualDescendants().OfType<TextBox>().Any(t => t.Name == "PART_Search").ShouldBeTrue();
+        bar.GetVisualDescendants().OfType<IconButton>()
+            .Any(button => AutomationProperties.GetName(button) == "Add").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
     public void Layout_hosts_appbar_drawer_and_main_content()
     {
         var layout = new Layout

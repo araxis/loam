@@ -387,6 +387,24 @@ Equivalent of the reference API's `AppBar`. A full-width, elevated, colored tool
 | `Color` | `LoamColor` | `LoamColor.Default` | App-bar background color. `Default` uses the theme's `AppbarBackground` palette token. |
 | `Elevation` | `int` | `4` | Shadow depth. |
 | `Dense` | `bool` | `false` | Reduces the bar height to 48 px. |
+| `Title` / `Subtitle` | `string?` | `null` | Built-in title text shown in the default toolbar. |
+| `NavigationIcon` | `string?` | `null` | Leading icon path data (raises `NavigationClick` / runs `NavigationAction`). |
+| `Actions` | `IList<AppBarAction>` | empty | Trailing **icon-only** actions, each rendered as an `IconButton`. |
+| `CustomActions` | `IList<Control>` | empty | Trailing slot for **arbitrary live controls** (toggles, search fields, stateful actions). Rendered before `Actions`. |
+
+> Use `Actions` for simple icon buttons and `CustomActions` for anything else (a search `TextField`, a
+> `ToggleIconButton` you flip, a menu). For a fully custom bar, set `Content` instead — it replaces the
+> generated toolbar entirely.
+
+```csharp
+var bar = new AppBar
+{
+    Title = "Inbox",
+    NavigationIcon = Icons.Material.Filled.Menu,
+    CustomActions = { searchField, new ToggleIconButton { Icon = Icons.Material.Filled.DarkMode } },
+    Actions = { new AppBarAction { Icon = Icons.Material.Filled.MoreVert, Label = "More" } },
+};
+```
 
 ---
 
