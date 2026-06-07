@@ -9,10 +9,11 @@
     <!-- Packaging -->
     <IsPackable>true</IsPackable>
     <PackageId>Loam</PackageId>
-    <Version>2.0.1</Version>
+    <Version>2.0.2</Version>
     <Description>Pure C# themed controls for Avalonia applications.</Description>
     <PackageTags>avalonia;ui;controls;theme;csharp</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://araxis.github.io/loam/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/araxis/loam</RepositoryUrl>
@@ -31,6 +32,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\loam-icon-512.png" Pack="true" PackagePath="\loam-icon.png" />
   </ItemGroup>
 
 </Project>

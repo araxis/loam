@@ -14,6 +14,7 @@ export default defineConfig({
   ignoreDeadLinks: true,
 
   head: [
+    ['link', { rel: 'icon', type: 'image/png', href: `${base}favicon.png` }],
     ['meta', { name: 'theme-color', content: '#594AE2' }],
     ['meta', { name: 'keywords', content: 'avalonia, ui, controls, theme, csharp, dotnet' }],
   ],
@@ -23,6 +24,7 @@ export default defineConfig({
   },
 
   themeConfig: {
+    logo: '/loam-icon-128.png',
     siteTitle: 'Loam',
 
     nav: [
