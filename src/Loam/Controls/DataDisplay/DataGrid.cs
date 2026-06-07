@@ -149,6 +149,8 @@ public class DataGrid<T> : Decorator
     private Func<T, object?>? _groupBy;
     private readonly HashSet<object> _collapsedGroups = new();
     private bool _collapsibleGroups = true;
+    private string _emptyText = "No data";
+    private Control? _emptyContent;
 
     /// <summary>Creates the grid.</summary>
     public DataGrid()
@@ -269,6 +271,20 @@ public class DataGrid<T> : Decorator
         set { _collapsibleGroups = value; Rebuild(); }
     }
 
+    /// <summary>Text shown (below the header) when there are no rows to display after filtering. Defaults to "No data".</summary>
+    public string EmptyText
+    {
+        get => _emptyText;
+        set { _emptyText = value; Rebuild(); }
+    }
+
+    /// <summary>Optional custom empty-state content; overrides <see cref="EmptyText"/> when set.</summary>
+    public Control? EmptyContent
+    {
+        get => _emptyContent;
+        set { _emptyContent = value; Rebuild(); }
+    }
+
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
@@ -385,7 +401,51 @@ public class DataGrid<T> : Decorator
             }
         }
 
+        if (rowIndex == 1)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var empty = BuildEmptyRow();
+            AvaGrid.SetRow(empty, rowIndex);
+            AvaGrid.SetColumn(empty, 0);
+            AvaGrid.SetColumnSpan(empty, Columns.Count);
+            grid.Children.Add(empty);
+        }
+
         return grid;
+    }
+
+    private Border BuildEmptyRow()
+    {
+        Control content;
+        if (_emptyContent is not null)
+        {
+            if (_emptyContent.Parent is Border previous)
+            {
+                previous.Child = null;
+            }
+
+            content = _emptyContent;
+        }
+        else
+        {
+            content = new Text
+            {
+                Text = _emptyText,
+                Typo = Typo.Body2,
+                Color = LoamColor.Default,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+        }
+
+        var cell = new Border
+        {
+            Child = content,
+            Padding = new Thickness(16, 24),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+        InteractionAssist.SetAutomationName(cell, _emptyContent is null ? _emptyText : "No data");
+        return cell;
     }
 
     private Border BuildHeaderCell(DataGridColumn<T> column)

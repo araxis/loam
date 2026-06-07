@@ -7,6 +7,25 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 5 — DataGrid empty state
+
+**Done**
+- `DataGrid<T>` now renders a proper empty state (below the header) when there are no rows to display
+  after filtering: `EmptyText` (default "No data") or a custom `EmptyContent` control, spanning all
+  columns. Detected via "no data/group rows rendered" so collapsed-but-present groups don't trigger it;
+  custom `EmptyContent` is detached from its prior parent on rebuild (reparenting-safe).
+- Added two `DataDisplayTests` (empty `Items` shows "No data"; filter excluding all shows custom text).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **420 passed**, 0 failed.
+
+**Next:** frozen columns is the remaining named Phase 5 item but needs a column-width API + a
+synced-horizontal-scroll two-pane layout (row-height alignment) — a larger change; deferred with that
+rationale. Otherwise Phase 6 release prep. Package split still deferred (ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 5 — Collapsible DataGrid groups
 
 **Done**

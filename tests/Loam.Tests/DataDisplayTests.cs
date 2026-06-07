@@ -146,6 +146,37 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void DataGrid_shows_empty_state_when_no_rows()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person>();
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "No data").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_empty_state_uses_custom_text_when_filter_excludes_all()
+    {
+        var grid = new DataGrid<Person>
+        {
+            EmptyText = "No matches",
+            FilterText = "zzz",
+            Filter = (person, text) => person.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("No matches");
+        texts.ShouldNotContain("Alice");
+    }
+
+    [AvaloniaFact]
     public void DataGrid_filter_text_limits_rendered_rows()
     {
         var grid = new DataGrid<Person>
