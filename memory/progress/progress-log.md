@@ -7,6 +7,34 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 5 — DataGrid frozen columns + group aggregates
+
+**Done**
+- **Column-width API:** `DataGridColumn<T>.Width` (pixel; `null` = star). Single-grid mode now honors
+  mixed fixed/star columns.
+- **Frozen columns:** `DataGrid<T>.FrozenColumns` pins the leading N columns in a left `Grid` while the
+  rest render in a right `Grid` inside a horizontal `ScrollViewer` (two-pane `BuildFrozenGrid`). Row
+  hover/selection are **synced across panes** via a shared `RowVisual` (refactored the old per-border
+  closure state into `RowVisual` + `AddRowBackgroundTo` + `ApplyRowBackgrounds`). `RowHeight` (px, 0=auto)
+  guarantees cross-pane row alignment for custom-height cells. Frozen layouts size all columns by pixel
+  width (default 140 when unset). Frozen is **ignored while grouped** (falls back to single grid) to
+  avoid the group-header-spanning-panes problem — documented limitation.
+- **Group aggregates:** `GroupAggregate` (`Func<IReadOnlyList<T>, string>?`) appends computed text
+  (sum/avg/etc.) to each group header.
+- Added `DataDisplayTests`: two-pane render + horizontal scroller, frozen row activation selects,
+  frozen-ignored-while-grouped, group-aggregate text. Docs (`data-display.md`) + tracker updated.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors (fixed CA1859 by typing
+  the builders as `Grid`).
+- Full suite — **424 passed**, 0 failed.
+
+**This completes the named Phase 5 data-maturity items** (grouping, collapsible groups, empty state,
+frozen columns, group aggregates). **Next:** Phase 6 release prep (visual-regression snapshots,
+positioning docs, `3.0.0`), or richer inline-edit. Package split still deferred (ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 5 — DataGrid empty state
 
 **Done**

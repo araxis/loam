@@ -114,8 +114,11 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Elevation` | `int` | `1` | Host paper elevation. Mirrors the reference API's `Elevation`. |
 | `GroupBy` | `Func<T, object?>?` | `null` | Groups rows by key with a group-header row (key + count) above each group, in first-appearance order (follows the current sort). Applies within the rendered page. |
 | `CollapsibleGroups` | `bool` | `true` | When grouped, lets the user click (or keyboard-activate) a group header to collapse/expand its rows. Collapsed state is keyed by group key and survives re-renders. |
+| `GroupAggregate` | `Func<IReadOnlyList<T>, string>?` | `null` | Optional text appended to each group header, computed from the group's items (e.g. a sum or average). |
 | `EmptyText` | `string` | `"No data"` | Text shown below the header when there are no rows to display after filtering. |
 | `EmptyContent` | `Control?` | `null` | Custom empty-state content; overrides `EmptyText` when set. |
+| `FrozenColumns` | `int` | `0` | Number of leading columns to pin while the rest scroll horizontally. Ignored while grouped, or if not less than the column count. Frozen layouts size every column by pixel width. |
+| `RowHeight` | `double` | `0` | Fixed body-row height in px (`0` = auto). Guarantees row alignment across the frozen/scrollable panes for custom-height cells. |
 | `SelectionChanged` | `event Action<T?>?` | — | Raised when a row is clicked and `SelectedItem` changes. |
 
 ### DataGridColumn&lt;T&gt; properties
@@ -127,6 +130,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Format` | `string?` | `null` | Optional .NET format string applied to the cell value (e.g. `"N2"`). |
 | `Sortable` | `bool` | `true` | Whether clicking the header sorts by this column. |
 | `Align` | `HorizontalAlignment` | `Left` | Cell content alignment. |
+| `Width` | `double?` | `null` | Fixed pixel width; `null` sizes with star (shares remaining space). In a frozen-column layout, columns without a width get a default pixel width. |
 | `CellTemplate` | `Func<T, Control>?` | `null` | Custom cell content. |
 | `Editable` | `bool` | `false` | Renders a text editor for this column when `SetText` is provided. |
 | `SetText` | `Action<T, string?>?` | `null` | Applies edited text back to the row. |

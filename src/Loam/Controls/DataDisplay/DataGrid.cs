@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -151,6 +152,9 @@ public class DataGrid<T> : Decorator
     private bool _collapsibleGroups = true;
     private string _emptyText = "No data";
     private Control? _emptyContent;
+    private int _frozenColumns;
+    private double _rowHeight;
+    private Func<IReadOnlyList<T>, string>? _groupAggregate;
 
     /// <summary>Creates the grid.</summary>
     public DataGrid()
@@ -285,6 +289,35 @@ public class DataGrid<T> : Decorator
         set { _emptyContent = value; Rebuild(); }
     }
 
+    /// <summary>
+    /// Number of leading columns to freeze (pin) while the remaining columns scroll horizontally;
+    /// <c>0</c> disables. Ignored while grouped, or when it is not less than the column count. Frozen
+    /// layouts size every column by pixel width (see <see cref="DataGridColumn{T}.Width"/>); columns
+    /// without an explicit width get a default so horizontal scrolling works.
+    /// </summary>
+    public int FrozenColumns
+    {
+        get => _frozenColumns;
+        set { _frozenColumns = Math.Max(0, value); Rebuild(); }
+    }
+
+    /// <summary>
+    /// Optional fixed body-row height in pixels (<c>0</c> = auto). Useful to guarantee row alignment
+    /// across the frozen and scrollable panes when cells use custom templates of differing heights.
+    /// </summary>
+    public double RowHeight
+    {
+        get => _rowHeight;
+        set { _rowHeight = Math.Max(0, value); Rebuild(); }
+    }
+
+    /// <summary>Optional aggregate text appended to each group header, computed from the group's items.</summary>
+    public Func<IReadOnlyList<T>, string>? GroupAggregate
+    {
+        get => _groupAggregate;
+        set { _groupAggregate = value; Rebuild(); }
+    }
+
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
@@ -337,10 +370,25 @@ public class DataGrid<T> : Decorator
 
     private AvaGrid BuildGrid(IReadOnlyList<T> rows)
     {
+        var useFrozen = _frozenColumns > 0 && _groupBy is null && _frozenColumns < Columns.Count;
+        return useFrozen ? BuildFrozenGrid(rows) : BuildSingleGrid(rows);
+    }
+
+    private static ColumnDefinition StarOrWidth(DataGridColumn<T> column) =>
+        new(column.Width is { } w ? new GridLength(w, GridUnitType.Pixel) : GridLength.Star);
+
+    private static ColumnDefinition PixelWidth(DataGridColumn<T> column) =>
+        new(new GridLength(column.Width ?? 140d, GridUnitType.Pixel));
+
+    private RowDefinition BodyRowDef() =>
+        new(_rowHeight > 0 ? new GridLength(_rowHeight, GridUnitType.Pixel) : GridLength.Auto);
+
+    private AvaGrid BuildSingleGrid(IReadOnlyList<T> rows)
+    {
         var grid = new AvaGrid();
         for (var c = 0; c < Columns.Count; c++)
         {
-            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            grid.ColumnDefinitions.Add(StarOrWidth(Columns[c]));
         }
 
         grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
@@ -357,7 +405,7 @@ public class DataGrid<T> : Decorator
 
         void AddDataRow(T item)
         {
-            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            grid.RowDefinitions.Add(BodyRowDef());
             AddRowBackground(grid, rowIndex, item, dataIndex);
             for (var c = 0; c < Columns.Count; c++)
             {
@@ -384,7 +432,7 @@ public class DataGrid<T> : Decorator
             {
                 grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
                 var collapsed = _collapsibleGroups && _collapsedGroups.Contains(group.Key ?? NullKeyToken);
-                var header = BuildGroupHeader(group.Key, group.Items.Count, collapsed);
+                var header = BuildGroupHeader(group.Key, group.Items.Count, collapsed, _groupAggregate?.Invoke(group.Items));
                 AvaGrid.SetRow(header, rowIndex);
                 AvaGrid.SetColumn(header, 0);
                 AvaGrid.SetColumnSpan(header, Columns.Count);
@@ -412,6 +460,102 @@ public class DataGrid<T> : Decorator
         }
 
         return grid;
+    }
+
+    private AvaGrid BuildFrozenGrid(IReadOnlyList<T> rows)
+    {
+        var frozen = _frozenColumns;
+        var scrollCount = Columns.Count - frozen;
+
+        var leftGrid = new AvaGrid { VerticalAlignment = VerticalAlignment.Top };
+        for (var c = 0; c < frozen; c++)
+        {
+            leftGrid.ColumnDefinitions.Add(PixelWidth(Columns[c]));
+        }
+
+        var rightGrid = new AvaGrid { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+        for (var c = frozen; c < Columns.Count; c++)
+        {
+            rightGrid.ColumnDefinitions.Add(PixelWidth(Columns[c]));
+        }
+
+        leftGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        rightGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        for (var c = 0; c < frozen; c++)
+        {
+            var header = BuildHeaderCell(Columns[c]);
+            AvaGrid.SetRow(header, 0);
+            AvaGrid.SetColumn(header, c);
+            leftGrid.Children.Add(header);
+        }
+
+        for (var c = frozen; c < Columns.Count; c++)
+        {
+            var header = BuildHeaderCell(Columns[c]);
+            AvaGrid.SetRow(header, 0);
+            AvaGrid.SetColumn(header, c - frozen);
+            rightGrid.Children.Add(header);
+        }
+
+        var rowIndex = 1;
+        var dataIndex = 0;
+        foreach (var item in rows)
+        {
+            leftGrid.RowDefinitions.Add(BodyRowDef());
+            rightGrid.RowDefinitions.Add(BodyRowDef());
+
+            var visual = new RowVisual { Selected = EqualityComparer<T>.Default.Equals(item, _selectedItem) };
+            var striped = _striped && dataIndex % 2 == 1;
+            AddRowBackgroundTo(leftGrid, rowIndex, 0, frozen, item, dataIndex, visual, striped);
+            AddRowBackgroundTo(rightGrid, rowIndex, 0, scrollCount, item, dataIndex, visual, striped);
+            ApplyRowBackgrounds(visual, striped);
+
+            for (var c = 0; c < frozen; c++)
+            {
+                var cell = BuildBodyCell(Columns[c], item);
+                AvaGrid.SetRow(cell, rowIndex);
+                AvaGrid.SetColumn(cell, c);
+                leftGrid.Children.Add(cell);
+            }
+
+            for (var c = frozen; c < Columns.Count; c++)
+            {
+                var cell = BuildBodyCell(Columns[c], item);
+                AvaGrid.SetRow(cell, rowIndex);
+                AvaGrid.SetColumn(cell, c - frozen);
+                rightGrid.Children.Add(cell);
+            }
+
+            rowIndex++;
+            dataIndex++;
+        }
+
+        if (rowIndex == 1)
+        {
+            rightGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var empty = BuildEmptyRow();
+            AvaGrid.SetRow(empty, rowIndex);
+            AvaGrid.SetColumn(empty, 0);
+            AvaGrid.SetColumnSpan(empty, scrollCount);
+            rightGrid.Children.Add(empty);
+        }
+
+        var scroller = new ScrollViewer
+        {
+            Content = rightGrid,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        };
+
+        var outer = new AvaGrid();
+        outer.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        outer.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        AvaGrid.SetColumn(leftGrid, 0);
+        AvaGrid.SetColumn(scroller, 1);
+        outer.Children.Add(leftGrid);
+        outer.Children.Add(scroller);
+        InteractionAssist.SetAutomationName(outer, "Data grid");
+        return outer;
     }
 
     private Border BuildEmptyRow()
@@ -568,7 +712,7 @@ public class DataGrid<T> : Decorator
         return new Border { Child = text, Padding = pad };
     }
 
-    private Border BuildGroupHeader(object? key, int count, bool collapsed)
+    private Border BuildGroupHeader(object? key, int count, bool collapsed, string? aggregate)
     {
         var pad = InteractionAssist.ThicknessToken(this,
             _dense ? LoamTokens.DensityDataHeaderPaddingDense : LoamTokens.DensityDataHeaderPadding,
@@ -594,6 +738,18 @@ public class DataGrid<T> : Decorator
                 Data = collapsed ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ExpandLess,
                 Color = LoamColor.Default,
                 Size = LoamSize.Small,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
+
+        if (!string.IsNullOrEmpty(aggregate))
+        {
+            row.Children.Add(new Text
+            {
+                Text = aggregate,
+                Typo = Typo.Body2,
+                Color = LoamColor.Default,
+                Margin = new Thickness(12, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             });
         }
@@ -630,13 +786,25 @@ public class DataGrid<T> : Decorator
         return cell;
     }
 
+    private sealed class RowVisual
+    {
+        public bool Selected;
+        public bool Focused;
+        public bool Hovered;
+        public readonly List<Border> Backgrounds = new();
+        public readonly List<IDisposable> Bindings = new();
+    }
+
     private void AddRowBackground(AvaGrid grid, int rowIndex, T item, int dataIndex)
     {
-        var selected = EqualityComparer<T>.Default.Equals(item, _selectedItem);
+        var visual = new RowVisual { Selected = EqualityComparer<T>.Default.Equals(item, _selectedItem) };
         var striped = _striped && dataIndex % 2 == 1;
-        var focused = false;
-        var hovered = false;
+        AddRowBackgroundTo(grid, rowIndex, 0, Columns.Count, item, dataIndex, visual, striped);
+        ApplyRowBackgrounds(visual, striped);
+    }
 
+    private void AddRowBackgroundTo(AvaGrid grid, int rowIndex, int columnStart, int columnSpan, T item, int dataIndex, RowVisual visual, bool striped)
+    {
         var background = new Border
         {
             Background = Brushes.Transparent,
@@ -645,48 +813,20 @@ public class DataGrid<T> : Decorator
         };
         InteractionAssist.SetAutomationName(background, $"Row {dataIndex + 1}: {RowLabel(item)}");
         AvaGrid.SetRow(background, rowIndex);
-        AvaGrid.SetColumn(background, 0);
-        AvaGrid.SetColumnSpan(background, Columns.Count);
+        AvaGrid.SetColumn(background, columnStart);
+        AvaGrid.SetColumnSpan(background, columnSpan);
         grid.Children.Add(background);
-
-        IDisposable? baseBinding = null;
-        void ApplyBase()
-        {
-            baseBinding?.Dispose();
-            baseBinding = null;
-            if (selected)
-            {
-                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteSelected(nameof(LoamPalette.Primary))));
-            }
-            else if (focused)
-            {
-                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.PaletteFocus(nameof(LoamPalette.Primary))));
-            }
-            else if (hovered && _hover)
-            {
-                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableHover))));
-            }
-            else if (striped)
-            {
-                baseBinding = background.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableStriped))));
-            }
-            else
-            {
-                background.Background = Brushes.Transparent;
-            }
-        }
-
-        ApplyBase();
+        visual.Backgrounds.Add(background);
 
         background.GotFocus += (_, _) =>
         {
-            focused = true;
-            ApplyBase();
+            visual.Focused = true;
+            ApplyRowBackgrounds(visual, striped);
         };
         background.LostFocus += (_, _) =>
         {
-            focused = false;
-            ApplyBase();
+            visual.Focused = false;
+            ApplyRowBackgrounds(visual, striped);
         };
         background.KeyDown += (_, args) =>
         {
@@ -701,17 +841,57 @@ public class DataGrid<T> : Decorator
         {
             background.PointerEntered += (_, _) =>
             {
-                hovered = true;
-                ApplyBase();
+                visual.Hovered = true;
+                ApplyRowBackgrounds(visual, striped);
             };
             background.PointerExited += (_, _) =>
             {
-                hovered = false;
-                ApplyBase();
+                visual.Hovered = false;
+                ApplyRowBackgrounds(visual, striped);
             };
         }
 
         background.PointerPressed += (_, _) => SelectRow(item);
+    }
+
+    private void ApplyRowBackgrounds(RowVisual visual, bool striped)
+    {
+        foreach (var binding in visual.Bindings)
+        {
+            binding.Dispose();
+        }
+
+        visual.Bindings.Clear();
+
+        object? key = null;
+        if (visual.Selected)
+        {
+            key = LoamTokens.PaletteSelected(nameof(LoamPalette.Primary));
+        }
+        else if (visual.Focused)
+        {
+            key = LoamTokens.PaletteFocus(nameof(LoamPalette.Primary));
+        }
+        else if (visual.Hovered && _hover)
+        {
+            key = LoamTokens.Palette(nameof(LoamPalette.TableHover));
+        }
+        else if (striped)
+        {
+            key = LoamTokens.Palette(nameof(LoamPalette.TableStriped));
+        }
+
+        foreach (var border in visual.Backgrounds)
+        {
+            if (key is null)
+            {
+                border.Background = Brushes.Transparent;
+            }
+            else
+            {
+                visual.Bindings.Add(border.Bind(Border.BackgroundProperty, this.GetResourceObservable(key)));
+            }
+        }
     }
 
     private void SelectRow(T item)

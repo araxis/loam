@@ -67,11 +67,13 @@ picking the project up cold. Read this file first.
   (M3). **414 tests.**
 - **Phase 6 polish:** migration guide brought in sync with reality (Phases 1–3 ✅, delivered-features
   summary); README test count refreshed.
-- **Phase 5 started:** `DataGrid<T>.GroupBy` renders group-header rows (+ pure `DataGrids.Group`).
-  Sort/filter/page/virtualize/inline-edit already existed. **417 tests.**
+- **Phase 5 data maturity — done:** `DataGrid<T>` gained grouping (`GroupBy` + pure `DataGrids.Group`),
+  collapsible groups, empty state (`EmptyText`/`EmptyContent`), a column-width API
+  (`DataGridColumn<T>.Width`), **frozen columns** (`FrozenColumns` two-pane layout with synced
+  hover/selection + `RowHeight`), and **group aggregates** (`GroupAggregate`). On top of the
+  pre-existing sort/filter/page/virtualize/inline-edit/selection. **424 tests.**
 - **Next (maintainer-directed):** the **package split** is deferred (ADR-0009; needs satellite
-  theme-registration design). Open options: Phase 5 — DataGrid maturity (grouping is the main gap;
-  sort/filter/page/virtualize/edit already exist); more Phase 6 (visual-regression snapshots,
-  positioning docs) toward `3.0.0`. (Optional: CAM16/HCT upgrade; wire/remove orphaned
-  `DesignSystemView`/`LayoutView`.)
+  theme-registration design). Open options: Phase 6 release prep (visual-regression snapshots,
+  positioning docs) toward `3.0.0`; richer DataGrid inline-edit (validation/commit). (Optional:
+  CAM16/HCT upgrade; wire/remove orphaned `DesignSystemView`/`LayoutView`.)
 - **Last updated:** 2026-06-07
