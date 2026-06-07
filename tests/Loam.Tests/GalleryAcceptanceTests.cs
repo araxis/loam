@@ -231,6 +231,24 @@ public class GalleryAcceptanceTests
     }
 
     [AvaloniaFact]
+    public void Components_view_header_has_material_you_seed_picker()
+    {
+        var view = new ComponentsView();
+        var window = Show(view, ThemeVariant.Light);
+        try
+        {
+            var seed = view.GetVisualDescendants().OfType<IconButton>()
+                .Single(button => AutomationProperties.GetName(button) == "Theme seed");
+            seed.Icon.ShouldBe(Icons.Material.Filled.Palette);
+            seed.Flyout.ShouldNotBeNull();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public void Code_sample_view_exposes_copy_button()
     {
         var view = new CodeSampleView("Copy", "new LoamButton { Content = \"Save\" };");

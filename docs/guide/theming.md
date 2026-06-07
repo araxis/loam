@@ -52,6 +52,7 @@ restyle.
 
 | Method | Description |
 | --- | --- |
+| `SetSeed(Color seed)` | **Material You** — generate a complete light + dark scheme from one seed color. |
 | `SetPrimary(Color color)` | Recolor the primary (and its contrast text) for both variants. |
 | `SetPalette(LoamPalette light, LoamPalette dark)` | Swap compatibility palettes and derive matching schemes. |
 | `SetData(LoamThemeData data)` | Replace the entire theme data. |
@@ -59,6 +60,22 @@ restyle.
 ```csharp
 theme.SetPrimary(Colors.Indigo);
 ```
+
+### Material You — generate a theme from one seed
+
+`SetSeed` derives tonal palettes (primary/secondary/tertiary/neutral/neutral-variant/error) from a
+single seed color and maps every role to the standard Material 3 tone for each variant — producing a
+complete, **accessible** light + dark scheme at runtime. Build one up front with
+`LoamThemeData.FromSeed(seed)`, or apply it live:
+
+```csharp
+// Recolor the whole app — base Avalonia controls follow via the Fluent bridge.
+theme.SetSeed(Color.Parse("#006A6A"));
+```
+
+Schemes are accessible by construction: a color's WCAG luminance is fixed by its tone (L\*), so the
+Material 3 tone pairs (e.g. on-primary on primary) always clear WCAG AA regardless of the seed. The
+gallery's header has a **seed picker** (the palette icon) that drives this live.
 
 ## Semantic colors & variants
 

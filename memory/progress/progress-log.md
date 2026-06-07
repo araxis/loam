@@ -7,6 +7,32 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 2 — Gallery Material You seed playground
+
+**Done**
+- Added a live **seed picker** to the gallery header (palette `IconButton` → `Flyout` of seed swatches
+  + Reset). Clicking a swatch calls `LoamTheme.SetSeed` on the app's theme instance, recoloring the
+  whole gallery at runtime (base controls follow via the Phase-1 Fluent bridge); Reset restores
+  `LoamThemeData.Default`. Found via `Application.Current.Styles.OfType<LoamTheme>()`.
+- Noted: `DesignSystemView` (its old `SetPrimary` swatches) is orphaned — `MainWindow` only shows
+  `ComponentsView`, so the playground was added to the real shell header.
+- Documented `SetSeed`/Material You in `docs/guide/theming.md` (runtime setters table + a section,
+  incl. the accessibility-by-construction note and the gallery seed picker).
+- Added a gallery acceptance test for the seed picker (present in the header, palette icon, has a
+  flyout). Kept the existing header test green (seed is a plain `IconButton`; the "Toggle theme"
+  `ToggleIconButton` stays uniquely identifiable).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors (CA1859 fixed:
+  `BuildSeedFlyout` returns the concrete `StackPanel`).
+- Full suite — **396 passed**, 0 failed.
+- `npm run docs:build` — passed.
+
+**Next:** Phase 2 remaining — high-contrast theme variant, one-call compact/density switch. (Optional:
+wire `DesignSystemView` into the shell or remove it; CAM16/HCT upgrade for exact M3 fidelity.)
+
+---
+
 ## 2026-06-07 — v3 Phase 2 — Material You seed→scheme generator (first slice)
 
 **Done**

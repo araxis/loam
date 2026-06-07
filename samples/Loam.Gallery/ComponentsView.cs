@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -146,6 +147,8 @@ public sealed class ComponentsView : UserControl
         Tooltip.Set(theme, "Toggle theme");
         theme.Click += (_, _) => ToggleTheme();
 
+        var seed = BuildSeedPicker();
+
         var actions = new StackPanel
         {
             Name = "PART_HeaderActions",
@@ -153,7 +156,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
-            Children = { theme },
+            Children = { seed, theme },
         };
 
         var layout = new Avalonia.Controls.Grid
@@ -186,6 +189,83 @@ public sealed class ComponentsView : UserControl
         app.RequestedThemeVariant =
             app.ActualThemeVariant == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
     }
+
+    // Material You (Phase 2) playground: pick a seed and the whole gallery re-themes at runtime via
+    // LoamTheme.SetSeed (one seed -> complete light + dark scheme). The Fluent bridge follows too.
+    private static readonly string[] SeedPresets =
+    [
+        "#6750A4", "#006A6A", "#386A20", "#B3261E", "#765A00",
+        "#1565C0", "#7D5260", "#5B5BD6", "#3F6212", "#9A3412",
+    ];
+
+    private static IconButton BuildSeedPicker()
+    {
+        var button = new IconButton
+        {
+            Icon = Icons.Material.Filled.Palette,
+            Variant = Variant.Outlined,
+            Color = LoamColor.Primary,
+            Size = LoamSize.Small,
+            VerticalAlignment = VerticalAlignment.Center,
+            Flyout = new Flyout
+            {
+                Placement = PlacementMode.BottomEdgeAlignedRight,
+                Content = BuildSeedFlyout(),
+            },
+        };
+        AutomationProperties.SetName(button, "Theme seed");
+        AutomationProperties.SetHelpText(button, "Generate the whole theme from a seed color (Material You).");
+        Tooltip.Set(button, "Material You seed");
+        return button;
+    }
+
+    private static StackPanel BuildSeedFlyout()
+    {
+        var caption = new Text
+        {
+            Text = "Material You — pick a seed",
+            Typo = Typo.Subtitle2,
+            Margin = new Thickness(4, 0, 4, 8),
+        };
+
+        var swatches = new WrapPanel { MaxWidth = 220 };
+        foreach (var hex in SeedPresets)
+        {
+            swatches.Children.Add(SeedSwatch(Color.Parse(hex)));
+        }
+
+        var reset = new LoamButton
+        {
+            Content = "Reset",
+            Variant = Variant.Text,
+            Color = LoamColor.Primary,
+            Size = LoamSize.Small,
+            Margin = new Thickness(0, 8, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        reset.Click += (_, _) => CurrentLoamTheme()?.SetData(LoamThemeData.Default);
+
+        return new StackPanel { Margin = new Thickness(8), Children = { caption, swatches, reset } };
+    }
+
+    private static Border SeedSwatch(Color color)
+    {
+        var swatch = new Border
+        {
+            Width = 32,
+            Height = 32,
+            Margin = new Thickness(4),
+            CornerRadius = new CornerRadius(8),
+            Background = new SolidColorBrush(color),
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+        AutomationProperties.SetName(swatch, $"Seed {color}");
+        swatch.PointerPressed += (_, _) => CurrentLoamTheme()?.SetSeed(color);
+        return swatch;
+    }
+
+    private static LoamTheme? CurrentLoamTheme() =>
+        Application.Current?.Styles.OfType<LoamTheme>().FirstOrDefault();
 
     internal enum GallerySampleKind
     {

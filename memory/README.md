@@ -57,6 +57,8 @@ picking the project up cold. Read this file first.
   `LoamThemeData.FromSeed`. CIELAB tonal palettes (tone = L\*), gamut-clamped, with M3 role mapping;
   accessible by construction (132 contrast assertions across 6 seeds × light/dark pass WCAG AA). Full
   solution builds clean; **395 headless/unit tests pass**.
-- **Next:** Phase 2 remaining — gallery theme playground (live seed picker), high-contrast variant,
-  one-call compact/density switch. (Optional later: CAM16/HCT upgrade for exact M3 fidelity.)
+- **Latest (playground):** the gallery header now has a live **seed picker** (palette icon) that calls
+  `SetSeed` to recolor the whole app at runtime; documented in `docs/guide/theming.md`. **396 tests**.
+- **Next:** Phase 2 remaining — high-contrast variant, one-call compact/density switch. (Optional later:
+  CAM16/HCT upgrade for exact M3 fidelity; wire/remove the orphaned `DesignSystemView`.)
 - **Last updated:** 2026-06-07
