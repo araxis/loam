@@ -66,7 +66,9 @@ picking the project up cold. Read this file first.
   (ADR-0013: `DataGrid<T>` recommended); added `NavigationRail`, `BottomNavigation`, `CommandPalette`
   (M3). **414 tests.**
 - **Phase 6 polish:** migration guide brought in sync with reality (Phases 1–3 ✅, delivered-features
-  summary); README test count refreshed. **414 tests.**
+  summary); README test count refreshed.
+- **Phase 5 started:** `DataGrid<T>.GroupBy` renders group-header rows (+ pure `DataGrids.Group`).
+  Sort/filter/page/virtualize/inline-edit already existed. **417 tests.**
 - **Next (maintainer-directed):** the **package split** is deferred (ADR-0009; needs satellite
   theme-registration design). Open options: Phase 5 — DataGrid maturity (grouping is the main gap;
   sort/filter/page/virtualize/edit already exist); more Phase 6 (visual-regression snapshots,

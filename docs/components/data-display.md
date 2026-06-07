@@ -112,6 +112,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Hover` | `bool` | `true` | Row hover highlight. Mirrors the reference API's `Hover`. |
 | `Dense` | `bool` | `false` | Compact cell padding. Mirrors the reference API's `Dense`. |
 | `Elevation` | `int` | `1` | Host paper elevation. Mirrors the reference API's `Elevation`. |
+| `GroupBy` | `Func<T, object?>?` | `null` | Groups rows by key with a group-header row (key + count) above each group, in first-appearance order (follows the current sort). Applies within the rendered page. |
 | `SelectionChanged` | `event Action<T?>?` | — | Raised when a row is clicked and `SelectedItem` changes. |
 
 ### DataGridColumn&lt;T&gt; properties
@@ -134,6 +135,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Sort<T>` | `(IReadOnlyList<T> items, DataGridColumn<T>? column, bool descending) → IReadOnlyList<T>` | Sorts `items` by `column.Value`; returns original order when `column` is `null`. |
 | `PageCount` | `(int count, int pageSize) → int` | Total page count for `count` rows at `pageSize` (`0` = 1 page). |
 | `Filter<T>` | `(IReadOnlyList<T> items, string? text, Func<T, string, bool> predicate) → IReadOnlyList<T>` | Returns matching rows when `text` has content; otherwise returns the original rows. |
+| `Group<T>` | `(IReadOnlyList<T> items, Func<T, object?> selector) → IReadOnlyList<DataGridGroup<T>>` | Groups rows by key in first-appearance order; a `null` key forms its own group. |
 
 ```csharp
 class Employee

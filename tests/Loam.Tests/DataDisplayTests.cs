@@ -76,6 +76,46 @@ public class DataDisplayTests
         texts.ShouldContain("30");
     }
 
+    [Fact]
+    public void DataGrids_group_preserves_first_appearance_order()
+    {
+        var people = new List<Person> { new("Bob", 30), new("Ann", 30), new("Cy", 40), new("Dee", 30) };
+
+        var groups = DataGrids.Group(people, p => (object?)p.Age);
+
+        groups.Select(g => (int)g.Key!).ShouldBe([30, 40]);
+        groups[0].Items.Select(p => p.Name).ShouldBe(["Bob", "Ann", "Dee"]);
+        groups[1].Items.Single().Name.ShouldBe("Cy");
+    }
+
+    [Fact]
+    public void DataGrids_group_handles_null_keys()
+    {
+        var values = new[] { "apple", "", "banana", "" };
+
+        var groups = DataGrids.Group(values, s => s.Length == 0 ? null : (object?)s[0]);
+
+        groups.Select(g => g.Key?.ToString()).ShouldBe(["a", null, "b"]);
+        groups.Single(g => g.Key is null).Items.Count.ShouldBe(2);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_renders_group_headers_when_grouped()
+    {
+        var grid = new DataGrid<Person> { GroupBy = p => p.Age < 35 ? "Junior" : "Senior" };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        grid.Items = new List<Person> { new("Ann", 30), new("Bob", 40), new("Cy", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("Junior (2)");
+        texts.ShouldContain("Senior (1)");
+        texts.ShouldContain("Ann");
+        texts.ShouldContain("Bob");
+    }
+
     [AvaloniaFact]
     public void DataGrid_filter_text_limits_rendered_rows()
     {

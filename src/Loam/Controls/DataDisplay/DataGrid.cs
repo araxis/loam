@@ -52,6 +52,38 @@ public static class DataGrids
     public static int PageCount(int count, int pageSize) =>
         pageSize <= 0 ? 1 : Math.Max(1, (count + pageSize - 1) / pageSize);
 
+    private static readonly object NullGroupKey = new();
+
+    /// <summary>
+    /// Groups <paramref name="items"/> by <paramref name="selector"/> in first-appearance order (so
+    /// groups follow the current sort). A <c>null</c> key is its own group with a <c>null</c>
+    /// <see cref="DataGridGroup{T}.Key"/>.
+    /// </summary>
+    public static IReadOnlyList<DataGridGroup<T>> Group<T>(IReadOnlyList<T> items, Func<T, object?> selector)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(selector);
+
+        var order = new List<object>();
+        var map = new Dictionary<object, List<T>>();
+        foreach (var item in items)
+        {
+            var key = selector(item) ?? NullGroupKey;
+            if (!map.TryGetValue(key, out var list))
+            {
+                list = new List<T>();
+                map[key] = list;
+                order.Add(key);
+            }
+
+            list.Add(item);
+        }
+
+        return order
+            .Select(k => new DataGridGroup<T>(ReferenceEquals(k, NullGroupKey) ? null : k, map[k]))
+            .ToList();
+    }
+
     internal sealed class CellComparer : IComparer<object?>
     {
         public static readonly CellComparer Instance = new();
@@ -83,6 +115,10 @@ public static class DataGrids
     }
 }
 
+/// <summary>A group of rows produced by <see cref="DataGrids.Group{T}"/>.</summary>
+/// <typeparam name="T">The row item type.</typeparam>
+public sealed record DataGridGroup<T>(object? Key, IReadOnlyList<T> Items);
+
 /// <summary>
 /// A typed data grid, mirroring the reference API's <c>DataGrid</c>. Renders <see cref="Items"/> across the
 /// typed <see cref="Columns"/> with clickable sort headers, optional paging (<see cref="PageSize"/>),
@@ -109,6 +145,7 @@ public class DataGrid<T> : Decorator
     private int _maxRenderedRows = 200;
     private DataGridColumn<T>? _sortColumn;
     private bool _sortDescending;
+    private Func<T, object?>? _groupBy;
 
     /// <summary>Creates the grid.</summary>
     public DataGrid()
@@ -207,6 +244,17 @@ public class DataGrid<T> : Decorator
         set { _maxRenderedRows = Math.Max(1, value); Rebuild(); }
     }
 
+    /// <summary>
+    /// Optional grouping selector. When set, rows are grouped by key with a group-header row (key +
+    /// count) above each group, in first-appearance order (i.e. following the current sort). Grouping
+    /// applies within the rendered page.
+    /// </summary>
+    public Func<T, object?>? GroupBy
+    {
+        get => _groupBy;
+        set { _groupBy = value; Rebuild(); }
+    }
+
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
@@ -274,20 +322,48 @@ public class DataGrid<T> : Decorator
             grid.Children.Add(header);
         }
 
-        for (var r = 0; r < rows.Count; r++)
+        var rowIndex = 1;
+        var dataIndex = 0;
+
+        void AddDataRow(T item)
         {
             grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-            var rowIndex = r + 1;
-            var item = rows[r];
-
-            AddRowBackground(grid, rowIndex, item, r);
-
+            AddRowBackground(grid, rowIndex, item, dataIndex);
             for (var c = 0; c < Columns.Count; c++)
             {
                 var cell = BuildBodyCell(Columns[c], item);
                 AvaGrid.SetRow(cell, rowIndex);
                 AvaGrid.SetColumn(cell, c);
                 grid.Children.Add(cell);
+            }
+
+            rowIndex++;
+            dataIndex++;
+        }
+
+        if (_groupBy is null)
+        {
+            foreach (var item in rows)
+            {
+                AddDataRow(item);
+            }
+        }
+        else
+        {
+            foreach (var group in DataGrids.Group(rows, _groupBy))
+            {
+                grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                var header = BuildGroupHeader(group.Key, group.Items.Count);
+                AvaGrid.SetRow(header, rowIndex);
+                AvaGrid.SetColumn(header, 0);
+                AvaGrid.SetColumnSpan(header, Columns.Count);
+                grid.Children.Add(header);
+                rowIndex++;
+
+                foreach (var item in group.Items)
+                {
+                    AddDataRow(item);
+                }
             }
         }
 
@@ -412,6 +488,30 @@ public class DataGrid<T> : Decorator
 
         var text = new Text { Text = column.Display(item), Typo = Typo.Body2, Color = LoamColor.Inherit, HorizontalAlignment = column.Align, VerticalAlignment = VerticalAlignment.Center };
         return new Border { Child = text, Padding = pad };
+    }
+
+    private Border BuildGroupHeader(object? key, int count)
+    {
+        var pad = InteractionAssist.ThicknessToken(this,
+            _dense ? LoamTokens.DensityDataHeaderPaddingDense : LoamTokens.DensityDataHeaderPadding,
+            _dense ? new Thickness(8, 6) : new Thickness(16, 8));
+        var label = new Text
+        {
+            Text = $"{key} ({count})",
+            Typo = Typo.Subtitle2,
+            Color = LoamColor.Default,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var cell = new Border
+        {
+            Child = label,
+            Padding = pad,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+        };
+        cell.Bind(Border.BackgroundProperty, this.GetResourceObservable(LoamTokens.ColorSurfaceContainerHigh));
+        cell.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableLines))));
+        InteractionAssist.SetAutomationName(cell, $"Group {key}, {count} items");
+        return cell;
     }
 
     private void AddRowBackground(AvaGrid grid, int rowIndex, T item, int dataIndex)

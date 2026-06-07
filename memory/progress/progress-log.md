@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 5 — DataGrid grouping
+
+**Done**
+- Added grouping to the self-rendering generic `DataGrid<T>`: a `GroupBy` selector renders a
+  group-header row (`key (count)`, surface-container-high, on its own full-width row) above each
+  group's data rows, integrated with the existing filter→sort→page→render pipeline (groups apply within
+  the rendered page, in first-appearance order so they follow the current sort).
+- Added the pure, testable `DataGrids.Group<T>(items, selector)` + `DataGridGroup<T>` record
+  (first-appearance order; `null` keys form their own group). Refactored `BuildGrid`'s row loop into a
+  shared `AddDataRow` local fn used by both grouped and ungrouped paths; added `BuildGroupHeader`.
+- Added `DataDisplayTests` (pure group order + null keys; end-to-end group headers render) and
+  documented `GroupBy`/`Group` in `docs/components/data-display.md` + the tracker.
+- Scope note: grouping is per-page; cross-page group continuity, collapsible groups, frozen columns,
+  and richer inline-edit remain future expansion.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **417 passed**, 0 failed.
+
+**Next:** more Phase 5 (collapsible groups / frozen columns) or Phase 6 release prep
+(visual-regression snapshots, positioning docs, `3.0.0`). Package split still deferred (ADR-0009).
+
+---
+
 ## 2026-06-07 — v3 Phase 6 — Migration-guide accuracy pass (deferring package split)
 
 **Decision:** per maintainer direction, defer the Phase 4 **package split** (`Loam.Charts`/
