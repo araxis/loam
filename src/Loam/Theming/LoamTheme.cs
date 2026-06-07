@@ -185,8 +185,19 @@ public sealed class LoamTheme : Styles
         BridgeFluentScrollBar(dict, scheme);
         BridgeFluentToolTip(dict, scheme);
         BridgeFluentMenu(dict, scheme, stateLayer);
+        BridgeFluentWindowAndText(dict, scheme);
 
         return dict;
+    }
+
+    // Phase 1 — theme consistency. The bare Window region background reads as the Material app
+    // background, and base text selection uses the Loam primary instead of Fluent blue (this flows
+    // into every base TextBox, including the ones hosted inside Loam's Field/TextField). Keys verified
+    // against Avalonia 12.0.4 Controls/Window.xaml and Controls/TextBox.xaml.
+    private static void BridgeFluentWindowAndText(ResourceDictionary dict, LoamColorScheme scheme)
+    {
+        dict["SystemRegionBrush"] = new ImmutableSolidColorBrush(scheme.Background);
+        dict["TextControlSelectionHighlightColor"] = new ImmutableSolidColorBrush(scheme.Primary, 0.4);
     }
 
     // Phase 1 — theme consistency. Material menus/flyouts: a SurfaceContainer surface (elevation, no

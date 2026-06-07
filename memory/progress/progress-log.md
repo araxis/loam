@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 1 — Theme consistency: Window background + text selection
+
+**Done**
+- Added `LoamTheme.BridgeFluentWindowAndText`: the bare Window region background now reads as the
+  Material app background (`SystemRegionBrush` → scheme `Background`), and base text selection uses
+  Loam primary instead of Fluent blue (`TextControlSelectionHighlightColor` → primary @ 0.4). The
+  selection fix flows into every base `TextBox`, including those hosted inside Loam `Field`/`TextField`.
+  Per variant, runtime-swappable.
+- Added two `FluentBridgeTests` (per-variant projection + end-to-end selection resolution).
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/Window.xaml` (`SystemRegionBrush`) and `Controls/TextBox.xaml`
+  (`TextControlSelectionHighlightColor`, `CaretBrush` = `TextControlForeground`).
+- Left caret/text foreground to Fluent for now (caret follows `TextControlForeground`; overriding it
+  would broadly change base text color — a separate decision).
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **388 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `Expander`, Avalonia `DataGrid`. Then consider extracting the five
+`BridgeFluent*` methods into a dedicated `FluentBridge` helper + an ADR, and a visual gallery pass
+(light/dark) to confirm the look (selection opacity 0.4 and scrollbar thumb opacities are tunable).
+
+---
+
 ## 2026-06-07 — v3 Phase 1 — Theme consistency: ContextMenu / MenuFlyout bridge
 
 **Done**

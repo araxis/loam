@@ -167,6 +167,30 @@ public class FluentBridgeTests
         ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
     }
 
+    [Fact]
+    public void Window_and_text_selection_keys_project_loam_tokens_per_variant()
+    {
+        var res = new LoamTheme().Resources;
+
+        ScrollBrush(res, "SystemRegionBrush", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.Background);
+        ScrollBrush(res, "SystemRegionBrush", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.Background);
+        ScrollBrush(res, "TextControlSelectionHighlightColor", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.Primary);
+    }
+
+    [AvaloniaFact]
+    public void Stray_text_selection_resolves_to_loam_primary()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+
+        var probe = new Border();
+        new Window { Content = probe }.Show();
+        Dispatcher.UIThread.RunJobs();
+        probe.Bind(Border.BackgroundProperty, probe.GetResourceObservable("TextControlSelectionHighlightColor"));
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.Primary);
+    }
+
     private static Color ScrollBrush(IResourceDictionary res, string key, ThemeVariant variant)
     {
         res.TryGetResource(key, variant, out var value).ShouldBeTrue($"{key} ({variant})");
