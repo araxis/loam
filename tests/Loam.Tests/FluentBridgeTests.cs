@@ -87,16 +87,16 @@ public class FluentBridgeTests
     {
         var res = new LoamTheme().Resources;
 
-        ScrollBrush(res, "ScrollBarPanningThumbBackground", ThemeVariant.Light)
+        BrushColor(res, "ScrollBarPanningThumbBackground", ThemeVariant.Light)
             .ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
-        ScrollBrush(res, "ScrollBarThumbFillPointerOver", ThemeVariant.Dark)
+        BrushColor(res, "ScrollBarThumbFillPointerOver", ThemeVariant.Dark)
             .ShouldBe(LoamColorScheme.DefaultDark.OnSurfaceVariant);
-        ScrollBrush(res, "ScrollBarThumbFillPressed", ThemeVariant.Light)
+        BrushColor(res, "ScrollBarThumbFillPressed", ThemeVariant.Light)
             .ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
 
         // Track and root chrome are transparent — Material scrollbars float.
-        ScrollBrush(res, "ScrollBarTrackFill", ThemeVariant.Light).ShouldBe(Colors.Transparent);
-        ScrollBrush(res, "ScrollBarBackground", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+        BrushColor(res, "ScrollBarTrackFill", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+        BrushColor(res, "ScrollBarBackground", ThemeVariant.Light).ShouldBe(Colors.Transparent);
     }
 
     [AvaloniaFact]
@@ -119,10 +119,10 @@ public class FluentBridgeTests
     {
         var res = new LoamTheme().Resources;
 
-        ScrollBrush(res, "ToolTipBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.InverseSurface);
-        ScrollBrush(res, "ToolTipForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.InverseOnSurface);
-        ScrollBrush(res, "ToolTipBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.InverseSurface);
-        ScrollBrush(res, "ToolTipBorderBrush", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+        BrushColor(res, "ToolTipBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.InverseSurface);
+        BrushColor(res, "ToolTipForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.InverseOnSurface);
+        BrushColor(res, "ToolTipBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.InverseSurface);
+        BrushColor(res, "ToolTipBorderBrush", ThemeVariant.Light).ShouldBe(Colors.Transparent);
     }
 
     [AvaloniaFact]
@@ -144,13 +144,13 @@ public class FluentBridgeTests
     {
         var res = new LoamTheme().Resources;
 
-        ScrollBrush(res, "MenuFlyoutPresenterBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
-        ScrollBrush(res, "FlyoutPresenterBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.SurfaceContainer);
-        ScrollBrush(res, "MenuFlyoutItemForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
-        ScrollBrush(res, "MenuFlyoutItemBackgroundPointerOver", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
-        ScrollBrush(res, "MenuFlyoutItemKeyboardAcceleratorTextForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
-        ScrollBrush(res, "MenuFlyoutSubItemChevron", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
-        ScrollBrush(res, "MenuFlyoutPresenterBorderBrush", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+        BrushColor(res, "MenuFlyoutPresenterBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
+        BrushColor(res, "FlyoutPresenterBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.SurfaceContainer);
+        BrushColor(res, "MenuFlyoutItemForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
+        BrushColor(res, "MenuFlyoutItemBackgroundPointerOver", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
+        BrushColor(res, "MenuFlyoutItemKeyboardAcceleratorTextForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+        BrushColor(res, "MenuFlyoutSubItemChevron", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+        BrushColor(res, "MenuFlyoutPresenterBorderBrush", ThemeVariant.Light).ShouldBe(Colors.Transparent);
     }
 
     [AvaloniaFact]
@@ -172,9 +172,9 @@ public class FluentBridgeTests
     {
         var res = new LoamTheme().Resources;
 
-        ScrollBrush(res, "SystemRegionBrush", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.Background);
-        ScrollBrush(res, "SystemRegionBrush", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.Background);
-        ScrollBrush(res, "TextControlSelectionHighlightColor", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.Primary);
+        BrushColor(res, "SystemRegionBrush", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.Background);
+        BrushColor(res, "SystemRegionBrush", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.Background);
+        BrushColor(res, "TextControlSelectionHighlightColor", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.Primary);
     }
 
     [AvaloniaFact]
@@ -191,7 +191,33 @@ public class FluentBridgeTests
         ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.Primary);
     }
 
-    private static Color ScrollBrush(IResourceDictionary res, string key, ThemeVariant variant)
+    [Fact]
+    public void Expander_brush_keys_project_surface_tokens_per_variant()
+    {
+        var res = new LoamTheme().Resources;
+
+        BrushColor(res, "ExpanderHeaderBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
+        BrushColor(res, "ExpanderHeaderForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurface);
+        BrushColor(res, "ExpanderContentBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.Surface);
+        BrushColor(res, "ExpanderChevronForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
+        BrushColor(res, "ExpanderHeaderBorderBrush", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.OutlineVariant);
+    }
+
+    [AvaloniaFact]
+    public void Stray_expander_header_resolves_to_loam_surface_container()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+
+        var probe = new Border();
+        new Window { Content = probe }.Show();
+        Dispatcher.UIThread.RunJobs();
+        probe.Bind(Border.BackgroundProperty, probe.GetResourceObservable("ExpanderHeaderBackground"));
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.SurfaceContainer);
+    }
+
+    private static Color BrushColor(IResourceDictionary res, string key, ThemeVariant variant)
     {
         res.TryGetResource(key, variant, out var value).ShouldBeTrue($"{key} ({variant})");
         return ((ISolidColorBrush)value!).Color;

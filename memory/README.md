@@ -44,16 +44,17 @@ picking the project up cold. Read this file first.
 - [ADR-0008 — v3 naming & Avalonia collision strategy](decisions/0008-v3-naming-collision-strategy.md)
 - [ADR-0009 — v3 package split (lean core + satellites)](decisions/0009-v3-package-split.md)
 - [ADR-0010 — v3 versioning & deprecation policy](decisions/0010-v3-versioning-deprecation-policy.md)
+- [ADR-0011 — Bridging base Fluent chrome to Loam tokens (Phase 1)](decisions/0011-fluent-base-chrome-bridge.md)
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 0: Decide & scaffold** (branch `work/vnext`, version
-  `3.0.0-preview.1`). The v3 roadmap and its driving review live at the repo root in
-  [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md).
-- **Latest:** locked the v3 naming/collision strategy, package split, and breaking-change policy
-  (ADR-0008/0009/0010); renamed the responsive grid `Grid`→`ResponsiveGrid` and `Item`→`Col` with
-  `[Obsolete]` aliases (`LOAM0001`/`LOAM0002`); scaffolded the `docs/migration/v2-to-v3.md` guide and
-  rename map. Full solution builds clean; **377 headless/unit tests pass** (added a back-compat test
-  for the deprecated aliases).
-- **Next:** Phase 1 — theme consistency (bridge Loam tokens to base Avalonia chrome).
+- **Phase:** **v3 (vNext) — Phase 1: Theme consistency** (branch `work/vnext`, version
+  `3.0.0-preview.1`). Phase 0 (scaffold) is done. The v3 roadmap and its driving review live at the
+  repo root in [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md).
+- **Latest:** built the `FluentBridge` helper (ADR-0011) so stray base Fluent controls read as Material
+  in light & dark — accent, scrollbars, tooltips, menus/flyouts, window background, text selection, and
+  expanders are bridged onto Loam tokens (per variant, runtime-swappable). Demo app visually confirmed
+  in both themes on 2026-06-07. Full solution builds clean; **390 headless/unit tests pass**.
+- **Next:** Phase 1 remaining — Avalonia `DataGrid` (deferred: not referenced by the core package;
+  likely a `Loam.Data` concern). Then Phase 2 — Material You seed→scheme generator.
 - **Last updated:** 2026-06-07

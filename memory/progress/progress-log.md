@@ -7,6 +7,34 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 1 — Expander bridge + consolidate FluentBridge + ADR-0011
+
+**Done**
+- Themed the base Avalonia `Expander`: header on the tonal container ramp (rest/hover/press),
+  `OnSurface` header text, outline-variant edges, `Surface` content, neutral chevron. Size/padding/
+  alignment keys left to Fluent.
+- **Refactor:** extracted the five inline `BridgeFluent*` methods out of `LoamTheme` into a dedicated
+  `Loam.Theming.FluentBridge` static helper (now six bridges + accent shade math), invoked once per
+  variant via `FluentBridge.Apply(dict, scheme, stateLayer)`. `LoamTheme` is back to token projection
+  + control-theme registration.
+- Added **ADR-0011** documenting the bridge approach (override brush keys not colors; colors only,
+  leave geometry to Fluent; source-verified + version-coupled; retired when FluentTheme is dropped).
+- Added Expander `FluentBridgeTests` (projection + end-to-end) and renamed the test helper to
+  `BrushColor` (now general across all bridges).
+- **Visual:** user confirmed the demo app looks good in both light and dark themes — closes the
+  Phase 1 visual-verification gap for accent/scrollbar/tooltip/menu/window/selection/expander.
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/Expander.xaml` for the exact brush keys.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **390 passed**, 0 failed.
+
+**Next:** Avalonia `DataGrid` is the last Phase 1 item, but the core package doesn't reference
+`Avalonia.Controls.DataGrid` (its theme ships separately) — defer to the `Loam.Data` satellite
+(ADR-0009) or document a consumer opt-in. Then Phase 2 (Material You seed→scheme generator).
+
+---
+
 ## 2026-06-07 — v3 Phase 1 — Theme consistency: Window background + text selection
 
 **Done**
