@@ -47,8 +47,8 @@ source before implementation (source-first, ADR-0007).
 | reference | Loam | Status | Notes |
 | --- | --- | --- | --- |
 | `Container` | `Container` | ✅ | `MaxWidthBreakpoint`/`Gutters`; caps + centers (`: Decorator`). |
-| `Grid`/`Item` | `Grid`/`Item` | ✅ | responsive 12-col custom panel; container-query breakpoints. Qualify vs `Avalonia.Controls.Grid`. |
-| `Stack` | `Stack` | ✅ | `Row` + spacing (`: StackPanel`). `Justify`/`Wrap`/`Reverse` ⬜. |
+| `Grid`/`Item` | `ResponsiveGrid`/`Col` | ✅ | responsive 12-col custom panel; container-query breakpoints. **v3:** renamed from `Grid`/`Item`; old names kept as `[Obsolete]` aliases (`LOAM0001`/`LOAM0002`, ADR-0008). Distinct concept from `Avalonia.Controls.Grid` (fixed 2D). |
+| `Stack` | `Stack` | ✅ | `Row` + spacing (`: StackPanel`). **v3:** deprecation planned (Phase 4 removal → use `StackPanel`). `Justify`/`Wrap`/`Reverse` ⬜. |
 | `Spacer` | `Spacer` | 🟦 | `: Control`, stretch; fills as the `LastChildFill` child of a `DockPanel` (or star `Grid` cell) to push docked siblings to the edges. |
 | `Hidden` | `Hidden` | 🟦 | `: Decorator`; tracks host-window width → hides `Child` when current `Breakpoints` bucket satisfies `Mode` (Down/Up/Only) vs `Breakpoint`. Pure `IsHiddenAt` for the rule. |
 | Breakpoint service | `Breakpoint` enum + `Breakpoints` helper | ✅ | xs–xxl thresholds; container-width based. |

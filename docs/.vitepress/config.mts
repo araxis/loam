@@ -30,10 +30,13 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/introduction', activeMatch: '/guide/' },
       { text: 'Components', link: '/components/overview', activeMatch: '/components/' },
+      { text: 'Migrate', link: '/migration/v2-to-v3', activeMatch: '/migration/' },
       {
-        text: 'v2',
+        text: 'Project',
         items: [
-          { text: 'Development Plan', link: `${repo}/blob/main/DEVELOPMENT_PLAN.md` },
+          { text: 'v3 plan', link: `${repo}/blob/main/PLAN.md` },
+          { text: 'v3 review', link: `${repo}/blob/main/REVIEW.md` },
+          { text: 'v2 development plan', link: `${repo}/blob/main/DEVELOPMENT_PLAN.md` },
           { text: 'Progress log', link: `${repo}/blob/main/memory/progress/progress-log.md` },
           { text: 'Component tracker', link: `${repo}/blob/main/memory/component-inventory.md` },
         ],
@@ -66,6 +69,14 @@ export default defineConfig({
             { text: 'Navigation', link: '/components/navigation' },
             { text: 'Overlays & feedback', link: '/components/overlays' },
             { text: 'Charts & effects', link: '/components/charts' },
+          ],
+        },
+      ],
+      '/migration/': [
+        {
+          text: 'Migration',
+          items: [
+            { text: 'v2 → v3', link: '/migration/v2-to-v3' },
           ],
         },
       ],

@@ -597,8 +597,8 @@ public sealed class ComponentsView : UserControl
         Page("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavGroup),
 
         Page("Layout", "Container", "Centered and width-capped content regions.", BuildContainer),
-        Page("Layout", "Grid", "Responsive 12-column layout with item spans.", BuildGridLayout),
-        Page("Layout", "Item", "Grid child span settings across breakpoints.", BuildItemLayout),
+        Page("Layout", "ResponsiveGrid", "Responsive 12-column layout with column spans.", BuildGridLayout),
+        Page("Layout", "Col", "ResponsiveGrid child span settings across breakpoints.", BuildItemLayout),
         Page("Layout", "Stack", "Spaced row and column layout.", BuildStackLayout),
         Page("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildSpacer),
         Page("Layout", "Hidden", "Breakpoint-based visibility.", BuildHidden),
@@ -807,7 +807,7 @@ public sealed class ComponentsView : UserControl
         "NavLink" => Icons.Material.Filled.ArrowForward,
 
         "Container" => Icons.Material.Filled.WebAsset,
-        "Grid" or "Item" => Icons.Material.Filled.GridView,
+        "ResponsiveGrid" or "Col" => Icons.Material.Filled.GridView,
         "Stack" => Icons.Material.Filled.ViewHeadline,
         "Spacer" => Icons.Material.Filled.SwapHoriz,
         "Hidden" => Icons.Material.Filled.VisibilityOff,
@@ -876,8 +876,8 @@ public sealed class ComponentsView : UserControl
             },
         };
 
-        var board = new Loam.Controls.Grid { Spacing = 18 };
-        board.Children.Add(new Item
+        var board = new Loam.Controls.ResponsiveGrid { Spacing = 18 };
+        board.Children.Add(new Col
         {
             Xs = 12,
             Md = 7,
@@ -892,7 +892,7 @@ public sealed class ComponentsView : UserControl
                 },
             },
         });
-        board.Children.Add(new Item
+        board.Children.Add(new Col
         {
             Xs = 12,
             Md = 5,
@@ -1289,10 +1289,10 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildLayoutSamples()
     {
-        var grid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 720 };
+        var grid = new Loam.Controls.ResponsiveGrid { Spacing = 12, MaxWidth = 720 };
         for (var i = 1; i <= 6; i++)
         {
-            grid.Children.Add(new Item
+            grid.Children.Add(new Col
             {
                 Xs = 12,
                 Sm = 6,
@@ -1333,7 +1333,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 18,
             Children =
             {
-                Labeled("Grid", grid),
+                Labeled("ResponsiveGrid", grid),
                 Labeled("Stack", stack),
                 Labeled("Container", container),
             },
@@ -1377,10 +1377,10 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildGridLayout()
     {
-        var spanGrid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 780 };
+        var spanGrid = new Loam.Controls.ResponsiveGrid { Spacing = 12, MaxWidth = 780 };
         foreach (var (label, span) in new[] { ("xs12", 12), ("xs6", 6), ("xs4", 4), ("xs3", 3) })
         {
-            spanGrid.Children.Add(new Item
+            spanGrid.Children.Add(new Col
             {
                 Xs = span,
                 Child = new Paper
@@ -1394,10 +1394,10 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        var responsiveGrid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 780 };
+        var responsiveGrid = new Loam.Controls.ResponsiveGrid { Spacing = 12, MaxWidth = 780 };
         for (var i = 1; i <= 6; i++)
         {
-            responsiveGrid.Children.Add(new Item
+            responsiveGrid.Children.Add(new Col
             {
                 Xs = 12,
                 Sm = 6,
@@ -1436,12 +1436,12 @@ public sealed class ComponentsView : UserControl
 
     private static StackPanel BuildItemLayout()
     {
-        var grid = new Loam.Controls.Grid { Spacing = 12, MaxWidth = 780 };
-        grid.Children.Add(new Item { Xs = 12, Sm = 12, Md = 8, Lg = 8, Child = new Paper { Height = 72, Elevation = 1, Padding = new Thickness(12), Content = new Text { Text = "Main\nxs12 / md8", Typo = Typo.Body2 } } });
-        grid.Children.Add(new Item { Xs = 12, Sm = 12, Md = 4, Lg = 4, Child = new Paper { Height = 72, Elevation = 1, Padding = new Thickness(12), Content = new Text { Text = "Side\nxs12 / md4", Typo = Typo.Body2 } } });
-        grid.Children.Add(new Item { Xs = 6, Sm = 4, Md = 3, Lg = 2, Xl = 2, Xxl = 1, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "xs6 / sm4 / md3 / lg2 / xxl1", Typo = Typo.Body2 } } });
-        grid.Children.Add(new Item { Xs = 6, Sm = 4, Md = 3, Lg = 2, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "breakpoint fallback", Typo = Typo.Body2 } } });
-        grid.Children.Add(new Item { Xs = 12, Sm = 4, Md = 6, Lg = 4, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "mixed item span", Typo = Typo.Body2 } } });
+        var grid = new Loam.Controls.ResponsiveGrid { Spacing = 12, MaxWidth = 780 };
+        grid.Children.Add(new Col { Xs = 12, Sm = 12, Md = 8, Lg = 8, Child = new Paper { Height = 72, Elevation = 1, Padding = new Thickness(12), Content = new Text { Text = "Main\nxs12 / md8", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Col { Xs = 12, Sm = 12, Md = 4, Lg = 4, Child = new Paper { Height = 72, Elevation = 1, Padding = new Thickness(12), Content = new Text { Text = "Side\nxs12 / md4", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Col { Xs = 6, Sm = 4, Md = 3, Lg = 2, Xl = 2, Xxl = 1, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "xs6 / sm4 / md3 / lg2 / xxl1", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Col { Xs = 6, Sm = 4, Md = 3, Lg = 2, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "breakpoint fallback", Typo = Typo.Body2 } } });
+        grid.Children.Add(new Col { Xs = 12, Sm = 4, Md = 6, Lg = 4, Child = new Paper { Height = 56, Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = new Text { Text = "mixed item span", Typo = Typo.Body2 } } });
 
         return new StackPanel
         {

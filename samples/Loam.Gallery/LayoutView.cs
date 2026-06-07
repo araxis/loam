@@ -5,11 +5,11 @@ using Loam;
 using Loam.Controls;
 using Loam.Theming;
 using LoamButton = Loam.Controls.Button;
-using LoamGrid = Loam.Controls.Grid;
+using LoamGrid = Loam.Controls.ResponsiveGrid;
 
 namespace Loam.Gallery;
 
-/// <summary>Phase 4 showcase: responsive <see cref="LoamGrid"/>/<see cref="Item"/>, <see cref="Stack"/> and <see cref="Container"/>.</summary>
+/// <summary>Phase 4 showcase: responsive <see cref="LoamGrid"/>/<see cref="Col"/>, <see cref="Stack"/> and <see cref="Container"/>.</summary>
 public sealed class LayoutView : UserControl
 {
     public LayoutView()
@@ -46,7 +46,7 @@ public sealed class LayoutView : UserControl
         var grid = new LoamGrid { Spacing = 12 };
         for (var i = 1; i <= 6; i++)
         {
-            grid.Children.Add(new Item
+            grid.Children.Add(new Col
             {
                 Xs = 12,
                 Sm = 6,

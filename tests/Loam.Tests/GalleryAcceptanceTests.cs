@@ -1534,7 +1534,7 @@ public class GalleryAcceptanceTests
             containerWindow.Close();
         }
 
-        var gridPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Grid");
+        var gridPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/ResponsiveGrid");
         foreach (var expected in new[] { "Fixed spans", "Responsive spans", "Xs = 12", "Sm = 6", "Md = 4", "Non-Item child spans 12 columns" })
         {
             gridPage.Code.ShouldContain(expected);
@@ -1544,10 +1544,10 @@ public class GalleryAcceptanceTests
         var gridWindow = Show(gridPreview, ThemeVariant.Light);
         try
         {
-            var grids = gridPreview.GetVisualDescendants().OfType<Loam.Controls.Grid>().ToArray();
+            var grids = gridPreview.GetVisualDescendants().OfType<Loam.Controls.ResponsiveGrid>().ToArray();
             grids.Length.ShouldBeGreaterThanOrEqualTo(2);
             grids.Any(grid => grid.Spacing == 12).ShouldBeTrue();
-            gridPreview.GetVisualDescendants().OfType<Item>().Count().ShouldBeGreaterThanOrEqualTo(10);
+            gridPreview.GetVisualDescendants().OfType<Col>().Count().ShouldBeGreaterThanOrEqualTo(10);
             grids.All(grid => AutomationProperties.GetName(grid) == "Grid layout").ShouldBeTrue();
         }
         finally
@@ -1555,7 +1555,7 @@ public class GalleryAcceptanceTests
             gridWindow.Close();
         }
 
-        var itemPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Item");
+        var itemPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Col");
         foreach (var expected in new[] { "Item breakpoint props", "Xs = 12", "Sm = 12", "Md = 8", "Lg = 8", "Xl = 2", "Xxl = 1" })
         {
             itemPage.Code.ShouldContain(expected);
@@ -1565,7 +1565,7 @@ public class GalleryAcceptanceTests
         var itemWindow = Show(itemPreview, ThemeVariant.Light);
         try
         {
-            var items = itemPreview.GetVisualDescendants().OfType<Item>().ToArray();
+            var items = itemPreview.GetVisualDescendants().OfType<Col>().ToArray();
             items.Length.ShouldBeGreaterThanOrEqualTo(5);
             items.Any(item => item.Xs == 12 && item.Md == 8).ShouldBeTrue();
             items.Any(item => item.Xxl == 1).ShouldBeTrue();

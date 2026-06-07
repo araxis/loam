@@ -7,6 +7,41 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 0 — Decide & scaffold (kickoff)
+
+**Done**
+- Started v3 ("vNext") on branch `work/vnext`; bumped `Loam.csproj` `<Version>` to `3.0.0-preview.1`.
+- Locked three ADRs: ADR-0008 (naming & Avalonia collision strategy + rename map), ADR-0009 (package
+  split: lean core + `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites, deferred to Phase 4),
+  ADR-0010 (v3 versioning & deprecation policy / breaking-change budget).
+- Renamed the responsive layout: new canonical `ResponsiveGrid` (was `Grid`) and `Col` (was `Item`),
+  behaviour-identical (carried automation names "Grid layout"/"Grid item" verbatim).
+- Kept `Grid`/`Item` as `[Obsolete]` subclasses with stable diagnostic ids `LOAM0001`/`LOAM0002` and a
+  migration URL (warning, not error).
+- Migrated internal + sample + test call sites off the deprecated names (`ColorPicker`, `LayoutView`,
+  `ShellView`, `ComponentsView`, `CodeSampleView`, `LayoutTests`, `GalleryAcceptanceTests`); renamed
+  the gallery's `Layout/Grid`+`Layout/Item` pages to `Layout/ResponsiveGrid`+`Layout/Col`.
+- Added a back-compat `LayoutTests` case proving the deprecated aliases still construct, resolve spans,
+  lay out, and report the same automation names (scoped `#pragma warning disable LOAM0001, LOAM0002`).
+- Scaffolded `docs/migration/v2-to-v3.md` (status, breaking-change policy, canonical rename map,
+  diagnostic-id registry, step-by-step for the done renames, per-phase "coming soon"); wired it into
+  the VitePress nav/sidebar and added a "Project" menu linking `PLAN.md`/`REVIEW.md`.
+- Updated `docs/components/layout.md` (ResponsiveGrid/Col sections + deprecation notes; Avalonia `Grid`
+  qualified in the fixed-2D example), README status, memory README, and the component tracker.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — **0 warnings, 0 errors** (custom obsolete
+  diagnostics `LOAM0001`/`LOAM0002` emit correctly under `TreatWarningsAsErrors`).
+- `dotnet test … Loam.Tests.csproj -c Release --no-build --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` — **377 passed**, 0 failed (was 376 + 1 new
+  back-compat test).
+
+**Next:** Phase 1 — theme consistency: bridge Loam tokens to base Avalonia chrome (ScrollBar,
+ToolTip, ContextMenu/MenuFlyout, Window, text selection/caret, Expander, Avalonia DataGrid) and map
+`SystemAccentColor*` → Loam primary. Also run the docs site build to confirm the new page renders.
+
+---
+
 ## 2026-06-07 — v2.0 — Gallery header and docs refresh
 
 **Done**

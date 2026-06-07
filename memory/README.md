@@ -41,11 +41,19 @@ picking the project up cold. Read this file first.
 - [ADR-0005 — Theming engine: LoamTheme](decisions/0005-theming-engine-loamtheme.md)
 - [ADR-0006 — Icon system](decisions/0006-icon-system.md)
 - [ADR-0007 — API naming & reference mapping convention](decisions/0007-api-naming-mapping.md)
+- [ADR-0008 — v3 naming & Avalonia collision strategy](decisions/0008-v3-naming-collision-strategy.md)
+- [ADR-0009 — v3 package split (lean core + satellites)](decisions/0009-v3-package-split.md)
+- [ADR-0010 — v3 versioning & deprecation policy](decisions/0010-v3-versioning-deprecation-policy.md)
 
 ## Current status (update me)
 
-- **Phase:** v2.0 design-system rebaseline. Default visuals now use role-based schemes and expanded
-  foundation tokens while preserving the familiar component API.
-- **Latest:** all major component families have been rechecked for the v2.0 baseline; data display
-  and charts now include tokenized visuals, gallery acceptance examples, and focused headless tests.
-- **Last updated:** 2026-06-05
+- **Phase:** **v3 (vNext) — Phase 0: Decide & scaffold** (branch `work/vnext`, version
+  `3.0.0-preview.1`). The v3 roadmap and its driving review live at the repo root in
+  [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md).
+- **Latest:** locked the v3 naming/collision strategy, package split, and breaking-change policy
+  (ADR-0008/0009/0010); renamed the responsive grid `Grid`→`ResponsiveGrid` and `Item`→`Col` with
+  `[Obsolete]` aliases (`LOAM0001`/`LOAM0002`); scaffolded the `docs/migration/v2-to-v3.md` guide and
+  rename map. Full solution builds clean; **377 headless/unit tests pass** (added a back-compat test
+  for the deprecated aliases).
+- **Next:** Phase 1 — theme consistency (bridge Loam tokens to base Avalonia chrome).
+- **Last updated:** 2026-06-07

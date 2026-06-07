@@ -55,14 +55,16 @@ var current = field.Text;          // get
 
 ## Name clashes with Avalonia
 
-A few Loam types share a name with `Avalonia.Controls` (`Button`, `Grid`, `CheckBox`, `Slider`,
+A few Loam types share a name with `Avalonia.Controls` (`Button`, `CheckBox`, `Slider`,
 `TabItem`, `Menu`, `TreeView`, `TreeViewItem`, `Carousel`, `DatePicker`, `TimePicker`). When a file
 imports **both** `Avalonia.Controls` and `Loam.Controls`, qualify the Loam one:
 
 ```csharp
 var button = new Loam.Controls.Button { Content = "Go" };
-var grid   = new Loam.Controls.Grid();        // Loam's responsive 12-column grid
 ```
+
+> The responsive grid was renamed `Grid` → `ResponsiveGrid` (and `Item` → `Col`) in v3 precisely to
+> remove this clash, so it needs no qualification. See the [migration guide](../migration/v2-to-v3).
 
 Inside the Loam library itself the local type always wins, so this only matters in your app code that
 imports both namespaces.

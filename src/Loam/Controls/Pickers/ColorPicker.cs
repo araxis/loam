@@ -337,7 +337,7 @@ public class ColorPicker : TemplatedControl
                 Width = 36,
                 Height = 36,
                 Padding = new Thickness(3),
-                Child = new Grid { Children = { stateLayer, fill } },
+                Child = new ResponsiveGrid { Children = { stateLayer, fill } },
                 Cursor = HandCursor,
                 Focusable = true,
             };

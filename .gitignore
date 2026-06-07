@@ -20,6 +20,9 @@ coverage*.xml
 .idea/
 *.DotSettings.user
 
+# Local agent settings — never commit
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
