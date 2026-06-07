@@ -55,6 +55,7 @@ restyle.
 | `SetSeed(Color seed)` | **Material You** — generate a complete light + dark scheme from one seed color. |
 | `SetPrimary(Color color)` | Recolor the primary (and its contrast text) for both variants. |
 | `SetPalette(LoamPalette light, LoamPalette dark)` | Swap compatibility palettes and derive matching schemes. |
+| `SetDensity(LoamDensity density)` | Switch component density — `LoamDensity.Compact` for dense apps, `LoamDensity.Default` for comfortable. |
 | `SetData(LoamThemeData data)` | Replace the entire theme data. |
 
 ```csharp

@@ -223,7 +223,7 @@ public sealed class ComponentsView : UserControl
     {
         var caption = new Text
         {
-            Text = "Material You — pick a seed",
+            Text = "Theme playground",
             Typo = Typo.Subtitle2,
             Margin = new Thickness(4, 0, 4, 8),
         };
@@ -234,6 +234,15 @@ public sealed class ComponentsView : UserControl
             swatches.Children.Add(SeedSwatch(Color.Parse(hex)));
         }
 
+        var compact = new Switch
+        {
+            Content = "Compact density",
+            Color = LoamColor.Primary,
+            Margin = new Thickness(4, 12, 4, 0),
+        };
+        compact.IsCheckedChanged += (_, _) =>
+            CurrentLoamTheme()?.SetDensity(compact.IsChecked == true ? LoamDensity.Compact : LoamDensity.Default);
+
         var reset = new LoamButton
         {
             Content = "Reset",
@@ -243,9 +252,13 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 8, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        reset.Click += (_, _) => CurrentLoamTheme()?.SetData(LoamThemeData.Default);
+        reset.Click += (_, _) =>
+        {
+            compact.IsChecked = false;
+            CurrentLoamTheme()?.SetData(LoamThemeData.Default);
+        };
 
-        return new StackPanel { Margin = new Thickness(8), Children = { caption, swatches, reset } };
+        return new StackPanel { Margin = new Thickness(8), Children = { caption, swatches, compact, reset } };
     }
 
     private static Border SeedSwatch(Color color)

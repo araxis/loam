@@ -7,6 +7,28 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 2 — One-call density switch (compact mode)
+
+**Done**
+- Added `LoamDensity.Compact` preset (reduced interactive targets, button heights/padding, icon-button
+  and tabular padding) and a runtime `LoamTheme.SetDensity(LoamDensity)` entry point (keeps
+  colors/typography). Density tokens already flow through `ProjectSharedTokens`, so the switch updates
+  `Loam.Density.*` at runtime.
+- Gallery: turned the header seed flyout into a small "Theme playground" — seed swatches + a
+  **Compact density** `Switch` (calls `SetDensity`) + Reset (restores `LoamThemeData.Default` and
+  unchecks compact).
+- Documented `SetDensity` in `docs/guide/theming.md` runtime-setters table.
+- Added `ThemingTests`: Compact metrics < Default; `SetDensity` updates density tokens at runtime.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **398 passed**, 0 failed.
+
+**Next:** Phase 2 remaining — high-contrast theme variant. (Then Phase 3: naming/ergonomics refactor —
+`AppBar` custom-actions slot, generated-vs-custom content precedence, collision tooling.)
+
+---
+
 ## 2026-06-07 — v3 Phase 2 — Gallery Material You seed playground
 
 **Done**

@@ -130,6 +130,13 @@ public sealed class LoamTheme : Styles
         });
     }
 
+    /// <summary>
+    /// Switches component density at runtime (e.g. <see cref="LoamDensity.Compact"/> for an
+    /// information-dense "compact app", or <see cref="LoamDensity.Default"/> for comfortable),
+    /// keeping colors/typography/etc. One-call compact mode.
+    /// </summary>
+    public void SetDensity(LoamDensity density) => SetData(_data with { Density = density });
+
     private void BuildTokens()
     {
         // Color roles → per-variant dictionaries. Assigning fresh dictionaries guarantees a resource

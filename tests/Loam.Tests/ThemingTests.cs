@@ -241,6 +241,27 @@ public class ThemingTests
         Brush(theme.Resources, LoamTokens.Surface, ThemeVariant.Dark).ShouldBe(Color.Parse("#373740"));
     }
 
+    [Fact]
+    public void Compact_density_reduces_key_metrics()
+    {
+        LoamDensity.Compact.InteractiveMedium.ShouldBeLessThan(LoamDensity.Default.InteractiveMedium);
+        LoamDensity.Compact.ButtonContainerHeightMedium.ShouldBeLessThan(LoamDensity.Default.ButtonContainerHeightMedium);
+        LoamDensity.Compact.DataCellPadding.Top.ShouldBeLessThan(LoamDensity.Default.DataCellPadding.Top);
+    }
+
+    [Fact]
+    public void SetDensity_updates_density_tokens_at_runtime()
+    {
+        var theme = new LoamTheme();
+
+        theme.SetDensity(LoamDensity.Compact);
+
+        theme.Resources.TryGetResource(LoamTokens.DensityInteractiveMedium, ThemeVariant.Light, out var interactive).ShouldBeTrue();
+        interactive.ShouldBe(LoamDensity.Compact.InteractiveMedium);
+        theme.Resources.TryGetResource(LoamTokens.DensityButtonContainerHeightMedium, ThemeVariant.Light, out var button).ShouldBeTrue();
+        button.ShouldBe(LoamDensity.Compact.ButtonContainerHeightMedium);
+    }
+
     private static Color SchemeColor(LoamColorScheme scheme, string role) =>
         (Color)typeof(LoamColorScheme).GetProperty(role)!.GetValue(scheme)!;
 }
