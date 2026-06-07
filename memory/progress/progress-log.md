@@ -7,6 +7,25 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 1 — Theme consistency: ToolTip bridge
+
+**Done**
+- Added `LoamTheme.BridgeFluentToolTip`: base Avalonia tooltips now use the Material inverse-surface
+  container with inverse-on-surface text and no border. Overrides `ToolTipBackground`,
+  `ToolTipForeground`, `ToolTipBorderBrush` (per variant, runtime-swappable); geometry/size/corner keys
+  left to Fluent.
+- Added two `FluentBridgeTests` (projection per variant + end-to-end background resolution).
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/ToolTip.xaml` for the exact brush keys.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **384 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `ContextMenu`/`MenuFlyout`, `Window` background, text selection/caret,
+`Expander`, Avalonia `DataGrid`. Visual gallery pass (light/dark) still pending.
+
+---
+
 ## 2026-06-07 — v3 Phase 1 — Theme consistency: ScrollBar bridge
 
 **Done**

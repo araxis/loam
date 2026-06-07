@@ -183,8 +183,20 @@ public sealed class LoamTheme : Styles
 
         BridgeFluentAccent(dict, scheme.Primary);
         BridgeFluentScrollBar(dict, scheme);
+        BridgeFluentToolTip(dict, scheme);
 
         return dict;
+    }
+
+    // Phase 1 — theme consistency. Material tooltips use the inverse-surface container with
+    // inverse-on-surface text and no border. Overrides the Fluent ToolTip brush keys (resolved by the
+    // ToolTip ControlTheme via DynamicResource). Keys verified against Avalonia 12.0.4
+    // Controls/ToolTip.xaml; geometry/size/corner keys are left to Fluent.
+    private static void BridgeFluentToolTip(ResourceDictionary dict, LoamColorScheme scheme)
+    {
+        dict["ToolTipBackground"] = new ImmutableSolidColorBrush(scheme.InverseSurface);
+        dict["ToolTipForeground"] = new ImmutableSolidColorBrush(scheme.InverseOnSurface);
+        dict["ToolTipBorderBrush"] = new ImmutableSolidColorBrush(Colors.Transparent);
     }
 
     // Phase 1 — theme consistency. Bridge Loam's primary into Avalonia Fluent's accent system so base

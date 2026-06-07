@@ -114,6 +114,31 @@ public class FluentBridgeTests
         ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.OnSurfaceVariant);
     }
 
+    [Fact]
+    public void Tooltip_brush_keys_project_inverse_surface_per_variant()
+    {
+        var res = new LoamTheme().Resources;
+
+        ScrollBrush(res, "ToolTipBackground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.InverseSurface);
+        ScrollBrush(res, "ToolTipForeground", ThemeVariant.Light).ShouldBe(LoamColorScheme.DefaultLight.InverseOnSurface);
+        ScrollBrush(res, "ToolTipBackground", ThemeVariant.Dark).ShouldBe(LoamColorScheme.DefaultDark.InverseSurface);
+        ScrollBrush(res, "ToolTipBorderBrush", ThemeVariant.Light).ShouldBe(Colors.Transparent);
+    }
+
+    [AvaloniaFact]
+    public void Stray_tooltip_background_resolves_to_loam_inverse_surface()
+    {
+        Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+
+        var probe = new Border();
+        new Window { Content = probe }.Show();
+        Dispatcher.UIThread.RunJobs();
+        probe.Bind(Border.BackgroundProperty, probe.GetResourceObservable("ToolTipBackground"));
+        Dispatcher.UIThread.RunJobs();
+
+        ((ISolidColorBrush)probe.Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.InverseSurface);
+    }
+
     private static Color ScrollBrush(IResourceDictionary res, string key, ThemeVariant variant)
     {
         res.TryGetResource(key, variant, out var value).ShouldBeTrue($"{key} ({variant})");
