@@ -7,6 +7,33 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 2 — Material You seed→scheme generator (first slice)
+
+**Done**
+- Implemented one-seed → complete light + dark `LoamColorScheme` generation (the headline
+  "customizable" feature). New `LoamLab` (sRGB↔Lab↔LCh, tone = CIE L\*, gamut-clamped chroma),
+  `LoamTonalPalette` (hue + chroma, sampled by tone), `LoamColorScheme.FromSeed(seed, dark)` mapping
+  every role to standard M3 tones.
+- Runtime API: `LoamTheme.SetSeed(color)` and `LoamThemeData.FromSeed(color)` — regenerate both
+  schemes + compatibility palettes, keeping typography/shape/etc. The Phase-1 Fluent accent bridge
+  follows the new seed automatically.
+- Added **ADR-0012** (CIELAB tonal palettes as a tractable, accessible approximation of CAM16/HCT;
+  full HCT deferred as an optional upgrade).
+- Added `MaterialYouTests`: accessibility across 6 seeds × light/dark × 11 text pairs, tone ordering,
+  gamut clamping at extremes, `FromSeed`/`SetSeed` runtime updates.
+
+**Verified**
+- Key insight (and why generated schemes are accessible by construction): WCAG luminance == XYZ Y, and
+  L\* is a function of Y alone, so tone-gap contrast is deterministic and matches M3 — independent of
+  the seed's hue/chroma. 132 contrast assertions pass WCAG AA (≥ 4.5).
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **395 passed**, 0 failed.
+
+**Next:** Phase 2 remaining — gallery theme playground (live seed picker), high-contrast variant, a
+one-call compact/density switch. Optional: CAM16/HCT upgrade for exact Material You fidelity.
+
+---
+
 ## 2026-06-07 — v3 Phase 1 — Expander bridge + consolidate FluentBridge + ADR-0011
 
 **Done**

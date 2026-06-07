@@ -45,16 +45,18 @@ picking the project up cold. Read this file first.
 - [ADR-0009 — v3 package split (lean core + satellites)](decisions/0009-v3-package-split.md)
 - [ADR-0010 — v3 versioning & deprecation policy](decisions/0010-v3-versioning-deprecation-policy.md)
 - [ADR-0011 — Bridging base Fluent chrome to Loam tokens (Phase 1)](decisions/0011-fluent-base-chrome-bridge.md)
+- [ADR-0012 — Material You seed → scheme generation (Phase 2)](decisions/0012-material-you-seed-scheme.md)
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 1: Theme consistency** (branch `work/vnext`, version
-  `3.0.0-preview.1`). Phase 0 (scaffold) is done. The v3 roadmap and its driving review live at the
-  repo root in [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md).
-- **Latest:** built the `FluentBridge` helper (ADR-0011) so stray base Fluent controls read as Material
-  in light & dark — accent, scrollbars, tooltips, menus/flyouts, window background, text selection, and
-  expanders are bridged onto Loam tokens (per variant, runtime-swappable). Demo app visually confirmed
-  in both themes on 2026-06-07. Full solution builds clean; **390 headless/unit tests pass**.
-- **Next:** Phase 1 remaining — Avalonia `DataGrid` (deferred: not referenced by the core package;
-  likely a `Loam.Data` concern). Then Phase 2 — Material You seed→scheme generator.
+- **Phase:** **v3 (vNext) — Phase 2: Theming power** (branch `work/vnext`, version
+  `3.0.0-preview.1`). Phase 0 (scaffold) and Phase 1 (theme consistency) are done. The v3 roadmap and
+  its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md).
+- **Latest:** shipped the **Material You** seed→scheme generator (ADR-0012): one seed color produces a
+  complete, accessible light + dark `LoamColorScheme` at runtime via `LoamTheme.SetSeed` /
+  `LoamThemeData.FromSeed`. CIELAB tonal palettes (tone = L\*), gamut-clamped, with M3 role mapping;
+  accessible by construction (132 contrast assertions across 6 seeds × light/dark pass WCAG AA). Full
+  solution builds clean; **395 headless/unit tests pass**.
+- **Next:** Phase 2 remaining — gallery theme playground (live seed picker), high-contrast variant,
+  one-call compact/density switch. (Optional later: CAM16/HCT upgrade for exact M3 fidelity.)
 - **Last updated:** 2026-06-07

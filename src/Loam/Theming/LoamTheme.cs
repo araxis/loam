@@ -112,6 +112,24 @@ public sealed class LoamTheme : Styles
             PaletteDark = _data.PaletteDark with { Primary = color.Lighten(0.35), PrimaryContrastText = color.Darken(0.65).ContrastText() },
         });
 
+    /// <summary>
+    /// Regenerates both palettes from a single seed color at runtime (Material You), keeping the
+    /// current typography/shape/spacing/etc. The headline customizable entry point: one seed produces
+    /// a complete, accessible light + dark scheme. See ADR-0012.
+    /// </summary>
+    public void SetSeed(Color seed)
+    {
+        var light = LoamColorScheme.FromSeed(seed, dark: false);
+        var dark = LoamColorScheme.FromSeed(seed, dark: true);
+        SetData(_data with
+        {
+            ColorSchemeLight = light,
+            ColorSchemeDark = dark,
+            PaletteLight = light.ToPalette(),
+            PaletteDark = dark.ToPalette(),
+        });
+    }
+
     private void BuildTokens()
     {
         // Color roles → per-variant dictionaries. Assigning fresh dictionaries guarantees a resource

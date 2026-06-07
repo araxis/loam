@@ -250,4 +250,82 @@ public sealed record LoamColorScheme
         InverseOnSurface = palette.DarkContrastText,
         InversePrimary = palette.Primary.Lighten(0.35),
     };
+
+    /// <summary>
+    /// Builds a complete light or dark scheme from a single seed color (Material You). Derives
+    /// tonal palettes (primary/secondary/tertiary/neutral/neutral-variant/error) from the seed and
+    /// maps each role to the standard Material 3 tone for the variant. See ADR-0012.
+    /// </summary>
+    public static LoamColorScheme FromSeed(Color seed, bool dark)
+    {
+        var (_, chroma, hue) = LoamLab.ToLch(seed);
+
+        var primary = LoamTonalPalette.FromHueChroma(hue, Math.Max(chroma, 48));
+        var secondary = LoamTonalPalette.FromHueChroma(hue, 24);
+        var tertiary = LoamTonalPalette.FromHueChroma(hue + 60, 36);
+        var neutral = LoamTonalPalette.FromHueChroma(hue, 6);
+        var neutralVariant = LoamTonalPalette.FromHueChroma(hue, 12);
+        var error = LoamTonalPalette.FromColor(Color.Parse("#B3261E"));
+
+        return new LoamColorScheme
+        {
+            Primary = primary.Tone(dark ? 80 : 40),
+            OnPrimary = primary.Tone(dark ? 20 : 100),
+            PrimaryContainer = primary.Tone(dark ? 30 : 90),
+            OnPrimaryContainer = primary.Tone(dark ? 90 : 10),
+
+            Secondary = secondary.Tone(dark ? 80 : 40),
+            OnSecondary = secondary.Tone(dark ? 20 : 100),
+            SecondaryContainer = secondary.Tone(dark ? 30 : 90),
+            OnSecondaryContainer = secondary.Tone(dark ? 90 : 10),
+
+            Tertiary = tertiary.Tone(dark ? 80 : 40),
+            OnTertiary = tertiary.Tone(dark ? 20 : 100),
+            TertiaryContainer = tertiary.Tone(dark ? 30 : 90),
+            OnTertiaryContainer = tertiary.Tone(dark ? 90 : 10),
+
+            Error = error.Tone(dark ? 80 : 40),
+            OnError = error.Tone(dark ? 20 : 100),
+            ErrorContainer = error.Tone(dark ? 30 : 90),
+            OnErrorContainer = error.Tone(dark ? 90 : 10),
+
+            Background = neutral.Tone(dark ? 6 : 98),
+            OnBackground = neutral.Tone(dark ? 90 : 10),
+            Surface = neutral.Tone(dark ? 6 : 98),
+            OnSurface = neutral.Tone(dark ? 90 : 10),
+            SurfaceDim = neutral.Tone(dark ? 6 : 87),
+            SurfaceBright = neutral.Tone(dark ? 24 : 98),
+            SurfaceContainerLowest = neutral.Tone(dark ? 4 : 100),
+            SurfaceContainerLow = neutral.Tone(dark ? 10 : 96),
+            SurfaceContainer = neutral.Tone(dark ? 12 : 94),
+            SurfaceContainerHigh = neutral.Tone(dark ? 17 : 92),
+            SurfaceContainerHighest = neutral.Tone(dark ? 22 : 90),
+            SurfaceVariant = neutralVariant.Tone(dark ? 30 : 90),
+            OnSurfaceVariant = neutralVariant.Tone(dark ? 80 : 30),
+
+            Outline = neutralVariant.Tone(dark ? 60 : 50),
+            OutlineVariant = neutralVariant.Tone(dark ? 30 : 80),
+            Shadow = neutral.Tone(0),
+            Scrim = neutral.Tone(0),
+
+            InverseSurface = neutral.Tone(dark ? 90 : 20),
+            InverseOnSurface = neutral.Tone(dark ? 20 : 95),
+            InversePrimary = primary.Tone(dark ? 40 : 80),
+
+            PrimaryFixed = primary.Tone(90),
+            PrimaryFixedDim = primary.Tone(80),
+            OnPrimaryFixed = primary.Tone(10),
+            OnPrimaryFixedVariant = primary.Tone(30),
+
+            SecondaryFixed = secondary.Tone(90),
+            SecondaryFixedDim = secondary.Tone(80),
+            OnSecondaryFixed = secondary.Tone(10),
+            OnSecondaryFixedVariant = secondary.Tone(30),
+
+            TertiaryFixed = tertiary.Tone(90),
+            TertiaryFixedDim = tertiary.Tone(80),
+            OnTertiaryFixed = tertiary.Tone(10),
+            OnTertiaryFixedVariant = tertiary.Tone(30),
+        };
+    }
 }
