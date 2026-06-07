@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 4 — Deprecate Stack + table strategy
+
+**Done**
+- Marked `Stack` `[Obsolete]` (`LOAM0003`) → use `Avalonia.Controls.StackPanel`. Migrated every gallery
+  + test usage to `StackPanel` (`Row = true` → `Orientation = Orientation.Horizontal`; default
+  `Spacing = 8` set explicitly). Removed the gallery's dedicated Stack page (StackPanel is framework
+  standard) and its acceptance test; kept a scoped back-compat unit test
+  (`#pragma warning disable LOAM0003`) for the shim.
+- Self-references inside the obsolete `Stack` (its own `Register`/`nameof`) don't warn — obsolete
+  usage within an obsolete type is exempt, so the library stays warning-clean under
+  `TreatWarningsAsErrors`.
+- **Table strategy (ADR-0013):** `DataGrid<T>` is the recommended table; `SimpleTable` is kept as the
+  minimal static option (not deprecated, positioned secondary). Added "Choosing a table" guidance to
+  `docs/components/data-display.md`; updated the migration guide rename map and the component tracker.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **405 passed**, 0 failed.
+
+**Next:** Phase 4 remaining — additive shell controls (`NavigationRail`, `BottomNavigation`,
+`CommandPalette`), then the package split into `Loam.Charts`/`Loam.Pickers`/`Loam.Data` (ADR-0009,
+the big restructure).
+
+---
+
 ## 2026-06-07 — v3 Phase 3 — Collision tooling: global-usings snippet (Phase 3 core complete)
 
 **Done**

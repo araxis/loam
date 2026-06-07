@@ -10,6 +10,12 @@ namespace Loam.Controls;
 /// A spaced stack of children, mirroring the reference API's <c>Stack</c>. Vertical by default;
 /// <see cref="Row"/> lays out horizontally. Spacing reuses <see cref="StackPanel.Spacing"/>.
 /// </summary>
+[Obsolete(
+    "Loam.Controls.Stack is a thin wrapper over Avalonia.Controls.StackPanel and will be removed in a " +
+    "future release. Use StackPanel (set Orientation and Spacing). See https://araxis.github.io/loam/migration/v2-to-v3.",
+    error: false,
+    DiagnosticId = "LOAM0003",
+    UrlFormat = "https://araxis.github.io/loam/migration/v2-to-v3")]
 [SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Mirrors the reference API's Stack.")]
 public class Stack : StackPanel
 {

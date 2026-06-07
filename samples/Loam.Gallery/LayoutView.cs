@@ -9,7 +9,7 @@ using LoamGrid = Loam.Controls.ResponsiveGrid;
 
 namespace Loam.Gallery;
 
-/// <summary>Phase 4 showcase: responsive <see cref="LoamGrid"/>/<see cref="Col"/>, <see cref="Stack"/> and <see cref="Container"/>.</summary>
+/// <summary>Phase 4 showcase: responsive <see cref="LoamGrid"/>/<see cref="Col"/>, <c>StackPanel</c> and <see cref="Container"/>.</summary>
 public sealed class LayoutView : UserControl
 {
     public LayoutView()
@@ -21,7 +21,7 @@ public sealed class LayoutView : UserControl
             Children =
             {
                 Section("Responsive grid — resize the window to reflow", BuildGrid()),
-                Section("Stack", BuildStacks()),
+                Section("StackPanel", BuildStacks()),
                 Section("Container (max-width = Sm, centered)", BuildContainer()),
             },
         };
@@ -65,9 +65,10 @@ public sealed class LayoutView : UserControl
 
     private static StackPanel BuildStacks()
     {
-        var row = new Stack
+        var row = new StackPanel
         {
-            Row = true,
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
             Children =
             {
                 new LoamButton { Content = "One", Variant = Variant.Filled, Color = LoamColor.Primary },
@@ -76,8 +77,9 @@ public sealed class LayoutView : UserControl
             },
         };
 
-        var column = new Stack
+        var column = new StackPanel
         {
+            Spacing = 8,
             Children =
             {
                 new Chip { Text = "Alpha", Color = LoamColor.Info },

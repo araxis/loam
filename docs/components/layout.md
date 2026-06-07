@@ -210,7 +210,7 @@ var grid = new ResponsiveGrid
 
 Equivalent of the reference API's `Stack`. Extends `StackPanel` with a `Row` toggle and a sensible default `Spacing` of `8 px`. Vertical by default; set `Row = true` for horizontal layout.
 
-> **Deprecation planned (v3).** `Stack` is a thin wrapper over `Avalonia.Controls.StackPanel`. It is slated for removal in a later v3 preview — prefer `StackPanel` directly (set `Orientation` and `Spacing`). See the [migration guide](../migration/v2-to-v3).
+> **Deprecated in v3 (`LOAM0003`).** `Stack` is a thin wrapper over `Avalonia.Controls.StackPanel` and will be removed in a future release. Use `StackPanel` directly: set `Orientation = Orientation.Horizontal` for the old `Row = true`, and set `Spacing` (Loam's `Stack` defaulted it to `8`). See the [migration guide](../migration/v2-to-v3).
 
 ### Properties
 

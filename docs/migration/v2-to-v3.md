@@ -53,8 +53,8 @@ site — the warnings are there to find them.
 | --- | --- | --- | --- | --- |
 | `Loam.Controls.Grid` | `Loam.Controls.ResponsiveGrid` | `LOAM0001` | ✅ Done | Net-new responsive concept; no longer shadows `Avalonia.Controls.Grid`. |
 | `Loam.Controls.Item` | `Loam.Controls.Col` | `LOAM0002` | ✅ Done | The responsive grid’s column child. |
-| `Loam.Controls.Stack` | `Avalonia.Controls.StackPanel` | _TBD_ | 🔜 Planned (Phase 4) | Thin wrapper over `StackPanel` (adds `Row` + default `Spacing`); slated for removal. |
-| `SimpleTable` + `DataGrid<T>` | one consolidated table API | _TBD_ | 🔜 Planned (Phase 4) | Consolidating the two table paths. |
+| `Loam.Controls.Stack` | `Avalonia.Controls.StackPanel` | `LOAM0003` | ✅ Done | Thin wrapper over `StackPanel`; deprecated. Use `StackPanel` (`Orientation` = `Horizontal` for the old `Row = true`; set `Spacing`, which defaulted to `8`). |
+| `SimpleTable` + `DataGrid<T>` | `DataGrid<T>` (recommended) | n/a | ✅ Guidance (ADR-0013) | `DataGrid<T>` is the recommended table; `SimpleTable` is kept for trivial static tables. |
 | Charts / Pickers / heavy Data controls | satellite packages (`Loam.Charts`, `Loam.Pickers`, `Loam.Data`) | n/a | 🔜 Planned (Phase 4) | Moves out of the core package; namespaces unchanged. |
 
 ## Done in this preview

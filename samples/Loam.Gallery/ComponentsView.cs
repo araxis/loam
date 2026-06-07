@@ -716,7 +716,6 @@ public sealed class ComponentsView : UserControl
         Page("Layout", "Container", "Centered and width-capped content regions.", BuildContainer),
         Page("Layout", "ResponsiveGrid", "Responsive 12-column layout with column spans.", BuildGridLayout),
         Page("Layout", "Col", "ResponsiveGrid child span settings across breakpoints.", BuildItemLayout),
-        Page("Layout", "Stack", "Spaced row and column layout.", BuildStackLayout),
         Page("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildSpacer),
         Page("Layout", "Hidden", "Breakpoint-based visibility.", BuildHidden),
         Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildScrollToTop),
@@ -925,7 +924,6 @@ public sealed class ComponentsView : UserControl
 
         "Container" => Icons.Material.Filled.WebAsset,
         "ResponsiveGrid" or "Col" => Icons.Material.Filled.GridView,
-        "Stack" => Icons.Material.Filled.ViewHeadline,
         "Spacer" => Icons.Material.Filled.SwapHoriz,
         "Hidden" => Icons.Material.Filled.VisibilityOff,
         "ScrollToTop" => Icons.Material.Filled.ExpandLess,
@@ -1423,9 +1421,10 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        var stack = new Stack
+        var stack = new StackPanel
         {
-            Row = true,
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
             Children =
             {
                 new LoamButton { Content = "One", Variant = Variant.Filled, Color = LoamColor.Primary },
@@ -1451,7 +1450,7 @@ public sealed class ComponentsView : UserControl
             Children =
             {
                 Labeled("ResponsiveGrid", grid),
-                Labeled("Stack", stack),
+                Labeled("StackPanel", stack),
                 Labeled("Container", container),
             },
         };
@@ -1567,51 +1566,6 @@ public sealed class ComponentsView : UserControl
             {
                 new Text { Text = "Item breakpoint props", Typo = Typo.Subtitle2 },
                 grid,
-            },
-        };
-    }
-
-    private static StackPanel BuildStackLayout()
-    {
-        return new StackPanel
-        {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                new Text { Text = "Vertical stack", Typo = Typo.Subtitle2 },
-                new Stack
-                {
-                    Children =
-                    {
-                        new Chip { Text = "Default" },
-                        new Chip { Text = "Vertical" },
-                        new Chip { Text = "Spacing = 8" },
-                    },
-                },
-                new Text { Text = "Row stack", Typo = Typo.Subtitle2 },
-                new Stack
-                {
-                    Row = true,
-                    Children =
-                    {
-                        new LoamButton { Content = "One", Variant = Variant.Filled, Color = LoamColor.Primary },
-                        new LoamButton { Content = "Two", Variant = Variant.Outlined, Color = LoamColor.Primary },
-                        new LoamButton { Content = "Three", Variant = Variant.Text, Color = LoamColor.Primary },
-                    },
-                },
-                new Text { Text = "Custom spacing", Typo = Typo.Subtitle2 },
-                new Stack
-                {
-                    Row = true,
-                    Spacing = 16,
-                    Children =
-                    {
-                        new Chip { Text = "Spacing" },
-                        new Chip { Text = "16" },
-                        new Chip { Text = "Wrap-ready" },
-                    },
-                },
             },
         };
     }
@@ -3498,9 +3452,10 @@ public sealed class ComponentsView : UserControl
         var group = new RadioGroup
         {
             Value = "b",
-            Child = new Stack
+            Child = new StackPanel
             {
-                Row = true,
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
                 Children =
                 {
                     new Radio { Value = "a", Content = "One", Color = LoamColor.Primary },
@@ -3516,9 +3471,10 @@ public sealed class ComponentsView : UserControl
         {
             Value = "email",
             IsEnabled = false,
-            Child = new Stack
+            Child = new StackPanel
             {
-                Row = true,
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
                 Children =
                 {
                     new Radio { Value = "email", Content = "Email", IsChecked = true },

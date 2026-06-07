@@ -1594,27 +1594,6 @@ public class GalleryAcceptanceTests
             itemWindow.Close();
         }
 
-        var stackPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Stack");
-        foreach (var expected in new[] { "Vertical stack", "Row stack", "Custom spacing", "Row = true", "Spacing = 16" })
-        {
-            stackPage.Code.ShouldContain(expected);
-        }
-
-        var stackPreview = stackPage.Build();
-        var stackWindow = Show(stackPreview, ThemeVariant.Light);
-        try
-        {
-            var stacks = stackPreview.GetVisualDescendants().OfType<Loam.Controls.Stack>().ToArray();
-            stacks.Length.ShouldBeGreaterThanOrEqualTo(3);
-            stacks.Any(stack => stack.Row).ShouldBeTrue();
-            stacks.Any(stack => stack.Spacing == 16).ShouldBeTrue();
-            stacks.All(stack => AutomationProperties.GetName(stack) == "Stack").ShouldBeTrue();
-        }
-        finally
-        {
-            stackWindow.Close();
-        }
-
         var spacerPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Spacer");
         foreach (var expected in new[] { "Star column spacer", "Dock fill spacer", "new Spacer()" })
         {

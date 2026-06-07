@@ -8,6 +8,11 @@ Controls for presenting structured information: lists, tables, grids, trees, tab
 
 > **Name collision note.** `TreeView`, `TreeViewItem`, and `Carousel` exist in both Loam and `Avalonia.Controls`. Qualify Loam types explicitly — `Loam.Controls.TreeView`, `Loam.Controls.TreeViewItem`, `Loam.Controls.Carousel` — when both namespaces are in scope.
 
+> **Choosing a table.** Reach for **`DataGrid<T>`** by default — it's the recommended table for any
+> data-shaped content (sorting, paging, filtering, selection, editing). Use **`SimpleTable`** only for a
+> handful of static, non-interactive rows you'd otherwise hand-build with a `Grid`. See
+> [ADR-0013](https://github.com/araxis/loam/blob/main/memory/decisions/0013-table-strategy.md).
+
 ---
 
 ## List / ListItem / ListSubheader

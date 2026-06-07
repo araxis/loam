@@ -48,7 +48,7 @@ source before implementation (source-first, ADR-0007).
 | --- | --- | --- | --- |
 | `Container` | `Container` | ✅ | `MaxWidthBreakpoint`/`Gutters`; caps + centers (`: Decorator`). |
 | `Grid`/`Item` | `ResponsiveGrid`/`Col` | ✅ | responsive 12-col custom panel; container-query breakpoints. **v3:** renamed from `Grid`/`Item`; old names kept as `[Obsolete]` aliases (`LOAM0001`/`LOAM0002`, ADR-0008). Distinct concept from `Avalonia.Controls.Grid` (fixed 2D). |
-| `Stack` | `Stack` | ✅ | `Row` + spacing (`: StackPanel`). **v3:** deprecation planned (Phase 4 removal → use `StackPanel`). `Justify`/`Wrap`/`Reverse` ⬜. |
+| `Stack` | `Stack` | ⏸️ | `Row` + spacing (`: StackPanel`). **v3: deprecated** (`[Obsolete]` `LOAM0003`) → use `Avalonia.Controls.StackPanel` (`Orientation` + `Spacing`). Removal in a later release. |
 | `Spacer` | `Spacer` | 🟦 | `: Control`, stretch; fills as the `LastChildFill` child of a `DockPanel` (or star `Grid` cell) to push docked siblings to the edges. |
 | `Hidden` | `Hidden` | 🟦 | `: Decorator`; tracks host-window width → hides `Child` when current `Breakpoints` bucket satisfies `Mode` (Down/Up/Only) vs `Breakpoint`. Pure `IsHiddenAt` for the rule. |
 | Breakpoint service | `Breakpoint` enum + `Breakpoints` helper | ✅ | xs–xxl thresholds; container-width based. |
@@ -100,7 +100,7 @@ source before implementation (source-first, ADR-0007).
 | --- | --- | --- | --- |
 | `List`/`ListItem`/`ListSubheader` | `List`/`ListItem`/`ListSubheader` | ✅ | `List` (`: StackPanel`), `ListItem` (`: ContentControl`, icon + hover), `ListSubheader` (`: Text`, muted SemiBold caption). Selection/nested ⬜. |
 | `SimpleTable` | `SimpleTable` | 🟦 | Data-driven `Headers`/`Rows` (`TableRow` of cells; string→`Text`, else hosted `Control`) into a `Grid` inside an elevated `Paper`. `Striped`/`Hover`/`Bordered`/`Dense`/`Elevation`. Content-child (`<tr>`-style) API ⬜. |
-| `Table` | `Table` | ✅ | covered by `SimpleTable` (simple data table) + `DataGrid<T>` (typed sort/page/select). No separate redundant control built — intentional. |
+| `Table` | `Table` | ✅ | covered by `SimpleTable` (simple data table) + `DataGrid<T>` (typed sort/page/select). No separate redundant control built — intentional. **v3 (ADR-0013):** `DataGrid<T>` is the recommended table; `SimpleTable` kept for trivial static tables. |
 | `DataGrid`/`Column` | `DataGrid<T>`/`DataGridColumn<T>` | ✅ | Typed, self-rendering `: Decorator` (generics can't host `StyledProperty`/`ControlTheme`): sort headers, `PageSize` paging, striping/hover/`Dense`, single-row selection, `FilterText`/`Filter`, `Virtualize`/`MaxRenderedRows`, editable text cells via `SetText`, custom `CellTemplate`. Pure `DataGrids.Sort`/`PageCount`/`Filter`. Grouping remains future expansion. |
 | `TreeView`/`TreeViewItem` | `TreeView`/`TreeViewItem` | 🟦 | `TreeViewItem` (`Text`/`Icon`/`Items`/`Expanded`/`IsSelected`; expander chevron, indented children, hover/select highlight; bubbling `ItemSelectedEvent`; focusable row with Enter select / Space toggle and automation name). `TreeView` coordinates single selection (`SelectedItem`). Qualify vs `Avalonia.Controls.TreeView`. Checkboxes/lazy-load ⬜. |
 | `ExpansionPanels`/`ExpansionPanel` | `ExpansionPanels`/`ExpansionPanel` | ✅ | `ExpansionPanel` (`: HeaderedContentControl`, `IsExpanded` two-way, focusable header + rotating chevron + `Collapse`-based content reveal + automation name from header). `ExpansionPanels` container (`Panels`, `MultiExpansion`; accordion via `PropertyChanged`). |

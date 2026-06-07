@@ -60,11 +60,14 @@ public class LayoutTests
     }
 
     [Fact]
-    public void Stack_row_toggles_orientation_and_defaults()
+    public void Deprecated_stack_alias_still_toggles_orientation_and_defaults()
     {
+#pragma warning disable LOAM0003 // Back-compat: the deprecated Stack wrapper over StackPanel.
         new Stack().Orientation.ShouldBe(Orientation.Vertical);
         new Stack().Spacing.ShouldBe(8d);
         new Stack { Row = true }.Orientation.ShouldBe(Orientation.Horizontal);
+        AutomationProperties.GetName(new Stack()).ShouldBe("Stack");
+#pragma warning restore LOAM0003
     }
 
     [Fact]
@@ -82,7 +85,6 @@ public class LayoutTests
         AutomationProperties.GetName(new Container()).ShouldBe("Container");
         AutomationProperties.GetName(new ResponsiveGrid()).ShouldBe("Grid layout");
         AutomationProperties.GetName(new Col()).ShouldBe("Grid item");
-        AutomationProperties.GetName(new Stack()).ShouldBe("Stack");
         AutomationProperties.GetName(new Spacer()).ShouldBe("Spacer");
         AutomationProperties.GetName(new Hidden()).ShouldBe("Hidden");
 

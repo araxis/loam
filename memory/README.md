@@ -46,10 +46,11 @@ picking the project up cold. Read this file first.
 - [ADR-0010 — v3 versioning & deprecation policy](decisions/0010-v3-versioning-deprecation-policy.md)
 - [ADR-0011 — Bridging base Fluent chrome to Loam tokens (Phase 1)](decisions/0011-fluent-base-chrome-bridge.md)
 - [ADR-0012 — Material You seed → scheme generation (Phase 2)](decisions/0012-material-you-seed-scheme.md)
+- [ADR-0013 — Table strategy: one recommended path (Phase 4)](decisions/0013-table-strategy.md)
 
 ## Current status (update me)
 
-- **Phase:** **v3 (vNext) — Phase 3 core complete; Phase 4 next** (branch `work/vnext`, version
+- **Phase:** **v3 (vNext) — Phase 4 in progress** (branch `work/vnext`, version
   `3.0.0-preview.1`). Phases 0 (scaffold), 1 (theme consistency), and 2 (theming power) are done. The
   v3 roadmap and its driving review live at the repo root in [`PLAN.md`](../PLAN.md) and
   [`REVIEW.md`](../REVIEW.md).
@@ -61,8 +62,9 @@ picking the project up cold. Read this file first.
 - **Phase 3 core done:** `AppBar.CustomActions`, generated-vs-custom content precedence (+ debug-only
   `DualContent` warning), and a global-usings collision aid (docs). Optional remainder: a Roslyn
   rename/collision analyzer.
-- **Next:** Phase 4 — component churn & packaging: drop thin wrappers (`Stack`→`StackPanel`),
-  consolidate the table story, extract `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites (ADR-0009),
-  add `NavigationRail`/`BottomNavigation`/`CommandPalette`. (Optional: CAM16/HCT upgrade; wire/remove
-  the orphaned `DesignSystemView`.)
+- **Phase 4 so far:** deprecated `Stack`→`StackPanel` (`LOAM0003`); table strategy decided
+  (ADR-0013: `DataGrid<T>` recommended, `SimpleTable` kept for static). **405 tests.**
+- **Next:** Phase 4 remaining — add `NavigationRail`/`BottomNavigation`/`CommandPalette` (additive),
+  then the package split into `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites (ADR-0009).
+  (Optional: CAM16/HCT upgrade; wire/remove the orphaned `DesignSystemView`/`LayoutView`.)
 - **Last updated:** 2026-06-07
