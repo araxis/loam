@@ -701,8 +701,10 @@ public class DataGrid<T> : Decorator
                 BorderThickness = default,
                 Background = Brushes.Transparent,
                 Padding = default,
+                MinHeight = 0,
                 HorizontalAlignment = column.Align,
                 VerticalAlignment = VerticalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
             };
             editor.TextChanged += (_, _) => column.SetText(item, editor.Text);
             return new Border { Child = editor, Padding = pad };

@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 — Gallery DataGrid page: visual cleanup (ran the app to verify)
+
+**Maintainer feedback:** "the ui of grid sample is awful." Ran the desktop gallery and screenshotted
+the DataGrid page to see it. Real problems found: (1) the shared `Labeled` helper is a fixed **96px**
+side caption, so the new long captions truncated ("Grouped + aggr", "Frozen column") and floated
+mid-height beside tall grids; (2) the Paged sample used **editable** cells whose `TextBox` forced tall
+rows, misaligning the name vs the centered number columns.
+
+**Done**
+- Reworked `BuildDataGrid` to a clean **stacked** layout: a local `Section(title, control)` puts a
+  primary-colored heading **above** each grid (full captions, no truncation), replacing the side
+  `Labeled` for this page. Samples: Sortable·filtered·paged · Grouped+aggregate · Frozen first column ·
+  Editable cells · Virtualized · Empty. Paged is now non-editable (tight, aligned); inline-edit moved
+  to its own "Editable cells" sample.
+- **Product fix:** editable `DataGrid` cells now align with text cells — the cell `TextBox` gets
+  `MinHeight = 0` + `VerticalContentAlignment = Center` so it no longer inflates row height.
+- Re-ran the app: headings sit above each grid, rows align, frozen column pins with a working
+  horizontal scrollbar, editable rows match the others. Eyesore resolved.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0. Full suite **424** green. Visually confirmed in the
+  running desktop gallery.
+
+---
+
 ## 2026-06-07 — v3 Phase 5/6 — Gallery: demo the new DataGrid features
 
 **Gap found (by maintainer):** the Phase 5 `DataGrid<T>` features had tests + docs but no **gallery**

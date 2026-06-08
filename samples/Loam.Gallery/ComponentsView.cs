@@ -5666,6 +5666,17 @@ public sealed class ComponentsView : UserControl
             new("Honeycomb", 408, 3.2),
         };
 
+        static StackPanel Section(string title, Control content) => new()
+        {
+            Spacing = 6,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = title, Typo = Typo.Subtitle2, Color = LoamColor.Primary },
+                content,
+            },
+        };
+
         var paged = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
@@ -5674,25 +5685,12 @@ public sealed class ComponentsView : UserControl
             PageSize = 4,
             FilterText = "i",
             Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
-            MaxWidth = 480,
+            MaxWidth = 520,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        AddColumns(paged, editable: true);
+        AddColumns(paged);
         paged.Items = desserts;
         paged.SelectedItem = desserts[1];
-
-        var virtualized = new Loam.Controls.DataGrid<Dessert>
-        {
-            Dense = true,
-            Striped = true,
-            Hover = true,
-            Virtualize = true,
-            MaxRenderedRows = 3,
-            MaxWidth = 480,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-        AddColumns(virtualized);
-        virtualized.Items = desserts;
 
         var grouped = new Loam.Controls.DataGrid<Dessert>
         {
@@ -5701,7 +5699,7 @@ public sealed class ComponentsView : UserControl
             Hover = true,
             GroupBy = d => d.Fat >= 5 ? "Indulgent" : "Light",
             GroupAggregate = items => $"avg {items.Average(d => d.Calories):F0} cal",
-            MaxWidth = 480,
+            MaxWidth = 520,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
         AddColumns(grouped);
@@ -5713,15 +5711,39 @@ public sealed class ComponentsView : UserControl
             Striped = true,
             Hover = true,
             FrozenColumns = 1,
-            MaxWidth = 420,
+            MaxWidth = 460,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
         frozen.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name) { Width = 160 });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Width = 120, Align = HorizontalAlignment.Right });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Width = 120, Format = "0.0", Align = HorizontalAlignment.Right });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Width = 110, Align = HorizontalAlignment.Right });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Width = 110, Format = "0.0", Align = HorizontalAlignment.Right });
         frozen.Columns.Add(new DataGridColumn<Dessert>("Cal / 100g", d => d.Calories / 100.0) { Width = 120, Format = "0.0", Align = HorizontalAlignment.Right });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Tier", d => d.Fat >= 5 ? "Indulgent" : "Light") { Width = 130 });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Tier", d => d.Fat >= 5 ? "Indulgent" : "Light") { Width = 120 });
         frozen.Items = desserts;
+
+        var editable = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            MaxWidth = 520,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddColumns(editable, editable: true);
+        editable.Items = desserts.Take(4).ToList();
+
+        var virtualized = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            Virtualize = true,
+            MaxRenderedRows = 3,
+            MaxWidth = 520,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddColumns(virtualized);
+        virtualized.Items = desserts;
 
         var empty = new Loam.Controls.DataGrid<Dessert>
         {
@@ -5729,7 +5751,7 @@ public sealed class ComponentsView : UserControl
             EmptyText = "No desserts match your filter.",
             FilterText = "zzz",
             Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
-            MaxWidth = 480,
+            MaxWidth = 520,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
         AddColumns(empty);
@@ -5737,15 +5759,16 @@ public sealed class ComponentsView : UserControl
 
         return new StackPanel
         {
-            Spacing = 16,
+            Spacing = 24,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                Labeled("Paged", paged),
-                Labeled("Grouped + aggregate", grouped),
-                Labeled("Frozen columns", frozen),
-                Labeled("Virtual", virtualized),
-                Labeled("Empty", empty),
+                Section("Sortable · filtered · paged", paged),
+                Section("Grouped with aggregate — click a group header to collapse", grouped),
+                Section("Frozen first column — scroll the rest horizontally", frozen),
+                Section("Editable cells", editable),
+                Section("Virtualized — capped render", virtualized),
+                Section("Empty state", empty),
             },
         };
     }
