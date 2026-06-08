@@ -7,6 +7,40 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 — Gallery per-sample layout (infra + DataGrid flagship)
+
+**Maintainer ask:** wider previews; **each sample interleaved with its own C# snippet** (sample → its
+code → next sample) instead of all previews then one big code dump; do it for all pages.
+
+**Architecture before:** each `GalleryPage` had one `BuilderMethod`; `page.Code` was that whole
+method's source (regex-extracted from `ComponentsView.cs` at runtime); `BuildArticle` = header + one
+Preview card + one `CodeSampleView`.
+
+**Done (infrastructure, applied to DataGrid as the verified flagship)**
+- New `GallerySample(Caption, Build, Code)` + `GalleryPage.Samples` (init, default empty). Helpers
+  `Sample(caption, build)` (captures `build.Method.Name` → per-sample code via `GallerySourceCode`)
+  and `PageWithSamples(group, title, desc, params samples)` (page `Code` = join of sample codes so the
+  metadata asserts still hold; `Build` = all samples stacked for the expected-components test;
+  `BuilderMethod` = first sample's method).
+- `BuildArticle` now interleaves: when `Samples` is non-empty it renders, per sample, a Preview `Paper`
+  (caption header + control) **followed by that sample's `CodeSampleView`**. Single-builder pages keep
+  the old one-preview-one-code path (back-compat) so the rollout is incremental.
+- Converted the **DataGrid** page: split the monolithic `BuildDataGrid` into `SampleDesserts()`,
+  `AddDessertColumns()`, and six per-sample methods (`BuildDataGridPaged/Grouped/Frozen/Editable/
+  Virtualized/Empty`), each its own snippet; widened grids (520→720, frozen 460→560).
+- Relaxed the gallery test that asserted exactly one `CodeSampleView` per article → now ≥1 (we
+  intentionally render one per sample).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0; full suite **424** green. Ran the desktop gallery: the
+  DataGrid page now shows each sample's preview card immediately followed by its own highlighted C#
+  snippet, then the next sample — exactly the requested structure.
+
+**Next:** roll the `PageWithSamples` pattern out to the remaining pages (large mechanical pass — split
+each multi-variant builder into per-sample methods). Infra + flagship are in; the rest is repetition.
+
+---
+
 ## 2026-06-07 — v3 — Gallery DataGrid page: visual cleanup (ran the app to verify)
 
 **Maintainer feedback:** "the ui of grid sample is awful." Ran the desktop gallery and screenshotted

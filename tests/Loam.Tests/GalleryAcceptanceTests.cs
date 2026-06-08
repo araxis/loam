@@ -139,7 +139,8 @@ public class GalleryAcceptanceTests
                 var window = Show(article, theme);
                 try
                 {
-                    article.GetVisualDescendants().OfType<CodeSampleView>().ShouldHaveSingleItem(page.Route);
+                    // A page renders one code block, or one per sample when it uses the per-sample layout.
+                    article.GetVisualDescendants().OfType<CodeSampleView>().Any().ShouldBeTrue(page.Route);
                     article.GetVisualDescendants().OfType<ContentControl>().Any().ShouldBeTrue(page.Route);
                 }
                 finally

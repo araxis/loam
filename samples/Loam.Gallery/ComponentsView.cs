@@ -351,7 +351,16 @@ public sealed class ComponentsView : UserControl
         IReadOnlyList<GalleryAcceptanceCriterion> AcceptanceCriteria)
     {
         internal string Route => $"{Group}/{Title}";
+
+        /// <summary>
+        /// Optional per-sample breakdown. When non-empty, the page renders each sample's preview
+        /// followed by its own code snippet (instead of one preview + one combined code block).
+        /// </summary>
+        internal IReadOnlyList<GallerySample> Samples { get; init; } = [];
     }
+
+    /// <summary>One labelled example on a gallery page: a live preview plus its own C# snippet.</summary>
+    internal sealed record GallerySample(string Caption, Func<Control> Build, string Code);
 
     internal static IReadOnlyList<GalleryPage> PageCatalog { get; } = BuildPageCatalog();
 
@@ -393,6 +402,45 @@ public sealed class ComponentsView : UserControl
             SourceReferenceFor(group, title),
             expected,
             AcceptanceFor(group, title));
+    }
+
+    private static GallerySample Sample(string caption, Func<Control> build) =>
+        new(caption, build, GallerySourceCode.ForMethod(build.Method.Name));
+
+    private static GalleryPage PageWithSamples(
+        string group,
+        string title,
+        string description,
+        params GallerySample[] samples)
+    {
+        var builderMethod = samples[0].Build.Method.Name;
+        var code = string.Join($"{Environment.NewLine}{Environment.NewLine}", samples.Select(sample => sample.Code));
+
+        Func<Control> buildAll = () =>
+        {
+            var stack = new StackPanel { Spacing = 24, HorizontalAlignment = HorizontalAlignment.Left };
+            foreach (var sample in samples)
+            {
+                stack.Children.Add(sample.Build());
+            }
+
+            return stack;
+        };
+
+        return new GalleryPage(
+            group,
+            title,
+            description,
+            buildAll,
+            code,
+            builderMethod,
+            GallerySampleKind.SingleComponent,
+            SourceReferenceFor(group, title),
+            [title],
+            AcceptanceFor(group, title))
+        {
+            Samples = samples,
+        };
     }
 
     private static string SourceReferenceFor(string group, string title) => (group, title) switch
@@ -698,7 +746,13 @@ public sealed class ComponentsView : UserControl
         Page("Feedback", "CommandPalette", "Searchable command list with keyboard navigation.", BuildCommandPalette),
 
         Page("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.", BuildTable),
-        Page("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.", BuildDataGrid),
+        PageWithSamples("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.",
+            Sample("Sortable · filtered · paged", BuildDataGridPaged),
+            Sample("Grouped with aggregate — click a header to collapse", BuildDataGridGrouped),
+            Sample("Frozen first column — scroll the rest horizontally", BuildDataGridFrozen),
+            Sample("Editable cells", BuildDataGridEditable),
+            Sample("Virtualized — capped render", BuildDataGridVirtualized),
+            Sample("Empty state", BuildDataGridEmpty)),
         Page("Data", "TreeView", "Nested rows with selection and expansion.", BuildTreeView),
         Page("Data", "Tabs", "Header strip and selected content region.", BuildTabs),
         Page("Data", "ExpansionPanels", "Accordion-style expandable content.", BuildExpansionPanels),
@@ -792,11 +846,53 @@ public sealed class ComponentsView : UserControl
             },
         };
 
-        return new StackPanel
+        var article = new StackPanel
         {
             Margin = new Thickness(32, 28, 32, 40),
-            Spacing = 20,
-            Children = { header, BuildPreviewPanel(page), new CodeSampleView(page.Title, page.Code) },
+            Spacing = 24,
+            Children = { header },
+        };
+
+        if (page.Samples.Count > 0)
+        {
+            foreach (var sample in page.Samples)
+            {
+                article.Children.Add(BuildSampleBlock(sample));
+            }
+        }
+        else
+        {
+            article.Children.Add(BuildPreviewPanel(page));
+            article.Children.Add(new CodeSampleView(page.Title, page.Code));
+        }
+
+        return article;
+    }
+
+    private static StackPanel BuildSampleBlock(GallerySample sample)
+    {
+        var preview = new Paper
+        {
+            Elevation = 1,
+            Padding = new Thickness(0),
+            Content = new StackPanel
+            {
+                Children =
+                {
+                    PanelHeader(sample.Caption, "Live control surface"),
+                    new Border
+                    {
+                        Padding = new Thickness(28),
+                        Child = sample.Build(),
+                    },
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 12,
+            Children = { preview, new CodeSampleView(sample.Caption, sample.Code) },
         };
     }
 
@@ -5641,43 +5737,32 @@ public sealed class ComponentsView : UserControl
         public double Fat { get; } = fat;
     }
 
-    private static StackPanel BuildDataGrid()
+    private static List<Dessert> SampleDesserts() =>
+    [
+        new("Frozen yogurt", 159, 6.0),
+        new("Ice cream sandwich", 237, 9.0),
+        new("Eclair", 262, 16.0),
+        new("Cupcake", 305, 3.7),
+        new("Gingerbread", 356, 16.0),
+        new("Jelly bean", 375, 0.0),
+        new("Lollipop", 392, 0.2),
+        new("Honeycomb", 408, 3.2),
+    ];
+
+    private static void AddDessertColumns(Loam.Controls.DataGrid<Dessert> grid, bool editable = false)
     {
-        static void AddColumns(Loam.Controls.DataGrid<Dessert> grid, bool editable = false)
+        grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name)
         {
-            grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name)
-            {
-                Editable = editable,
-                SetText = editable ? (Action<Dessert, string?>)((dessert, text) => dessert.Name = text ?? "") : null,
-            });
-            grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
-            grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
-        }
+            Editable = editable,
+            SetText = editable ? (Action<Dessert, string?>)((dessert, text) => dessert.Name = text ?? "") : null,
+        });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
+    }
 
-        var desserts = new List<Dessert>
-        {
-            new("Frozen yogurt", 159, 6.0),
-            new("Ice cream sandwich", 237, 9.0),
-            new("Eclair", 262, 16.0),
-            new("Cupcake", 305, 3.7),
-            new("Gingerbread", 356, 16.0),
-            new("Jelly bean", 375, 0.0),
-            new("Lollipop", 392, 0.2),
-            new("Honeycomb", 408, 3.2),
-        };
-
-        static StackPanel Section(string title, Control content) => new()
-        {
-            Spacing = 6,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                new Text { Text = title, Typo = Typo.Subtitle2, Color = LoamColor.Primary },
-                content,
-            },
-        };
-
-        var paged = new Loam.Controls.DataGrid<Dessert>
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridPaged()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
             Striped = true,
@@ -5685,92 +5770,99 @@ public sealed class ComponentsView : UserControl
             PageSize = 4,
             FilterText = "i",
             Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
-            MaxWidth = 520,
+            MaxWidth = 720,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        AddColumns(paged);
-        paged.Items = desserts;
-        paged.SelectedItem = desserts[1];
+        AddDessertColumns(grid);
+        var desserts = SampleDesserts();
+        grid.Items = desserts;
+        grid.SelectedItem = desserts[1];
+        return grid;
+    }
 
-        var grouped = new Loam.Controls.DataGrid<Dessert>
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridGrouped()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
             Striped = true,
             Hover = true,
             GroupBy = d => d.Fat >= 5 ? "Indulgent" : "Light",
             GroupAggregate = items => $"avg {items.Average(d => d.Calories):F0} cal",
-            MaxWidth = 520,
+            MaxWidth = 720,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        AddColumns(grouped);
-        grouped.Items = desserts;
+        AddDessertColumns(grid);
+        grid.Items = SampleDesserts();
+        return grid;
+    }
 
-        var frozen = new Loam.Controls.DataGrid<Dessert>
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridFrozen()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
             Striped = true,
             Hover = true,
             FrozenColumns = 1,
-            MaxWidth = 460,
+            MaxWidth = 560,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name) { Width = 160 });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Width = 110, Align = HorizontalAlignment.Right });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Width = 110, Format = "0.0", Align = HorizontalAlignment.Right });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Cal / 100g", d => d.Calories / 100.0) { Width = 120, Format = "0.0", Align = HorizontalAlignment.Right });
-        frozen.Columns.Add(new DataGridColumn<Dessert>("Tier", d => d.Fat >= 5 ? "Indulgent" : "Light") { Width = 120 });
-        frozen.Items = desserts;
+        grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name) { Width = 180 });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Width = 120, Align = HorizontalAlignment.Right });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Width = 120, Format = "0.0", Align = HorizontalAlignment.Right });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Cal / 100g", d => d.Calories / 100.0) { Width = 130, Format = "0.0", Align = HorizontalAlignment.Right });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Tier", d => d.Fat >= 5 ? "Indulgent" : "Light") { Width = 130 });
+        grid.Items = SampleDesserts();
+        return grid;
+    }
 
-        var editable = new Loam.Controls.DataGrid<Dessert>
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridEditable()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
             Striped = true,
             Hover = true,
-            MaxWidth = 520,
+            MaxWidth = 720,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        AddColumns(editable, editable: true);
-        editable.Items = desserts.Take(4).ToList();
+        AddDessertColumns(grid, editable: true);
+        grid.Items = SampleDesserts().Take(4).ToList();
+        return grid;
+    }
 
-        var virtualized = new Loam.Controls.DataGrid<Dessert>
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridVirtualized()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
             Striped = true,
             Hover = true,
             Virtualize = true,
             MaxRenderedRows = 3,
-            MaxWidth = 520,
+            MaxWidth = 720,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        AddColumns(virtualized);
-        virtualized.Items = desserts;
+        AddDessertColumns(grid);
+        grid.Items = SampleDesserts();
+        return grid;
+    }
 
-        var empty = new Loam.Controls.DataGrid<Dessert>
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridEmpty()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
         {
             Dense = true,
             EmptyText = "No desserts match your filter.",
             FilterText = "zzz",
             Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
-            MaxWidth = 520,
+            MaxWidth = 720,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
-        AddColumns(empty);
-        empty.Items = desserts;
-
-        return new StackPanel
-        {
-            Spacing = 24,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                Section("Sortable · filtered · paged", paged),
-                Section("Grouped with aggregate — click a group header to collapse", grouped),
-                Section("Frozen first column — scroll the rest horizontally", frozen),
-                Section("Editable cells", editable),
-                Section("Virtualized — capped render", virtualized),
-                Section("Empty state", empty),
-            },
-        };
+        AddDessertColumns(grid);
+        grid.Items = SampleDesserts();
+        return grid;
     }
 
     private static StackPanel BuildTable()
