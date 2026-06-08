@@ -1797,6 +1797,25 @@ public sealed class ComponentsView : UserControl
                 },
                 new AppBar
                 {
+                    Color = LoamColor.Secondary,
+                    Title = "Custom actions slot",
+                    Subtitle = "Arbitrary controls via CustomActions",
+                    NavigationIcon = Icons.Material.Filled.Menu,
+                    NavigationAction = () => { },
+                    CustomActions =
+                    {
+                        new LoamButton
+                        {
+                            Content = "Upgrade",
+                            Variant = Variant.Filled,
+                            Color = LoamColor.Inherit,
+                            StartIcon = Icons.Material.Filled.Star,
+                        },
+                        new IconButton { Icon = Icons.Material.Filled.Settings, Color = LoamColor.Inherit },
+                    },
+                },
+                new AppBar
+                {
                     Dense = true,
                     Elevation = 0,
                     Color = LoamColor.Default,

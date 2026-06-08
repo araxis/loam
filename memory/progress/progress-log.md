@@ -18,6 +18,10 @@ demo (only the new nav controls got gallery pages). Fixed.
   `Width`s + two derived columns so the scrollable pane actually scrolls), and **Empty** (custom
   `EmptyText` with a filter that excludes all) — alongside the existing Paged + Virtual samples. This
   also makes the page's long-declared `Empty` acceptance criterion truthful.
+- Audited the rest: Material You / high-contrast / `SetDensity` are already demoed via the header
+  `BuildSeedPicker`; the new nav controls had pages. The one other untouched Phase 3 item —
+  **`AppBar.CustomActions`** — had no gallery demo either, so added a third AppBar sample showing
+  arbitrary controls (a filled button + icon button) in that slot.
 
 **Verified**
 - `dotnet build Loam.slnx -c Release` — 0/0. GalleryAcceptanceTests (37) green; full suite **424** green.
