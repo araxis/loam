@@ -7,7 +7,7 @@ title: Migrating from v2 to v3
 > **Status: in progress (preview).** Loam v3 (“vNext”) is under active development on the
 > `work/vnext` branch. This guide is the living record of every breaking change. It is filled in
 > phase by phase as the work lands, so sections marked _Planned_ describe decisions that are agreed
-> but not yet shipped. The current package version is **`3.0.0-preview.1`**.
+> but not yet shipped. The current package version is **`3.0.0-preview.2`**.
 
 The v3 plan and the independent review that drives it live at the repository root:
 [`PLAN.md`](https://github.com/araxis/loam/blob/main/PLAN.md) and
@@ -117,7 +117,7 @@ unchanged — `ResponsiveGrid`/`Col` are behaviour-identical to the v2 `Grid`/`I
 
 ## Delivered in this preview
 
-Beyond the renames above, `3.0.0-preview.1` also ships these (no migration needed — additive or
+Beyond the renames above, the `3.0.0` previews also ship these (no migration needed — additive or
 internal; see the docs site for each):
 
 - **Base-chrome theme bridge** so stray Avalonia controls (scrollbars, tooltips, menus, window

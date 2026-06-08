@@ -7,6 +7,33 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 6 — Release prep (docs, positioning, version)
+
+**Done**
+- New docs: **`guide/why-loam.md`** ("Why Loam vs plain Avalonia" — side-by-side code, comparison table,
+  honest "use plain Avalonia when…") and **`guide/changelog.md`** (v3 preview release notes by phase).
+  Wired both into the Guide sidebar; refreshed the stale `guide/introduction.md` Status section
+  (v2 → v3 preview) and links.
+- Refreshed the **README** component catalog (`Grid`/`Item`/`Stack` → `ResponsiveGrid`/`Col`; added
+  `NavigationRail`/`BottomNavigation`/`CommandPalette`; "deeper DataGrid grouping" → "richer inline-edit").
+- **Version bump** `3.0.0-preview.1` → `3.0.0-preview.2`; added `PackageReleaseNotes` + a `material`
+  tag; updated version refs in README + migration guide.
+- **Release-readiness check:** `dotnet pack -c Release` produced `Loam.3.0.0-preview.2.nupkg` cleanly
+  (README + icon + license metadata all present); docs build passed.
+
+**Decision (visual-regression):** deferring pixel-snapshot tests — cross-machine font rendering makes
+them flaky, which conflicts with the zero-flake gate. The existing `GalleryAcceptanceTests` already
+render every page headlessly (a stable render-smoke guard); pixel snapshots, if added later, should be
+an opt-in CI job, not part of the default suite.
+
+**Verified**
+- `npm run docs:build` passed; `dotnet pack -c Release` succeeded. Suite unchanged at **424**.
+
+**Next:** the final `3.0.0` cut (drop the preview suffix) when ready; the deferred package split
+(ADR-0009); optional richer inline-edit / CAM16-HCT.
+
+---
+
 ## 2026-06-07 — v3 Phase 5 — DataGrid frozen columns + group aggregates
 
 **Done**

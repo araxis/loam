@@ -65,8 +65,10 @@ picking the project up cold. Read this file first.
 - **Phase 4 so far:** deprecated `Stack`→`StackPanel` (`LOAM0003`); table strategy decided
   (ADR-0013: `DataGrid<T>` recommended); added `NavigationRail`, `BottomNavigation`, `CommandPalette`
   (M3). **414 tests.**
-- **Phase 6 polish:** migration guide brought in sync with reality (Phases 1–3 ✅, delivered-features
-  summary); README test count refreshed.
+- **Phase 6 release prep:** migration guide synced; added a "Why Loam vs plain Avalonia" page + a v3
+  changelog (docs); refreshed README catalog; bumped `3.0.0-preview.1` → **`preview.2`** and verified
+  `dotnet pack` produces a clean nupkg. Visual-regression pixel snapshots deferred (flaky cross-machine;
+  render-smoke already covered by gallery acceptance tests).
 - **Phase 5 data maturity — done:** `DataGrid<T>` gained grouping (`GroupBy` + pure `DataGrids.Group`),
   collapsible groups, empty state (`EmptyText`/`EmptyContent`), a column-width API
   (`DataGridColumn<T>.Width`), **frozen columns** (`FrozenColumns` two-pane layout with synced

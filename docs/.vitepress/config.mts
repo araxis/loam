@@ -49,9 +49,11 @@ export default defineConfig({
           text: 'Guide',
           items: [
             { text: 'Introduction', link: '/guide/introduction' },
+            { text: 'Why Loam vs plain Avalonia', link: '/guide/why-loam' },
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Theming', link: '/guide/theming' },
             { text: 'Authoring UI in C#', link: '/guide/csharp-ui' },
+            { text: 'Changelog', link: '/guide/changelog' },
           ],
         },
       ],
