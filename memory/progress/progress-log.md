@@ -7,6 +7,23 @@ Next.
 
 ---
 
+## 2026-06-07 — v3 Phase 5/6 — Gallery: demo the new DataGrid features
+
+**Gap found (by maintainer):** the Phase 5 `DataGrid<T>` features had tests + docs but no **gallery**
+demo (only the new nav controls got gallery pages). Fixed.
+
+**Done**
+- Extended `BuildDataGrid` in `Loam.Gallery`: added **Grouped + aggregate** (`GroupBy` Indulgent/Light
+  with `GroupAggregate` avg-calories), **Frozen columns** (`FrozenColumns = 1` with explicit column
+  `Width`s + two derived columns so the scrollable pane actually scrolls), and **Empty** (custom
+  `EmptyText` with a filter that excludes all) — alongside the existing Paged + Virtual samples. This
+  also makes the page's long-declared `Empty` acceptance criterion truthful.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0. GalleryAcceptanceTests (37) green; full suite **424** green.
+
+---
+
 ## 2026-06-07 — v3 Phase 6 — Release prep (docs, positioning, version)
 
 **Done**

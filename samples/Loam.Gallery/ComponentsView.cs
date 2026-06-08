@@ -5675,6 +5675,47 @@ public sealed class ComponentsView : UserControl
         AddColumns(virtualized);
         virtualized.Items = desserts;
 
+        var grouped = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            GroupBy = d => d.Fat >= 5 ? "Indulgent" : "Light",
+            GroupAggregate = items => $"avg {items.Average(d => d.Calories):F0} cal",
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddColumns(grouped);
+        grouped.Items = desserts;
+
+        var frozen = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            FrozenColumns = 1,
+            MaxWidth = 420,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name) { Width = 160 });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Width = 120, Align = HorizontalAlignment.Right });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Width = 120, Format = "0.0", Align = HorizontalAlignment.Right });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Cal / 100g", d => d.Calories / 100.0) { Width = 120, Format = "0.0", Align = HorizontalAlignment.Right });
+        frozen.Columns.Add(new DataGridColumn<Dessert>("Tier", d => d.Fat >= 5 ? "Indulgent" : "Light") { Width = 130 });
+        frozen.Items = desserts;
+
+        var empty = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            EmptyText = "No desserts match your filter.",
+            FilterText = "zzz",
+            Filter = (dessert, text) => dessert.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+            MaxWidth = 480,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddColumns(empty);
+        empty.Items = desserts;
+
         return new StackPanel
         {
             Spacing = 16,
@@ -5682,7 +5723,10 @@ public sealed class ComponentsView : UserControl
             Children =
             {
                 Labeled("Paged", paged),
+                Labeled("Grouped + aggregate", grouped),
+                Labeled("Frozen columns", frozen),
                 Labeled("Virtual", virtualized),
+                Labeled("Empty", empty),
             },
         };
     }
