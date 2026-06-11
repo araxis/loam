@@ -802,12 +802,31 @@ public sealed class ComponentsView : UserControl
             Sample("Constrained", BuildMonthCalendarConstrained)),
 
         Page("Feedback", "Alert", "Contextual message banners across variants and severities.", BuildAlert),
-        Page("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.", BuildProgressCircular),
-        Page("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.", BuildProgressLinear),
-        Page("Feedback", "Skeleton", "Animated and static loading placeholders.", BuildSkeleton),
+        PageWithSamples("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.",
+            Sample("States", BuildProgressCircularStates),
+            Sample("Sizes", BuildProgressCircularSizes),
+            Sample("Disabled", BuildProgressCircularDisabled)),
+        PageWithSamples("Feedback", "ProgressLinear", "Determinate and indeterminate linear progress.",
+            Sample("States", BuildProgressLinearStates),
+            Sample("Sizes", BuildProgressLinearSizes)),
+        PageWithSamples("Feedback", "Skeleton", "Animated and static loading placeholders.",
+            Sample("Presets", BuildSkeletonPresets),
+            Sample("Composition", BuildSkeletonComposition),
+            Sample("Sizes", BuildSkeletonSizes),
+            Sample("States", BuildSkeletonStates)),
         Page("Feedback", "Overlay", "Auto-closing scrim over local content.", BuildOverlayScrim),
-        Page("Feedback", "Popover", "Anchored floating content.", BuildPopover),
-        Page("Feedback", "Tooltip", "Attached contextual help on focusable targets.", BuildTooltip),
+        PageWithSamples("Feedback", "Popover", "Anchored floating content.",
+            Sample("Trigger", BuildPopoverTrigger),
+            Sample("Open and close", BuildPopoverOpenAndClose),
+            Sample("Disabled", BuildPopoverDisabled),
+            Sample("Controlled", BuildPopoverControlled)),
+        PageWithSamples("Feedback", "Tooltip", "Attached contextual help on focusable targets.",
+            Sample("Standard", BuildTooltipStandard),
+            Sample("Rich surface", BuildTooltipRichSurface),
+            Sample("Placement and delay", BuildTooltipPlacementAndDelay),
+            Sample("Disabled target", BuildTooltipDisabledTarget),
+            Sample("Suppressed", BuildTooltipSuppressed),
+            Sample("Cleared", BuildTooltipCleared)),
         Page("Feedback", "DialogService", "Confirm, action, and message dialogs.", BuildDialogService),
         Page("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildSnackbarService),
         Page("Feedback", "CommandPalette", "Searchable command list with keyboard navigation.", BuildCommandPalette),
@@ -4579,7 +4598,7 @@ public sealed class ComponentsView : UserControl
         return sizes;
     }
 
-    private static StackPanel BuildPopover()
+    private static StackPanel BuildPopoverTrigger()
     {
         var detailsTrigger = new LoamButton
         {
@@ -4610,6 +4629,23 @@ public sealed class ComponentsView : UserControl
             },
         };
 
+        return new StackPanel
+        {
+            Width = 280,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Trigger", Typo = Typo.Subtitle2 },
+                detailsTrigger,
+                detailsPopover,
+                new Border { Height = 112 },
+            },
+        };
+    }
+
+    private static StackPanel BuildPopoverOpenAndClose()
+    {
         var actionTrigger = new LoamButton
         {
             Content = "Open actions",
@@ -4643,6 +4679,23 @@ public sealed class ComponentsView : UserControl
             },
         };
 
+        return new StackPanel
+        {
+            Width = 300,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Open and close", Typo = Typo.Subtitle2 },
+                actionTrigger,
+                actionPopover,
+                new Border { Height = 132 },
+            },
+        };
+    }
+
+    private static StackPanel BuildPopoverDisabled()
+    {
         var disabledTrigger = new LoamButton
         {
             Content = "Disabled trigger",
@@ -4666,6 +4719,23 @@ public sealed class ComponentsView : UserControl
             },
         };
 
+        return new StackPanel
+        {
+            Width = 280,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
+                disabledTrigger,
+                disabledPopover,
+                new Border { Height = 88 },
+            },
+        };
+    }
+
+    private static StackPanel BuildPopoverControlled()
+    {
         var controlledTrigger = new LoamButton
         {
             Content = "Controlled open",
@@ -4701,73 +4771,20 @@ public sealed class ComponentsView : UserControl
 
         return new StackPanel
         {
-            Spacing = 16,
-            HorizontalAlignment = HorizontalAlignment.Left,
+            Width = 280,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new WrapPanel
-                {
-                    Children =
-                    {
-                        new StackPanel
-                        {
-                            Width = 280,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Trigger", Typo = Typo.Subtitle2 },
-                                detailsTrigger,
-                                detailsPopover,
-                                new Border { Height = 112 },
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 300,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Open and close", Typo = Typo.Subtitle2 },
-                                actionTrigger,
-                                actionPopover,
-                                new Border { Height = 132 },
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 280,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
-                                disabledTrigger,
-                                disabledPopover,
-                                new Border { Height = 88 },
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 280,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Controlled", Typo = Typo.Subtitle2 },
-                                controlledTrigger,
-                                controlledPopover,
-                                new Border { Height = 132 },
-                            },
-                        },
-                    },
-                },
+                new Text { Text = "Controlled", Typo = Typo.Subtitle2 },
+                controlledTrigger,
+                controlledPopover,
+                new Border { Height = 132 },
             },
         };
     }
 
-    private static StackPanel BuildTooltip()
+    private static StackPanel BuildTooltipStandard()
     {
         var standard = new LoamButton
         {
@@ -4780,6 +4797,21 @@ public sealed class ComponentsView : UserControl
             HelpText = "Quick context tooltip",
         });
 
+        return new StackPanel
+        {
+            Width = 240,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Standard", Typo = Typo.Subtitle2 },
+                standard,
+            },
+        };
+    }
+
+    private static StackPanel BuildTooltipRichSurface()
+    {
         var rich = new LoamButton
         {
             Content = "Rich tooltip",
@@ -4797,6 +4829,21 @@ public sealed class ComponentsView : UserControl
             HelpText = "Rich tooltip with title",
         });
 
+        return new StackPanel
+        {
+            Width = 260,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Rich surface", Typo = Typo.Subtitle2 },
+                rich,
+            },
+        };
+    }
+
+    private static StackPanel BuildTooltipPlacementAndDelay()
+    {
         var delayed = new LoamButton
         {
             Content = "Delayed bottom",
@@ -4813,6 +4860,21 @@ public sealed class ComponentsView : UserControl
             HelpText = "Delayed tooltip",
         });
 
+        return new StackPanel
+        {
+            Width = 260,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Placement and delay", Typo = Typo.Subtitle2 },
+                delayed,
+            },
+        };
+    }
+
+    private static StackPanel BuildTooltipDisabledTarget()
+    {
         var disabled = new LoamButton
         {
             Content = "Disabled target",
@@ -4826,6 +4888,21 @@ public sealed class ComponentsView : UserControl
             HelpText = "Disabled target tooltip",
         });
 
+        return new StackPanel
+        {
+            Width = 260,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Disabled target", Typo = Typo.Subtitle2 },
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildTooltipSuppressed()
+    {
         var serviceDisabled = new LoamButton
         {
             Content = "Service disabled",
@@ -4838,6 +4915,21 @@ public sealed class ComponentsView : UserControl
             HelpText = "Tooltip service disabled",
         });
 
+        return new StackPanel
+        {
+            Width = 260,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
+            Children =
+            {
+                new Text { Text = "Suppressed", Typo = Typo.Subtitle2 },
+                serviceDisabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildTooltipCleared()
+    {
         var cleared = new LoamButton
         {
             Content = "Cleared",
@@ -4849,82 +4941,13 @@ public sealed class ComponentsView : UserControl
 
         return new StackPanel
         {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
+            Width = 220,
+            Spacing = 8,
+            Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new WrapPanel
-                {
-                    Children =
-                    {
-                        new StackPanel
-                        {
-                            Width = 240,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Standard", Typo = Typo.Subtitle2 },
-                                standard,
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 260,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Rich surface", Typo = Typo.Subtitle2 },
-                                rich,
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 260,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Placement and delay", Typo = Typo.Subtitle2 },
-                                delayed,
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 260,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Disabled target", Typo = Typo.Subtitle2 },
-                                disabled,
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 260,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Suppressed", Typo = Typo.Subtitle2 },
-                                serviceDisabled,
-                            },
-                        },
-                        new StackPanel
-                        {
-                            Width = 220,
-                            Spacing = 8,
-                            Margin = new Thickness(0, 0, 24, 16),
-                            Children =
-                            {
-                                new Text { Text = "Cleared", Typo = Typo.Subtitle2 },
-                                cleared,
-                            },
-                        },
-                    },
-                },
+                new Text { Text = "Cleared", Typo = Typo.Subtitle2 },
+                cleared,
             },
         };
     }
@@ -5092,7 +5115,7 @@ public sealed class ComponentsView : UserControl
         return new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left, Children = { rows } };
     }
 
-    private static StackPanel BuildProgressCircular()
+    private static Avalonia.Controls.Grid BuildProgressCircularStates()
     {
         var activity = new WrapPanel();
         activity.Children.Add(new StackPanel
@@ -5170,6 +5193,11 @@ public sealed class ComponentsView : UserControl
             },
         });
 
+        return Labeled("States", activity);
+    }
+
+    private static Avalonia.Controls.Grid BuildProgressCircularSizes()
+    {
         var allSizes = new[]
         {
             LoamSize.ExtraSmall,
@@ -5204,6 +5232,11 @@ public sealed class ComponentsView : UserControl
             });
         }
 
+        return Labeled("Sizes", sizes);
+    }
+
+    private static Avalonia.Controls.Grid BuildProgressCircularDisabled()
+    {
         var disabled = new WrapPanel();
         disabled.Children.Add(new StackPanel
         {
@@ -5248,20 +5281,10 @@ public sealed class ComponentsView : UserControl
             },
         });
 
-        return new StackPanel
-        {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                Labeled("States", activity),
-                Labeled("Sizes", sizes),
-                Labeled("Disabled", disabled),
-            },
-        };
+        return Labeled("Disabled", disabled);
     }
 
-    private static StackPanel BuildProgressLinear()
+    private static Avalonia.Controls.Grid BuildProgressLinearStates()
     {
         var states = new WrapPanel();
         states.Children.Add(new StackPanel
@@ -5357,6 +5380,11 @@ public sealed class ComponentsView : UserControl
             },
         });
 
+        return Labeled("States", states);
+    }
+
+    private static Avalonia.Controls.Grid BuildProgressLinearSizes()
+    {
         var allSizes = new[]
         {
             LoamSize.ExtraSmall,
@@ -5390,19 +5418,10 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        return new StackPanel
-        {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                Labeled("States", states),
-                Labeled("Sizes", sizes),
-            },
-        };
+        return Labeled("Sizes", sizes);
     }
 
-    private static StackPanel BuildSkeleton()
+    private static Avalonia.Controls.Grid BuildSkeletonPresets()
     {
         var presets = new WrapPanel();
         presets.Children.Add(Skeleton.TextLine(220, LoamSize.Medium, label: "Title loading"));
@@ -5412,6 +5431,11 @@ public sealed class ComponentsView : UserControl
         presets.Children.Add(Skeleton.Thumbnail(128, 84, label: "Thumbnail loading"));
         presets.Children.Add(Skeleton.Card(260, 96, animate: false, label: "Card loading"));
 
+        return Labeled("Presets", presets);
+    }
+
+    private static Avalonia.Controls.Grid BuildSkeletonComposition()
+    {
         var article = new StackPanel
         {
             Width = 300,
@@ -5443,6 +5467,11 @@ public sealed class ComponentsView : UserControl
             },
         };
 
+        return Labeled("Composition", article);
+    }
+
+    private static Avalonia.Controls.Grid BuildSkeletonSizes()
+    {
         var allSizes = new[]
         {
             LoamSize.ExtraSmall,
@@ -5470,6 +5499,11 @@ public sealed class ComponentsView : UserControl
             });
         }
 
+        return Labeled("Sizes", sizes);
+    }
+
+    private static Avalonia.Controls.Grid BuildSkeletonStates()
+    {
         var states = new WrapPanel();
         states.Children.Add(Skeleton.TextLine(180, LoamSize.Medium, label: "Animated loading"));
         states.Children.Add(Skeleton.TextLine(180, LoamSize.Medium, animate: false, label: "Static loading"));
@@ -5490,18 +5524,7 @@ public sealed class ComponentsView : UserControl
             Label = "Custom circular loading",
         });
 
-        return new StackPanel
-        {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                Labeled("Presets", presets),
-                Labeled("Composition", article),
-                Labeled("Sizes", sizes),
-                Labeled("States", states),
-            },
-        };
+        return Labeled("States", states);
     }
 
     private static StackPanel BuildProgress()
