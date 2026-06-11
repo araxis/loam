@@ -770,12 +770,25 @@ public sealed class ComponentsView : UserControl
             Sample("States", BuildRadioStates),
             Sample("Sizes", BuildRadioSizes),
             Sample("Disabled", BuildRadioDisabled)),
-        Page("Inputs", "RadioGroup", "Grouped single-choice selection.", BuildRadioGroup),
-        Page("Inputs", "Slider", "Pointer-driven range selection.", BuildSlider),
+        PageWithSamples("Inputs", "RadioGroup", "Grouped single-choice selection.",
+            Sample("Vertical group", BuildRadioGroupVertical),
+            Sample("Horizontal group", BuildRadioGroupHorizontal),
+            Sample("Disabled group", BuildRadioGroupDisabled)),
+        PageWithSamples("Inputs", "Slider", "Pointer-driven range selection.",
+            Sample("Default range", BuildSliderDefaultRange),
+            Sample("Custom min and max", BuildSliderCustomRange),
+            Sample("Color states", BuildSliderColorStates),
+            Sample("Zero value", BuildSliderZeroValue),
+            Sample("Disabled", BuildSliderDisabled)),
         PageWithSamples("Inputs", "Rating", "Interactive and read-only star ratings.",
             Sample("States", BuildRatingStates),
             Sample("Sizes", BuildRatingSizes)),
-        Page("Inputs", "ToggleGroup", "Segmented single selection.", BuildToggleGroup),
+        PageWithSamples("Inputs", "ToggleGroup", "Segmented single selection.",
+            Sample("Selected", BuildToggleGroupSelected),
+            Sample("Color", BuildToggleGroupColor),
+            Sample("No selection", BuildToggleGroupNoSelection),
+            Sample("Sizes", BuildToggleGroupSizes),
+            Sample("Disabled", BuildToggleGroupDisabled)),
         Page("Inputs", "FileUpload", "Platform file picking and selected-name chips.", BuildFileUpload),
         Page("Inputs", "Form", "Lightweight validation over text-field descendants.", BuildFormDemo),
 
@@ -3808,7 +3821,7 @@ public sealed class ComponentsView : UserControl
         return disabled;
     }
 
-    private static StackPanel BuildRadioGroup()
+    private static StackPanel BuildRadioGroupVertical()
     {
         var shipping = new RadioGroup
         {
@@ -3825,22 +3838,21 @@ public sealed class ComponentsView : UserControl
             },
         };
 
-        var disabled = new RadioGroup
+        return new StackPanel
         {
-            Value = "email",
-            IsEnabled = false,
-            Child = new StackPanel
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 16,
-                Children =
-                {
-                    new Radio { Value = "email", Content = "Email" },
-                    new Radio { Value = "sms", Content = "SMS" },
-                },
+                new Text { Text = "Vertical group", Typo = Typo.Subtitle2 },
+                shipping,
             },
         };
+    }
 
+    private static StackPanel BuildRadioGroupHorizontal()
+    {
         var notification = new RadioGroup
         {
             Value = "push",
@@ -3864,23 +3876,46 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Vertical group", Typo = Typo.Subtitle2 },
-                shipping,
                 new Text { Text = "Horizontal group", Typo = Typo.Subtitle2 },
                 notification,
+            },
+        };
+    }
+
+    private static StackPanel BuildRadioGroupDisabled()
+    {
+        var disabled = new RadioGroup
+        {
+            Value = "email",
+            IsEnabled = false,
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 16,
+                Children =
+                {
+                    new Radio { Value = "email", Content = "Email" },
+                    new Radio { Value = "sms", Content = "SMS" },
+                },
+            },
+        };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Disabled group", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
     }
 
-    private static StackPanel BuildSlider()
+    private static StackPanel BuildSliderDefaultRange()
     {
         var primary = new Loam.Controls.Slider { Value = 40, Width = 360, Color = LoamColor.Primary };
-        var customRange = new Loam.Controls.Slider { Value = 72, Minimum = 20, Maximum = 120, Width = 360, Color = LoamColor.Secondary };
-        var warning = new Loam.Controls.Slider { Value = 30, Width = 360, Color = LoamColor.Warning };
-        var zero = new Loam.Controls.Slider { Value = 0, Width = 360, Color = LoamColor.Primary };
-        var disabled = new Loam.Controls.Slider { Value = 70, Width = 360, IsEnabled = false };
 
         return new StackPanel
         {
@@ -3891,12 +3926,72 @@ public sealed class ComponentsView : UserControl
             {
                 new Text { Text = "Default range", Typo = Typo.Subtitle2 },
                 primary,
+            },
+        };
+    }
+
+    private static StackPanel BuildSliderCustomRange()
+    {
+        var customRange = new Loam.Controls.Slider { Value = 72, Minimum = 20, Maximum = 120, Width = 360, Color = LoamColor.Secondary };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Custom min and max", Typo = Typo.Subtitle2 },
                 customRange,
+            },
+        };
+    }
+
+    private static StackPanel BuildSliderColorStates()
+    {
+        var warning = new Loam.Controls.Slider { Value = 30, Width = 360, Color = LoamColor.Warning };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Color states", Typo = Typo.Subtitle2 },
                 warning,
+            },
+        };
+    }
+
+    private static StackPanel BuildSliderZeroValue()
+    {
+        var zero = new Loam.Controls.Slider { Value = 0, Width = 360, Color = LoamColor.Primary };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Zero value", Typo = Typo.Subtitle2 },
                 zero,
+            },
+        };
+    }
+
+    private static StackPanel BuildSliderDisabled()
+    {
+        var disabled = new Loam.Controls.Slider { Value = 70, Width = 360, IsEnabled = false };
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
@@ -4313,31 +4408,28 @@ public sealed class ComponentsView : UserControl
         return stack;
     }
 
-    private static StackPanel BuildToggleGroup()
+    private static StackPanel BuildToggleGroupSelected()
     {
-        var allSizes = new[]
-        {
-            LoamSize.ExtraSmall,
-            LoamSize.Small,
-            LoamSize.Medium,
-            LoamSize.Large,
-            LoamSize.ExtraLarge,
-        };
-
-        ToggleGroup CreateGroup(LoamSize size, object? selectedValue)
-        {
-            var result = new ToggleGroup { Size = size, HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = selectedValue };
-            result.Items.Add(new ToggleItem("Day", "day"));
-            result.Items.Add(new ToggleItem("Week", "week"));
-            result.Items.Add(new ToggleItem("Month", "month"));
-            return result;
-        }
-
         var group = new ToggleGroup { HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = "week" };
         group.Items.Add(new ToggleItem("Day", "day"));
         group.Items.Add(new ToggleItem("Week", "week"));
         group.Items.Add(new ToggleItem("Month", "month"));
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Selected", Typo = Typo.Subtitle2 },
+                group,
+            },
+        };
+    }
+
+    private static StackPanel BuildToggleGroupColor()
+    {
         var priority = new ToggleGroup
         {
             Color = LoamColor.Secondary,
@@ -4348,14 +4440,58 @@ public sealed class ComponentsView : UserControl
         priority.Items.Add(new ToggleItem("High", "high"));
         priority.Items.Add(new ToggleItem("Urgent", "urgent"));
 
-        var disabled = new ToggleGroup { IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = "open" };
-        disabled.Items.Add(new ToggleItem("Open", "open"));
-        disabled.Items.Add(new ToggleItem("Closed", "closed"));
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Color", Typo = Typo.Subtitle2 },
+                priority,
+            },
+        };
+    }
 
+    private static StackPanel BuildToggleGroupNoSelection()
+    {
         var noSelection = new ToggleGroup { HorizontalAlignment = HorizontalAlignment.Left };
         noSelection.Items.Add(new ToggleItem("Draft", "draft"));
         noSelection.Items.Add(new ToggleItem("Review", "review"));
         noSelection.Items.Add(new ToggleItem("Done", "done"));
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "No selection", Typo = Typo.Subtitle2 },
+                noSelection,
+            },
+        };
+    }
+
+    private static StackPanel BuildToggleGroupSizes()
+    {
+        var allSizes = new[]
+        {
+            LoamSize.ExtraSmall,
+            LoamSize.Small,
+            LoamSize.Medium,
+            LoamSize.Large,
+            LoamSize.ExtraLarge,
+        };
+
+        static ToggleGroup CreateGroup(LoamSize size, object? selectedValue)
+        {
+            var result = new ToggleGroup { Size = size, HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = selectedValue };
+            result.Items.Add(new ToggleItem("Day", "day"));
+            result.Items.Add(new ToggleItem("Week", "week"));
+            result.Items.Add(new ToggleItem("Month", "month"));
+            return result;
+        }
 
         var sizes = new WrapPanel();
         foreach (var size in allSizes)
@@ -4379,14 +4515,25 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Selected", Typo = Typo.Subtitle2 },
-                group,
-                new Text { Text = "Color", Typo = Typo.Subtitle2 },
-                priority,
-                new Text { Text = "No selection", Typo = Typo.Subtitle2 },
-                noSelection,
                 new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
                 sizes,
+            },
+        };
+    }
+
+    private static StackPanel BuildToggleGroupDisabled()
+    {
+        var disabled = new ToggleGroup { IsEnabled = false, HorizontalAlignment = HorizontalAlignment.Left, SelectedValue = "open" };
+        disabled.Items.Add(new ToggleItem("Open", "open"));
+        disabled.Items.Add(new ToggleItem("Closed", "closed"));
+
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 760,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
