@@ -748,8 +748,14 @@ public sealed class ComponentsView : UserControl
             Sample("Variants", BuildIconButtonsVariants),
             Sample("Sizes", BuildIconButtonsSizes)),
         Page("Buttons", "ToggleIconButton", "Two-state icon action with a separate toggled color.", BuildToggleIconButton),
-        Page("Buttons", "ButtonGroup", "Connected button segments with shared variant and color.", BuildButtonGroup),
-        Page("Buttons", "Fab", "Floating action buttons with icon-only and label modes.", BuildFabs),
+        PageWithSamples("Buttons", "ButtonGroup", "Connected button segments with shared variant and color.",
+            Sample("Outlined", BuildButtonGroupOutlined),
+            Sample("Filled", BuildButtonGroupFilled),
+            Sample("Sizes", BuildButtonGroupSizes),
+            Sample("Paired with a toggle", BuildButtonGroupToggle)),
+        PageWithSamples("Buttons", "Fab", "Floating action buttons with icon-only and label modes.",
+            Sample("Sizes", BuildFabSizes),
+            Sample("Icon-only and extended", BuildFabShapes)),
         Family("Buttons", "Menu", "Button-anchored menu rows.", BuildMenu, "Menu", "MenuItem"),
 
         Page("Inputs", "Field", "A reusable field shell for custom input-like content.", BuildField),
@@ -912,7 +918,10 @@ public sealed class ComponentsView : UserControl
         Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildScrollToTop),
 
         Page("Shell", "Layout", "App shell composition with bar, drawer, and content.", BuildShellLayout),
-        Page("Shell", "AppBar", "Elevated top application bar.", BuildAppBar),
+        PageWithSamples("Shell", "AppBar", "Elevated top application bar.",
+            Sample("Actions", BuildAppBarActions),
+            Sample("Custom actions slot", BuildAppBarCustomActions),
+            Sample("Dense", BuildAppBarDense)),
         Page("Shell", "Drawer", "Docked or temporary side navigation.", BuildDrawer),
         Page("Shell", "MainContent", "Scrollable main content region.", BuildMainContent),
 
@@ -2027,72 +2036,73 @@ public sealed class ComponentsView : UserControl
         return new Border { Width = 360, Height = 260, ClipToBounds = true, Child = shell };
     }
 
-    private static StackPanel BuildAppBar()
+    private static AppBar BuildAppBarActions()
     {
-        return new StackPanel
+        return new AppBar
         {
-            Spacing = 16,
-            Children =
+            Color = LoamColor.Primary,
+            Title = "Primary app bar",
+            Subtitle = "Configured from properties",
+            NavigationIcon = Icons.Material.Filled.Menu,
+            NavigationAction = () => { },
+            Actions =
             {
-                new AppBar
+                new AppBarAction
                 {
-                    Color = LoamColor.Primary,
-                    Title = "Primary app bar",
-                    Subtitle = "Configured from properties",
-                    NavigationIcon = Icons.Material.Filled.Menu,
-                    NavigationAction = () => { },
-                    Actions =
-                    {
-                        new AppBarAction
-                        {
-                            Icon = Icons.Material.Filled.Settings,
-                            Label = "Settings",
-                            OnClick = () => { },
-                        },
-                        new AppBarAction
-                        {
-                            Icon = Icons.Material.Filled.Search,
-                            Label = "Search",
-                            Color = LoamColor.Inherit,
-                            Size = LoamSize.Small,
-                            OnClick = () => { },
-                        },
-                        new AppBarAction
-                        {
-                            Icon = Icons.Material.Filled.Delete,
-                            Label = "Delete disabled",
-                            IsEnabled = false,
-                        },
-                    },
+                    Icon = Icons.Material.Filled.Settings,
+                    Label = "Settings",
+                    OnClick = () => { },
                 },
-                new AppBar
+                new AppBarAction
                 {
-                    Color = LoamColor.Secondary,
-                    Title = "Custom actions slot",
-                    Subtitle = "Arbitrary controls via CustomActions",
-                    NavigationIcon = Icons.Material.Filled.Menu,
-                    NavigationAction = () => { },
-                    CustomActions =
-                    {
-                        new LoamButton
-                        {
-                            Content = "Upgrade",
-                            Variant = Variant.Filled,
-                            Color = LoamColor.Inherit,
-                            StartIcon = Icons.Material.Filled.Star,
-                        },
-                        new IconButton { Icon = Icons.Material.Filled.Settings, Color = LoamColor.Inherit },
-                    },
+                    Icon = Icons.Material.Filled.Search,
+                    Label = "Search",
+                    Color = LoamColor.Inherit,
+                    Size = LoamSize.Small,
+                    OnClick = () => { },
                 },
-                new AppBar
+                new AppBarAction
                 {
-                    Dense = true,
-                    Elevation = 0,
-                    Color = LoamColor.Default,
-                    Title = "Dense app bar",
-                    Subtitle = "No custom toolbar required",
+                    Icon = Icons.Material.Filled.Delete,
+                    Label = "Delete disabled",
+                    IsEnabled = false,
                 },
             },
+        };
+    }
+
+    private static AppBar BuildAppBarCustomActions()
+    {
+        return new AppBar
+        {
+            Color = LoamColor.Secondary,
+            Title = "Custom actions slot",
+            Subtitle = "Arbitrary controls via CustomActions",
+            NavigationIcon = Icons.Material.Filled.Menu,
+            NavigationAction = () => { },
+            CustomActions =
+            {
+                new LoamButton
+                {
+                    Content = "Upgrade",
+                    Variant = Variant.Filled,
+                    Color = LoamColor.Inherit,
+                    StartIcon = Icons.Material.Filled.Star,
+                },
+                new IconButton { Icon = Icons.Material.Filled.Settings, Color = LoamColor.Inherit },
+            },
+        };
+    }
+
+    private static AppBar BuildAppBarDense()
+    {
+        return new AppBar
+        {
+            Dense = true,
+            Elevation = 0,
+            Color = LoamColor.Default,
+            Title = "Dense app bar",
+            Subtitle = "No custom toolbar required",
         };
     }
 
@@ -2364,23 +2374,27 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildButtonGroup()
+    private static ButtonGroup BuildButtonGroupOutlined()
     {
-        var stack = new StackPanel { Spacing = 16, HorizontalAlignment = HorizontalAlignment.Left };
-
         var outlined = new ButtonGroup { Variant = Variant.Outlined, Color = LoamColor.Primary };
         outlined.Items.Add(new LoamButton { Content = "Left" });
         outlined.Items.Add(new LoamButton { Content = "Center" });
         outlined.Items.Add(new LoamButton { Content = "Right" });
-        stack.Children.Add(outlined);
+        return outlined;
+    }
 
+    private static ButtonGroup BuildButtonGroupFilled()
+    {
         var filled = new ButtonGroup { Variant = Variant.Filled, Color = LoamColor.Secondary };
         filled.Items.Add(new LoamButton { Content = "Day" });
         filled.Items.Add(new LoamButton { Content = "Week" });
         filled.Items.Add(new LoamButton { Content = "Month" });
-        stack.Children.Add(filled);
+        return filled;
+    }
 
-        var sizeRows = new StackPanel { Spacing = 8 };
+    private static StackPanel BuildButtonGroupSizes()
+    {
+        var sizeRows = new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var size in Sizes)
         {
             var group = new ButtonGroup { Variant = Variant.Outlined, Color = LoamColor.Primary, Size = size };
@@ -2390,8 +2404,11 @@ public sealed class ComponentsView : UserControl
             sizeRows.Children.Add(group);
         }
 
-        stack.Children.Add(Labeled("Sizes", sizeRows));
+        return sizeRows;
+    }
 
+    private static StackPanel BuildButtonGroupToggle()
+    {
         var favorites = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
         favorites.Children.Add(new Text { Text = "Toggle icon button:", VerticalAlignment = VerticalAlignment.Center });
         favorites.Children.Add(new ToggleIconButton
@@ -2401,9 +2418,7 @@ public sealed class ComponentsView : UserControl
             Color = LoamColor.Default,
             ToggledColor = LoamColor.Error,
         });
-        stack.Children.Add(favorites);
-
-        return stack;
+        return favorites;
     }
 
     private static StackPanel BuildToggleIconButton()
@@ -2684,7 +2699,7 @@ public sealed class ComponentsView : UserControl
         return sizes;
     }
 
-    private static WrapPanel BuildFabs()
+    private static WrapPanel BuildFabSizes()
     {
         var wrap = new WrapPanel();
         foreach (var size in Sizes)
@@ -2699,6 +2714,12 @@ public sealed class ComponentsView : UserControl
             });
         }
 
+        return wrap;
+    }
+
+    private static WrapPanel BuildFabShapes()
+    {
+        var wrap = new WrapPanel();
         wrap.Children.Add(new Fab { StartIcon = Icons.Material.Filled.Edit, Color = LoamColor.Secondary, Margin = new Thickness(0, 0, 12, 12) });
         wrap.Children.Add(new Fab { Label = "Save", StartIcon = Icons.Material.Filled.Check, Color = LoamColor.Success, Margin = new Thickness(0, 0, 12, 12) });
         return wrap;
