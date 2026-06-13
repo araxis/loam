@@ -957,7 +957,10 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Layout", "Spacer", "Flexible space for toolbars and docked rows.",
             Sample("Star column spacer", BuildSpacerStarColumn),
             Sample("Dock fill spacer", BuildSpacerDockFill)),
-        Page("Layout", "Hidden", "Breakpoint-based visibility.", BuildHidden),
+        PageWithSamples("Layout", "Hidden", "Breakpoint-based visibility.",
+            Sample("Down mode", BuildHiddenDownMode),
+            Sample("Up mode", BuildHiddenUpMode),
+            Sample("Only mode", BuildHiddenOnlyMode)),
         Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildScrollToTop),
 
         Page("Shell", "Layout", "App shell composition with bar, drawer, and content.", BuildShellLayout),
@@ -8057,34 +8060,33 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildHidden()
+    private static Hidden BuildHiddenDownMode()
     {
-        return new StackPanel
+        return new Hidden
         {
-            Spacing = 12,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                new Text { Text = "Breakpoint rules", Typo = Typo.Subtitle2 },
-                new Hidden
-                {
-                    Breakpoint = Breakpoint.Sm,
-                    Mode = HiddenMode.Down,
-                    Child = new Chip { Text = "Visible on Md and wider", Color = LoamColor.Primary },
-                },
-                new Hidden
-                {
-                    Breakpoint = Breakpoint.Md,
-                    Mode = HiddenMode.Up,
-                    Child = new Chip { Text = "Visible below Md", Color = LoamColor.Secondary },
-                },
-                new Hidden
-                {
-                    Breakpoint = Breakpoint.Lg,
-                    Mode = HiddenMode.Only,
-                    Child = new Chip { Text = "Hidden only at Lg", Color = LoamColor.Warning },
-                },
-            },
+            Breakpoint = Breakpoint.Sm,
+            Mode = HiddenMode.Down,
+            Child = new Chip { Text = "Visible on Md and wider", Color = LoamColor.Primary },
+        };
+    }
+
+    private static Hidden BuildHiddenUpMode()
+    {
+        return new Hidden
+        {
+            Breakpoint = Breakpoint.Md,
+            Mode = HiddenMode.Up,
+            Child = new Chip { Text = "Visible below Md", Color = LoamColor.Secondary },
+        };
+    }
+
+    private static Hidden BuildHiddenOnlyMode()
+    {
+        return new Hidden
+        {
+            Breakpoint = Breakpoint.Lg,
+            Mode = HiddenMode.Only,
+            Child = new Chip { Text = "Hidden only at Lg", Color = LoamColor.Warning },
         };
     }
 
