@@ -8108,7 +8108,6 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Themed pie", Typo = Typo.Subtitle2 },
                     new PieChart { Width = 180, Height = 180, Values = split },
                     new ChartLegend { Labels = { "Planning", "Build", "Review" } },
                 },
@@ -8137,7 +8136,6 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Explicit donut", Typo = Typo.Subtitle2 },
                     new PieChart { Width = 180, Height = 180, Values = split, Donut = true, Colors = explicitColors },
                     new ChartLegend { Colors = explicitColors, Labels = { "Alpha", "Beta", "Stable" } },
                 },
@@ -8159,7 +8157,6 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Themed bars", Typo = Typo.Subtitle2 },
                     new Text { Text = "Grid and baseline colors come from outline roles.", Typo = Typo.Caption, Color = LoamColor.Secondary },
                     new BarChart { Width = 320, Height = 180, Values = revenue },
                 },
@@ -8179,7 +8176,6 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "No data", Typo = Typo.Subtitle2 },
                     new BarChart { Width = 320, Height = 180, Values = [0d, -2d, 0d] },
                 },
             },
@@ -8200,7 +8196,6 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Line", Typo = Typo.Subtitle2 },
                     new LineChart { Width = 320, Height = 180, Values = revenue },
                 },
             },
@@ -8221,7 +8216,6 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Area", Typo = Typo.Subtitle2 },
                     new Text { Text = "Area fill follows the first resolved series color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
                     new LineChart { Width = 320, Height = 180, Values = revenue, Area = true },
                 },
