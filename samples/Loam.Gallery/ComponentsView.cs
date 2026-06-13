@@ -747,7 +747,9 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Buttons", "IconButton", "Icon-only actions in default, filled, and outlined variants.",
             Sample("Variants", BuildIconButtonsVariants),
             Sample("Sizes", BuildIconButtonsSizes)),
-        Page("Buttons", "ToggleIconButton", "Two-state icon action with a separate toggled color.", BuildToggleIconButton),
+        PageWithSamples("Buttons", "ToggleIconButton", "Two-state icon action with a separate toggled color.",
+            Sample("Favorite", BuildToggleIconButtonFavorite),
+            Sample("Sizes", BuildToggleIconButtonSizes)),
         PageWithSamples("Buttons", "ButtonGroup", "Connected button segments with shared variant and color.",
             Sample("Outlined", BuildButtonGroupOutlined),
             Sample("Filled", BuildButtonGroupFilled),
@@ -2457,7 +2459,7 @@ public sealed class ComponentsView : UserControl
         return favorites;
     }
 
-    private static StackPanel BuildToggleIconButton()
+    private static StackPanel BuildToggleIconButtonFavorite()
     {
         var favorites = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
         favorites.Children.Add(new Text { Text = "Favorite", VerticalAlignment = VerticalAlignment.Center });
@@ -2469,6 +2471,20 @@ public sealed class ComponentsView : UserControl
             ToggledColor = LoamColor.Error,
         });
 
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                favorites,
+                new Text { Text = "The toggled state swaps the glyph and can tint it independently.", Typo = Typo.Body2, Color = LoamColor.Secondary },
+            },
+        };
+    }
+
+    private static Avalonia.Controls.Grid BuildToggleIconButtonSizes()
+    {
         var allSizes = new[]
         {
             LoamSize.ExtraSmall,
@@ -2493,17 +2509,7 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        return new StackPanel
-        {
-            Spacing = 12,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                favorites,
-                Labeled("Sizes", sizes),
-                new Text { Text = "The toggled state swaps the glyph and can tint it independently.", Typo = Typo.Body2, Color = LoamColor.Secondary },
-            },
-        };
+        return Labeled("Sizes", sizes);
     }
 
     private static WrapPanel BuildButtonsVariantRow(Variant variant)
