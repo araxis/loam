@@ -3634,7 +3634,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default tabs", Typo = Typo.Subtitle2 },
                 tabs,
             },
         };
@@ -3654,7 +3653,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Secondary selected", Typo = Typo.Subtitle2 },
                 secondary,
             },
         };
@@ -3673,7 +3671,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Clamped SelectedIndex", Typo = Typo.Subtitle2 },
                 clamped,
             },
         };
@@ -3692,7 +3689,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -3708,7 +3704,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
                 empty,
             },
         };
@@ -6121,7 +6116,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Boundary pages", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 10, Selected = 1 },
             },
         };
@@ -6135,7 +6129,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Windowed pages", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 24, Selected = 12, BoundaryCount = 2, MiddleCount = 5 },
             },
         };
@@ -6149,7 +6142,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Secondary color", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 12, Selected = 6, Color = LoamColor.Secondary },
             },
         };
@@ -6163,7 +6155,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Clamped selected page", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 7, Selected = 99, MiddleCount = 3 },
             },
         };
@@ -6177,7 +6168,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Empty and disabled", Typo = Typo.Subtitle2 },
                 new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
@@ -6206,7 +6196,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Active step", Typo = Typo.Subtitle2 },
                 active,
             },
         };
@@ -6226,7 +6215,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Completed steps", Typo = Typo.Subtitle2 },
                 completed,
             },
         };
@@ -6245,7 +6233,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Clamped ActiveIndex", Typo = Typo.Subtitle2 },
                 clamped,
             },
         };
@@ -6264,7 +6251,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -6280,7 +6266,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
                 empty,
             },
         };
@@ -6318,7 +6303,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Animated reveal", Typo = Typo.Subtitle2 },
                 animatedToggle,
                 animated,
             },
@@ -6358,7 +6342,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Static reveal", Typo = Typo.Subtitle2 },
                 staticToggle,
                 staticReveal,
             },
@@ -6400,7 +6383,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Custom duration", Typo = Typo.Subtitle2 },
                 customToggle,
                 customDuration,
             },
@@ -6435,7 +6417,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled static", Typo = Typo.Subtitle2 },
                 disabledButton,
                 disabled,
             },
@@ -6475,7 +6456,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Zero duration", Typo = Typo.Subtitle2 },
                 instantToggle,
                 zeroDuration,
             },
@@ -6496,7 +6476,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default sequence", Typo = Typo.Subtitle2 },
                 timeline,
             },
         };
@@ -6530,7 +6509,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Rich content", Typo = Typo.Subtitle2 },
                 rich,
             },
         };
@@ -6554,7 +6532,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Horizontal", Typo = Typo.Subtitle2 },
                 new ScrollViewer
                 {
                     HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
@@ -6575,7 +6552,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
                 empty,
             },
         };
@@ -6593,7 +6569,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -6612,7 +6587,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Accordion", Typo = Typo.Subtitle2 },
                 accordion,
             },
         };
@@ -6632,7 +6606,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "MultiExpansion", Typo = Typo.Subtitle2 },
                 multi,
             },
         };
@@ -6652,7 +6625,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled panel", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -6677,7 +6649,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default carousel", Typo = Typo.Subtitle2 },
                 carousel,
             },
         };
@@ -6702,7 +6673,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Chrome hidden", Typo = Typo.Subtitle2 },
                 chromeHidden,
             },
         };
@@ -6728,7 +6698,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Auto play", Typo = Typo.Subtitle2 },
                 auto,
             },
         };
@@ -6752,7 +6721,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "GoTo clamped", Typo = Typo.Subtitle2 },
                 clamped,
             },
         };
@@ -6768,7 +6736,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
                 empty,
             },
         };
@@ -6792,7 +6759,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -6969,7 +6935,7 @@ public sealed class ComponentsView : UserControl
         return grid;
     }
 
-    private static Avalonia.Controls.Grid BuildTableDense()
+    private static SimpleTable BuildTableDense()
     {
         var table = new SimpleTable
         {
@@ -6988,10 +6954,10 @@ public sealed class ComponentsView : UserControl
         table.Rows.Add(new TableRow("Eclair", 262, 16.0));
         table.Rows.Add(new TableRow("Cupcake", 305, 3.7));
 
-        return Labeled("Dense", table);
+        return table;
     }
 
-    private static Avalonia.Controls.Grid BuildTableEmpty()
+    private static SimpleTable BuildTableEmpty()
     {
         var empty = new SimpleTable
         {
@@ -7003,7 +6969,7 @@ public sealed class ComponentsView : UserControl
         empty.Headers.Add("Dessert");
         empty.Headers.Add("Calories");
 
-        return Labeled("Empty", empty);
+        return empty;
     }
 
     private static WrapPanel BuildFileUploadVariants()
