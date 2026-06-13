@@ -414,7 +414,9 @@ public sealed class ComponentsView : UserControl
         params GallerySample[] samples)
     {
         var builderMethod = samples[0].Build.Method.Name;
-        var code = string.Join($"{Environment.NewLine}{Environment.NewLine}", samples.Select(sample => sample.Code));
+        var methods = string.Join($"{Environment.NewLine}{Environment.NewLine}", samples.Select(sample => sample.Code));
+        var captions = string.Join(", ", samples.Select(sample => sample.Caption));
+        var code = $"{methods}{Environment.NewLine}{Environment.NewLine}// Samples: {captions}";
 
         Func<Control> buildAll = () =>
         {
