@@ -819,10 +819,25 @@ public sealed class ComponentsView : UserControl
             Sample("States", BuildFormStates),
             Sample("Action sizes", BuildFormActionSizes)),
 
-        Page("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDatePicker),
-        Page("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildTimePicker),
-        Page("Pickers", "DateRangePicker", "Two-click date range selection.", BuildDateRangePicker),
-        Page("Pickers", "ColorPicker", "Swatch picker with hex display.", BuildColorPicker),
+        PageWithSamples("Pickers", "DatePicker", "Date input with a calendar flyout.",
+            Sample("Variants", BuildDatePickerVariants),
+            Sample("Selected & custom format", BuildDatePickerSelected),
+            Sample("Constrained & floating label", BuildDatePickerConstrained),
+            Sample("States", BuildDatePickerStates)),
+        PageWithSamples("Pickers", "TimePicker", "Time input with hour and minute columns.",
+            Sample("Variants", BuildTimePickerVariants),
+            Sample("Selected & custom format", BuildTimePickerSelected),
+            Sample("Floating label", BuildTimePickerConstrained),
+            Sample("States", BuildTimePickerStates)),
+        PageWithSamples("Pickers", "DateRangePicker", "Two-click date range selection.",
+            Sample("Variants", BuildDateRangePickerVariants),
+            Sample("Selected & custom format", BuildDateRangePickerSelected),
+            Sample("Constrained & floating label", BuildDateRangePickerConstrained),
+            Sample("States", BuildDateRangePickerStates)),
+        PageWithSamples("Pickers", "ColorPicker", "Swatch picker with hex display.",
+            Sample("Variants", BuildColorPickerVariants),
+            Sample("Selected & custom format", BuildColorPickerValues),
+            Sample("States", BuildColorPickerStates)),
         PageWithSamples("Pickers", "MonthCalendar", "Standalone month grid used by date pickers.",
             Sample("Selected", BuildMonthCalendarSelected),
             Sample("Range", BuildMonthCalendarRange),
@@ -7342,223 +7357,267 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildColorPicker()
+    private static WrapPanel BuildColorPickerVariants()
     {
-        return new StackPanel
+        return new WrapPanel
         {
-            Spacing = 18,
+            Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new WrapPanel
+                new Loam.Controls.ColorPicker
                 {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Children =
+                    Label = "Outlined",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Variant = Variant.Outlined,
+                    HelperText = "Default palette",
+                },
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Custom palette",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Value = Color.Parse("#2E7D32"),
+                    Palette =
                     {
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Outlined",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Variant = Variant.Outlined,
-                            HelperText = "Default palette",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Custom palette",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Value = Color.Parse("#2E7D32"),
-                            Palette =
-                            {
-                                Color.Parse("#6750A4"),
-                                Color.Parse("#2E7D32"),
-                                Color.Parse("#B3261E"),
-                                Color.Parse("#006A6A"),
-                                Color.Parse("#795900"),
-                            },
-                            HelperText = "Palette collection overrides defaults",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Filled",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Variant = Variant.Filled,
-                            Value = Color.Parse("#6750A4"),
-                            HelperText = "Filled field style",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Text / underline",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Variant = Variant.Text,
-                            Value = Color.Parse("#FF9800"),
-                            HelperText = "Underline field style",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Default value",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            HelperText = "Uses the component default value",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Alpha",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
-                            ShowAlpha = true,
-                            HelperText = "Shows #AARRGGBB",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Error",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Value = Color.Parse("#F7F2FA"),
-                            Error = true,
-                            ErrorText = "Choose a visible color",
-                        },
-                        new Loam.Controls.ColorPicker
-                        {
-                            Label = "Disabled",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Value = Color.Parse("#607D8B"),
-                            IsEnabled = false,
-                            HelperText = "Read-only state",
-                        },
+                        Color.Parse("#6750A4"),
+                        Color.Parse("#2E7D32"),
+                        Color.Parse("#B3261E"),
+                        Color.Parse("#006A6A"),
+                        Color.Parse("#795900"),
                     },
+                    HelperText = "Palette collection overrides defaults",
+                },
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Filled",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Variant = Variant.Filled,
+                    Value = Color.Parse("#6750A4"),
+                    HelperText = "Filled field style",
+                },
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Text / underline",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Variant = Variant.Text,
+                    Value = Color.Parse("#FF9800"),
+                    HelperText = "Underline field style",
                 },
             },
         };
     }
 
-    private static StackPanel BuildDateRangePicker()
+    private static WrapPanel BuildColorPickerValues()
     {
-        return new StackPanel
+        return new WrapPanel
         {
-            Spacing = 18,
+            Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new WrapPanel
+                new Loam.Controls.ColorPicker
                 {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Children =
-                    {
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Outlined",
-                            Variant = Variant.Outlined,
-                            Placeholder = "Pick start and end",
-                            PickerTitle = "Select trip range",
-                            HelperText = "Pick dates, then confirm with OK",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Filled",
-                            Variant = Variant.Filled,
-                            Start = new DateTime(2026, 6, 8),
-                            End = new DateTime(2026, 6, 19),
-                            HelperText = "Filled field style",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Text / underline",
-                            Variant = Variant.Text,
-                            Start = new DateTime(2026, 6, 15),
-                            End = new DateTime(2026, 6, 20),
-                            HelperText = "Underline field style",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Empty",
-                            Placeholder = "Select range",
-                            HelperText = "No start or end selected",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Selected",
-                            Start = new DateTime(2026, 6, 1),
-                            End = new DateTime(2026, 6, 30),
-                            HelperText = "Both dates selected",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Custom format",
-                            Start = new DateTime(2026, 7, 2),
-                            End = new DateTime(2026, 7, 16),
-                            DateFormat = "MMM d",
-                            CancelText = "Dismiss",
-                            OkText = "Apply",
-                            HelperText = "Short month/day display",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Constrained",
-                            Start = new DateTime(2026, 6, 10),
-                            End = new DateTime(2026, 6, 14),
-                            MinDate = new DateTime(2026, 6, 1),
-                            MaxDate = new DateTime(2026, 7, 31),
-                            HelperText = "Limited to June and July",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Floating label",
-                            ShrinkLabel = true,
-                            Placeholder = "Choose dates",
-                            HelperText = "Label remains visible while empty",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Error",
-                            Start = new DateTime(2026, 6, 1),
-                            Error = true,
-                            ErrorText = "Choose an end date",
-                        },
-                        new Loam.Controls.DateRangePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Disabled",
-                            Start = new DateTime(2026, 5, 1),
-                            End = new DateTime(2026, 5, 31),
-                            IsEnabled = false,
-                            HelperText = "Read-only state",
-                        },
-                    },
+                    Label = "Default value",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    HelperText = "Uses the component default value",
+                },
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Alpha",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
+                    ShowAlpha = true,
+                    HelperText = "Shows #AARRGGBB",
                 },
             },
         };
     }
 
-    private static StackPanel BuildDatePicker()
+    private static WrapPanel BuildColorPickerStates()
     {
-        var wrap = new WrapPanel
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Error",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Value = Color.Parse("#F7F2FA"),
+                    Error = true,
+                    ErrorText = "Choose a visible color",
+                },
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Disabled",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Value = Color.Parse("#607D8B"),
+                    IsEnabled = false,
+                    HelperText = "Read-only state",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDateRangePickerVariants()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Outlined",
+                    Variant = Variant.Outlined,
+                    Placeholder = "Pick start and end",
+                    PickerTitle = "Select trip range",
+                    HelperText = "Pick dates, then confirm with OK",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Filled",
+                    Variant = Variant.Filled,
+                    Start = new DateTime(2026, 6, 8),
+                    End = new DateTime(2026, 6, 19),
+                    HelperText = "Filled field style",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Text / underline",
+                    Variant = Variant.Text,
+                    Start = new DateTime(2026, 6, 15),
+                    End = new DateTime(2026, 6, 20),
+                    HelperText = "Underline field style",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Empty",
+                    Placeholder = "Select range",
+                    HelperText = "No start or end selected",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDateRangePickerSelected()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Selected",
+                    Start = new DateTime(2026, 6, 1),
+                    End = new DateTime(2026, 6, 30),
+                    HelperText = "Both dates selected",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Custom format",
+                    Start = new DateTime(2026, 7, 2),
+                    End = new DateTime(2026, 7, 16),
+                    DateFormat = "MMM d",
+                    CancelText = "Dismiss",
+                    OkText = "Apply",
+                    HelperText = "Short month/day display",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDateRangePickerConstrained()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Constrained",
+                    Start = new DateTime(2026, 6, 10),
+                    End = new DateTime(2026, 6, 14),
+                    MinDate = new DateTime(2026, 6, 1),
+                    MaxDate = new DateTime(2026, 7, 31),
+                    HelperText = "Limited to June and July",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Floating label",
+                    ShrinkLabel = true,
+                    Placeholder = "Choose dates",
+                    HelperText = "Label remains visible while empty",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDateRangePickerStates()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Error",
+                    Start = new DateTime(2026, 6, 1),
+                    Error = true,
+                    ErrorText = "Choose an end date",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Disabled",
+                    Start = new DateTime(2026, 5, 1),
+                    End = new DateTime(2026, 5, 31),
+                    IsEnabled = false,
+                    HelperText = "Read-only state",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerVariants()
+    {
+        return new WrapPanel
         {
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Left,
@@ -7599,6 +7658,18 @@ public sealed class ComponentsView : UserControl
                     Placeholder = "Select a date",
                     HelperText = "Calendar opens from the field",
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerSelected()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Loam.Controls.DatePicker
                 {
                     Width = 360,
@@ -7619,6 +7690,18 @@ public sealed class ComponentsView : UserControl
                     OkText = "Apply",
                     HelperText = "Formatted display text",
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerConstrained()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Loam.Controls.DatePicker
                 {
                     Width = 360,
@@ -7638,6 +7721,18 @@ public sealed class ComponentsView : UserControl
                     ShrinkLabel = true,
                     HelperText = "Label remains above the field",
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerStates()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Loam.Controls.DatePicker
                 {
                     Width = 360,
@@ -7658,121 +7753,142 @@ public sealed class ComponentsView : UserControl
                 },
             },
         };
-
-        return new StackPanel
-        {
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { wrap },
-        };
     }
 
-    private static StackPanel BuildTimePicker()
+    private static WrapPanel BuildTimePickerVariants()
     {
-        return new StackPanel
+        return new WrapPanel
         {
-            Spacing = 18,
+            Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new WrapPanel
+                new Loam.Controls.TimePicker
                 {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Children =
-                    {
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Outlined",
-                            Variant = Variant.Outlined,
-                            Placeholder = "Select a time",
-                            HelperText = "Bordered field style",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Filled",
-                            Variant = Variant.Filled,
-                            Time = new TimeSpan(8, 30, 0),
-                            HelperText = "Filled field style",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Text / underline",
-                            Variant = Variant.Text,
-                            Time = new TimeSpan(13, 0, 0),
-                            HelperText = "Underline field style",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Empty",
-                            Placeholder = "Select a time",
-                            HelperText = "No time selected",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Selected",
-                            Time = new TimeSpan(9, 30, 0),
-                            HelperText = "Default local time format",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "24-hour format",
-                            Time = new TimeSpan(21, 45, 0),
-                            TimeFormat = "HH:mm",
-                            HelperText = "Custom time display",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Minute step",
-                            PickerTitle = "Select reminder time",
-                            Time = new TimeSpan(10, 15, 0),
-                            TimeFormat = "HH:mm",
-                            MinuteStep = 15,
-                            CancelText = "Dismiss",
-                            OkText = "Apply",
-                            HelperText = "Quarter-hour choices",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Floating label",
-                            ShrinkLabel = true,
-                            Placeholder = "Select a time",
-                            HelperText = "Label remains visible while empty",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Error",
-                            Error = true,
-                            ErrorText = "Choose a time",
-                        },
-                        new Loam.Controls.TimePicker
-                        {
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Label = "Disabled",
-                            Time = new TimeSpan(16, 45, 0),
-                            IsEnabled = false,
-                            HelperText = "Read-only state",
-                        },
-                    },
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Outlined",
+                    Variant = Variant.Outlined,
+                    Placeholder = "Select a time",
+                    HelperText = "Bordered field style",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Filled",
+                    Variant = Variant.Filled,
+                    Time = new TimeSpan(8, 30, 0),
+                    HelperText = "Filled field style",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Text / underline",
+                    Variant = Variant.Text,
+                    Time = new TimeSpan(13, 0, 0),
+                    HelperText = "Underline field style",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Empty",
+                    Placeholder = "Select a time",
+                    HelperText = "No time selected",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerSelected()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Selected",
+                    Time = new TimeSpan(9, 30, 0),
+                    HelperText = "Default local time format",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "24-hour format",
+                    Time = new TimeSpan(21, 45, 0),
+                    TimeFormat = "HH:mm",
+                    HelperText = "Custom time display",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Minute step",
+                    PickerTitle = "Select reminder time",
+                    Time = new TimeSpan(10, 15, 0),
+                    TimeFormat = "HH:mm",
+                    MinuteStep = 15,
+                    CancelText = "Dismiss",
+                    OkText = "Apply",
+                    HelperText = "Quarter-hour choices",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerConstrained()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Floating label",
+                    ShrinkLabel = true,
+                    Placeholder = "Select a time",
+                    HelperText = "Label remains visible while empty",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerStates()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Error",
+                    Error = true,
+                    ErrorText = "Choose a time",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Disabled",
+                    Time = new TimeSpan(16, 45, 0),
+                    IsEnabled = false,
+                    HelperText = "Read-only state",
                 },
             },
         };
