@@ -4901,7 +4901,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Trigger", Typo = Typo.Subtitle2 },
                 detailsTrigger,
                 detailsPopover,
                 new Border { Height = 112 },
@@ -4951,7 +4950,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Open and close", Typo = Typo.Subtitle2 },
                 actionTrigger,
                 actionPopover,
                 new Border { Height = 132 },
@@ -4991,7 +4989,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabledTrigger,
                 disabledPopover,
                 new Border { Height = 88 },
@@ -5041,7 +5038,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Controlled", Typo = Typo.Subtitle2 },
                 controlledTrigger,
                 controlledPopover,
                 new Border { Height = 132 },
@@ -5069,7 +5065,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Standard", Typo = Typo.Subtitle2 },
                 standard,
             },
         };
@@ -5101,7 +5096,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Rich surface", Typo = Typo.Subtitle2 },
                 rich,
             },
         };
@@ -5132,7 +5126,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Placement and delay", Typo = Typo.Subtitle2 },
                 delayed,
             },
         };
@@ -5160,7 +5153,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Disabled target", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -5187,7 +5179,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Suppressed", Typo = Typo.Subtitle2 },
                 serviceDisabled,
             },
         };
@@ -5211,7 +5202,6 @@ public sealed class ComponentsView : UserControl
             Margin = new Thickness(0, 0, 24, 16),
             Children =
             {
-                new Text { Text = "Cleared", Typo = Typo.Subtitle2 },
                 cleared,
             },
         };
@@ -5380,7 +5370,7 @@ public sealed class ComponentsView : UserControl
         return new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Left, Children = { rows } };
     }
 
-    private static Avalonia.Controls.Grid BuildProgressCircularStates()
+    private static WrapPanel BuildProgressCircularStates()
     {
         var activity = new WrapPanel();
         activity.Children.Add(new StackPanel
@@ -5458,10 +5448,10 @@ public sealed class ComponentsView : UserControl
             },
         });
 
-        return Labeled("States", activity);
+        return activity;
     }
 
-    private static Avalonia.Controls.Grid BuildProgressCircularSizes()
+    private static WrapPanel BuildProgressCircularSizes()
     {
         var allSizes = new[]
         {
@@ -5497,10 +5487,10 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        return Labeled("Sizes", sizes);
+        return sizes;
     }
 
-    private static Avalonia.Controls.Grid BuildProgressCircularDisabled()
+    private static WrapPanel BuildProgressCircularDisabled()
     {
         var disabled = new WrapPanel();
         disabled.Children.Add(new StackPanel
@@ -5546,10 +5536,10 @@ public sealed class ComponentsView : UserControl
             },
         });
 
-        return Labeled("Disabled", disabled);
+        return disabled;
     }
 
-    private static Avalonia.Controls.Grid BuildProgressLinearStates()
+    private static WrapPanel BuildProgressLinearStates()
     {
         var states = new WrapPanel();
         states.Children.Add(new StackPanel
@@ -5645,10 +5635,10 @@ public sealed class ComponentsView : UserControl
             },
         });
 
-        return Labeled("States", states);
+        return states;
     }
 
-    private static Avalonia.Controls.Grid BuildProgressLinearSizes()
+    private static WrapPanel BuildProgressLinearSizes()
     {
         var allSizes = new[]
         {
@@ -5683,10 +5673,10 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        return Labeled("Sizes", sizes);
+        return sizes;
     }
 
-    private static Avalonia.Controls.Grid BuildSkeletonPresets()
+    private static WrapPanel BuildSkeletonPresets()
     {
         var presets = new WrapPanel();
         presets.Children.Add(Skeleton.TextLine(220, LoamSize.Medium, label: "Title loading"));
@@ -5696,10 +5686,10 @@ public sealed class ComponentsView : UserControl
         presets.Children.Add(Skeleton.Thumbnail(128, 84, label: "Thumbnail loading"));
         presets.Children.Add(Skeleton.Card(260, 96, animate: false, label: "Card loading"));
 
-        return Labeled("Presets", presets);
+        return presets;
     }
 
-    private static Avalonia.Controls.Grid BuildSkeletonComposition()
+    private static StackPanel BuildSkeletonComposition()
     {
         var article = new StackPanel
         {
@@ -5732,10 +5722,10 @@ public sealed class ComponentsView : UserControl
             },
         };
 
-        return Labeled("Composition", article);
+        return article;
     }
 
-    private static Avalonia.Controls.Grid BuildSkeletonSizes()
+    private static WrapPanel BuildSkeletonSizes()
     {
         var allSizes = new[]
         {
@@ -5764,10 +5754,10 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        return Labeled("Sizes", sizes);
+        return sizes;
     }
 
-    private static Avalonia.Controls.Grid BuildSkeletonStates()
+    private static WrapPanel BuildSkeletonStates()
     {
         var states = new WrapPanel();
         states.Children.Add(Skeleton.TextLine(180, LoamSize.Medium, label: "Animated loading"));
@@ -5789,7 +5779,7 @@ public sealed class ComponentsView : UserControl
             Label = "Custom circular loading",
         });
 
-        return Labeled("States", states);
+        return states;
     }
 
     private static StackPanel BuildProgress()
