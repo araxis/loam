@@ -2513,7 +2513,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static Avalonia.Controls.Grid BuildToggleIconButtonSizes()
+    private static WrapPanel BuildToggleIconButtonSizes()
     {
         var allSizes = new[]
         {
@@ -2539,7 +2539,7 @@ public sealed class ComponentsView : UserControl
             });
         }
 
-        return Labeled("Sizes", sizes);
+        return sizes;
     }
 
     private static WrapPanel BuildButtonsVariantRow(Variant variant)
