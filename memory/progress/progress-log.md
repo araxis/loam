@@ -7,6 +7,35 @@ Next.
 
 ---
 
+## 2026-06-13 — v3 — Gallery per-sample layout rolled out to all groups
+
+**Done:** finished the per-sample gallery layout across every component group, so each multi-variant
+page now renders **each sample as its own preview card immediately followed by its own C# snippet**
+(via `PageWithSamples` + `Sample(caption, BuildXxxVariant)` + per-sample builder methods). Genuinely
+single-cohesive-demo pages stay as `Page(...)` (one preview + one code block) — correct, since they
+have no separate captioned variants.
+
+Converted (≈35 pages): Display (all 8), DataGrid, Inputs (RadioGroup/Slider/ToggleGroup),
+Feedback (ProgressCircular/ProgressLinear/Skeleton/Popover/Tooltip), Data (SimpleTable/Tabs/
+ExpansionPanels/Collapse/Timeline/Carousel/Stepper/Pagination), Navigation (Breadcrumbs/NavMenu),
+Layout (Container/ResponsiveGrid/Spacer), Charts (PieChart/BarChart/LineChart), plus Button/IconButton.
+Left as single-demo `Page(...)`: pickers, text inputs, Shell, Surfaces, TreeView, NavLink/NavGroup/rails,
+Col/Hidden/ScrollToTop, etc. (no multi-captioned variants).
+
+**How:** executed as a multi-agent **workflow** (one agent per group, sequential because all builders
+live in one 7000-line file; per-group self-commit for durability). The first attempt died on a session
+suspension and a later one half-converted Data (registrations referencing methods it never created — was
+discarded); the hardened rerun (create methods **before** swapping each registration) finished cleanly.
+
+**Verified:** `dotnet build Loam.slnx -c Release` 0/0; full suite **424 passed**; live spot-check of the
+Inputs/Slider page confirms per-sample preview+code interleaving. Commits `1945d54`/`5be0a18`/`6c2fe14`/
+`8168c8d`/`3186c57`/`4e3a9f9`/`54021a0` on `work/vnext`.
+
+**Next:** optional — convert the remaining caption-less multi-variant pages (e.g. AppBar's 3 variants,
+Buttons' ToggleIconButton/ButtonGroup/Fab) if per-sample splitting is wanted there too.
+
+---
+
 ## 2026-06-07 — v3 — Gallery per-sample layout (infra + DataGrid flagship)
 
 **Maintainer ask:** wider previews; **each sample interleaved with its own C# snippet** (sample → its
