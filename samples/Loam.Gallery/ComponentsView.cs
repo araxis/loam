@@ -921,9 +921,15 @@ public sealed class ComponentsView : UserControl
         Family("Surfaces", "List", "List rows, subheaders, secondary text, and trailing actions.", BuildList, "List", "ListSubheader", "ListItem", "Badge", "IconButton"),
         Page("Surfaces", "Ripple", "Pointer feedback effect.", BuildRipple),
 
-        Page("Charts", "PieChart", "Pie and donut chart rendering.", BuildPieChart),
-        Page("Charts", "BarChart", "Bar chart rendering from numeric values.", BuildBarChart),
-        Page("Charts", "LineChart", "Line and area chart rendering.", BuildLineChart),
+        PageWithSamples("Charts", "PieChart", "Pie and donut chart rendering.",
+            Sample("Themed pie", BuildPieChartThemedPie),
+            Sample("Explicit donut", BuildPieChartExplicitDonut)),
+        PageWithSamples("Charts", "BarChart", "Bar chart rendering from numeric values.",
+            Sample("Themed bars", BuildBarChartThemedBars),
+            Sample("No data", BuildBarChartNoData)),
+        PageWithSamples("Charts", "LineChart", "Line and area chart rendering.",
+            Sample("Line", BuildLineChartLine),
+            Sample("Area", BuildLineChartArea)),
     ];
 
     private NavMenu BuildSideMenu()
@@ -7821,7 +7827,29 @@ public sealed class ComponentsView : UserControl
         return border;
     }
 
-    private static StackPanel BuildPieChart()
+    private static Paper BuildPieChartThemedPie()
+    {
+        var split = new[] { 40d, 25d, 20d, 15d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Themed pie", Typo = Typo.Subtitle2 },
+                    new PieChart { Width = 180, Height = 180, Values = split },
+                    new ChartLegend { Labels = { "Planning", "Build", "Review" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildPieChartExplicitDonut()
     {
         var split = new[] { 40d, 25d, 20d, 15d };
         var explicitColors = new[]
@@ -7832,133 +7860,103 @@ public sealed class ComponentsView : UserControl
             Color.Parse("#F67280"),
         };
 
-        return new StackPanel
+        return new Paper
         {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
             {
-                new Paper
+                Spacing = 10,
+                Children =
                 {
-                    Outlined = true,
-                    Elevation = 0,
-                    Padding = new Thickness(16),
-                    Content = new StackPanel
-                    {
-                        Spacing = 10,
-                        Children =
-                        {
-                            new Text { Text = "Themed pie", Typo = Typo.Subtitle2 },
-                            new PieChart { Width = 180, Height = 180, Values = split },
-                            new ChartLegend { Labels = { "Planning", "Build", "Review" } },
-                        },
-                    },
-                },
-                new Paper
-                {
-                    Outlined = true,
-                    Elevation = 0,
-                    Padding = new Thickness(16),
-                    Content = new StackPanel
-                    {
-                        Spacing = 10,
-                        Children =
-                        {
-                            new Text { Text = "Explicit donut", Typo = Typo.Subtitle2 },
-                            new PieChart { Width = 180, Height = 180, Values = split, Donut = true, Colors = explicitColors },
-                            new ChartLegend { Colors = explicitColors, Labels = { "Alpha", "Beta", "Stable" } },
-                        },
-                    },
+                    new Text { Text = "Explicit donut", Typo = Typo.Subtitle2 },
+                    new PieChart { Width = 180, Height = 180, Values = split, Donut = true, Colors = explicitColors },
+                    new ChartLegend { Colors = explicitColors, Labels = { "Alpha", "Beta", "Stable" } },
                 },
             },
         };
     }
 
-    private static StackPanel BuildBarChart()
+    private static Paper BuildBarChartThemedBars()
     {
         var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
 
-        return new StackPanel
+        return new Paper
         {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
             {
-                new Paper
+                Spacing = 10,
+                Children =
                 {
-                    Outlined = true,
-                    Elevation = 0,
-                    Padding = new Thickness(16),
-                    Content = new StackPanel
-                    {
-                        Spacing = 10,
-                        Children =
-                        {
-                            new Text { Text = "Themed bars", Typo = Typo.Subtitle2 },
-                            new Text { Text = "Grid and baseline colors come from outline roles.", Typo = Typo.Caption, Color = LoamColor.Secondary },
-                            new BarChart { Width = 320, Height = 180, Values = revenue },
-                        },
-                    },
-                },
-                new Paper
-                {
-                    Outlined = true,
-                    Elevation = 0,
-                    Padding = new Thickness(16),
-                    Content = new StackPanel
-                    {
-                        Spacing = 10,
-                        Children =
-                        {
-                            new Text { Text = "No data", Typo = Typo.Subtitle2 },
-                            new BarChart { Width = 320, Height = 180, Values = [0d, -2d, 0d] },
-                        },
-                    },
+                    new Text { Text = "Themed bars", Typo = Typo.Subtitle2 },
+                    new Text { Text = "Grid and baseline colors come from outline roles.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BarChart { Width = 320, Height = 180, Values = revenue },
                 },
             },
         };
     }
 
-    private static StackPanel BuildLineChart()
+    private static Paper BuildBarChartNoData()
+    {
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "No data", Typo = Typo.Subtitle2 },
+                    new BarChart { Width = 320, Height = 180, Values = [0d, -2d, 0d] },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildLineChartLine()
     {
         var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
 
-        return new StackPanel
+        return new Paper
         {
-            Spacing = 18,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
             {
-                new Paper
+                Spacing = 10,
+                Children =
                 {
-                    Outlined = true,
-                    Elevation = 0,
-                    Padding = new Thickness(16),
-                    Content = new StackPanel
-                    {
-                        Spacing = 10,
-                        Children =
-                        {
-                            new Text { Text = "Line", Typo = Typo.Subtitle2 },
-                            new LineChart { Width = 320, Height = 180, Values = revenue },
-                        },
-                    },
+                    new Text { Text = "Line", Typo = Typo.Subtitle2 },
+                    new LineChart { Width = 320, Height = 180, Values = revenue },
                 },
-                new Paper
+            },
+        };
+    }
+
+    private static Paper BuildLineChartArea()
+    {
+        var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
                 {
-                    Outlined = true,
-                    Elevation = 0,
-                    Padding = new Thickness(16),
-                    Content = new StackPanel
-                    {
-                        Spacing = 10,
-                        Children =
-                        {
-                            new Text { Text = "Area", Typo = Typo.Subtitle2 },
-                            new Text { Text = "Area fill follows the first resolved series color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
-                            new LineChart { Width = 320, Height = 180, Values = revenue, Area = true },
-                        },
-                    },
+                    new Text { Text = "Area", Typo = Typo.Subtitle2 },
+                    new Text { Text = "Area fill follows the first resolved series color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new LineChart { Width = 320, Height = 180, Values = revenue, Area = true },
                 },
             },
         };
