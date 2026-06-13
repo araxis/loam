@@ -936,7 +936,9 @@ public sealed class ComponentsView : UserControl
             Sample("Custom separator", BuildBreadcrumbsCustomSeparator),
             Sample("Href and disabled item", BuildBreadcrumbsHrefAndDisabled),
             Sample("Deep trail", BuildBreadcrumbsDeepTrail)),
-        Page("Navigation", "Link", "Clickable text link variants.", BuildLink),
+        PageWithSamples("Navigation", "Link", "Clickable text link variants.",
+            Sample("States and colors", BuildLinkColors),
+            Sample("Href and disabled", BuildLinkHrefAndDisabled)),
         PageWithSamples("Navigation", "NavMenu", "Side-menu container with links and groups.",
             Sample("Simple menu", BuildNavMenuSimple),
             Sample("Grouped menu", BuildNavMenuGrouped)),
@@ -5920,7 +5922,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildLink()
+    private static StackPanel BuildLinkColors()
     {
         var clicked = new Text
         {
@@ -5935,13 +5937,24 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "States and colors", Typo = Typo.Subtitle2 },
                 new Link { Text = "Hover underline", OnClick = () => clicked.Text = "Hover underline clicked" },
                 new Link { Text = "Always underline", Underline = true, Color = LoamColor.Secondary, OnClick = () => clicked.Text = "Always underline clicked" },
                 new Link { Text = "Success link", Color = LoamColor.Success, OnClick = () => clicked.Text = "Success link clicked" },
+                clicked,
+            },
+        };
+    }
+
+    private static StackPanel BuildLinkHrefAndDisabled()
+    {
+        return new StackPanel
+        {
+            Spacing = 14,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Link { Text = "External href", Href = "https://example.com", Underline = true },
                 new Link { Text = "Disabled link", IsEnabled = false },
-                clicked,
             },
         };
     }
