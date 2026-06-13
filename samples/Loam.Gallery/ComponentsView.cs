@@ -758,12 +758,29 @@ public sealed class ComponentsView : UserControl
             Sample("Icon-only and extended", BuildFabShapes)),
         Family("Buttons", "Menu", "Button-anchored menu rows.", BuildMenu, "Menu", "MenuItem"),
 
-        Page("Inputs", "Field", "A reusable field shell for custom input-like content.", BuildField),
-        Page("Inputs", "TextField", "Text field variants, adornments, helper text, and error state.", BuildTextField),
-        Page("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.", BuildNumericField),
-        Page("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.", BuildMaskedTextField),
-        Page("Inputs", "Autocomplete", "Text entry with filtered suggestions.", BuildAutocomplete),
-        Page("Inputs", "Select", "Single and multi-select dropdowns.", BuildSelect),
+        PageWithSamples("Inputs", "Field", "A reusable field shell for custom input-like content.",
+            Sample("Custom editors", BuildFieldVariants),
+            Sample("Underline & validation", BuildFieldUnderlineAndValidation),
+            Sample("Disabled", BuildFieldDisabled)),
+        PageWithSamples("Inputs", "TextField", "Text field variants, adornments, helper text, and error state.",
+            Sample("Variants", BuildTextFieldVariants),
+            Sample("Adornments & floating label", BuildTextFieldAdornments),
+            Sample("States", BuildTextFieldStates)),
+        PageWithSamples("Inputs", "NumericField", "Numeric parsing, formatting, bounds, and spinner controls.",
+            Sample("Variants", BuildNumericFieldVariants),
+            Sample("Steps & bounds", BuildNumericFieldStepsAndBounds),
+            Sample("States", BuildNumericFieldStates)),
+        PageWithSamples("Inputs", "MaskedTextField", "Pattern-based text formatting for phone-style entry.",
+            Sample("Variants", BuildMaskedTextFieldVariants),
+            Sample("Mask types", BuildMaskedTextFieldMaskTypes),
+            Sample("States", BuildMaskedTextFieldStates)),
+        PageWithSamples("Inputs", "Autocomplete", "Text entry with filtered suggestions.",
+            Sample("Filtered suggestions", BuildAutocompleteFiltered),
+            Sample("Prefilled value", BuildAutocompletePrefilled)),
+        PageWithSamples("Inputs", "Select", "Single and multi-select dropdowns.",
+            Sample("Single select", BuildSelectSingle),
+            Sample("Multi-select", BuildSelectMulti),
+            Sample("States", BuildSelectStates)),
         PageWithSamples("Inputs", "CheckBox", "Checkbox states, colors, and disabled rendering.",
             Sample("States", BuildCheckBoxStates),
             Sample("Sizes", BuildCheckBoxSizes),
@@ -795,8 +812,12 @@ public sealed class ComponentsView : UserControl
             Sample("No selection", BuildToggleGroupNoSelection),
             Sample("Sizes", BuildToggleGroupSizes),
             Sample("Disabled", BuildToggleGroupDisabled)),
-        Page("Inputs", "FileUpload", "Platform file picking and selected-name chips.", BuildFileUpload),
-        Page("Inputs", "Form", "Lightweight validation over text-field descendants.", BuildFormDemo),
+        PageWithSamples("Inputs", "FileUpload", "Platform file picking and selected-name chips.",
+            Sample("Variants", BuildFileUploadVariants),
+            Sample("Sizes", BuildFileUploadSizes)),
+        PageWithSamples("Inputs", "Form", "Lightweight validation over text-field descendants.",
+            Sample("States", BuildFormStates),
+            Sample("Action sizes", BuildFormActionSizes)),
 
         Page("Pickers", "DatePicker", "Date input with a calendar flyout.", BuildDatePicker),
         Page("Pickers", "TimePicker", "Time input with hour and minute columns.", BuildTimePicker),
@@ -3399,7 +3420,7 @@ public sealed class ComponentsView : UserControl
         return new StackPanel { Spacing = 12, Children = { Labeled("Checkboxes", checks), Labeled("Switches", switches) } };
     }
 
-    private static StackPanel BuildField()
+    private static StackPanel BuildFieldVariants()
     {
         static TextBox InnerTextBox(string text, string? watermark = null) =>
             FieldEditor.MakeChromeless(new TextBox
@@ -3459,6 +3480,25 @@ public sealed class ComponentsView : UserControl
             },
         };
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 380,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { phone, color, options },
+        };
+    }
+
+    private static StackPanel BuildFieldUnderlineAndValidation()
+    {
+        static TextBox InnerTextBox(string text, string? watermark = null) =>
+            FieldEditor.MakeChromeless(new TextBox
+            {
+                Text = text,
+                PlaceholderText = watermark,
+                VerticalContentAlignment = VerticalAlignment.Center,
+            });
+
         var search = new Field
         {
             Label = "Quick filter",
@@ -3477,20 +3517,25 @@ public sealed class ComponentsView : UserControl
             Content = InnerTextBox("0"),
         };
 
-        var disabled = new Field
-        {
-            Label = "Read-only token",
-            IsEnabled = false,
-            HelperText = "Disabled custom field shell.",
-            Content = new Text { Text = "LOAM-2.0" },
-        };
-
         return new StackPanel
         {
             Spacing = 18,
             MaxWidth = 380,
             HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { phone, color, options, search, invalid, disabled },
+            Children = { search, invalid },
+        };
+    }
+
+    private static Field BuildFieldDisabled()
+    {
+        return new Field
+        {
+            Label = "Read-only token",
+            IsEnabled = false,
+            HelperText = "Disabled custom field shell.",
+            Content = new Text { Text = "LOAM-2.0" },
+            MaxWidth = 380,
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
     }
 
@@ -4230,11 +4275,13 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildTextField()
+    private static WrapPanel BuildTextFieldVariants()
     {
         var itemMargin = new Thickness(0, 0, 18, 18);
-        var fields = new WrapPanel
+        return new WrapPanel
         {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
                 new TextField
@@ -4264,6 +4311,19 @@ public sealed class ComponentsView : UserControl
                     Width = 320,
                     Margin = itemMargin,
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTextFieldAdornments()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        return new WrapPanel
+        {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new TextField
                 {
                     Label = "Budget",
@@ -4292,6 +4352,19 @@ public sealed class ComponentsView : UserControl
                     Width = 320,
                     Margin = itemMargin,
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTextFieldStates()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        return new WrapPanel
+        {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new TextField
                 {
                     Label = "Email",
@@ -4314,24 +4387,15 @@ public sealed class ComponentsView : UserControl
                 },
             },
         };
-
-        return new StackPanel
-        {
-            Spacing = 6,
-            MaxWidth = 700,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                fields,
-            },
-        };
     }
 
-    private static StackPanel BuildNumericField()
+    private static WrapPanel BuildNumericFieldVariants()
     {
         var itemMargin = new Thickness(0, 0, 18, 18);
-        var fields = new WrapPanel
+        return new WrapPanel
         {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
                 new NumericField
@@ -4368,6 +4432,19 @@ public sealed class ComponentsView : UserControl
                     Width = 320,
                     Margin = itemMargin,
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildNumericFieldStepsAndBounds()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        return new WrapPanel
+        {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new NumericField
                 {
                     Label = "Step 0.25",
@@ -4403,6 +4480,19 @@ public sealed class ComponentsView : UserControl
                     Width = 320,
                     Margin = itemMargin,
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildNumericFieldStates()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        return new WrapPanel
+        {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new NumericField
                 {
                     Label = "Amount",
@@ -4423,24 +4513,15 @@ public sealed class ComponentsView : UserControl
                 },
             },
         };
-
-        return new StackPanel
-        {
-            Spacing = 6,
-            MaxWidth = 700,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                fields,
-            },
-        };
     }
 
-    private static StackPanel BuildMaskedTextField()
+    private static WrapPanel BuildMaskedTextFieldVariants()
     {
         var itemMargin = new Thickness(0, 0, 18, 18);
-        var fields = new WrapPanel
+        return new WrapPanel
         {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
                 new MaskedTextField
@@ -4471,6 +4552,19 @@ public sealed class ComponentsView : UserControl
                     Width = 320,
                     Margin = itemMargin,
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildMaskedTextFieldMaskTypes()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        return new WrapPanel
+        {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new MaskedTextField
                 {
                     Label = "Access code",
@@ -4500,6 +4594,19 @@ public sealed class ComponentsView : UserControl
                     Width = 320,
                     Margin = itemMargin,
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildMaskedTextFieldStates()
+    {
+        var itemMargin = new Thickness(0, 0, 18, 18);
+        return new WrapPanel
+        {
+            MaxWidth = 700,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new MaskedTextField
                 {
                     Label = "Invalid",
@@ -4522,43 +4629,30 @@ public sealed class ComponentsView : UserControl
                 },
             },
         };
-
-        return new StackPanel
-        {
-            Spacing = 6,
-            MaxWidth = 700,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                fields,
-            },
-        };
     }
 
-    private static StackPanel BuildAutocomplete()
+    private static Autocomplete BuildAutocompleteFiltered()
     {
-        var fruit = new Autocomplete { Label = "Fruit", Placeholder = "Start typing...", HelperText = "Suggestions use the same field chrome" };
+        var fruit = new Autocomplete { Label = "Fruit", Placeholder = "Start typing...", HelperText = "Suggestions use the same field chrome", MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var name in new[] { "Apple", "Apricot", "Banana", "Blueberry", "Cherry", "Grape", "Mango", "Orange", "Peach", "Pineapple" })
         {
             fruit.Items.Add(name);
         }
 
         fruit.SearchFunc = text => fruit.Items.Where(item => item.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
-        var country = new Autocomplete { Label = "Country", Placeholder = "Type a country", Value = "Sweden", Variant = Variant.Filled };
+        return fruit;
+    }
+
+    private static Autocomplete BuildAutocompletePrefilled()
+    {
+        var country = new Autocomplete { Label = "Country", Placeholder = "Type a country", Value = "Sweden", Variant = Variant.Filled, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var name in new[] { "Denmark", "Finland", "Norway", "Sweden" })
         {
             country.Items.Add(name);
         }
 
         country.SearchFunc = text => country.Items.Where(item => item.Contains(text ?? "", StringComparison.OrdinalIgnoreCase));
-
-        return new StackPanel
-        {
-            Spacing = 18,
-            MaxWidth = 360,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { fruit, country },
-        };
+        return country;
     }
 
     private static StackPanel BuildTextFields()
@@ -6897,27 +6991,8 @@ public sealed class ComponentsView : UserControl
         return Labeled("Empty", empty);
     }
 
-    private static StackPanel BuildFileUpload()
+    private static WrapPanel BuildFileUploadVariants()
     {
-        FileUpload SizeSample(string label, LoamSize size)
-        {
-            var upload = new FileUpload
-            {
-                Label = label,
-                HelperText = "Generated chips and clear action follow the upload size.",
-                EmptyText = "No file selected",
-                ButtonText = $"Upload {label.ToLowerInvariant()}",
-                Width = 360,
-                Margin = new Thickness(0, 0, 24, 24),
-                Size = size,
-                Variant = Variant.Outlined,
-                ShowRemoveButtons = true,
-                ShowClearButton = true,
-            };
-            upload.ShowSelection([$"{label.ToLowerInvariant()}-file.txt"]);
-            return upload;
-        }
-
         var single = new FileUpload
         {
             Label = "Filled",
@@ -6960,84 +7035,107 @@ public sealed class ComponentsView : UserControl
         };
         multiple.ShowSelection(new List<string> { "brief.md", "screenshot.png", "metrics.csv" });
 
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new FileUpload
+                {
+                    Label = "Outlined",
+                    HelperText = "Images only, multiple selection allowed.",
+                    EmptyText = "No images attached",
+                    ButtonText = "Attach files",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Variant = Variant.Outlined,
+                    Color = LoamColor.Primary,
+                    AllowMultiple = true,
+                    AcceptedFileTypes =
+                    [
+                        new FilePickerFileType("Images") { Patterns = ["*.png", "*.jpg", "*.jpeg"] },
+                    ],
+                },
+                single,
+                new FileUpload
+                {
+                    Label = "Text",
+                    HelperText = "Text action with removable selected-file chips.",
+                    EmptyText = "Nothing selected yet",
+                    ButtonText = "Browse",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Variant = Variant.Text,
+                    Color = LoamColor.Primary,
+                    AllowMultiple = true,
+                    ShowRemoveButtons = true,
+                },
+                multiple,
+                new FileUpload
+                {
+                    Label = "Small",
+                    HelperText = "Compact upload action.",
+                    EmptyText = "No avatar selected",
+                    ButtonText = "Upload avatar",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Size = LoamSize.Small,
+                    Variant = Variant.Outlined,
+                },
+                new FileUpload
+                {
+                    Label = "Large",
+                    HelperText = "Large filled action for larger upload surfaces.",
+                    EmptyText = "No package selected",
+                    ButtonText = "Upload package",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Size = LoamSize.Large,
+                    Variant = Variant.Filled,
+                    Color = LoamColor.Primary,
+                },
+                new FileUpload
+                {
+                    Label = "Disabled",
+                    HelperText = "Disabled upload action keeps label and status visible.",
+                    EmptyText = "Archived uploads are locked",
+                    ButtonText = "Archived upload",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    IsEnabled = false,
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildFileUploadSizes()
+    {
+        FileUpload SizeSample(string label, LoamSize size)
+        {
+            var upload = new FileUpload
+            {
+                Label = label,
+                HelperText = "Generated chips and clear action follow the upload size.",
+                EmptyText = "No file selected",
+                ButtonText = $"Upload {label.ToLowerInvariant()}",
+                Width = 360,
+                Margin = new Thickness(0, 0, 24, 24),
+                Size = size,
+                Variant = Variant.Outlined,
+                ShowRemoveButtons = true,
+                ShowClearButton = true,
+            };
+            upload.ShowSelection([$"{label.ToLowerInvariant()}-file.txt"]);
+            return upload;
+        }
+
         return new StackPanel
         {
             Spacing = 18,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new WrapPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Children =
-                    {
-                        new FileUpload
-                        {
-                            Label = "Outlined",
-                            HelperText = "Images only, multiple selection allowed.",
-                            EmptyText = "No images attached",
-                            ButtonText = "Attach files",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Variant = Variant.Outlined,
-                            Color = LoamColor.Primary,
-                            AllowMultiple = true,
-                            AcceptedFileTypes =
-                            [
-                                new FilePickerFileType("Images") { Patterns = ["*.png", "*.jpg", "*.jpeg"] },
-                            ],
-                        },
-                        single,
-                        new FileUpload
-                        {
-                            Label = "Text",
-                            HelperText = "Text action with removable selected-file chips.",
-                            EmptyText = "Nothing selected yet",
-                            ButtonText = "Browse",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Variant = Variant.Text,
-                            Color = LoamColor.Primary,
-                            AllowMultiple = true,
-                            ShowRemoveButtons = true,
-                        },
-                        multiple,
-                        new FileUpload
-                        {
-                            Label = "Small",
-                            HelperText = "Compact upload action.",
-                            EmptyText = "No avatar selected",
-                            ButtonText = "Upload avatar",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Size = LoamSize.Small,
-                            Variant = Variant.Outlined,
-                        },
-                        new FileUpload
-                        {
-                            Label = "Large",
-                            HelperText = "Large filled action for larger upload surfaces.",
-                            EmptyText = "No package selected",
-                            ButtonText = "Upload package",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            Size = LoamSize.Large,
-                            Variant = Variant.Filled,
-                            Color = LoamColor.Primary,
-                        },
-                        new FileUpload
-                        {
-                            Label = "Disabled",
-                            HelperText = "Disabled upload action keeps label and status visible.",
-                            EmptyText = "Archived uploads are locked",
-                            ButtonText = "Archived upload",
-                            Width = 360,
-                            Margin = new Thickness(0, 0, 24, 24),
-                            IsEnabled = false,
-                        },
-                    },
-                },
                 new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
                 new WrapPanel
                 {
@@ -7056,7 +7154,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildFormDemo()
+    private static WrapPanel BuildFormStates()
     {
         Form AccessForm(string title, LoamSize actionSize = LoamSize.Small, bool filled = false, bool disabled = false)
         {
@@ -7132,6 +7230,91 @@ public sealed class ComponentsView : UserControl
         var ready = AccessForm("Ready state", filled: true);
         ready.Validate();
         var disabled = AccessForm("Disabled", disabled: true);
+
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Frame(standard),
+                Frame(invalid),
+                Frame(ready),
+                Frame(disabled),
+            },
+        };
+    }
+
+    private static StackPanel BuildFormActionSizes()
+    {
+        Form AccessForm(string title, LoamSize actionSize = LoamSize.Small, bool filled = false, bool disabled = false)
+        {
+            var name = new TextField
+            {
+                Label = "Full name",
+                Placeholder = "Ada Lovelace",
+                HelperText = "Required",
+                Required = true,
+                Text = filled ? "Ada Lovelace" : null,
+            };
+
+            var email = new TextField
+            {
+                Label = "Email",
+                Placeholder = "name@example.com",
+                HelperText = "Used for notifications",
+                Required = true,
+                Text = filled ? "ada@example.com" : null,
+                Validation = value => value?.Contains('@', StringComparison.Ordinal) == true ? null : "Enter a valid email",
+            };
+
+            var role = new TextField
+            {
+                Label = "Role",
+                Text = "Design systems",
+                HelperText = "Optional",
+                Variant = Variant.Filled,
+            };
+
+            var form = new Form
+            {
+                Title = title,
+                Subtitle = "Validate required fields before inviting a collaborator.",
+                HelperText = "Fill the required fields and validate.",
+                SuccessText = "Ready to submit.",
+                ErrorText = "Review the highlighted fields.",
+                FieldWidth = 320,
+                SubmitText = "Validate",
+                ResetText = "Reset",
+                SubmitIcon = Icons.Material.Filled.Check,
+                ResetIcon = Icons.Material.Filled.Close,
+                ActionSize = actionSize,
+                SubmitVariant = Variant.Filled,
+                SubmitColor = LoamColor.Primary,
+                ResetVariant = Variant.Outlined,
+                ResetColor = LoamColor.Secondary,
+                ActionsHorizontalAlignment = HorizontalAlignment.Right,
+                IsEnabled = !disabled,
+                Children = { name, email, role },
+            };
+            form.ResetAction = _ => role.Text = "Design systems";
+            return form;
+        }
+
+        Paper Frame(Form form)
+        {
+            return new Paper
+            {
+                Outlined = true,
+                Elevation = 0,
+                Padding = new Thickness(24),
+                Width = 420,
+                Margin = new Thickness(0, 0, 24, 24),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Content = form,
+            };
+        }
+
         var actionSizes = new[]
         {
             LoamSize.ExtraSmall,
@@ -7153,18 +7336,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new WrapPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Children =
-                    {
-                        Frame(standard),
-                        Frame(invalid),
-                        Frame(ready),
-                        Frame(disabled),
-                    },
-                },
                 new Text { Text = "Action sizes", Typo = Typo.Subtitle2 },
                 sizeSamples,
             },
@@ -7688,7 +7859,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildSelect()
+    private static StackPanel BuildSelectSingle()
     {
         var stack = new StackPanel { Spacing = 18, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
 
@@ -7705,23 +7876,31 @@ public sealed class ComponentsView : UserControl
         size.Items.Add(new SelectItem("Large", "l"));
         stack.Children.Add(size);
 
-        var tags = new Select { Label = "Tags", MultiSelect = true, ShrinkLabel = true };
+        return stack;
+    }
+
+    private static Select BuildSelectMulti()
+    {
+        var tags = new Select { Label = "Tags", MultiSelect = true, ShrinkLabel = true, MaxWidth = 360, HorizontalAlignment = HorizontalAlignment.Left };
         tags.Items.Add(new SelectItem("Design", "design"));
         tags.Items.Add(new SelectItem("Build", "build"));
         tags.Items.Add(new SelectItem("Review", "review"));
         tags.SelectedValues.Add("design");
         tags.SelectedValues.Add("review");
-        stack.Children.Add(tags);
+        return tags;
+    }
 
-        stack.Children.Add(new Select
+    private static Select BuildSelectStates()
+    {
+        return new Select
         {
             Label = "Required",
             Error = true,
             ErrorText = "Choose at least one option",
             Placeholder = "No value selected",
-        });
-
-        return stack;
+            MaxWidth = 360,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
     }
 
     private static StackPanel BuildHidden()
