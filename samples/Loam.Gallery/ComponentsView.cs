@@ -845,7 +845,10 @@ public sealed class ComponentsView : UserControl
             Sample("Range", BuildMonthCalendarRange),
             Sample("Constrained", BuildMonthCalendarConstrained)),
 
-        Page("Feedback", "Alert", "Contextual message banners across variants and severities.", BuildAlert),
+        PageWithSamples("Feedback", "Alert", "Contextual message banners across variants and severities.",
+            Sample("Severities and variants", BuildAlertSeveritiesAndVariants),
+            Sample("Disabled", BuildAlertDisabled),
+            Sample("Content fallback", BuildAlertContentFallback)),
         PageWithSamples("Feedback", "ProgressCircular", "Determinate and indeterminate circular progress.",
             Sample("States", BuildProgressCircularStates),
             Sample("Sizes", BuildProgressCircularSizes),
@@ -1647,7 +1650,7 @@ public sealed class ComponentsView : UserControl
         _ => size.ToString(),
     };
 
-    private static StackPanel BuildAlert()
+    private static StackPanel BuildAlertSeveritiesAndVariants()
     {
         var stack = new StackPanel { Spacing = 12, MaxWidth = 620, HorizontalAlignment = HorizontalAlignment.Left };
         stack.Children.Add(new Alert
@@ -1678,16 +1681,32 @@ public sealed class ComponentsView : UserControl
             Closeable = true,
         });
         stack.Children.Add(new Alert { Color = LoamColor.Error, Title = "Validation failed", Message = "Error alert without a leading icon." });
-        stack.Children.Add(new Alert
+        return stack;
+    }
+
+    private static Alert BuildAlertDisabled()
+    {
+        return new Alert
         {
             Color = LoamColor.Info,
             Title = "Disabled",
             Message = "Disabled alerts dim generated text, icon, action and close regions.",
             Closeable = true,
             IsEnabled = false,
-        });
-        stack.Children.Add(new Alert { Color = LoamColor.Default, Content = "Compatibility path: raw Content still renders." });
-        return stack;
+            MaxWidth = 620,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+    }
+
+    private static Alert BuildAlertContentFallback()
+    {
+        return new Alert
+        {
+            Color = LoamColor.Default,
+            Content = "Compatibility path: raw Content still renders.",
+            MaxWidth = 620,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
     }
 
     private static StackPanel BuildLayoutSamples()
