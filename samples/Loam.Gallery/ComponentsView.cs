@@ -1799,7 +1799,6 @@ public sealed class ComponentsView : UserControl
             Spacing = 16,
             Children =
             {
-                new Text { Text = "Breakpoint caps", Typo = Typo.Subtitle2 },
                 ContainerExample("MaxWidthBreakpoint = Breakpoint.Sm", Breakpoint.Sm, gutters: true),
                 ContainerExample("MaxWidthBreakpoint = Breakpoint.Md", Breakpoint.Md, gutters: true),
                 ContainerExample("MaxWidthBreakpoint = Breakpoint.Lg", Breakpoint.Lg, gutters: true),
@@ -1814,7 +1813,6 @@ public sealed class ComponentsView : UserControl
             Spacing = 16,
             Children =
             {
-                new Text { Text = "No gutters", Typo = Typo.Subtitle2 },
                 ContainerExample("Gutters = false", Breakpoint.Md, gutters: false),
             },
         };
@@ -1844,7 +1842,6 @@ public sealed class ComponentsView : UserControl
             Spacing = 18,
             Children =
             {
-                new Text { Text = "Fixed spans", Typo = Typo.Subtitle2 },
                 spanGrid,
             },
         };
@@ -1884,7 +1881,6 @@ public sealed class ComponentsView : UserControl
             Spacing = 18,
             Children =
             {
-                new Text { Text = "Responsive spans", Typo = Typo.Subtitle2 },
                 responsiveGrid,
             },
         };
@@ -1932,7 +1928,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Star column spacer", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = toolbar },
             },
         };
@@ -1963,7 +1958,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Dock fill spacer", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = dock },
             },
         };
