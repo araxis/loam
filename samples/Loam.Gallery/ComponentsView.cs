@@ -884,9 +884,15 @@ public sealed class ComponentsView : UserControl
             Sample("Clamped selected page", BuildPaginationClamped),
             Sample("Empty and disabled", BuildPaginationEmptyAndDisabled)),
 
-        Page("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildBreadcrumbs),
+        PageWithSamples("Navigation", "Breadcrumbs", "Path navigation with current item text.",
+            Sample("Default trail", BuildBreadcrumbsDefaultTrail),
+            Sample("Custom separator", BuildBreadcrumbsCustomSeparator),
+            Sample("Href and disabled item", BuildBreadcrumbsHrefAndDisabled),
+            Sample("Deep trail", BuildBreadcrumbsDeepTrail)),
         Page("Navigation", "Link", "Clickable text link variants.", BuildLink),
-        Page("Navigation", "NavMenu", "Side-menu container with links and groups.", BuildNavMenu),
+        PageWithSamples("Navigation", "NavMenu", "Side-menu container with links and groups.",
+            Sample("Simple menu", BuildNavMenuSimple),
+            Sample("Grouped menu", BuildNavMenuGrouped)),
         Page("Navigation", "NavLink", "Active and hoverable navigation rows.", BuildNavLink),
         Page("Navigation", "NavGroup", "Collapsible navigation groups.", BuildNavGroup),
         Page("Navigation", "NavigationRail", "Compact vertical destination rail with single selection.", BuildNavigationRail),
@@ -5636,23 +5642,65 @@ public sealed class ComponentsView : UserControl
         return stack;
     }
 
-    private static StackPanel BuildBreadcrumbs()
+    private static StackPanel BuildBreadcrumbsDefaultTrail()
     {
         var defaultCrumbs = new Breadcrumbs();
         defaultCrumbs.Items.Add(new BreadcrumbItem("Home", () => { }));
         defaultCrumbs.Items.Add(new BreadcrumbItem("Components", () => { }));
         defaultCrumbs.Items.Add(new BreadcrumbItem("Navigation"));
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default trail", Typo = Typo.Subtitle2 },
+                defaultCrumbs,
+            },
+        };
+    }
+
+    private static StackPanel BuildBreadcrumbsCustomSeparator()
+    {
         var customSeparator = new Breadcrumbs { Separator = ">" };
         customSeparator.Items.Add(new BreadcrumbItem("Workspace", () => { }));
         customSeparator.Items.Add(new BreadcrumbItem("Projects", () => { }));
         customSeparator.Items.Add(new BreadcrumbItem("Gallery"));
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Custom separator", Typo = Typo.Subtitle2 },
+                customSeparator,
+            },
+        };
+    }
+
+    private static StackPanel BuildBreadcrumbsHrefAndDisabled()
+    {
         var mixedCrumbs = new Breadcrumbs();
         mixedCrumbs.Items.Add(new BreadcrumbItem { Text = "Docs", Href = "https://example.com/docs" });
         mixedCrumbs.Items.Add(new BreadcrumbItem { Text = "Archived", Disabled = true });
         mixedCrumbs.Items.Add(new BreadcrumbItem("Release notes"));
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Href and disabled item", Typo = Typo.Subtitle2 },
+                mixedCrumbs,
+            },
+        };
+    }
+
+    private static StackPanel BuildBreadcrumbsDeepTrail()
+    {
         var deepCrumbs = new Breadcrumbs();
         deepCrumbs.Items.Add(new BreadcrumbItem("Workspace", () => { }));
         deepCrumbs.Items.Add(new BreadcrumbItem("Projects", () => { }));
@@ -5665,12 +5713,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default trail", Typo = Typo.Subtitle2 },
-                defaultCrumbs,
-                new Text { Text = "Custom separator", Typo = Typo.Subtitle2 },
-                customSeparator,
-                new Text { Text = "Href and disabled item", Typo = Typo.Subtitle2 },
-                mixedCrumbs,
                 new Text { Text = "Deep trail", Typo = Typo.Subtitle2 },
                 deepCrumbs,
             },
@@ -5703,7 +5745,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildNavMenu()
+    private static StackPanel BuildNavMenuSimple()
     {
         var primaryMenu = new NavMenu { Width = 280, Spacing = 2 };
         primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Home, Content = "Dashboard", IsActive = true });
@@ -5711,6 +5753,20 @@ public sealed class ComponentsView : UserControl
         primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Settings, Content = "Settings" });
         primaryMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.VisibilityOff, Content = "Locked", IsEnabled = false });
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Simple menu", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = primaryMenu },
+            },
+        };
+    }
+
+    private static StackPanel BuildNavMenuGrouped()
+    {
         var groupedMenu = new NavMenu { Width = 280, Spacing = 4 };
         groupedMenu.Children.Add(new NavLink { Icon = Icons.Material.Filled.Article, Content = "Overview", IsActive = true });
         var reports = new NavGroup { Title = "Reports", Icon = Icons.Material.Filled.ShowChart, Expanded = true };
@@ -5725,8 +5781,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Simple menu", Typo = Typo.Subtitle2 },
-                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = primaryMenu },
                 new Text { Text = "Grouped menu", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = groupedMenu },
             },
