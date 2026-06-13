@@ -2316,9 +2316,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Display roles", Typo = Typo.Subtitle2 },
-                displayRoles,
+            {                displayRoles,
             },
         };
     }
@@ -2350,9 +2348,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Content roles", Typo = Typo.Subtitle2 },
-                contentRoles,
+            {                contentRoles,
             },
         };
     }
@@ -2376,9 +2372,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Legacy aliases", Typo = Typo.Subtitle2 },
-                legacyAliases,
+            {                legacyAliases,
             },
         };
     }
@@ -2402,9 +2396,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Colors", Typo = Typo.Subtitle2 },
-                colorSamples,
+            {                colorSamples,
             },
         };
     }
@@ -2429,9 +2421,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Alignment and wrapping", Typo = Typo.Subtitle2 },
-                alignment,
+            {                alignment,
             },
         };
     }
@@ -7877,9 +7867,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Selected", Typo = Typo.Subtitle2 },
-                selectedCalendar,
+            {                selectedCalendar,
                 selected,
             },
         };
@@ -7892,9 +7880,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Range", Typo = Typo.Subtitle2 },
-                new MonthCalendar
+            {                new MonthCalendar
                 {
                     DisplayMonth = new DateTime(2026, 6, 1),
                     SelectedDate = new DateTime(2026, 6, 16),
@@ -7913,9 +7899,7 @@ public sealed class ComponentsView : UserControl
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
-            {
-                new Text { Text = "Constrained", Typo = Typo.Subtitle2 },
-                new MonthCalendar
+            {                new MonthCalendar
                 {
                     DisplayMonth = new DateTime(2026, 6, 1),
                     SelectedDate = new DateTime(2026, 6, 14),
