@@ -898,10 +898,16 @@ public sealed class ComponentsView : UserControl
         Page("Navigation", "NavigationRail", "Compact vertical destination rail with single selection.", BuildNavigationRail),
         Page("Navigation", "BottomNavigation", "Horizontal bottom destination bar with single selection.", BuildBottomNavigation),
 
-        Page("Layout", "Container", "Centered and width-capped content regions.", BuildContainer),
-        Page("Layout", "ResponsiveGrid", "Responsive 12-column layout with column spans.", BuildGridLayout),
+        PageWithSamples("Layout", "Container", "Centered and width-capped content regions.",
+            Sample("Breakpoint caps", BuildContainerBreakpointCaps),
+            Sample("No gutters", BuildContainerNoGutters)),
+        PageWithSamples("Layout", "ResponsiveGrid", "Responsive 12-column layout with column spans.",
+            Sample("Fixed spans", BuildGridLayoutFixedSpans),
+            Sample("Responsive spans", BuildGridLayoutResponsiveSpans)),
         Page("Layout", "Col", "ResponsiveGrid child span settings across breakpoints.", BuildItemLayout),
-        Page("Layout", "Spacer", "Flexible space for toolbars and docked rows.", BuildSpacer),
+        PageWithSamples("Layout", "Spacer", "Flexible space for toolbars and docked rows.",
+            Sample("Star column spacer", BuildSpacerStarColumn),
+            Sample("Dock fill spacer", BuildSpacerDockFill)),
         Page("Layout", "Hidden", "Breakpoint-based visibility.", BuildHidden),
         Page("Layout", "ScrollToTop", "Floating scroll affordance used in this app shell.", BuildScrollToTop),
 
@@ -1685,26 +1691,26 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildContainer()
+    private static Loam.Controls.Container ContainerExample(string label, Breakpoint breakpoint, bool gutters)
     {
-        Loam.Controls.Container ContainerExample(string label, Breakpoint breakpoint, bool gutters)
+        return new Loam.Controls.Container
         {
-            return new Loam.Controls.Container
+            Width = 780,
+            MaxWidthBreakpoint = breakpoint,
+            Gutters = gutters,
+            Child = new Paper
             {
-                Width = 780,
-                MaxWidthBreakpoint = breakpoint,
-                Gutters = gutters,
-                Child = new Paper
-                {
-                    Height = 64,
-                    Elevation = 0,
-                    Outlined = true,
-                    Padding = new Thickness(16),
-                    Content = new Text { Text = label, Typo = Typo.Body2 },
-                },
-            };
-        }
+                Height = 64,
+                Elevation = 0,
+                Outlined = true,
+                Padding = new Thickness(16),
+                Content = new Text { Text = label, Typo = Typo.Body2 },
+            },
+        };
+    }
 
+    private static StackPanel BuildContainerBreakpointCaps()
+    {
         return new StackPanel
         {
             Spacing = 16,
@@ -1714,13 +1720,24 @@ public sealed class ComponentsView : UserControl
                 ContainerExample("MaxWidthBreakpoint = Breakpoint.Sm", Breakpoint.Sm, gutters: true),
                 ContainerExample("MaxWidthBreakpoint = Breakpoint.Md", Breakpoint.Md, gutters: true),
                 ContainerExample("MaxWidthBreakpoint = Breakpoint.Lg", Breakpoint.Lg, gutters: true),
+            },
+        };
+    }
+
+    private static StackPanel BuildContainerNoGutters()
+    {
+        return new StackPanel
+        {
+            Spacing = 16,
+            Children =
+            {
                 new Text { Text = "No gutters", Typo = Typo.Subtitle2 },
                 ContainerExample("Gutters = false", Breakpoint.Md, gutters: false),
             },
         };
     }
 
-    private static StackPanel BuildGridLayout()
+    private static StackPanel BuildGridLayoutFixedSpans()
     {
         var spanGrid = new Loam.Controls.ResponsiveGrid { Spacing = 12, MaxWidth = 780 };
         foreach (var (label, span) in new[] { ("xs12", 12), ("xs6", 6), ("xs4", 4), ("xs3", 3) })
@@ -1739,6 +1756,19 @@ public sealed class ComponentsView : UserControl
             });
         }
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            Children =
+            {
+                new Text { Text = "Fixed spans", Typo = Typo.Subtitle2 },
+                spanGrid,
+            },
+        };
+    }
+
+    private static StackPanel BuildGridLayoutResponsiveSpans()
+    {
         var responsiveGrid = new Loam.Controls.ResponsiveGrid { Spacing = 12, MaxWidth = 780 };
         for (var i = 1; i <= 6; i++)
         {
@@ -1771,8 +1801,6 @@ public sealed class ComponentsView : UserControl
             Spacing = 18,
             Children =
             {
-                new Text { Text = "Fixed spans", Typo = Typo.Subtitle2 },
-                spanGrid,
                 new Text { Text = "Responsive spans", Typo = Typo.Subtitle2 },
                 responsiveGrid,
             },
@@ -1799,7 +1827,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildSpacer()
+    private static StackPanel BuildSpacerStarColumn()
     {
         var toolbar = new Avalonia.Controls.Grid
         {
@@ -1815,6 +1843,20 @@ public sealed class ComponentsView : UserControl
         Avalonia.Controls.Grid.SetColumn(toolbar.Children[1], 1);
         Avalonia.Controls.Grid.SetColumn(toolbar.Children[2], 2);
 
+        return new StackPanel
+        {
+            Spacing = 12,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Star column spacer", Typo = Typo.Subtitle2 },
+                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = toolbar },
+            },
+        };
+    }
+
+    private static StackPanel BuildSpacerDockFill()
+    {
         var dockLeft = new Text { Text = "Leading", VerticalAlignment = VerticalAlignment.Center };
         var dockRight = new Text { Text = "Trailing", VerticalAlignment = VerticalAlignment.Center };
         DockPanel.SetDock(dockLeft, Dock.Left);
@@ -1838,8 +1880,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Star column spacer", Typo = Typo.Subtitle2 },
-                new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = toolbar },
                 new Text { Text = "Dock fill spacer", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(12), Content = dock },
             },
