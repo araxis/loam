@@ -831,7 +831,9 @@ public sealed class ComponentsView : UserControl
         Page("Feedback", "SnackbarService", "Toast messages with colors and actions.", BuildSnackbarService),
         Page("Feedback", "CommandPalette", "Searchable command list with keyboard navigation.", BuildCommandPalette),
 
-        Page("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.", BuildTable),
+        PageWithSamples("Data", "SimpleTable", "Small tabular datasets with hover and stripe options.",
+            Sample("Dense", BuildTableDense),
+            Sample("Empty", BuildTableEmpty)),
         PageWithSamples("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.",
             Sample("Sortable · filtered · paged", BuildDataGridPaged),
             Sample("Grouped with aggregate — click a header to collapse", BuildDataGridGrouped),
@@ -840,13 +842,47 @@ public sealed class ComponentsView : UserControl
             Sample("Virtualized — capped render", BuildDataGridVirtualized),
             Sample("Empty state", BuildDataGridEmpty)),
         Page("Data", "TreeView", "Nested rows with selection and expansion.", BuildTreeView),
-        Page("Data", "Tabs", "Header strip and selected content region.", BuildTabs),
-        Page("Data", "ExpansionPanels", "Accordion-style expandable content.", BuildExpansionPanels),
-        Page("Data", "Collapse", "Animated and static content reveal.", BuildCollapse),
-        Page("Data", "Timeline", "Vertical event sequence.", BuildTimeline),
-        Page("Data", "Carousel", "Slide navigation with arrows and bullets.", BuildCarousel),
-        Page("Data", "Stepper", "Multi-step workflow navigation.", BuildStepper),
-        Page("Data", "Pagination", "Page buttons with boundary and ellipsis behavior.", BuildPagination),
+        PageWithSamples("Data", "Tabs", "Header strip and selected content region.",
+            Sample("Default tabs", BuildTabsDefault),
+            Sample("Secondary selected", BuildTabsSecondarySelected),
+            Sample("Clamped SelectedIndex", BuildTabsClampedSelectedIndex),
+            Sample("Disabled", BuildTabsDisabled),
+            Sample("Empty", BuildTabsEmpty)),
+        PageWithSamples("Data", "ExpansionPanels", "Accordion-style expandable content.",
+            Sample("Accordion", BuildExpansionPanelsAccordion),
+            Sample("MultiExpansion", BuildExpansionPanelsMulti),
+            Sample("Disabled panel", BuildExpansionPanelsDisabled)),
+        PageWithSamples("Data", "Collapse", "Animated and static content reveal.",
+            Sample("Animated reveal", BuildCollapseAnimated),
+            Sample("Static reveal", BuildCollapseStatic),
+            Sample("Custom duration", BuildCollapseCustomDuration),
+            Sample("Disabled static", BuildCollapseDisabledStatic),
+            Sample("Zero duration", BuildCollapseZeroDuration)),
+        PageWithSamples("Data", "Timeline", "Vertical event sequence.",
+            Sample("Default sequence", BuildTimelineDefault),
+            Sample("Rich content", BuildTimelineRich),
+            Sample("Horizontal", BuildTimelineHorizontal),
+            Sample("Empty", BuildTimelineEmpty),
+            Sample("Disabled", BuildTimelineDisabled)),
+        PageWithSamples("Data", "Carousel", "Slide navigation with arrows and bullets.",
+            Sample("Default carousel", BuildCarouselDefault),
+            Sample("Chrome hidden", BuildCarouselChromeHidden),
+            Sample("Auto play", BuildCarouselAutoPlay),
+            Sample("GoTo clamped", BuildCarouselGoToClamped),
+            Sample("Empty", BuildCarouselEmpty),
+            Sample("Disabled", BuildCarouselDisabled)),
+        PageWithSamples("Data", "Stepper", "Multi-step workflow navigation.",
+            Sample("Active step", BuildStepperActive),
+            Sample("Completed steps", BuildStepperCompleted),
+            Sample("Clamped ActiveIndex", BuildStepperClamped),
+            Sample("Disabled", BuildStepperDisabled),
+            Sample("Empty", BuildStepperEmpty)),
+        PageWithSamples("Data", "Pagination", "Page buttons with boundary and ellipsis behavior.",
+            Sample("Boundary pages", BuildPaginationBoundary),
+            Sample("Windowed pages", BuildPaginationWindowed),
+            Sample("Secondary color", BuildPaginationSecondaryColor),
+            Sample("Clamped selected page", BuildPaginationClamped),
+            Sample("Empty and disabled", BuildPaginationEmptyAndDisabled)),
 
         Page("Navigation", "Breadcrumbs", "Path navigation with current item text.", BuildBreadcrumbs),
         Page("Navigation", "Link", "Clickable text link variants.", BuildLink),
@@ -3440,30 +3476,12 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildTabs()
+    private static StackPanel BuildTabsDefault()
     {
         var tabs = new Tabs { Color = LoamColor.Primary, Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
         tabs.Items.Add(new Loam.Controls.TabItem("Overview", new Text { Text = "Overview content.", Typo = Typo.Body1, Margin = new Thickness(0, 8) }));
         tabs.Items.Add(new Loam.Controls.TabItem("Details", new Text { Text = "Details content.", Typo = Typo.Body1, Margin = new Thickness(0, 8) }));
         tabs.Items.Add(new Loam.Controls.TabItem("Settings", new Text { Text = "Settings content.", Typo = Typo.Body1, Margin = new Thickness(0, 8) }));
-
-        var secondary = new Tabs { Color = LoamColor.Secondary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
-        secondary.Items.Add(new Loam.Controls.TabItem("Open", new Text { Text = "Open items." }));
-        secondary.Items.Add(new Loam.Controls.TabItem("Assigned", new Text { Text = "Assigned items." }));
-        secondary.Items.Add(new Loam.Controls.TabItem("Done", new Text { Text = "Completed items." }));
-        secondary.SelectedIndex = 1;
-
-        var clamped = new Tabs { Color = LoamColor.Tertiary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
-        clamped.Items.Add(new Loam.Controls.TabItem("First", new Text { Text = "Invalid SelectedIndex clamps into range." }));
-        clamped.Items.Add(new Loam.Controls.TabItem("Last", new Text { Text = "The last available tab is selected." }));
-        clamped.SelectedIndex = 99;
-
-        var disabled = new Tabs { Color = LoamColor.Primary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left, IsEnabled = false };
-        disabled.Items.Add(new Loam.Controls.TabItem("Queued", new Text { Text = "Disabled tab strips keep content stable." }));
-        disabled.Items.Add(new Loam.Controls.TabItem("Paused", new Text { Text = "Header activation is suppressed." }));
-        disabled.SelectedIndex = 1;
-
-        var empty = new Tabs { Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
 
         return new StackPanel
         {
@@ -3473,12 +3491,78 @@ public sealed class ComponentsView : UserControl
             {
                 new Text { Text = "Default tabs", Typo = Typo.Subtitle2 },
                 tabs,
+            },
+        };
+    }
+
+    private static StackPanel BuildTabsSecondarySelected()
+    {
+        var secondary = new Tabs { Color = LoamColor.Secondary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+        secondary.Items.Add(new Loam.Controls.TabItem("Open", new Text { Text = "Open items." }));
+        secondary.Items.Add(new Loam.Controls.TabItem("Assigned", new Text { Text = "Assigned items." }));
+        secondary.Items.Add(new Loam.Controls.TabItem("Done", new Text { Text = "Completed items." }));
+        secondary.SelectedIndex = 1;
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Secondary selected", Typo = Typo.Subtitle2 },
                 secondary,
+            },
+        };
+    }
+
+    private static StackPanel BuildTabsClampedSelectedIndex()
+    {
+        var clamped = new Tabs { Color = LoamColor.Tertiary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+        clamped.Items.Add(new Loam.Controls.TabItem("First", new Text { Text = "Invalid SelectedIndex clamps into range." }));
+        clamped.Items.Add(new Loam.Controls.TabItem("Last", new Text { Text = "The last available tab is selected." }));
+        clamped.SelectedIndex = 99;
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Clamped SelectedIndex", Typo = Typo.Subtitle2 },
                 clamped,
+            },
+        };
+    }
+
+    private static StackPanel BuildTabsDisabled()
+    {
+        var disabled = new Tabs { Color = LoamColor.Primary, Width = 420, HorizontalAlignment = HorizontalAlignment.Left, IsEnabled = false };
+        disabled.Items.Add(new Loam.Controls.TabItem("Queued", new Text { Text = "Disabled tab strips keep content stable." }));
+        disabled.Items.Add(new Loam.Controls.TabItem("Paused", new Text { Text = "Header activation is suppressed." }));
+        disabled.SelectedIndex = 1;
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildTabsEmpty()
+    {
+        var empty = new Tabs { Width = 420, HorizontalAlignment = HorizontalAlignment.Left };
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Empty", Typo = Typo.Subtitle2 },
                 empty,
             },
@@ -5799,7 +5883,7 @@ public sealed class ComponentsView : UserControl
         return stack;
     }
 
-    private static StackPanel BuildPagination()
+    private static StackPanel BuildPaginationBoundary()
     {
         return new StackPanel
         {
@@ -5809,12 +5893,60 @@ public sealed class ComponentsView : UserControl
             {
                 new Text { Text = "Boundary pages", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 10, Selected = 1 },
+            },
+        };
+    }
+
+    private static StackPanel BuildPaginationWindowed()
+    {
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Windowed pages", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 24, Selected = 12, BoundaryCount = 2, MiddleCount = 5 },
+            },
+        };
+    }
+
+    private static StackPanel BuildPaginationSecondaryColor()
+    {
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Secondary color", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 12, Selected = 6, Color = LoamColor.Secondary },
+            },
+        };
+    }
+
+    private static StackPanel BuildPaginationClamped()
+    {
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Clamped selected page", Typo = Typo.Subtitle2 },
                 new Pagination { Count = 7, Selected = 99, MiddleCount = 3 },
+            },
+        };
+    }
+
+    private static StackPanel BuildPaginationEmptyAndDisabled()
+    {
+        return new StackPanel
+        {
+            Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Empty and disabled", Typo = Typo.Subtitle2 },
                 new StackPanel
                 {
@@ -5830,31 +5962,13 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildStepper()
+    private static StackPanel BuildStepperActive()
     {
         var active = new Stepper { Width = 520 };
         active.Steps.Add(new Step("Account", new Text { Text = "Create your account credentials." }) { Completed = true });
         active.Steps.Add(new Step("Profile", new Text { Text = "Tell us a little about yourself." }));
         active.Steps.Add(new Step("Review", new Text { Text = "Confirm everything looks right." }));
         active.ActiveIndex = 1;
-
-        var completed = new Stepper { Width = 520 };
-        completed.Steps.Add(new Step("Account", new Text { Text = "Account details captured." }) { Completed = true });
-        completed.Steps.Add(new Step("Profile", new Text { Text = "Profile details captured." }) { Completed = true });
-        completed.Steps.Add(new Step("Review", new Text { Text = "Ready to finish." }));
-        completed.ActiveIndex = 2;
-
-        var clamped = new Stepper { Width = 520 };
-        clamped.Steps.Add(new Step("Start", new Text { Text = "Invalid ActiveIndex clamps to an available step." }));
-        clamped.Steps.Add(new Step("Finish", new Text { Text = "The final step remains reachable." }));
-        clamped.ActiveIndex = 99;
-
-        var disabled = new Stepper { Width = 520, IsEnabled = false };
-        disabled.Steps.Add(new Step("Queued", new Text { Text = "Disabled steppers suppress navigation actions." }) { Completed = true });
-        disabled.Steps.Add(new Step("Paused", new Text { Text = "Actions remain visible but disabled." }));
-        disabled.ActiveIndex = 1;
-
-        var empty = new Stepper { Width = 520 };
 
         return new StackPanel
         {
@@ -5864,19 +5978,85 @@ public sealed class ComponentsView : UserControl
             {
                 new Text { Text = "Active step", Typo = Typo.Subtitle2 },
                 active,
+            },
+        };
+    }
+
+    private static StackPanel BuildStepperCompleted()
+    {
+        var completed = new Stepper { Width = 520 };
+        completed.Steps.Add(new Step("Account", new Text { Text = "Account details captured." }) { Completed = true });
+        completed.Steps.Add(new Step("Profile", new Text { Text = "Profile details captured." }) { Completed = true });
+        completed.Steps.Add(new Step("Review", new Text { Text = "Ready to finish." }));
+        completed.ActiveIndex = 2;
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Completed steps", Typo = Typo.Subtitle2 },
                 completed,
+            },
+        };
+    }
+
+    private static StackPanel BuildStepperClamped()
+    {
+        var clamped = new Stepper { Width = 520 };
+        clamped.Steps.Add(new Step("Start", new Text { Text = "Invalid ActiveIndex clamps to an available step." }));
+        clamped.Steps.Add(new Step("Finish", new Text { Text = "The final step remains reachable." }));
+        clamped.ActiveIndex = 99;
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Clamped ActiveIndex", Typo = Typo.Subtitle2 },
                 clamped,
+            },
+        };
+    }
+
+    private static StackPanel BuildStepperDisabled()
+    {
+        var disabled = new Stepper { Width = 520, IsEnabled = false };
+        disabled.Steps.Add(new Step("Queued", new Text { Text = "Disabled steppers suppress navigation actions." }) { Completed = true });
+        disabled.Steps.Add(new Step("Paused", new Text { Text = "Actions remain visible but disabled." }));
+        disabled.ActiveIndex = 1;
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildStepperEmpty()
+    {
+        var empty = new Stepper { Width = 520 };
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
                 new Text { Text = "Empty", Typo = Typo.Subtitle2 },
                 empty,
             },
         };
     }
 
-    private static StackPanel BuildCollapse()
+    private static StackPanel BuildCollapseAnimated()
     {
         var animated = new Collapse
         {
@@ -5901,6 +6081,22 @@ public sealed class ComponentsView : UserControl
             animatedToggle.Content = animated.Expanded ? "Hide animated details" : "Show animated details";
         };
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 520,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Animated reveal", Typo = Typo.Subtitle2 },
+                animatedToggle,
+                animated,
+            },
+        };
+    }
+
+    private static StackPanel BuildCollapseStatic()
+    {
         var staticReveal = new Collapse
         {
             Animated = false,
@@ -5925,6 +6121,22 @@ public sealed class ComponentsView : UserControl
             staticToggle.Content = staticReveal.Expanded ? "Hide static details" : "Show static details";
         };
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 520,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Static reveal", Typo = Typo.Subtitle2 },
+                staticToggle,
+                staticReveal,
+            },
+        };
+    }
+
+    private static StackPanel BuildCollapseCustomDuration()
+    {
         var customDuration = new Collapse
         {
             Duration = TimeSpan.FromMilliseconds(320),
@@ -5951,6 +6163,22 @@ public sealed class ComponentsView : UserControl
                 : "Show custom-duration details";
         };
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 520,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Custom duration", Typo = Typo.Subtitle2 },
+                customToggle,
+                customDuration,
+            },
+        };
+    }
+
+    private static StackPanel BuildCollapseDisabledStatic()
+    {
         var disabled = new Collapse
         {
             IsEnabled = false,
@@ -5970,6 +6198,22 @@ public sealed class ComponentsView : UserControl
             IsEnabled = false,
         };
 
+        return new StackPanel
+        {
+            Spacing = 18,
+            MaxWidth = 520,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Disabled static", Typo = Typo.Subtitle2 },
+                disabledButton,
+                disabled,
+            },
+        };
+    }
+
+    private static StackPanel BuildCollapseZeroDuration()
+    {
         var zeroDuration = new Collapse
         {
             Duration = TimeSpan.Zero,
@@ -6001,18 +6245,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Animated reveal", Typo = Typo.Subtitle2 },
-                animatedToggle,
-                animated,
-                new Text { Text = "Static reveal", Typo = Typo.Subtitle2 },
-                staticToggle,
-                staticReveal,
-                new Text { Text = "Custom duration", Typo = Typo.Subtitle2 },
-                customToggle,
-                customDuration,
-                new Text { Text = "Disabled static", Typo = Typo.Subtitle2 },
-                disabledButton,
-                disabled,
                 new Text { Text = "Zero duration", Typo = Typo.Subtitle2 },
                 instantToggle,
                 zeroDuration,
@@ -6020,7 +6252,7 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static StackPanel BuildTimeline()
+    private static StackPanel BuildTimelineDefault()
     {
         var timeline = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
         timeline.Items.Add(new TimelineItem("Order placed", "Customer submitted checkout.", "9:24 AM", LoamColor.Primary));
@@ -6028,6 +6260,20 @@ public sealed class ComponentsView : UserControl
         timeline.Items.Add(new TimelineItem("Packed", "Warehouse prepared the shipment.", "10:40 AM", LoamColor.Secondary));
         timeline.Items.Add(new TimelineItem("Out for delivery", "Courier is heading to the customer.", "11:15 AM", LoamColor.Warning));
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default sequence", Typo = Typo.Subtitle2 },
+                timeline,
+            },
+        };
+    }
+
+    private static StackPanel BuildTimelineRich()
+    {
         var rich = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
         rich.Items.Add(new TimelineItem(new StackPanel
         {
@@ -6048,6 +6294,20 @@ public sealed class ComponentsView : UserControl
             },
         }, LoamColor.Info));
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Rich content", Typo = Typo.Subtitle2 },
+                rich,
+            },
+        };
+    }
+
+    private static StackPanel BuildTimelineHorizontal()
+    {
         var horizontal = new Timeline
         {
             Orientation = Orientation.Horizontal,
@@ -6058,7 +6318,41 @@ public sealed class ComponentsView : UserControl
         horizontal.Items.Add(new TimelineItem("Verified", "All gates passed", color: LoamColor.Success));
         horizontal.Items.Add(new TimelineItem("Published", "Ready", color: LoamColor.Primary));
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Horizontal", Typo = Typo.Subtitle2 },
+                new ScrollViewer
+                {
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    Content = horizontal,
+                },
+            },
+        };
+    }
+
+    private static StackPanel BuildTimelineEmpty()
+    {
         var empty = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left };
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
+                empty,
+            },
+        };
+    }
+
+    private static StackPanel BuildTimelineDisabled()
+    {
         var disabled = new Timeline { MaxWidth = 460, HorizontalAlignment = HorizontalAlignment.Left, IsEnabled = false };
         disabled.Items.Add(new TimelineItem("Locked event", "Read-only event metadata.", color: LoamColor.Primary));
         disabled.Items.Add(new TimelineItem("Read-only state", "Interaction disabled.", color: LoamColor.Secondary));
@@ -6069,38 +6363,53 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default sequence", Typo = Typo.Subtitle2 },
-                timeline,
-                new Text { Text = "Rich content", Typo = Typo.Subtitle2 },
-                rich,
-                new Text { Text = "Horizontal", Typo = Typo.Subtitle2 },
-                new ScrollViewer
-                {
-                    HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-                    VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                    Content = horizontal,
-                },
-                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
-                empty,
                 new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
     }
 
-    private static StackPanel BuildExpansionPanels()
+    private static StackPanel BuildExpansionPanelsAccordion()
     {
         var accordion = new ExpansionPanels { Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
         accordion.AddPanel("Shipping address", new Text { Text = "Where should we deliver your order?", Margin = new Thickness(0, 4) }, isExpanded: true);
         accordion.AddPanel("Billing details", new Text { Text = "Card and invoice information.", Margin = new Thickness(0, 4) });
         accordion.AddPanel("Delivery options", new Text { Text = "Standard, express, or pickup.", Margin = new Thickness(0, 4) });
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Accordion", Typo = Typo.Subtitle2 },
+                accordion,
+            },
+        };
+    }
+
+    private static StackPanel BuildExpansionPanelsMulti()
+    {
         var multi = new ExpansionPanels { Width = 520, MultiExpansion = true, HorizontalAlignment = HorizontalAlignment.Left };
         multi.AddPanel("Scope", new Text { Text = "Multiple sections may stay open.", Margin = new Thickness(0, 4) });
         multi.AddPanel("Risks", new Text { Text = "Second section remains open in multi mode.", Margin = new Thickness(0, 4) });
         multi.AddPanel("Notes", new Text { Text = "Additional content can be reviewed independently.", Margin = new Thickness(0, 4) });
         multi.ExpandAll();
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "MultiExpansion", Typo = Typo.Subtitle2 },
+                multi,
+            },
+        };
+    }
+
+    private static StackPanel BuildExpansionPanelsDisabled()
+    {
         var disabled = new ExpansionPanels { Width = 520, HorizontalAlignment = HorizontalAlignment.Left };
         disabled.AddPanel(
             "Locked review",
@@ -6113,17 +6422,13 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Accordion", Typo = Typo.Subtitle2 },
-                accordion,
-                new Text { Text = "MultiExpansion", Typo = Typo.Subtitle2 },
-                multi,
                 new Text { Text = "Disabled panel", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
     }
 
-    private static StackPanel BuildCarousel()
+    private static StackPanel BuildCarouselDefault()
     {
         var carousel = new Loam.Controls.Carousel
         {
@@ -6136,6 +6441,20 @@ public sealed class ComponentsView : UserControl
         carousel.Items.Add(new CarouselItem("Review", "Check keyboard, focus, and states.", LoamColor.Secondary));
         carousel.Items.Add(new CarouselItem("Ship", "Move verified changes forward.", LoamColor.Info));
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Default carousel", Typo = Typo.Subtitle2 },
+                carousel,
+            },
+        };
+    }
+
+    private static StackPanel BuildCarouselChromeHidden()
+    {
         var chromeHidden = new Loam.Controls.Carousel
         {
             Width = 380,
@@ -6147,6 +6466,20 @@ public sealed class ComponentsView : UserControl
         chromeHidden.Items.Add(new CarouselItem("Static slide", "Chrome disabled.", LoamColor.Secondary));
         chromeHidden.Items.Add(new CarouselItem("Hidden chrome", "Content remains readable.", LoamColor.Primary));
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Chrome hidden", Typo = Typo.Subtitle2 },
+                chromeHidden,
+            },
+        };
+    }
+
+    private static StackPanel BuildCarouselAutoPlay()
+    {
         var auto = new Loam.Controls.Carousel
         {
             Width = 380,
@@ -6159,6 +6492,20 @@ public sealed class ComponentsView : UserControl
         auto.Items.Add(new CarouselItem("Auto second", "Uses the public interval.", LoamColor.Info));
         auto.Items.Add(new CarouselItem("Auto third", "Stops when disabled.", LoamColor.Success));
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Auto play", Typo = Typo.Subtitle2 },
+                auto,
+            },
+        };
+    }
+
+    private static StackPanel BuildCarouselGoToClamped()
+    {
         var clamped = new Loam.Controls.Carousel
         {
             Width = 380,
@@ -6169,7 +6516,36 @@ public sealed class ComponentsView : UserControl
         clamped.Items.Add(new CarouselItem("Clamped last", "SelectedIndex stays deterministic.", LoamColor.Tertiary));
         clamped.GoTo(99);
 
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "GoTo clamped", Typo = Typo.Subtitle2 },
+                clamped,
+            },
+        };
+    }
+
+    private static StackPanel BuildCarouselEmpty()
+    {
         var empty = new Loam.Controls.Carousel { Width = 380, Height = 120, HorizontalAlignment = HorizontalAlignment.Left };
+
+        return new StackPanel
+        {
+            Spacing = 20,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
+                empty,
+            },
+        };
+    }
+
+    private static StackPanel BuildCarouselDisabled()
+    {
         var disabled = new Loam.Controls.Carousel
         {
             Width = 380,
@@ -6186,16 +6562,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default carousel", Typo = Typo.Subtitle2 },
-                carousel,
-                new Text { Text = "Chrome hidden", Typo = Typo.Subtitle2 },
-                chromeHidden,
-                new Text { Text = "Auto play", Typo = Typo.Subtitle2 },
-                auto,
-                new Text { Text = "GoTo clamped", Typo = Typo.Subtitle2 },
-                clamped,
-                new Text { Text = "Empty", Typo = Typo.Subtitle2 },
-                empty,
                 new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
@@ -6373,7 +6739,7 @@ public sealed class ComponentsView : UserControl
         return grid;
     }
 
-    private static StackPanel BuildTable()
+    private static Avalonia.Controls.Grid BuildTableDense()
     {
         var table = new SimpleTable
         {
@@ -6392,6 +6758,11 @@ public sealed class ComponentsView : UserControl
         table.Rows.Add(new TableRow("Eclair", 262, 16.0));
         table.Rows.Add(new TableRow("Cupcake", 305, 3.7));
 
+        return Labeled("Dense", table);
+    }
+
+    private static Avalonia.Controls.Grid BuildTableEmpty()
+    {
         var empty = new SimpleTable
         {
             Dense = true,
@@ -6402,16 +6773,7 @@ public sealed class ComponentsView : UserControl
         empty.Headers.Add("Dessert");
         empty.Headers.Add("Calories");
 
-        return new StackPanel
-        {
-            Spacing = 16,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children =
-            {
-                Labeled("Dense", table),
-                Labeled("Empty", empty),
-            },
-        };
+        return Labeled("Empty", empty);
     }
 
     private static StackPanel BuildFileUpload()
