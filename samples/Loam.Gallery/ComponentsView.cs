@@ -971,7 +971,11 @@ public sealed class ComponentsView : UserControl
         Page("Shell", "Drawer", "Docked or temporary side navigation.", BuildDrawer),
         Page("Shell", "MainContent", "Scrollable main content region.", BuildMainContent),
 
-        Page("Surfaces", "Paper", "Elevation, outlined, square, and filled surfaces.", BuildPaper),
+        PageWithSamples("Surfaces", "Paper", "Elevation, outlined, square, and filled surfaces.",
+            Sample("Elevation", BuildPaperElevation),
+            Sample("Outlined", BuildPaperOutlined),
+            Sample("Square", BuildPaperSquare),
+            Sample("Colored", BuildPaperColored)),
         Page("Surfaces", "Card", "Header, media, content, and actions.", BuildCard),
         Family("Surfaces", "List", "List rows, subheaders, secondary text, and trailing actions.", BuildList, "List", "ListSubheader", "ListItem", "Badge", "IconButton"),
         Page("Surfaces", "Ripple", "Pointer feedback effect.", BuildRipple),
@@ -8420,49 +8424,88 @@ public sealed class ComponentsView : UserControl
         };
     }
 
-    private static WrapPanel BuildPaper()
+    private static WrapPanel BuildPaperElevation()
     {
         var wrap = new WrapPanel();
 
-        Paper Make(string title, string subtitle)
+        wrap.Children.Add(new Paper
         {
-            return new Paper
-            {
-                Width = 130,
-                Height = 88,
-                Margin = new Thickness(0, 0, 16, 16),
-                Title = title,
-                Subtitle = subtitle,
-                Compact = true,
-            };
-        }
+            Width = 130,
+            Height = 88,
+            Margin = new Thickness(0, 0, 16, 16),
+            Title = "Elevation 1",
+            Subtitle = "Default",
+            Compact = true,
+        });
 
-        wrap.Children.Add(Make("Elevation 1", "Default"));
+        wrap.Children.Add(new Paper
+        {
+            Width = 130,
+            Height = 88,
+            Margin = new Thickness(0, 0, 16, 16),
+            Title = "Elevation 4",
+            Subtitle = "Tonal",
+            Compact = true,
+            Elevation = 4,
+        });
 
-        var e4 = Make("Elevation 4", "Tonal");
-        e4.Elevation = 4;
-        wrap.Children.Add(e4);
-
-        var e8 = Make("Elevation 8", "Clamped");
-        e8.Elevation = 8;
-        e8.Shape = SurfaceShape.Large;
-        wrap.Children.Add(e8);
-
-        var outlined = Make("Outlined", "Stroke");
-        outlined.Outlined = true;
-        wrap.Children.Add(outlined);
-
-        var square = Make("Square", "No radius");
-        square.Elevation = 4;
-        square.Square = true;
-        wrap.Children.Add(square);
-
-        var colored = Make("Colored", "Role tint");
-        colored.Color = LoamColor.Primary;
-        colored.Shape = SurfaceShape.ExtraLarge;
-        wrap.Children.Add(colored);
+        wrap.Children.Add(new Paper
+        {
+            Width = 130,
+            Height = 88,
+            Margin = new Thickness(0, 0, 16, 16),
+            Title = "Elevation 8",
+            Subtitle = "Clamped",
+            Compact = true,
+            Elevation = 8,
+            Shape = SurfaceShape.Large,
+        });
 
         return wrap;
+    }
+
+    private static Paper BuildPaperOutlined()
+    {
+        return new Paper
+        {
+            Width = 130,
+            Height = 88,
+            Margin = new Thickness(0, 0, 16, 16),
+            Title = "Outlined",
+            Subtitle = "Stroke",
+            Compact = true,
+            Outlined = true,
+        };
+    }
+
+    private static Paper BuildPaperSquare()
+    {
+        return new Paper
+        {
+            Width = 130,
+            Height = 88,
+            Margin = new Thickness(0, 0, 16, 16),
+            Title = "Square",
+            Subtitle = "No radius",
+            Compact = true,
+            Elevation = 4,
+            Square = true,
+        };
+    }
+
+    private static Paper BuildPaperColored()
+    {
+        return new Paper
+        {
+            Width = 130,
+            Height = 88,
+            Margin = new Thickness(0, 0, 16, 16),
+            Title = "Colored",
+            Subtitle = "Role tint",
+            Compact = true,
+            Color = LoamColor.Primary,
+            Shape = SurfaceShape.ExtraLarge,
+        };
     }
 
     private static StackPanel BuildDividerHorizontal()
