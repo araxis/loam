@@ -4093,7 +4093,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Vertical group", Typo = Typo.Subtitle2 },
                 shipping,
             },
         };
@@ -4124,7 +4123,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Horizontal group", Typo = Typo.Subtitle2 },
                 notification,
             },
         };
@@ -4155,7 +4153,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled group", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -4172,7 +4169,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default range", Typo = Typo.Subtitle2 },
                 primary,
             },
         };
@@ -4189,7 +4185,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Custom min and max", Typo = Typo.Subtitle2 },
                 customRange,
             },
         };
@@ -4206,7 +4201,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Color states", Typo = Typo.Subtitle2 },
                 warning,
             },
         };
@@ -4223,7 +4217,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Zero value", Typo = Typo.Subtitle2 },
                 zero,
             },
         };
@@ -4240,7 +4233,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -4719,7 +4711,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Selected", Typo = Typo.Subtitle2 },
                 group,
             },
         };
@@ -4744,7 +4735,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Color", Typo = Typo.Subtitle2 },
                 priority,
             },
         };
@@ -4764,7 +4754,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "No selection", Typo = Typo.Subtitle2 },
                 noSelection,
             },
         };
@@ -4812,7 +4801,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
                 sizes,
             },
         };
@@ -4831,7 +4819,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Disabled", Typo = Typo.Subtitle2 },
                 disabled,
             },
         };
@@ -7174,7 +7161,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Sizes", Typo = Typo.Subtitle2 },
                 new WrapPanel
                 {
                     Orientation = Orientation.Horizontal,
@@ -7374,7 +7360,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Action sizes", Typo = Typo.Subtitle2 },
                 sizeSamples,
             },
         };
