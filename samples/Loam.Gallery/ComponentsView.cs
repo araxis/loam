@@ -5815,7 +5815,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Default trail", Typo = Typo.Subtitle2 },
                 defaultCrumbs,
             },
         };
@@ -5834,7 +5833,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Custom separator", Typo = Typo.Subtitle2 },
                 customSeparator,
             },
         };
@@ -5853,7 +5851,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Href and disabled item", Typo = Typo.Subtitle2 },
                 mixedCrumbs,
             },
         };
@@ -5873,7 +5870,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Deep trail", Typo = Typo.Subtitle2 },
                 deepCrumbs,
             },
         };
@@ -5930,7 +5926,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Simple menu", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = primaryMenu },
             },
         };
@@ -5952,7 +5947,6 @@ public sealed class ComponentsView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                new Text { Text = "Grouped menu", Typo = Typo.Subtitle2 },
                 new Paper { Elevation = 0, Outlined = true, Padding = new Thickness(8), Width = 296, Content = groupedMenu },
             },
         };
