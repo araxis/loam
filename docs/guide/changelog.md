@@ -6,6 +6,14 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.19.0
+
+**`Loam.Data` DataGrid clipboard copy.** `DataGrid<T>` gains `CopyToClipboardAsync()`, which copies the current
+view (filtered + sorted, all pages) to the system clipboard as TSV (reusing `ExportTsv()`) and returns the
+copied text — also wired to **Ctrl+C** / **Cmd+C** when focus is within the grid. Uses Avalonia 12's
+`TopLevel.Clipboard` (`ClipboardExtensions.SetTextAsync`); returns `null` when no clipboard is available. This
+closes the clipboard loose end deferred since 3.6 (the Avalonia 12 clipboard API had moved). Additive.
+
 ## 3.18.0
 
 **`Loam.Pickers` ColorPicker validation.** `ColorPicker` gains a `Validation` delegate (`Func<Color, string?>`)

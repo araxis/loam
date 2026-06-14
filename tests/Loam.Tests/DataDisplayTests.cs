@@ -4,6 +4,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
@@ -47,6 +48,13 @@ public class DataDisplayTests
     {
         RoutedEvent = InputElement.KeyDownEvent,
         Key = key,
+    };
+
+    private static KeyEventArgs KeyArgs(Key key, KeyModifiers modifiers) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+        KeyModifiers = modifiers,
     };
 
     [Fact]
@@ -162,6 +170,91 @@ public class DataDisplayTests
         lines[0].ShouldBe("Name,Age");
         lines.Length.ShouldBe(4); // header + 3 rows (all pages)
         lines.ShouldContain("Alice,25");
+    }
+
+    [AvaloniaFact]
+    public async Task DataGrid_copy_to_clipboard_writes_the_view_as_tsv()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        grid.Items = new List<Person> { new("Alice", 25), new("Bob", 30) };
+        Show(grid);
+
+        var copied = await grid.CopyToClipboardAsync();
+        copied.ShouldBe(grid.ExportTsv());
+
+        var clipboard = TopLevel.GetTopLevel(grid)!.Clipboard!;
+        (await clipboard.TryGetTextAsync()).ShouldBe(grid.ExportTsv()); // round-trips through the system clipboard
+    }
+
+    [AvaloniaFact]
+    public async Task DataGrid_ctrl_c_copies_the_current_view()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        grid.Items = new List<Person> { new("Bob", 30), new("Alice", 25) };
+        Show(grid);
+
+        var handled = KeyArgs(Key.C, KeyModifiers.Control);
+        grid.RaiseEvent(handled);
+        Dispatcher.UIThread.RunJobs();
+        handled.Handled.ShouldBeTrue();
+
+        var clipboard = TopLevel.GetTopLevel(grid)!.Clipboard!;
+        (await clipboard.TryGetTextAsync()).ShouldBe(grid.ExportTsv());
+    }
+
+    [AvaloniaFact]
+    public async Task DataGrid_cmd_c_copies_the_current_view()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25) };
+        Show(grid);
+
+        grid.RaiseEvent(KeyArgs(Key.C, KeyModifiers.Meta)); // macOS Cmd+C
+        Dispatcher.UIThread.RunJobs();
+
+        var clipboard = TopLevel.GetTopLevel(grid)!.Clipboard!;
+        (await clipboard.TryGetTextAsync()).ShouldBe(grid.ExportTsv());
+    }
+
+    [AvaloniaFact]
+    public async Task DataGrid_editable_cell_ctrl_c_is_not_hijacked_by_grid()
+    {
+        var grid = new DataGrid<EditablePerson>();
+        grid.Columns.Add(new DataGridColumn<EditablePerson>("Name", p => p.Name)
+        {
+            Editable = true,
+            SetText = (p, t) => p.Name = t ?? "",
+        });
+        grid.Items = new List<EditablePerson> { new() { Name = "Alice" } };
+        Show(grid);
+
+        var clipboard = TopLevel.GetTopLevel(grid)!.Clipboard!;
+        await clipboard.SetTextAsync("sentinel");
+
+        var editor = grid.GetVisualDescendants().OfType<TextBox>().First();
+        editor.Focus();
+        editor.SelectAll();
+        Dispatcher.UIThread.RunJobs();
+        editor.RaiseEvent(KeyArgs(Key.C, KeyModifiers.Control));
+        Dispatcher.UIThread.RunJobs();
+
+        // The text box owns Ctrl+C for its selection; the grid must NOT overwrite the clipboard with its TSV.
+        (await clipboard.TryGetTextAsync()).ShouldNotBe(grid.ExportTsv());
+    }
+
+    [AvaloniaFact]
+    public async Task DataGrid_copy_returns_null_when_not_attached()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25) };
+        // never shown -> no TopLevel -> no clipboard
+        (await grid.CopyToClipboardAsync()).ShouldBeNull();
     }
 
     [AvaloniaFact]
