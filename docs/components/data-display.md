@@ -111,6 +111,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `ObserveItemChanges` | `bool` | `false` | When true and rows implement `INotifyPropertyChanged`, the grid also refreshes when a row raises a property change. |
 | `Refresh()` | `void` | — | Forces a refresh; call after mutating a non-observable source in place. |
 | `ExportCsv()` / `ExportTsv()` | `string` | — | The current view (filtered + sorted, all pages) as CSV / TSV, using each column's display text with RFC-4180 quoting. Backed by the static `DataGrids.ToDelimited<T>(rows, columns, separator)` helper. |
+| `CopyToClipboardAsync()` | `Task<string?>` | — | Copies the current view (as TSV, spreadsheet-paste friendly) to the system clipboard and returns the copied text; returns `null` when no clipboard is available (e.g. before the grid is attached). Also wired to **Ctrl+C** / **Cmd+C** when focus is within the grid. |
 | `IsLoading` | `bool` | `false` | Shows a skeleton loading body (state precedence: Error > Loading > Empty > data). |
 | `ErrorText` / `ErrorContent` | `string?` / `Control?` | `null` | Shows an error body instead of rows; `ErrorContent` overrides `ErrorText`. |
 | `OnRetry` | `Action?` | `null` | When set, the error body shows a **Retry** button that invokes this. |

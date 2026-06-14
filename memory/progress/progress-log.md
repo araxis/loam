@@ -7,7 +7,29 @@ Next.
 
 ---
 
-## 2026-06-14 — 3.18 — ColorPicker validation (validation across all 4 field pickers)
+## 2026-06-14 — 3.19 — DataGrid clipboard copy (closes the 3.6 loose end)
+
+Switched off the Pickers track. `DataGrid<T>` gains `public async Task<string?> CopyToClipboardAsync()` —
+copies the current view as TSV (reuses `ExportTsv()`) via `TopLevel.GetTopLevel(this)?.Clipboard`, returns the
+copied text or null if no clipboard; plus an `OnKeyDown` override binding Ctrl+C **and** Cmd+C (Meta, for macOS).
+
+**Resolved the 3.6 deferral:** the original block ("IClipboard lacks SetTextAsync") was an Avalonia-12 API move,
+not a removal. Verified empirically via a throwaway probe test: Avalonia 12 `IClipboard` is now a data-transfer
+model (`SetDataAsync(IAsyncDataTransfer)` / `TryGetDataAsync`), and the text convenience lives in
+`Avalonia.Input.Platform.ClipboardExtensions.SetTextAsync/TryGetTextAsync` (needs `using Avalonia.Input.Platform;`
+— the missing using was the whole problem). Also confirmed the **headless platform exposes a real, readable
+in-memory clipboard**, so the copy is fully round-trip testable (not just the text-generation).
+
+**Verified:** build 0/0 (solution); full suite **577** (+5): CopyToClipboardAsync returns ExportTsv and round-
+trips through the headless clipboard (read back via TryGetTextAsync); Ctrl+C and Cmd+C (Meta) copy the view +
+mark Handled; copy returns null when not attached (no TopLevel); editable-cell Ctrl+C is NOT hijacked (the
+inner TextBox handles it → grid's `!e.Handled` guard skips). Async `[AvaloniaFact] Task` tests work on the
+headless dispatcher. A focused single-agent adversarial review confirmed the design (fire-and-forget best-effort,
+cross-platform modifier, no hijack); its flagged editable-cell case is now tested-clean. Docs: data-display.md
+CopyToClipboardAsync row; changelog 3.19.0. No gallery (behavioral/clipboard).
+
+**Next:** DataGrid row selection (then copy-selection); HSV spectrum editor; CalendarView. Loose ends now: the
+DataGrid selection/AutomationPeers/header-menu/virtualization cluster.
 
 Tenth Pickers milestone. `ColorPicker` gains `Validation` (`Func<AvaColor,string?>`) + public `Validate()`,
 mirroring the 3.17 pattern but WITHOUT `Required` (Value is non-null). Self-gating (Validation null → return

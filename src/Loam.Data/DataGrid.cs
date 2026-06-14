@@ -7,6 +7,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Loam;
@@ -446,6 +447,37 @@ public class DataGrid<T> : Decorator
 
     /// <summary>Returns the current view as tab-separated values (spreadsheet-paste friendly).</summary>
     public string ExportTsv() => DataGrids.ToDelimited(CurrentViewRows(), Columns, '\t');
+
+    /// <summary>
+    /// Copies the current view (filtered + sorted, all pages) to the system clipboard as TSV. Returns the
+    /// copied text, or <c>null</c> when no clipboard is available (e.g. before the grid is attached to a window).
+    /// </summary>
+    public async System.Threading.Tasks.Task<string?> CopyToClipboardAsync()
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+        {
+            return null;
+        }
+
+        var text = ExportTsv();
+        await clipboard.SetTextAsync(text);
+        return text;
+    }
+
+    /// <inheritdoc />
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        // Ctrl+C (Cmd+C on macOS) copies the current view to the clipboard.
+        if (!e.Handled && e.Key == Key.C &&
+            (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta)))
+        {
+            _ = CopyToClipboardAsync();
+            e.Handled = true;
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
