@@ -853,6 +853,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Pickers", "ColorPicker", "Swatch picker with hex display.",
             Sample("Variants", BuildColorPickerVariants),
             Sample("Selected & custom format", BuildColorPickerValues),
+            Sample("Editable hex entry", BuildColorPickerEditable),
             Sample("States", BuildColorPickerStates)),
         PageWithSamples("Pickers", "MonthCalendar", "Standalone month grid used by date pickers.",
             Sample("Selected", BuildMonthCalendarSelected),
@@ -7502,6 +7503,38 @@ public sealed class ComponentsView : UserControl
                     Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
                     ShowAlpha = true,
                     HelperText = "Shows #AARRGGBB",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildColorPickerEditable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Type or pick",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Editable = true,
+                    Value = Color.Parse("#2196F3"),
+                    HelperText = "Type a hex like #2196F3, then Enter — or click the swatch",
+                },
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "Editable with alpha",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Editable = true,
+                    ShowAlpha = true,
+                    Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
+                    InvalidHexText = "Enter #AARRGGBB",
+                    HelperText = "Accepts #AARRGGBB when alpha is shown",
                 },
             },
         };

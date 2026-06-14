@@ -1510,6 +1510,186 @@ public class PickerTests
         picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_HelperText").Text.ShouldBe("Choose a valid time");
     }
 
+    [Fact]
+    public void ColorPicker_TryParseColor_handles_hex_alpha_named_and_invalid()
+    {
+        ColorPicker.TryParseColor("#2196F3", out var hex).ShouldBeTrue();
+        hex.ShouldBe(Color.Parse("#2196F3"));
+
+        ColorPicker.TryParseColor("#80102030", out var argb).ShouldBeTrue();
+        argb.ShouldBe(Color.FromArgb(0x80, 0x10, 0x20, 0x30));
+
+        ColorPicker.TryParseColor("   ", out _).ShouldBeFalse();
+        ColorPicker.TryParseColor("not a color", out _).ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_non_editable_hides_text_input()
+    {
+        var picker = new ColorPicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        EditableInput(picker).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_parses_typed_hex_on_enter()
+    {
+        Color? captured = null;
+        var picker = new ColorPicker { Editable = true, Value = Color.Parse("#000000") };
+        picker.ValueChanged += (_, c) => captured = c;
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.IsVisible.ShouldBeTrue();
+        input.Text = "#2196F3";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value.ShouldBe(Color.Parse("#2196F3"));
+        picker.Error.ShouldBeFalse();
+        captured.ShouldBe(Color.Parse("#2196F3"));
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_marks_error_on_invalid_hex()
+    {
+        var picker = new ColorPicker { Editable = true, Value = Color.Parse("#FF5722") };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "zzz";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidHexText);
+        picker.Value.ShouldBe(Color.Parse("#FF5722")); // unchanged
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_empty_reverts_without_error()
+    {
+        var raised = false;
+        var picker = new ColorPicker { Editable = true, Value = Color.Parse("#2196F3") };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        picker.ValueChanged += (_, _) => raised = true;
+
+        var input = EditableInput(picker);
+        input.Text.ShouldBe("#2196F3"); // synced from Value
+        input.Text = string.Empty;
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeFalse();
+        picker.Value.ShouldBe(Color.Parse("#2196F3")); // a color has no empty state
+        input.Text.ShouldBe("#2196F3");                // reverted
+        raised.ShouldBeFalse();                        // value did not change -> no ValueChanged
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_forces_opaque_when_alpha_hidden()
+    {
+        var picker = new ColorPicker { Editable = true, ShowAlpha = false, Value = Colors.Black };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "#80102030"; // alpha typed but ShowAlpha is off
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value.ShouldBe(Color.FromArgb(255, 0x10, 0x20, 0x30)); // forced opaque
+        input.Text.ShouldBe("#102030");                                // reformatted without alpha
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_reformats_lowercase_even_when_value_unchanged()
+    {
+        var picker = new ColorPicker { Editable = true, Value = Color.Parse("#2196F3") };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "#2196f3"; // same color, lowercase -> Value won't change but text must reformat
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value.ShouldBe(Color.Parse("#2196F3"));
+        input.Text.ShouldBe("#2196F3"); // normalized to upper-case despite no value change
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_non_editable_activation_still_opens_flyout()
+    {
+        var picker = new ColorPicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+        picker.RaiseEvent(KeyArgs(Key.Space)); // non-editable activation is unchanged
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_showalpha_round_trips_argb()
+    {
+        var picker = new ColorPicker { Editable = true, ShowAlpha = true, Value = Colors.Black };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "#80102030";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value.ShouldBe(Color.FromArgb(0x80, 0x10, 0x20, 0x30));
+        input.Text.ShouldBe("#80102030");
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_swatch_is_wired_as_palette_opener()
+    {
+        var picker = new ColorPicker { Editable = true };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        // The swatch is the editable-mode palette opener (pointer behavior is covered by the gallery/manual use).
+        var swatch = picker.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Swatch");
+        AutomationProperties.GetName(swatch).ShouldBe("Open color palette");
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_alt_down_opens_flyout()
+    {
+        var picker = new ColorPicker { Editable = true };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Focus();
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+
+        input.RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Alt));
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
     [AvaloniaFact]
     public void ColorPicker_shows_value_swatch_and_hex()
     {

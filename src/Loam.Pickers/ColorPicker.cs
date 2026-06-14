@@ -22,6 +22,9 @@ public class ColorPicker : TemplatedControl
 {
     private static readonly Cursor HandCursor = new(StandardCursorType.Hand);
 
+    /// <summary>Horizontal space the leading swatch occupies (20px wide + 10px right margin), used to inset the label.</summary>
+    private const double SwatchLeadingInset = 30;
+
     /// <summary>The default palette shown in the flyout.</summary>
     public static readonly IReadOnlyList<AvaColor> DefaultPalette = new[]
     {
@@ -69,10 +72,20 @@ public class ColorPicker : TemplatedControl
     public static readonly StyledProperty<bool> ShrinkLabelProperty =
         AvaloniaProperty.Register<ColorPicker, bool>(nameof(ShrinkLabel));
 
+    /// <summary>Identifies the <see cref="Editable"/> property.</summary>
+    public static readonly StyledProperty<bool> EditableProperty =
+        AvaloniaProperty.Register<ColorPicker, bool>(nameof(Editable));
+
+    /// <summary>Identifies the <see cref="InvalidHexText"/> property.</summary>
+    public static readonly StyledProperty<string> InvalidHexTextProperty =
+        AvaloniaProperty.Register<ColorPicker, string>(nameof(InvalidHexText), "Invalid color");
+
     private Border? _box;
     private Border? _labelHost;
     private Border? _swatch;
     private Text? _hex;
+    private TextBox? _input;
+    private bool _flyoutOpening;
     private Text? _label;
     private Text? _helper;
     private IDisposable? _boxBorderBrush;
@@ -160,6 +173,20 @@ public class ColorPicker : TemplatedControl
         set => SetValue(ShrinkLabelProperty, value);
     }
 
+    /// <summary>When true, the user can type a hex color into the field; the swatch (or Alt+Down) opens the palette.</summary>
+    public bool Editable
+    {
+        get => GetValue(EditableProperty);
+        set => SetValue(EditableProperty, value);
+    }
+
+    /// <summary>Error message shown when typed text cannot be parsed as a color (<see cref="Editable"/> mode).</summary>
+    public string InvalidHexText
+    {
+        get => GetValue(InvalidHexTextProperty);
+        set => SetValue(InvalidHexTextProperty, value);
+    }
+
     /// <summary>Opens the color palette flyout.</summary>
     public void OpenPicker() => Open();
 
@@ -172,6 +199,18 @@ public class ColorPicker : TemplatedControl
 
     /// <summary>A hue/saturation/value color triple using degrees and unit fractions.</summary>
     public readonly record struct HsvColor(double Hue, double Saturation, double Value);
+
+    /// <summary>Parses a hex (e.g. <c>#RRGGBB</c>/<c>#AARRGGBB</c>) or named color; returns <c>false</c> for empty or unparseable text.</summary>
+    public static bool TryParseColor(string? text, out AvaColor color)
+    {
+        if (!string.IsNullOrWhiteSpace(text) && AvaColor.TryParse(text.Trim(), out color))
+        {
+            return true;
+        }
+
+        color = default;
+        return false;
+    }
 
     /// <summary>Formats a color as an upper-case <c>#RRGGBB</c> string.</summary>
     public static string ToHex(AvaColor color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
@@ -231,8 +270,55 @@ public class ColorPicker : TemplatedControl
         _labelHost = e.NameScope.Find("PART_LabelHost") as Border;
         _swatch = e.NameScope.Find("PART_Swatch") as Border;
         _hex = e.NameScope.Find("PART_Hex") as Text;
+        _input = e.NameScope.Find("PART_Input") as TextBox;
         _label = e.NameScope.Find("PART_Label") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
+
+        if (_swatch is not null)
+        {
+            // In editable mode the swatch is the palette opener (clicking elsewhere focuses the text box).
+            // It is not focusable, so it does not blur the input; the flyout-open guard still covers popup focus theft.
+            AutomationProperties.SetName(_swatch, "Open color palette");
+            _swatch.PointerPressed += (_, args) =>
+            {
+                if (Editable && IsEnabled)
+                {
+                    _flyoutOpening = true;
+                    Open();
+                    _flyoutOpening = false;
+                    args.Handled = true;
+                }
+            };
+        }
+
+        if (_input is not null)
+        {
+            FieldChrome.ResetInnerTextBox(_input);
+            _input.GotFocus += (_, _) =>
+            {
+                FieldChrome.ResetInnerTextBox(_input);
+                ApplyBoxChrome();
+            };
+            _input.LostFocus += (_, _) =>
+            {
+                CommitText();
+                ApplyBoxChrome();
+            };
+            _input.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Enter)
+                {
+                    CommitText();
+                    args.Handled = true;
+                }
+                else if (args.Key is Key.Down && args.KeyModifiers.HasFlag(KeyModifiers.Alt))
+                {
+                    Open();
+                    args.Handled = true;
+                }
+            };
+        }
+
         if (_box is not null)
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
@@ -244,14 +330,65 @@ public class ColorPicker : TemplatedControl
                     return;
                 }
 
-                Focus();
-                Open();
+                if (Editable)
+                {
+                    _input?.Focus();
+                }
+                else
+                {
+                    Focus();
+                    Open();
+                }
             };
         }
 
+        UpdateEditMode();
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
+    }
+
+    private void UpdateEditMode()
+    {
+        if (_input is not null)
+        {
+            _input.IsVisible = Editable;
+            _input.IsReadOnly = !Editable;
+        }
+
+        if (_hex is not null)
+        {
+            _hex.IsVisible = !Editable;
+        }
+    }
+
+    private void CommitText()
+    {
+        // Skip while the flyout is open/opening: the popup steals focus and the palette selection,
+        // not the in-progress typed text, is what should set the value.
+        if (_input is null || !Editable || _flyoutOpen || _flyoutOpening)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_input.Text))
+        {
+            Error = false;
+            UpdateDisplay(); // a color has no empty state — revert the text to the current value
+            return;
+        }
+
+        if (!TryParseColor(_input.Text, out var parsed))
+        {
+            Error = true;
+            ErrorText = InvalidHexText;
+            return; // keep the user's text so they can correct it
+        }
+
+        Error = false;
+        // Honor ShowAlpha: when alpha is not exposed, force opaque even if the user typed #AARRGGBB.
+        Value = ShowAlpha ? parsed : AvaColor.FromArgb(255, parsed.R, parsed.G, parsed.B);
+        UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
     }
 
     /// <inheritdoc />
@@ -272,6 +409,13 @@ public class ColorPicker : TemplatedControl
             UpdateLabel();
         }
 
+        if (change.Property == EditableProperty)
+        {
+            UpdateEditMode();
+            UpdateDisplay();
+            ApplyBoxChrome();
+        }
+
         if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
@@ -289,7 +433,8 @@ public class ColorPicker : TemplatedControl
             return;
         }
 
-        if (InteractionAssist.IsActivationKey(e.Key))
+        // In editable mode, Space/Enter belong to the text box; the palette opens via the swatch or Alt+Down.
+        if (!Editable && InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
             e.Handled = true;
@@ -456,7 +601,8 @@ public class ColorPicker : TemplatedControl
             _labelForeground = _label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(labelForeground));
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, hasLabel, Variant);
+        // Inset the floating label past the leading swatch (20px wide + 10px margin) so it aligns above the value.
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, hasLabel, Variant, SwatchLeadingInset);
 
         if (_helper is not null)
         {
@@ -477,9 +623,17 @@ public class ColorPicker : TemplatedControl
             _swatch.Background = new ImmutableSolidColorBrush(Value);
         }
 
+        var hexText = ShowAlpha ? ToHexWithAlpha(Value) : ToHex(Value);
         if (_hex is not null)
         {
-            _hex.Text = ShowAlpha ? ToHexWithAlpha(Value) : ToHex(Value);
+            _hex.Text = hexText;
+        }
+
+        // Keep the editable text box in sync with the committed value.
+        if (_input is not null && Editable)
+        {
+            _input.Text = hexText;
+            AutomationProperties.SetName(_input, Label ?? "Color hex");
         }
 
         InteractionAssist.SetAutomationName(this, Label, _hex?.Text);
@@ -496,11 +650,13 @@ public class ColorPicker : TemplatedControl
         FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
         _box.IsEnabled = IsEnabled;
-        _box.Cursor = IsEnabled ? HandCursor : Cursor.Default;
+        _box.Cursor = !IsEnabled ? Cursor.Default
+            : Editable ? new Cursor(StandardCursorType.Ibeam)
+            : HandCursor;
         UpdateLabel();
     }
 
-    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true || _input?.IsFocused == true;
 
     private string LabelForegroundKey()
     {
