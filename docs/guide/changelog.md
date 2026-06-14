@@ -6,6 +6,17 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.20.0
+
+**`Loam.Data` DataGrid row selection.** `DataGrid<T>` gains opt-in `SelectionMode` (`None` / `Single` /
+`Multiple`), `SelectedItem`, `SelectedItems`, and a `SelectionChanged` event. Click selects; in `Multiple`,
+Ctrl-click (or Ctrl+Space) toggles and Shift-click (or Shift+Space) selects a range; selected rows are
+highlighted and the selection survives sort/filter/page rebuilds by item identity (items filtered out of the
+view are dropped). Ctrl+C now copies the **selected** rows when a selection exists (otherwise the whole view,
+as before). Assigning `SelectedItem` replaces the selection and raises `SelectionChanged`; a disabled grid is
+not selectable; selected rows expose their state to assistive technology (`AutomationProperties.ItemStatus`).
+`SelectionMode` defaults to `Single`, preserving the prior click-to-select behavior. Additive.
+
 ## 3.19.0
 
 **`Loam.Data` DataGrid clipboard copy.** `DataGrid<T>` gains `CopyToClipboardAsync()`, which copies the current

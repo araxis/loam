@@ -17,6 +17,22 @@ using AvaGrid = Avalonia.Controls.Grid;
 
 namespace Loam.Controls;
 
+/// <summary>Row selection behaviour for <see cref="DataGrid{T}"/>.</summary>
+public enum DataGridSelectionMode
+{
+    /// <summary>Rows are not selectable.</summary>
+    None,
+
+    /// <summary>At most one row is selected at a time (the default).</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Naming", "CA1720:Identifier contains type name",
+        Justification = "Matches the conventional WPF/Avalonia SelectionMode.Single naming.")]
+    Single,
+
+    /// <summary>Multiple rows can be selected (Ctrl toggles, Shift selects a range).</summary>
+    Multiple,
+}
+
 /// <summary>Non-generic sort/paging helpers for <see cref="DataGrid{T}"/> (statics can't live on the generic type).</summary>
 public static class DataGrids
 {
@@ -175,6 +191,11 @@ public class DataGrid<T> : Decorator
     private int _pageSize;
     private int _page = 1;
     private T? _selectedItem;
+    private DataGridSelectionMode _selectionMode = DataGridSelectionMode.Single;
+    private List<T> _selection = new();
+    private T? _anchorItem;
+    private bool _rebuilding;
+    private bool _rebuildRequested;
     private bool _striped = true;
     private bool _hover = true;
     private bool _dense;
@@ -207,7 +228,7 @@ public class DataGrid<T> : Decorator
         InteractionAssist.SetAutomationName(this, "Data grid");
     }
 
-    /// <summary>Raised when <see cref="SelectedItem"/> changes via a row click.</summary>
+    /// <summary>Raised when the selection changes; the argument is the primary (last-affected) selected item, or default when the selection is empty.</summary>
     public event Action<T?>? SelectionChanged;
 
     /// <summary>The column definitions.</summary>
@@ -259,12 +280,45 @@ public class DataGrid<T> : Decorator
         set { _page = value; Rebuild(); }
     }
 
-    /// <summary>The selected row, or default. Mirrors the reference API's <c>SelectedItem</c>.</summary>
+    /// <summary>Row selection behaviour (<see cref="DataGridSelectionMode.Single"/> by default; <see cref="DataGridSelectionMode.None"/> disables selection).</summary>
+    public DataGridSelectionMode SelectionMode
+    {
+        get => _selectionMode;
+        set
+        {
+            _selectionMode = value;
+            if (value == DataGridSelectionMode.None && _selection.Count > 0)
+            {
+                _selection = new List<T>();
+                _selectedItem = default;
+                _anchorItem = default;
+                SelectionChanged?.Invoke(default);
+            }
+            else if (value == DataGridSelectionMode.Single && _selection.Count > 1)
+            {
+                var keep = _selection[^1];
+                _selection = new List<T> { keep };
+                _selectedItem = keep;
+                _anchorItem = keep;
+            }
+
+            Rebuild();
+        }
+    }
+
+    /// <summary>
+    /// The selected row, or default (the primary selection in <see cref="DataGridSelectionMode.Multiple"/>). Mirrors
+    /// the reference API's <c>SelectedItem</c>. Assigning replaces any existing selection and raises
+    /// <see cref="SelectionChanged"/> when the value actually changes (assigning the current value is a no-op).
+    /// </summary>
     public T? SelectedItem
     {
         get => _selectedItem;
-        set { _selectedItem = value; Rebuild(); }
+        set => SetSelection(value is { } v ? new[] { v } : Array.Empty<T>(), value);
     }
+
+    /// <summary>The selected rows, in view order (empty unless <see cref="SelectionMode"/> allows selection). A snapshot.</summary>
+    public IReadOnlyList<T> SelectedItems => _selection.ToArray();
 
     /// <summary>Whether alternating rows are shaded. Mirrors the reference API's <c>Striped</c>.</summary>
     public bool Striped
@@ -449,8 +503,22 @@ public class DataGrid<T> : Decorator
     public string ExportTsv() => DataGrids.ToDelimited(CurrentViewRows(), Columns, '\t');
 
     /// <summary>
-    /// Copies the current view (filtered + sorted, all pages) to the system clipboard as TSV. Returns the
-    /// copied text, or <c>null</c> when no clipboard is available (e.g. before the grid is attached to a window).
+    /// The selected rows when a selection exists, otherwise the whole current view. Rows are returned in
+    /// filtered-and-sorted order (matching <see cref="ExportCsv"/>/<see cref="ExportTsv"/>); grouping does not reorder
+    /// the output.
+    /// </summary>
+    private List<T> RowsToCopy()
+    {
+        var view = CurrentViewRows();
+        return _selection.Count > 0
+            ? view.Where(x => _selection.Contains(x, EqualityComparer<T>.Default)).ToList()
+            : view;
+    }
+
+    /// <summary>
+    /// Copies the selected rows (or, when nothing is selected, the whole current view — filtered + sorted, all
+    /// pages) to the system clipboard as TSV. Returns the copied text, or <c>null</c> when no clipboard is
+    /// available (e.g. before the grid is attached to a window).
     /// </summary>
     public async System.Threading.Tasks.Task<string?> CopyToClipboardAsync()
     {
@@ -460,7 +528,7 @@ public class DataGrid<T> : Decorator
             return null;
         }
 
-        var text = ExportTsv();
+        var text = DataGrids.ToDelimited(RowsToCopy(), Columns, '\t');
         await clipboard.SetTextAsync(text);
         return text;
     }
@@ -560,7 +628,34 @@ public class DataGrid<T> : Decorator
 
     private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e) => Rebuild();
 
+    // Guards against re-entrant rebuilds: a SelectionChanged handler (fired mid-rebuild during pruning, or via
+    // SetSelection) may mutate Items or the selection and call back into Rebuild. Rather than restructure the visual
+    // tree while it is still being built, we coalesce the request and run one more pass once the current build settles.
     private void Rebuild()
+    {
+        if (_rebuilding)
+        {
+            _rebuildRequested = true;
+            return;
+        }
+
+        _rebuilding = true;
+        try
+        {
+            do
+            {
+                _rebuildRequested = false;
+                RebuildCore();
+            }
+            while (_rebuildRequested);
+        }
+        finally
+        {
+            _rebuilding = false;
+        }
+    }
+
+    private void RebuildCore()
     {
         if (Columns.Count == 0)
         {
@@ -571,10 +666,22 @@ public class DataGrid<T> : Decorator
         var all = _items?.ToList() ?? new List<T>();
         var filtered = DataGrids.Filter(all, _filterText, MatchesFilter);
         var sorted = DataGrids.Sort(filtered, _sortColumn, _sortDescending);
-        if (_selectedItem is T selected && !sorted.Contains(selected, EqualityComparer<T>.Default))
+
+        // Drop any selected items no longer in the view (filtered out), preserving the rest by identity.
+        if (_selection.Count > 0)
         {
-            _selectedItem = default;
-            SelectionChanged?.Invoke(default);
+            var pruned = _selection.Where(x => sorted.Contains(x, EqualityComparer<T>.Default)).ToList();
+            if (pruned.Count != _selection.Count)
+            {
+                _selection = pruned;
+                _selectedItem = pruned.Count > 0 ? pruned[^1] : default;
+                if (_anchorItem is T anchor && !sorted.Contains(anchor, EqualityComparer<T>.Default))
+                {
+                    _anchorItem = default;
+                }
+
+                SelectionChanged?.Invoke(_selectedItem);
+            }
         }
 
         var pageCount = DataGrids.PageCount(sorted.Count, _pageSize);
@@ -766,7 +873,10 @@ public class DataGrid<T> : Decorator
             leftGrid.RowDefinitions.Add(BodyRowDef());
             rightGrid.RowDefinitions.Add(BodyRowDef());
 
-            var visual = new RowVisual { Selected = EqualityComparer<T>.Default.Equals(item, _selectedItem) };
+            // One RowVisual is shared by the left (frozen) and right (scrolling) panes so their backgrounds —
+            // selection, focus, hover, stripe — stay in lock-step. Both panes' Borders close over this instance;
+            // Avalonia keeps those Borders (and therefore the closures) alive for the lifetime of the rebuilt tree.
+            var visual = new RowVisual { Selected = IsSelected(item) };
             var striped = _striped && dataIndex % 2 == 1;
             AddRowBackgroundTo(leftGrid, rowIndex, 0, frozen, item, dataIndex, visual, striped);
             AddRowBackgroundTo(rightGrid, rowIndex, 0, scrollCount, item, dataIndex, visual, striped);
@@ -1167,7 +1277,7 @@ public class DataGrid<T> : Decorator
 
     private void AddRowBackground(AvaGrid grid, int rowIndex, T item, int dataIndex)
     {
-        var visual = new RowVisual { Selected = EqualityComparer<T>.Default.Equals(item, _selectedItem) };
+        var visual = new RowVisual { Selected = IsSelected(item) };
         var striped = _striped && dataIndex % 2 == 1;
         AddRowBackgroundTo(grid, rowIndex, 0, Columns.Count, item, dataIndex, visual, striped);
         ApplyRowBackgrounds(visual, striped);
@@ -1182,6 +1292,10 @@ public class DataGrid<T> : Decorator
             Focusable = IsEnabled,
         };
         InteractionAssist.SetAutomationName(background, $"Row {dataIndex + 1}: {RowLabel(item)}");
+        // Expose selection state to assistive technology so a screen reader can announce a selected row. (A full
+        // SelectionItemPattern via a custom row AutomationPeer is tracked as a follow-up; ItemStatus is the readable
+        // signal available without a bespoke peer.)
+        AutomationProperties.SetItemStatus(background, visual.Selected ? "Selected" : string.Empty);
         AvaGrid.SetRow(background, rowIndex);
         AvaGrid.SetColumn(background, columnStart);
         AvaGrid.SetColumnSpan(background, columnSpan);
@@ -1202,7 +1316,14 @@ public class DataGrid<T> : Decorator
         {
             if (InteractionAssist.IsActivationKey(args.Key))
             {
-                SelectRow(item);
+                var modifiers = args.KeyModifiers;
+                // In Multiple mode, plain Space/Enter toggles the focused row; Shift extends the range.
+                if (_selectionMode == DataGridSelectionMode.Multiple && !modifiers.HasFlag(KeyModifiers.Shift))
+                {
+                    modifiers |= KeyModifiers.Control;
+                }
+
+                SelectRow(item, modifiers);
                 args.Handled = true;
             }
         };
@@ -1221,7 +1342,7 @@ public class DataGrid<T> : Decorator
             };
         }
 
-        background.PointerPressed += (_, _) => SelectRow(item);
+        background.PointerPressed += (_, e) => SelectRow(item, e.KeyModifiers);
     }
 
     private void ApplyRowBackgrounds(RowVisual visual, bool striped)
@@ -1264,15 +1385,84 @@ public class DataGrid<T> : Decorator
         }
     }
 
-    private void SelectRow(T item)
+    private static bool Eq(T a, T b) => EqualityComparer<T>.Default.Equals(a, b);
+
+    private bool IsSelected(T item) => _selection.Contains(item, EqualityComparer<T>.Default);
+
+    private void SelectRow(T item, KeyModifiers modifiers)
     {
-        if (EqualityComparer<T>.Default.Equals(item, _selectedItem))
+        if (!IsEnabled)
         {
+            return; // a disabled grid is not selectable by pointer or keyboard
+        }
+
+        switch (_selectionMode)
+        {
+            case DataGridSelectionMode.None:
+                return;
+
+            case DataGridSelectionMode.Single:
+                SetSelection(new[] { item }, item);
+                return;
+
+            default: // Multiple
+                // Prefer the explicit Shift anchor; if it was pruned by a filter, fall back to the primary selection
+                // so Shift still extends a sensible range instead of silently degrading to a plain click.
+                var anchorSource = _anchorItem is T ? _anchorItem : _selectedItem;
+                if (modifiers.HasFlag(KeyModifiers.Shift) && anchorSource is T anchor)
+                {
+                    var view = CurrentViewRows();
+                    var a = view.FindIndex(x => Eq(x, anchor));
+                    var b = view.FindIndex(x => Eq(x, item));
+                    if (a >= 0 && b >= 0)
+                    {
+                        var lo = Math.Min(a, b);
+                        var hi = Math.Max(a, b);
+                        SetSelection(view.GetRange(lo, hi - lo + 1), anchor); // keep the anchor for chained Shift
+                        return;
+                    }
+                }
+
+                if (modifiers.HasFlag(KeyModifiers.Control))
+                {
+                    var next = new List<T>(_selection);
+                    if (next.RemoveAll(x => Eq(x, item)) == 0)
+                    {
+                        next.Add(item);
+                    }
+
+                    SetSelection(next, item);
+                    return;
+                }
+
+                SetSelection(new[] { item }, item); // plain click replaces the selection
+                return;
+        }
+    }
+
+    private void SetSelection(IReadOnlyList<T> next, T? anchor)
+    {
+        var deduped = new List<T>();
+        foreach (var x in next)
+        {
+            if (!deduped.Contains(x, EqualityComparer<T>.Default))
+            {
+                deduped.Add(x);
+            }
+        }
+
+        var unchanged = deduped.Count == _selection.Count &&
+            deduped.All(x => _selection.Contains(x, EqualityComparer<T>.Default));
+        if (unchanged)
+        {
+            _anchorItem = anchor; // selection set is the same; only the anchor moves (no event/rebuild)
             return;
         }
 
-        _selectedItem = item;
-        SelectionChanged?.Invoke(item);
+        _selection = deduped;
+        _anchorItem = anchor;
+        _selectedItem = deduped.Count > 0 ? deduped[^1] : default;
+        SelectionChanged?.Invoke(_selectedItem);
         Rebuild();
     }
 

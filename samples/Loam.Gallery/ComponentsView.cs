@@ -900,6 +900,7 @@ public sealed class ComponentsView : UserControl
             Sample("Empty", BuildTableEmpty)),
         PageWithSamples("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.",
             Sample("Sortable · filtered · paged", BuildDataGridPaged),
+            Sample("Row selection — click, Ctrl/Shift, Ctrl+C to copy", BuildDataGridSelection),
             Sample("Live data — bound to an ObservableCollection", BuildDataGridLive),
             Sample("Async states — loading / error / ready", BuildDataGridAsyncStates),
             Sample("Footer totals", BuildDataGridFooter),
@@ -6955,6 +6956,38 @@ public sealed class ComponentsView : UserControl
         grid.Items = desserts;
         grid.SelectedItem = desserts[1];
         return grid;
+    }
+
+    private static Control BuildDataGridSelection()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            SelectionMode = DataGridSelectionMode.Multiple,
+            MaxWidth = 720,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddDessertColumns(grid);
+        grid.Items = SampleDesserts();
+
+        const string Idle = "No rows selected — click a row; Ctrl-click adds, Shift-click ranges, Ctrl+C copies.";
+        var status = new TextBlock { Text = Idle, Opacity = 0.75 };
+        grid.SelectionChanged += _ =>
+        {
+            var selected = grid.SelectedItems;
+            status.Text = selected.Count == 0
+                ? Idle
+                : $"{selected.Count} selected (primary: {grid.SelectedItem?.Name}) — Ctrl+C copies the selection.";
+        };
+
+        return new StackPanel
+        {
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { status, grid },
+        };
     }
 
     private static Loam.Controls.DataGrid<Dessert> BuildDataGridGrouped()
