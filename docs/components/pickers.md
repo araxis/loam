@@ -219,6 +219,9 @@ while still allowing programmatic range updates.
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when a range is set; clicking it clears `Start`/`End`, raises `RangeSelected` with `null, null`, and does not open the flyout. |
+| `ShowPresets` | `bool` | `false` | Shows a quick-select rail in the flyout listing `Presets` (or `DefaultPresets` when none are set). |
+| `Presets` | `AvaloniaList<DateRangePreset>` | empty | Custom quick-select shortcuts. When empty and `ShowPresets` is `true`, `DefaultPresets` is used. |
+| `DefaultPresets` _(static)_ | `IReadOnlyList<DateRangePreset>` | 7 built-ins | Today, Yesterday, Last 7 days, Last 30 days, This month, Last month, This year. |
 | `PickerTitle` | `string` | `"Select range"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |
@@ -227,6 +230,26 @@ while still allowing programmatic range updates.
 | `Clear()` | `void` | — | Clears both `Start` and `End`. |
 | `RangeSelected` | `event Action<DateTime?, DateTime?>` | — | Raised when OK commits the pending range. |
 | `Format(start, end, fmt)` _(static)_ | `string?` | — | Returns a formatted `"start – end"` string, or just the start if `end` is `null`, or `null` when `start` is `null`. |
+
+#### Quick-select presets
+
+Set `ShowPresets` to add a rail of one-click shortcuts beside the calendar. Clicking a preset stages a
+**pending** range — the calendar highlights it and the user still confirms with OK (or adjusts first), so
+presets compose with the two-click commit model instead of bypassing it. A preset's range is auto-ordered
+and clamped to `MinDate`/`MaxDate`; a preset that falls entirely outside the bounds does nothing.
+
+`DefaultPresets` supplies Today, Yesterday, Last 7 days, Last 30 days, This month, Last month, and This
+year. Add `DateRangePreset` items to `Presets` to replace the defaults with your own. Each preset's
+`Resolve` delegate receives an anchor date (the picker passes `DateTime.Today`) and returns a
+`(start, end)` pair:
+
+```csharp
+var picker = new DateRangePicker { ShowPresets = true };
+
+// Replace the built-ins with custom shortcuts
+picker.Presets.Add(new DateRangePreset("This week", a => (a.AddDays(-(int)a.DayOfWeek), a)));
+picker.Presets.Add(new DateRangePreset("Next 14 days", a => (a, a.AddDays(13))));
+```
 
 ### Example
 

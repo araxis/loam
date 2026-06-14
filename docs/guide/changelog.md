@@ -6,6 +6,15 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.10.0
+
+**`Loam.Pickers` DateRangePicker quick-select presets.** Set `ShowPresets` to add a one-click shortcut
+rail beside the calendar in the flyout. Clicking a preset stages a **pending** range (highlighted on the
+calendar) that the user still confirms with OK, so presets compose with the two-click commit model. The
+resolved range is auto-ordered and clamped to `MinDate`/`MaxDate`. `DefaultPresets` supplies Today,
+Yesterday, Last 7 days, Last 30 days, This month, Last month, and This year; add `DateRangePreset` items
+to `Presets` to supply your own. Additive and off by default.
+
 ## 3.9.0
 
 **`Loam.Pickers` clearable fields.** `DatePicker`, `TimePicker`, and `DateRangePicker` gain an opt-in
