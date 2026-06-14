@@ -35,6 +35,22 @@ public class Pagination : TemplatedControl
     public static readonly StyledProperty<int> MiddleCountProperty =
         AvaloniaProperty.Register<Pagination, int>(nameof(MiddleCount), 3);
 
+    /// <summary>Identifies the <see cref="ShowFirstLast"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowFirstLastProperty =
+        AvaloniaProperty.Register<Pagination, bool>(nameof(ShowFirstLast));
+
+    /// <summary>Identifies the <see cref="ShowRange"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowRangeProperty =
+        AvaloniaProperty.Register<Pagination, bool>(nameof(ShowRange));
+
+    /// <summary>Identifies the <see cref="TotalItems"/> property.</summary>
+    public static readonly StyledProperty<int> TotalItemsProperty =
+        AvaloniaProperty.Register<Pagination, int>(nameof(TotalItems));
+
+    /// <summary>Identifies the <see cref="PageSize"/> property.</summary>
+    public static readonly StyledProperty<int> PageSizeProperty =
+        AvaloniaProperty.Register<Pagination, int>(nameof(PageSize));
+
     private StackPanel? _items;
     private bool _coercing;
 
@@ -77,6 +93,34 @@ public class Pagination : TemplatedControl
     {
         get => GetValue(MiddleCountProperty);
         set => SetValue(MiddleCountProperty, value);
+    }
+
+    /// <summary>When true, adds first-page and last-page boundary buttons flanking the arrows.</summary>
+    public bool ShowFirstLast
+    {
+        get => GetValue(ShowFirstLastProperty);
+        set => SetValue(ShowFirstLastProperty, value);
+    }
+
+    /// <summary>When true (and <see cref="PageSize"/>/<see cref="TotalItems"/> are set), shows a "Showing X–Y of N" summary.</summary>
+    public bool ShowRange
+    {
+        get => GetValue(ShowRangeProperty);
+        set => SetValue(ShowRangeProperty, value);
+    }
+
+    /// <summary>Total item count across all pages, for the range summary.</summary>
+    public int TotalItems
+    {
+        get => GetValue(TotalItemsProperty);
+        set => SetValue(TotalItemsProperty, value);
+    }
+
+    /// <summary>Rows per page, for the range summary.</summary>
+    public int PageSize
+    {
+        get => GetValue(PageSizeProperty);
+        set => SetValue(PageSizeProperty, value);
     }
 
     /// <summary>
@@ -164,7 +208,9 @@ public class Pagination : TemplatedControl
         base.OnPropertyChanged(change);
         if (change.Property == CountProperty || change.Property == SelectedProperty ||
             change.Property == ColorProperty || change.Property == BoundaryCountProperty ||
-            change.Property == MiddleCountProperty || change.Property == IsEnabledProperty)
+            change.Property == MiddleCountProperty || change.Property == IsEnabledProperty ||
+            change.Property == ShowFirstLastProperty || change.Property == ShowRangeProperty ||
+            change.Property == TotalItemsProperty || change.Property == PageSizeProperty)
         {
             if (change.Property == CountProperty || change.Property == SelectedProperty)
             {
@@ -184,7 +230,15 @@ public class Pagination : TemplatedControl
 
         _items.Children.Clear();
 
-        AutomationProperties.SetHelpText(this, Count <= 0 ? "No pages" : $"Page {Selected} of {Count}");
+        var rangeText = ShowRange && PageSize > 0 && TotalItems > 0 ? RangeLabel() : null;
+        AutomationProperties.SetHelpText(this, Count <= 0
+            ? "No pages"
+            : rangeText is not null ? $"Page {Selected} of {Count}, {rangeText}" : $"Page {Selected} of {Count}");
+
+        if (ShowFirstLast)
+        {
+            _items.Children.Add(Arrow(Icons.Material.Filled.FirstPage, IsEnabled && Selected > 1, () => Selected = 1, "First page"));
+        }
 
         _items.Children.Add(Arrow(Icons.Material.Filled.ArrowBack, IsEnabled && Selected > 1, () => Selected--, "Previous page"));
 
@@ -194,6 +248,29 @@ public class Pagination : TemplatedControl
         }
 
         _items.Children.Add(Arrow(Icons.Material.Filled.ArrowForward, IsEnabled && Selected < Count, () => Selected++, "Next page"));
+
+        if (ShowFirstLast)
+        {
+            _items.Children.Add(Arrow(Icons.Material.Filled.LastPage, IsEnabled && Selected < Count, () => Selected = Count, "Last page"));
+        }
+
+        if (rangeText is not null)
+        {
+            _items.Children.Add(new Text
+            {
+                Text = rangeText,
+                Color = LoamColor.Secondary,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(10, 0, 0, 0),
+            });
+        }
+    }
+
+    private string RangeLabel()
+    {
+        var start = ((Selected - 1) * PageSize) + 1;
+        var end = Math.Min(Selected * PageSize, TotalItems);
+        return $"Showing {start}–{end} of {TotalItems}";
     }
 
     private static IconButton Arrow(string icon, bool enabled, Action onClick, string automationName)

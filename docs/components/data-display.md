@@ -111,6 +111,10 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `ObserveItemChanges` | `bool` | `false` | When true and rows implement `INotifyPropertyChanged`, the grid also refreshes when a row raises a property change. |
 | `Refresh()` | `void` | — | Forces a refresh; call after mutating a non-observable source in place. |
 | `ExportCsv()` / `ExportTsv()` | `string` | — | The current view (filtered + sorted, all pages) as CSV / TSV, using each column's display text with RFC-4180 quoting. Backed by the static `DataGrids.ToDelimited<T>(rows, columns, separator)` helper. |
+| `IsLoading` | `bool` | `false` | Shows a skeleton loading body (state precedence: Error > Loading > Empty > data). |
+| `ErrorText` / `ErrorContent` | `string?` / `Control?` | `null` | Shows an error body instead of rows; `ErrorContent` overrides `ErrorText`. |
+| `OnRetry` | `Action?` | `null` | When set, the error body shows a **Retry** button that invokes this. |
+| `SkeletonRowCount` | `int` | `6` | Number of skeleton rows in the loading state. |
 | `PageSize` | `int` | `0` | Rows per page; `0` disables paging. Mirrors the reference API's `RowsPerPage`. |
 | `Page` | `int` | `1` | Current 1-based page. |
 | `FilterText` | `string?` | `null` | Text passed to the filter pipeline before sorting/paging. |
@@ -386,6 +390,11 @@ A page navigator that renders boundary pages, a configurable window of pages aro
 | `Color` | `LoamColor` | `LoamColor.Primary` | Selected page button color. Mirrors the reference API's `Color`. |
 | `BoundaryCount` | `int` | `1` | Pages shown at each end. Mirrors the reference API's `BoundaryCount`. |
 | `MiddleCount` | `int` | `3` | Pages shown around the selection. Mirrors the reference API's `MiddleCount`. |
+| `ShowFirstLast` | `bool` | `false` | Adds first-page and last-page boundary buttons flanking the arrows. |
+| `ShowRange` | `bool` | `false` | With `PageSize`/`TotalItems`, shows a "Showing X–Y of N" summary. |
+| `PageSize` / `TotalItems` | `int` | `0` | Rows per page and total item count, used for the range summary. |
+
+`DataGrid<T>`'s built-in pager enables `ShowFirstLast` and `ShowRange` automatically.
 
 ### Static helper
 

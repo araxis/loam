@@ -189,6 +189,11 @@ public class DataGrid<T> : Decorator
     private bool _collapsibleGroups = true;
     private string _emptyText = "No data";
     private Control? _emptyContent;
+    private bool _isLoading;
+    private string? _errorText;
+    private Control? _errorContent;
+    private Action? _onRetry;
+    private int _skeletonRowCount = 6;
     private int _frozenColumns;
     private double _rowHeight;
     private Func<IReadOnlyList<T>, string>? _groupAggregate;
@@ -351,6 +356,41 @@ public class DataGrid<T> : Decorator
         set { _emptyContent = value; Rebuild(); }
     }
 
+    /// <summary>When true, the body shows a skeleton loading state (state precedence: Error &gt; Loading &gt; Empty &gt; data).</summary>
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set { _isLoading = value; Rebuild(); }
+    }
+
+    /// <summary>When set, the body shows an error panel (with a Retry button if <see cref="OnRetry"/> is set) instead of rows.</summary>
+    public string? ErrorText
+    {
+        get => _errorText;
+        set { _errorText = value; Rebuild(); }
+    }
+
+    /// <summary>Optional custom error content; overrides <see cref="ErrorText"/> when set.</summary>
+    public Control? ErrorContent
+    {
+        get => _errorContent;
+        set { _errorContent = value; Rebuild(); }
+    }
+
+    /// <summary>Invoked by the error state's Retry button when set.</summary>
+    public Action? OnRetry
+    {
+        get => _onRetry;
+        set { _onRetry = value; Rebuild(); }
+    }
+
+    /// <summary>Number of skeleton rows shown in the loading state.</summary>
+    public int SkeletonRowCount
+    {
+        get => _skeletonRowCount;
+        set { _skeletonRowCount = Math.Max(1, value); Rebuild(); }
+    }
+
     /// <summary>
     /// Number of leading columns to freeze (pin) while the remaining columns scroll horizontally;
     /// <c>0</c> disables. Ignored while grouped, or when it is not less than the column count. Frozen
@@ -508,12 +548,22 @@ public class DataGrid<T> : Decorator
             ? _virtualize ? sorted.Take(_maxRenderedRows).ToList() : sorted
             : sorted.Skip((page - 1) * _pageSize).Take(_pageSize).ToList();
 
-        var grid = BuildGrid(rows);
+        var inState = HasError || _isLoading;
+        var grid = BuildGrid(inState ? Array.Empty<T>() : rows);
 
         Control content = grid;
-        if (_pageSize > 0 && pageCount > 1)
+        if (!inState && _pageSize > 0 && pageCount > 1)
         {
-            var pagination = new Pagination { Count = pageCount, Selected = page, Margin = new Thickness(8, 4) };
+            var pagination = new Pagination
+            {
+                Count = pageCount,
+                Selected = page,
+                Margin = new Thickness(8, 4),
+                ShowFirstLast = true,
+                ShowRange = true,
+                TotalItems = sorted.Count,
+                PageSize = _pageSize,
+            };
             pagination.GetObservable(Pagination.SelectedProperty).Subscribe(new PageObserver(p =>
             {
                 if (p != _page)
@@ -718,10 +768,23 @@ public class DataGrid<T> : Decorator
         return outer;
     }
 
+    private bool HasError => _errorContent is not null || !string.IsNullOrEmpty(_errorText);
+
     private Border BuildEmptyRow()
     {
         Control content;
-        if (_emptyContent is not null)
+        string automationName;
+        if (HasError)
+        {
+            content = BuildErrorContent();
+            automationName = _errorText ?? "Error";
+        }
+        else if (_isLoading)
+        {
+            content = BuildSkeletonContent();
+            automationName = "Loading";
+        }
+        else if (_emptyContent is not null)
         {
             if (_emptyContent.Parent is Border previous)
             {
@@ -729,6 +792,7 @@ public class DataGrid<T> : Decorator
             }
 
             content = _emptyContent;
+            automationName = "No data";
         }
         else
         {
@@ -740,6 +804,7 @@ public class DataGrid<T> : Decorator
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            automationName = _emptyText;
         }
 
         var cell = new Border
@@ -748,8 +813,55 @@ public class DataGrid<T> : Decorator
             Padding = new Thickness(16, 24),
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
-        InteractionAssist.SetAutomationName(cell, _emptyContent is null ? _emptyText : "No data");
+        InteractionAssist.SetAutomationName(cell, automationName);
         return cell;
+    }
+
+    private Control BuildErrorContent()
+    {
+        if (_errorContent is not null)
+        {
+            if (_errorContent.Parent is Border previous)
+            {
+                previous.Child = null;
+            }
+
+            return _errorContent;
+        }
+
+        var stack = new StackPanel
+        {
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        stack.Children.Add(new Text
+        {
+            Text = _errorText ?? "Error",
+            Typo = Typo.Body2,
+            Color = LoamColor.Error,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        });
+
+        if (_onRetry is not null)
+        {
+            var retry = new Loam.Controls.Button { Content = "Retry", Variant = Variant.Text, Color = LoamColor.Primary };
+            retry.Click += (_, _) => _onRetry?.Invoke();
+            stack.Children.Add(retry);
+        }
+
+        return stack;
+    }
+
+    private StackPanel BuildSkeletonContent()
+    {
+        var stack = new StackPanel { Spacing = 8 };
+        for (var i = 0; i < _skeletonRowCount; i++)
+        {
+            stack.Children.Add(new Skeleton { HorizontalAlignment = HorizontalAlignment.Stretch });
+        }
+
+        return stack;
     }
 
     private Border BuildHeaderCell(DataGridColumn<T> column)

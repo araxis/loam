@@ -7,6 +7,27 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.7 — DataGrid async states + Pagination polish
+
+**Async states:** `DataGrid<T>` gains `IsLoading` (skeleton body via `Loam.Controls.Skeleton` rows),
+`ErrorText`/`ErrorContent` (+ `OnRetry` → Retry button), `SkeletonRowCount`. Precedence
+Error>Loading>Empty>data, implemented by forcing an empty body (so the existing column-spanning empty
+cell renders) and branching `BuildEmptyRow` on state; pagination hidden during states. Reuses the
+empty-state plumbing — minimal change.
+
+**Pagination polish:** `ShowFirstLast` (first/last `IconButton`s, new `Icons.Material.Filled.FirstPage`/
+`LastPage` glyphs added to core), `ShowRange` + `PageSize`/`TotalItems` → "Showing X–Y of N". DataGrid's
+internal pager enables both (TotalItems = filtered+sorted count).
+
+**Verified:** build 0/0; full suite **484 passing** (+3: loading skeleton hides rows, error+Retry,
+pagination first/last+range). Gallery: DataGrid "Async states" sample (Loading/Error/Ready buttons);
+existing paged sample now shows the enhanced pager.
+
+**Next (3.8+):** footer aggregates + sticky header; then multi-select → AutomationPeers → header-menu →
+virtualization. Also: verify the Avalonia 12 clipboard API and add copy.
+
+---
+
 ## 2026-06-14 — 3.6 — DataGrid liveness & egress (live binding + CSV/TSV export)
 
 Starts the Data track (value-first "liveness & egress" milestone).

@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.7.0
+
+**`Loam.Data` async states & pagination polish:**
+
+- **DataGrid async states.** `IsLoading` shows a skeleton body; `ErrorText`/`ErrorContent` (+ `OnRetry`
+  Retry button) show an error body; precedence is Error > Loading > Empty > data. `SkeletonRowCount`
+  tunes the skeleton. Reuses the empty-state plumbing.
+- **Pagination polish.** `ShowFirstLast` adds first/last boundary buttons; `ShowRange` (with `PageSize`/
+  `TotalItems`) shows a "Showing X–Y of N" summary. `DataGrid<T>`'s built-in pager enables both.
+
 ## 3.6.0
 
 **`Loam.Data` liveness & egress.** `DataGrid<T>` becomes live and exportable:
