@@ -33,6 +33,27 @@ new BarChart { Values = new[] { 12d, 19d, 8d }, ShowDataLabels = true };
 new PieChart { Donut = true, Values = data, ShowDataLabels = true, DataLabelFormat = p => $"{p.Percent:P0}" };
 ```
 
+### Hover, tooltips, and clicks (all charts)
+
+All charts hit-test the pointer against their datapoints (slice / bar / nearest line point) and surface it:
+
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `ShowTooltip` | `bool` | `true` | Draws a tokenized tooltip near the pointer for the hovered datapoint. |
+| `TooltipFormat` | `Func<ChartPoint, string>?` | `null` | Formats the tooltip text; when `null`, a per-chart default is used (value, plus the percentage for pie slices). |
+| `HoveredIndex` | `int` | `-1` | Index of the datapoint under the pointer, or `-1`. |
+| `HoverChanged` | `event EventHandler<ChartPointEventArgs>` | — | Raised when the hovered datapoint changes (`Index` is `-1` when the pointer leaves all datapoints). |
+| `PointClicked` | `event EventHandler<ChartPointEventArgs>` | — | Raised when a datapoint is clicked. |
+
+`ChartPointEventArgs` carries the `Index` and the `ChartPoint? Point` (null when none). The hovered element is lightly emphasized while under the pointer.
+
+```csharp
+var chart = new BarChart { Values = new[] { 12d, 19d, 8d }, Labels = new[] { "Mon", "Tue", "Wed" } };
+chart.HoverChanged += (_, e) => status.Text = e.Point is { } p ? $"{p.Label}: {p.Value:N0}" : "";
+chart.PointClicked += (_, e) => OpenDetails(e.Index);
+chart.TooltipFormat = p => $"{p.Label}: {p.Value:C0}"; // customize, or set ShowTooltip = false to disable
+```
+
 ---
 
 ## PieChart

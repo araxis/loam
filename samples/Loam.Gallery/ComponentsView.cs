@@ -991,6 +991,7 @@ public sealed class ComponentsView : UserControl
             Sample("Themed bars", BuildBarChartThemedBars),
             Sample("Signed values", BuildBarChartSigned),
             Sample("Data labels", BuildBarChartDataLabels),
+            Sample("Interactive", BuildBarChartInteractive),
             Sample("No data", BuildBarChartNoData)),
         PageWithSamples("Charts", "LineChart", "Line and area chart rendering.",
             Sample("Line", BuildLineChartLine),
@@ -8340,6 +8341,41 @@ public sealed class ComponentsView : UserControl
                 {
                     new Text { Text = "Values are drawn above each bar; colliding labels are thinned out.", Typo = Typo.Caption, Color = LoamColor.Secondary },
                     new BarChart { Width = 320, Height = 180, Values = revenue, Labels = labels, ShowDataLabels = true },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartInteractive()
+    {
+        var revenue = new[] { 12d, 19d, 8d, 22d, 17d };
+        var labels = new[] { "Mon", "Tue", "Wed", "Thu", "Fri" };
+        var status = new Text { Text = "Hover a bar for a tooltip, or click one.", Typo = Typo.Caption, Color = LoamColor.Secondary };
+
+        var chart = new BarChart { Width = 320, Height = 180, Values = revenue, Labels = labels };
+        chart.HoverChanged += (_, e) =>
+            status.Text = e.Point is { } p ? $"Hovering {p.Label}: {p.Value:N0}" : "Hover a bar for a tooltip, or click one.";
+        chart.PointClicked += (_, e) =>
+        {
+            if (e.Point is { } p)
+            {
+                status.Text = $"Clicked {p.Label}: {p.Value:N0}";
+            }
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Tooltips show on hover (on by default); HoverChanged/PointClicked drive the caption below.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    chart,
+                    status,
                 },
             },
         };

@@ -7,6 +7,37 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.3 — Charts interactivity: hit-testing + hover tooltips
+
+**Done**
+- `ChartBase`: `protected abstract int HitTest(Point local)`; pointer overrides (Moved/Exited/Pressed)
+  maintaining `HoveredIndex` (invalidate only on change; reposition tooltip on same-element move);
+  `HoverChanged`/`PointClicked` events with new `ChartPointEventArgs(int Index, ChartPoint? Point)`.
+- Per-chart HitTest using geometry recorded during Render: PieChart by angle+radius against slice
+  ranges (records `_center`/`_radius`/`_holeRadius`/`_sliceRanges`); BarChart by bar rect (`_barRects`,
+  both signed and non-signed branches); LineChart by nearest point within 16px (`_pointPositions`).
+- Hover emphasis: a 2px Surface outline on the hovered slice/bar, a larger outlined dot on the hovered
+  line point.
+- Tooltips: self-drawn rounded box (EmptySurface fill + Outline stroke + Text), pointer-following,
+  edge-flipped/clamped into bounds. `ShowTooltip` (default true) + `TooltipFormat`; `DefaultTooltip`
+  shows label+value (PieChart override adds the percentage). Drawn last in each chart's Render.
+- Gallery: BarChart "Interactive" sample wiring HoverChanged/PointClicked to a caption. Docs: charts.md
+  interactivity table + example, changelog 3.3.0.
+
+**Decisions**
+- Geometry recorded during `Render` (UI thread) and read in pointer handlers (UI thread) — no threading
+  issue with Avalonia's record-then-replay rendering. Changed `_points` field to `ChartPoint[]` (CA1859);
+  use `.Length`.
+
+**Verified:** Release build 0/0; full suite **468 passing** (+2: headless pointer test confirms hover
+hit-tests bar index 1 and `PointClicked` fires; tooltips render without throwing). Visually confirmed via
+headless `CaptureRenderedFrame`: "Thu: 22" bar tooltip and "Alpha: 45 (45%)" donut-slice tooltip, both
+with the hovered element emphasized.
+
+**Next:** 3.4 — analytical depth (axes, ItemsSource binding, multi-series/stacked, bound legend).
+
+---
+
 ## 2026-06-14 — 3.2 — Charts enrichment: on-chart data labels (completes 3.2)
 
 **Done**

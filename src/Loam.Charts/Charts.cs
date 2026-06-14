@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Styling;
@@ -153,6 +154,23 @@ public static class Charts
 /// </summary>
 public readonly record struct ChartPoint(int Index, double Value, double Percent, string? Label, Color Color);
 
+/// <summary>Event data for chart pointer interactions. <see cref="Index"/> is -1 (and <see cref="Point"/> null) when the pointer is over no datapoint.</summary>
+public sealed class ChartPointEventArgs : EventArgs
+{
+    /// <summary>Creates the event data.</summary>
+    public ChartPointEventArgs(int index, ChartPoint? point)
+    {
+        Index = index;
+        Point = point;
+    }
+
+    /// <summary>Index of the datapoint, or -1 when none.</summary>
+    public int Index { get; }
+
+    /// <summary>The datapoint snapshot, or null when none.</summary>
+    public ChartPoint? Point { get; }
+}
+
 /// <summary>Base for custom-drawn charts: holds <see cref="Values"/>/<see cref="Colors"/> and invalidates render on change.</summary>
 public abstract class ChartBase : Control
 {
@@ -178,9 +196,13 @@ public abstract class ChartBase : Control
     private IReadOnlyList<double> _values = Array.Empty<double>();
     private IReadOnlyList<Color>? _colors;
     private IReadOnlyList<string>? _labels;
-    private IReadOnlyList<ChartPoint> _points = Array.Empty<ChartPoint>();
+    private ChartPoint[] _points = Array.Empty<ChartPoint>();
     private bool _showDataLabels;
     private Func<ChartPoint, string>? _dataLabelFormat;
+    private bool _showTooltip = true;
+    private Func<ChartPoint, string>? _tooltipFormat;
+    private int _hoveredIndex = -1;
+    private Point _pointer;
     private ChartVisuals _visuals = ChartVisuals.Fallback;
 
     /// <summary>The data values.</summary>
@@ -235,6 +257,29 @@ public abstract class ChartBase : Control
         set { _dataLabelFormat = value; InvalidateVisual(); }
     }
 
+    /// <summary>When true, draws a tokenized tooltip near the pointer for the hovered datapoint.</summary>
+    public bool ShowTooltip
+    {
+        get => _showTooltip;
+        set { _showTooltip = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Formats the tooltip text from a <see cref="ChartPoint"/>; when null, a per-chart default is used.</summary>
+    public Func<ChartPoint, string>? TooltipFormat
+    {
+        get => _tooltipFormat;
+        set { _tooltipFormat = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Index of the datapoint currently under the pointer, or -1.</summary>
+    public int HoveredIndex => _hoveredIndex;
+
+    /// <summary>Raised when the hovered datapoint changes (index -1 when the pointer leaves all datapoints).</summary>
+    public event EventHandler<ChartPointEventArgs>? HoverChanged;
+
+    /// <summary>Raised when a datapoint is clicked.</summary>
+    public event EventHandler<ChartPointEventArgs>? PointClicked;
+
     internal ChartVisuals Visuals => _visuals;
 
     internal IReadOnlyList<Color> ResolvedSeriesColors => _colors is { Count: > 0 } ? _colors : _visuals.SeriesColors;
@@ -255,6 +300,9 @@ public abstract class ChartBase : Control
     /// <summary>Default automation name for the concrete chart type.</summary>
     protected abstract string ChartAutomationName { get; }
 
+    /// <summary>Returns the index of the datapoint at the given local point, or -1 when none. Charts record their drawn geometry during <c>Render</c>.</summary>
+    protected abstract int HitTest(Point local);
+
     /// <summary>Whether the current values contain data that can be drawn.</summary>
     protected bool HasRenderableData => HasPositiveData;
 
@@ -272,6 +320,53 @@ public abstract class ChartBase : Control
     {
         base.OnDetachedFromVisualTree(e);
         DisposeVisualSubscriptions();
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+        _pointer = e.GetPosition(this);
+        var index = HitTest(_pointer);
+        if (index != _hoveredIndex)
+        {
+            SetHovered(index);
+        }
+        else if (ShowTooltip && index >= 0)
+        {
+            InvalidateVisual();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+        SetHovered(-1);
+    }
+
+    /// <inheritdoc />
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        var index = HitTest(e.GetPosition(this));
+        if (index >= 0 && index < _points.Length)
+        {
+            PointClicked?.Invoke(this, new ChartPointEventArgs(index, _points[index]));
+        }
+    }
+
+    private void SetHovered(int index)
+    {
+        if (index == _hoveredIndex)
+        {
+            return;
+        }
+
+        _hoveredIndex = index;
+        var point = index >= 0 && index < _points.Length ? _points[index] : (ChartPoint?)null;
+        HoverChanged?.Invoke(this, new ChartPointEventArgs(index, point));
+        InvalidateVisual();
     }
 
     /// <summary>Returns the resolved series brush for the requested series index.</summary>
@@ -349,6 +444,58 @@ public abstract class ChartBase : Control
         return luminance > 0.6
             ? new ImmutableSolidColorBrush(Color.FromRgb(0x1C, 0x1B, 0x1F))
             : new ImmutableSolidColorBrush(global::Avalonia.Media.Colors.White);
+    }
+
+    /// <summary>Resolves the tooltip text for a datapoint using <see cref="TooltipFormat"/> or the chart default.</summary>
+    protected string ResolveTooltip(ChartPoint point) =>
+        TooltipFormat?.Invoke(point) ?? DefaultTooltip(point);
+
+    /// <summary>The default tooltip text when no <see cref="TooltipFormat"/> is supplied.</summary>
+    protected virtual string DefaultTooltip(ChartPoint point)
+    {
+        var value = point.Value.ToString("0.##", CultureInfo.CurrentCulture);
+        return string.IsNullOrEmpty(point.Label) ? value : $"{point.Label}: {value}";
+    }
+
+    /// <summary>Draws the hover tooltip for the currently hovered datapoint near the pointer (when enabled).</summary>
+    protected void DrawTooltip(DrawingContext context)
+    {
+        if (!ShowTooltip || _hoveredIndex < 0 || _hoveredIndex >= _points.Length)
+        {
+            return;
+        }
+
+        var text = new FormattedText(
+            ResolveTooltip(_points[_hoveredIndex]),
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium),
+            LabelFontSize,
+            _visuals.Text);
+
+        const double padX = 8;
+        const double padY = 5;
+        const double offset = 14;
+        var w = text.Width + padX * 2;
+        var h = text.Height + padY * 2;
+        var x = _pointer.X + offset;
+        var y = _pointer.Y + offset;
+        if (x + w > Bounds.Width)
+        {
+            x = _pointer.X - offset - w;
+        }
+
+        if (y + h > Bounds.Height)
+        {
+            y = _pointer.Y - offset - h;
+        }
+
+        x = Math.Clamp(x, 0, Math.Max(0, Bounds.Width - w));
+        y = Math.Clamp(y, 0, Math.Max(0, Bounds.Height - h));
+
+        var rect = new Rect(x, y, w, h);
+        context.DrawRectangle(_visuals.EmptySurface, new Pen(_visuals.Outline, 1), rect, 6, 6);
+        context.DrawText(text, new Point(x + padX, y + padY));
     }
 
     private void SubscribeVisualTokens()
@@ -526,6 +673,10 @@ public sealed class PieChart : ChartBase
     private string? _centerSubText;
     private double? _centerValue;
     private string? _centerValueFormat;
+    private Point _center;
+    private double _radius;
+    private double _holeRadius;
+    private (double Start, double End, int Index)[] _sliceRanges = Array.Empty<(double, double, int)>();
 
     /// <summary>Whether to render a center hole (donut). Mirrors the reference API's Donut chart.</summary>
     public bool Donut
@@ -593,20 +744,29 @@ public sealed class PieChart : ChartBase
         }
 
         var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
+        var holeRadius = Donut ? radius * HoleRatio : 0;
+        _center = center;
+        _radius = radius;
+        _holeRadius = holeRadius;
+
+        var ranges = new List<(double, double, int)>();
         var start = -90d;
         for (var i = 0; i < sweeps.Count; i++)
         {
             var sweep = sweeps[i];
             if (sweep > 0)
             {
-                context.DrawGeometry(SeriesBrush(i), null, Slice(center, radius, start, sweep));
+                var pen = i == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
+                context.DrawGeometry(SeriesBrush(i), pen, Slice(center, radius, start, sweep));
+                ranges.Add((start, start + sweep, i));
                 start += sweep;
             }
         }
 
+        _sliceRanges = ranges.ToArray();
+
         if (Donut)
         {
-            var holeRadius = radius * HoleRatio;
             context.DrawEllipse(Visuals.Surface, null, center, holeRadius, holeRadius);
             DrawCenterText(context, center, holeRadius);
         }
@@ -615,11 +775,52 @@ public sealed class PieChart : ChartBase
         {
             DrawSliceLabels(context, center, radius, sweeps);
         }
+
+        DrawTooltip(context);
+    }
+
+    /// <inheritdoc />
+    protected override int HitTest(Point local)
+    {
+        var dx = local.X - _center.X;
+        var dy = local.Y - _center.Y;
+        var distance = Math.Sqrt(dx * dx + dy * dy);
+        if (distance > _radius || distance < _holeRadius)
+        {
+            return -1;
+        }
+
+        var angle = Math.Atan2(dy, dx) * 180 / Math.PI;
+        foreach (var (rangeStart, rangeEnd, index) in _sliceRanges)
+        {
+            var a = angle;
+            while (a < rangeStart)
+            {
+                a += 360;
+            }
+
+            if (a < rangeEnd)
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     /// <inheritdoc />
     protected override string DefaultDataLabel(ChartPoint point) =>
         point.Percent.ToString("P0", CultureInfo.CurrentCulture);
+
+    /// <inheritdoc />
+    protected override string DefaultTooltip(ChartPoint point)
+    {
+        var value = point.Value.ToString("0.##", CultureInfo.CurrentCulture);
+        var percent = point.Percent.ToString("P0", CultureInfo.CurrentCulture);
+        return string.IsNullOrEmpty(point.Label)
+            ? $"{value} ({percent})"
+            : $"{point.Label}: {value} ({percent})";
+    }
 
     private void DrawSliceLabels(DrawingContext context, Point center, double radius, IReadOnlyList<double> sweeps)
     {
@@ -723,6 +924,7 @@ public sealed class PieChart : ChartBase
 public sealed class BarChart : ChartBase
 {
     private bool _allowNegative;
+    private (Rect Rect, int Index)[] _barRects = Array.Empty<(Rect, int)>();
 
     /// <summary>When true, negative values render as bars below a zero baseline instead of being clamped to zero.</summary>
     public bool AllowNegative
@@ -736,6 +938,20 @@ public sealed class BarChart : ChartBase
 
     /// <inheritdoc />
     protected override string ChartAutomationName => "Bar chart";
+
+    /// <inheritdoc />
+    protected override int HitTest(Point local)
+    {
+        foreach (var (rect, index) in _barRects)
+        {
+            if (rect.Contains(local))
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
 
     /// <inheritdoc />
     public override void Render(DrawingContext context)
@@ -766,6 +982,7 @@ public sealed class BarChart : ChartBase
             var zeroY = plot.Top + Charts.ZeroBaselineOffset(min, max, plot.Height);
             context.DrawLine(new Pen(Visuals.Outline, 1), new Point(plot.Left, zeroY), new Point(plot.Right, zeroY));
 
+            var signedRects = new List<(Rect, int)>();
             for (var i = 0; i < Values.Count; i++)
             {
                 var (y, height) = layout[i];
@@ -775,8 +992,13 @@ public sealed class BarChart : ChartBase
                 }
 
                 var x = plot.Left + i * slot + (slot - barWidth) / 2;
-                context.DrawRectangle(SeriesBrush(i), null, new Rect(x, plot.Top + y, barWidth, height), 4, 4);
+                var rect = new Rect(x, plot.Top + y, barWidth, height);
+                var pen = i == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
+                context.DrawRectangle(SeriesBrush(i), pen, rect, 4, 4);
+                signedRects.Add((rect, i));
             }
+
+            _barRects = signedRects.ToArray();
 
             if (ShowDataLabels)
             {
@@ -798,16 +1020,22 @@ public sealed class BarChart : ChartBase
                 }
             }
 
+            DrawTooltip(context);
             return;
         }
 
         var heights = Charts.BarHeights(Values, plot.Height);
+        var barRects = new List<(Rect, int)>();
         for (var i = 0; i < Values.Count; i++)
         {
             var x = plot.Left + i * slot + (slot - barWidth) / 2;
             var rect = new Rect(x, plot.Bottom - heights[i], barWidth, heights[i]);
-            context.DrawRectangle(SeriesBrush(i), null, rect, 4, 4);
+            var pen = i == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
+            context.DrawRectangle(SeriesBrush(i), pen, rect, 4, 4);
+            barRects.Add((rect, i));
         }
+
+        _barRects = barRects.ToArray();
 
         if (ShowDataLabels)
         {
@@ -826,6 +1054,8 @@ public sealed class BarChart : ChartBase
                 lastRight = lx + text.Width;
             }
         }
+
+        DrawTooltip(context);
     }
 }
 
@@ -834,6 +1064,7 @@ public sealed class LineChart : ChartBase
 {
     private bool _area;
     private bool _allowNegative;
+    private Point[] _pointPositions = Array.Empty<Point>();
 
     /// <summary>Whether to fill the area beneath the line.</summary>
     public bool Area
@@ -854,6 +1085,26 @@ public sealed class LineChart : ChartBase
 
     /// <inheritdoc />
     protected override string ChartAutomationName => "Line chart";
+
+    /// <inheritdoc />
+    protected override int HitTest(Point local)
+    {
+        var best = -1;
+        var bestDistance = 16d * 16d;
+        for (var i = 0; i < _pointPositions.Length; i++)
+        {
+            var dx = local.X - _pointPositions[i].X;
+            var dy = local.Y - _pointPositions[i].Y;
+            var distance = dx * dx + dy * dy;
+            if (distance <= bestDistance)
+            {
+                bestDistance = distance;
+                best = i;
+            }
+        }
+
+        return best;
+    }
 
     /// <inheritdoc />
     public override void Render(DrawingContext context)
@@ -896,6 +1147,7 @@ public sealed class LineChart : ChartBase
             return;
         }
 
+        _pointPositions = points.ToArray();
         var color = SeriesBrush(0);
 
         if (Area && points.Count > 1)
@@ -927,9 +1179,16 @@ public sealed class LineChart : ChartBase
             context.DrawLine(pen, points[i - 1], points[i]);
         }
 
-        foreach (var p in points)
+        for (var i = 0; i < points.Count; i++)
         {
-            context.DrawEllipse(color, null, p, 3, 3);
+            if (i == HoveredIndex)
+            {
+                context.DrawEllipse(color, new Pen(Visuals.Surface, 2), points[i], 5, 5);
+            }
+            else
+            {
+                context.DrawEllipse(color, null, points[i], 3, 3);
+            }
         }
 
         if (ShowDataLabels)
@@ -954,5 +1213,7 @@ public sealed class LineChart : ChartBase
                 lastRight = lx + text.Width;
             }
         }
+
+        DrawTooltip(context);
     }
 }
