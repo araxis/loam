@@ -13,6 +13,8 @@ Loam provides five picker controls. All controls are self-contained `TemplatedCo
 
 Field-style pickers are focusable. Enter or Space opens the flyout, Escape closes it, and the automation name is derived from the label or displayed value. Labels rest inside empty fields, float when focused or filled, and can be forced to float with `ShrinkLabel`.
 
+Set `Clearable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to surface an inline trailing × button whenever the field holds a value. Clicking it clears the value, raises the change event with `null`, and intentionally does not open the flyout (the button consumes the pointer before it reaches the field).
+
 ---
 
 ## DatePicker
@@ -39,6 +41,7 @@ still allowing programmatic date updates.
 | `HelperText` | `string?` | `null` | Hint shown below the field. |
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
+| `Clearable` | `bool` | `false` | Shows an inline trailing × button when `Date` is set; clicking it clears the value, raises `DateSelected` with `null`, and does not open the flyout. |
 | `PickerTitle` | `string` | `"Select date"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |
@@ -95,6 +98,7 @@ pointer, keyboard, and `OpenPicker()` flyout opening while still allowing progra
 | `HelperText` | `string?` | `null` | Hint shown below the field. |
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
+| `Clearable` | `bool` | `false` | Shows an inline trailing × button when `Time` is set; clicking it clears the value, raises `TimeSelected` with `null`, and does not open the flyout. |
 | `PickerTitle` | `string` | `"Select time"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |
@@ -214,6 +218,7 @@ while still allowing programmatic range updates.
 | `HelperText` | `string?` | `null` | Hint shown below the field. |
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
+| `Clearable` | `bool` | `false` | Shows an inline trailing × button when a range is set; clicking it clears `Start`/`End`, raises `RangeSelected` with `null, null`, and does not open the flyout. |
 | `PickerTitle` | `string` | `"Select range"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |

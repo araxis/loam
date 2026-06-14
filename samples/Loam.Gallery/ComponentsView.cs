@@ -827,16 +827,19 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Pickers", "DatePicker", "Date input with a calendar flyout.",
             Sample("Variants", BuildDatePickerVariants),
             Sample("Selected & custom format", BuildDatePickerSelected),
+            Sample("Clearable", BuildDatePickerClearable),
             Sample("Constrained & floating label", BuildDatePickerConstrained),
             Sample("States", BuildDatePickerStates)),
         PageWithSamples("Pickers", "TimePicker", "Time input with hour and minute columns.",
             Sample("Variants", BuildTimePickerVariants),
             Sample("Selected & custom format", BuildTimePickerSelected),
+            Sample("Clearable", BuildTimePickerClearable),
             Sample("Floating label", BuildTimePickerConstrained),
             Sample("States", BuildTimePickerStates)),
         PageWithSamples("Pickers", "DateRangePicker", "Two-click date range selection.",
             Sample("Variants", BuildDateRangePickerVariants),
             Sample("Selected & custom format", BuildDateRangePickerSelected),
+            Sample("Clearable", BuildDateRangePickerClearable),
             Sample("Constrained & floating label", BuildDateRangePickerConstrained),
             Sample("States", BuildDateRangePickerStates)),
         PageWithSamples("Pickers", "ColorPicker", "Swatch picker with hex display.",
@@ -7609,6 +7612,36 @@ public sealed class ComponentsView : UserControl
         };
     }
 
+    private static WrapPanel BuildDateRangePickerClearable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Clearable",
+                    Clearable = true,
+                    Start = new DateTime(2026, 6, 1),
+                    End = new DateTime(2026, 6, 30),
+                    HelperText = "Tap the × to reset both dates",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Clearable (empty)",
+                    Clearable = true,
+                    HelperText = "Clear button appears once a range is set",
+                },
+            },
+        };
+    }
+
     private static WrapPanel BuildDateRangePickerConstrained()
     {
         return new WrapPanel
@@ -7746,6 +7779,36 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Formatted display text",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerClearable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Clearable",
+                    Clearable = true,
+                    Date = new DateTime(2026, 6, 30),
+                    HelperText = "Tap the × to reset the value",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Clearable (empty)",
+                    Clearable = true,
+                    Placeholder = "Pick a date",
+                    HelperText = "Clear button appears once a date is set",
                 },
             },
         };
@@ -7896,6 +7959,37 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Quarter-hour choices",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerClearable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Clearable",
+                    Clearable = true,
+                    Time = new TimeSpan(9, 30, 0),
+                    TimeFormat = "HH:mm",
+                    HelperText = "Tap the × to reset the value",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Clearable (empty)",
+                    Clearable = true,
+                    Placeholder = "Pick a time",
+                    HelperText = "Clear button appears once a time is set",
                 },
             },
         };

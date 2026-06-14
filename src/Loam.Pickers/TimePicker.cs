@@ -78,7 +78,12 @@ public class TimePicker : TemplatedControl
 
     private readonly List<TimePickerRow> _hourRows = new();
     private readonly List<TimePickerRow> _minuteRows = new();
+    /// <summary>Identifies the <see cref="Clearable"/> property.</summary>
+    public static readonly StyledProperty<bool> ClearableProperty =
+        AvaloniaProperty.Register<TimePicker, bool>(nameof(Clearable));
+
     private Border? _box;
+    private IconButton? _clear;
     private Border? _labelHost;
     private Text? _display;
     private Text? _label;
@@ -111,6 +116,13 @@ public class TimePicker : TemplatedControl
     {
         get => GetValue(TimeProperty);
         set => SetValue(TimeProperty, value);
+    }
+
+    /// <summary>When true and a time is set, shows an inline clear (x) button that resets <see cref="Time"/> to null.</summary>
+    public bool Clearable
+    {
+        get => GetValue(ClearableProperty);
+        set => SetValue(ClearableProperty, value);
     }
 
     /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
@@ -230,6 +242,17 @@ public class TimePicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
+        _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        if (_clear is not null)
+        {
+            Avalonia.Automation.AutomationProperties.SetName(_clear, "Clear time");
+            _clear.Click += (_, _) =>
+            {
+                Clear();
+                TimeSelected?.Invoke(null);
+            };
+        }
+
         if (_box is not null)
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
@@ -250,6 +273,15 @@ public class TimePicker : TemplatedControl
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
+        UpdateClearButton();
+    }
+
+    private void UpdateClearButton()
+    {
+        if (_clear is not null)
+        {
+            _clear.IsVisible = Clearable && Time is not null;
+        }
     }
 
     /// <inheritdoc />
@@ -260,6 +292,11 @@ public class TimePicker : TemplatedControl
             change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
+        }
+
+        if (change.Property == TimeProperty || change.Property == ClearableProperty)
+        {
+            UpdateClearButton();
         }
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)

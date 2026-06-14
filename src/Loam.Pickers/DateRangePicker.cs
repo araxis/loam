@@ -81,7 +81,12 @@ public class DateRangePicker : TemplatedControl
     public static readonly StyledProperty<string> OkTextProperty =
         AvaloniaProperty.Register<DateRangePicker, string>(nameof(OkText), "OK");
 
+    /// <summary>Identifies the <see cref="Clearable"/> property.</summary>
+    public static readonly StyledProperty<bool> ClearableProperty =
+        AvaloniaProperty.Register<DateRangePicker, bool>(nameof(Clearable));
+
     private Border? _box;
+    private IconButton? _clear;
     private Border? _labelHost;
     private Text? _display;
     private Text? _label;
@@ -119,6 +124,13 @@ public class DateRangePicker : TemplatedControl
     {
         get => GetValue(EndProperty);
         set => SetValue(EndProperty, value);
+    }
+
+    /// <summary>When true and a range is set, shows an inline clear (x) button that resets the range.</summary>
+    public bool Clearable
+    {
+        get => GetValue(ClearableProperty);
+        set => SetValue(ClearableProperty, value);
     }
 
     /// <summary>The field label.</summary>
@@ -261,6 +273,17 @@ public class DateRangePicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
+        _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        if (_clear is not null)
+        {
+            Avalonia.Automation.AutomationProperties.SetName(_clear, "Clear dates");
+            _clear.Click += (_, _) =>
+            {
+                Clear();
+                RangeSelected?.Invoke(null, null);
+            };
+        }
+
         if (_box is not null)
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
@@ -281,6 +304,15 @@ public class DateRangePicker : TemplatedControl
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
+        UpdateClearButton();
+    }
+
+    private void UpdateClearButton()
+    {
+        if (_clear is not null)
+        {
+            _clear.IsVisible = Clearable && (Start is not null || End is not null);
+        }
     }
 
     /// <inheritdoc />
@@ -291,6 +323,12 @@ public class DateRangePicker : TemplatedControl
             change.Property == DateFormatProperty || change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
+        }
+
+        if (change.Property == StartProperty || change.Property == EndProperty ||
+            change.Property == ClearableProperty)
+        {
+            UpdateClearButton();
         }
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)

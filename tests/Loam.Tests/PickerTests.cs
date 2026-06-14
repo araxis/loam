@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -61,6 +62,69 @@ public class PickerTests
     private static Border PopupRow(Paper paper, string name) =>
         paper.GetVisualDescendants().OfType<Border>()
             .First(b => AutomationProperties.GetName(b) == name);
+
+    private static IconButton ClearButton(Control picker, string name) =>
+        picker.GetVisualDescendants().OfType<IconButton>().First(b => AutomationProperties.GetName(b) == name);
+
+    [AvaloniaFact]
+    public void DatePicker_clear_button_resets_value_and_does_not_open()
+    {
+        var raised = false;
+        DateTime? captured = DateTime.MaxValue;
+        var picker = new Loam.Controls.DatePicker { Clearable = true, Date = new DateTime(2026, 6, 14) };
+        picker.DateSelected += d => { raised = true; captured = d; };
+        Show(picker);
+        Dispatcher.UIThread.RunJobs();
+
+        var clear = ClearButton(picker, "Clear date");
+        clear.IsVisible.ShouldBeTrue();
+
+        clear.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBeNull();
+        raised.ShouldBeTrue();
+        captured.ShouldBeNull();
+        MaybeOpenedFlyout(picker).ShouldBeNull(); // clearing did not open the calendar
+        clear.IsVisible.ShouldBeFalse();           // hidden once the value is gone
+    }
+
+    [AvaloniaFact]
+    public void Picker_clear_button_hidden_without_clearable_or_value()
+    {
+        var noFlag = new Loam.Controls.DatePicker { Date = new DateTime(2026, 6, 14) };
+        Show(noFlag);
+        Dispatcher.UIThread.RunJobs();
+        ClearButton(noFlag, "Clear date").IsVisible.ShouldBeFalse();
+
+        var noValue = new Loam.Controls.DatePicker { Clearable = true };
+        Show(noValue);
+        Dispatcher.UIThread.RunJobs();
+        ClearButton(noValue, "Clear date").IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_and_DateRangePicker_clear_buttons_reset_values()
+    {
+        var time = new Loam.Controls.TimePicker { Clearable = true, Time = new TimeSpan(9, 30, 0) };
+        Show(time);
+        Dispatcher.UIThread.RunJobs();
+        var timeClear = ClearButton(time, "Clear time");
+        timeClear.IsVisible.ShouldBeTrue();
+        timeClear.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        time.Time.ShouldBeNull();
+
+        var range = new DateRangePicker { Clearable = true, Start = new DateTime(2026, 6, 1), End = new DateTime(2026, 6, 14) };
+        Show(range);
+        Dispatcher.UIThread.RunJobs();
+        var rangeClear = ClearButton(range, "Clear dates");
+        rangeClear.IsVisible.ShouldBeTrue();
+        rangeClear.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        range.Start.ShouldBeNull();
+        range.End.ShouldBeNull();
+    }
 
     [AvaloniaFact]
     public void DatePicker_display_shows_placeholder_then_formatted_date()

@@ -76,7 +76,12 @@ public class DatePicker : TemplatedControl
     public static readonly StyledProperty<string> OkTextProperty =
         AvaloniaProperty.Register<DatePicker, string>(nameof(OkText), "OK");
 
+    /// <summary>Identifies the <see cref="Clearable"/> property.</summary>
+    public static readonly StyledProperty<bool> ClearableProperty =
+        AvaloniaProperty.Register<DatePicker, bool>(nameof(Clearable));
+
     private Border? _box;
+    private IconButton? _clear;
     private Border? _labelHost;
     private Text? _display;
     private Text? _label;
@@ -100,6 +105,13 @@ public class DatePicker : TemplatedControl
         Focusable = true;
         GotFocus += (_, _) => ApplyBoxChrome();
         LostFocus += (_, _) => ApplyBoxChrome();
+    }
+
+    /// <summary>When true and a date is set, shows an inline clear (x) button that resets <see cref="Date"/> to null.</summary>
+    public bool Clearable
+    {
+        get => GetValue(ClearableProperty);
+        set => SetValue(ClearableProperty, value);
     }
 
     /// <summary>The selected date (two-way). Mirrors the reference API's <c>Date</c>.</summary>
@@ -233,6 +245,16 @@ public class DatePicker : TemplatedControl
         _label = e.NameScope.Find("PART_Label") as Text;
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
+        _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        if (_clear is not null)
+        {
+            Avalonia.Automation.AutomationProperties.SetName(_clear, "Clear date");
+            _clear.Click += (_, _) =>
+            {
+                Clear();
+                DateSelected?.Invoke(null);
+            };
+        }
         if (_box is not null)
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
@@ -253,6 +275,15 @@ public class DatePicker : TemplatedControl
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
+        UpdateClearButton();
+    }
+
+    private void UpdateClearButton()
+    {
+        if (_clear is not null)
+        {
+            _clear.IsVisible = Clearable && Date is not null;
+        }
     }
 
     /// <inheritdoc />
@@ -263,6 +294,11 @@ public class DatePicker : TemplatedControl
             change.Property == PlaceholderProperty)
         {
             UpdateDisplay();
+        }
+
+        if (change.Property == DateProperty || change.Property == ClearableProperty)
+        {
+            UpdateClearButton();
         }
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
