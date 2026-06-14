@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.19.0</Version>
-    <PackageReleaseNotes>Loam 3.19.0: Loam.Data DataGrid clipboard copy — CopyToClipboardAsync() copies the current view (filtered + sorted, all pages) to the system clipboard as TSV (reusing ExportTsv), also wired to Ctrl+C/Cmd+C; uses Avalonia 12's TopLevel.Clipboard and returns null when no clipboard is available. Closes the clipboard loose end deferred since 3.6. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.20.0</Version>
+    <PackageReleaseNotes>Loam 3.20.0: Loam.Data DataGrid row selection — opt-in SelectionMode (None/Single/Multiple), SelectedItem, SelectedItems, and a SelectionChanged event. Click selects; Multiple supports Ctrl-toggle and Shift-range (mouse or keyboard); selection is highlighted and survives sort/filter/page rebuilds by item identity. Ctrl+C copies the selected rows when a selection exists. Defaults to Single (preserves prior behavior). Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

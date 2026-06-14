@@ -111,7 +111,11 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `ObserveItemChanges` | `bool` | `false` | When true and rows implement `INotifyPropertyChanged`, the grid also refreshes when a row raises a property change. |
 | `Refresh()` | `void` | — | Forces a refresh; call after mutating a non-observable source in place. |
 | `ExportCsv()` / `ExportTsv()` | `string` | — | The current view (filtered + sorted, all pages) as CSV / TSV, using each column's display text with RFC-4180 quoting. Backed by the static `DataGrids.ToDelimited<T>(rows, columns, separator)` helper. |
-| `CopyToClipboardAsync()` | `Task<string?>` | — | Copies the current view (as TSV, spreadsheet-paste friendly) to the system clipboard and returns the copied text; returns `null` when no clipboard is available (e.g. before the grid is attached). Also wired to **Ctrl+C** / **Cmd+C** when focus is within the grid. |
+| `CopyToClipboardAsync()` | `Task<string?>` | — | Copies the selected rows — or the whole current view when nothing is selected — to the system clipboard as TSV and returns the copied text; returns `null` when no clipboard is available. Also wired to **Ctrl+C** / **Cmd+C** when focus is within the grid. |
+| `SelectionMode` | `DataGridSelectionMode` | `Single` | Row selection: `None` (disabled), `Single`, or `Multiple`. A plain click (or Space/Enter on the focused row) selects, replacing any existing selection. In `Multiple`, **Ctrl**-click / **Ctrl+Space** toggles a row and **Shift**-click / **Shift+Space** selects a range from the anchor. A disabled grid is not selectable. |
+| `SelectedItem` | `T?` | `null` | The selected row (the primary/last-affected one in `Multiple`). Two-way friendly; assigning replaces any existing selection and raises `SelectionChanged` when the value changes. |
+| `SelectedItems` | `IReadOnlyList<T>` | empty | A snapshot of the selected rows in view order. |
+| `SelectionChanged` | `event Action<T?>` | — | Raised when the selection changes; the argument is the primary selected item (or default when empty). |
 | `IsLoading` | `bool` | `false` | Shows a skeleton loading body (state precedence: Error > Loading > Empty > data). |
 | `ErrorText` / `ErrorContent` | `string?` / `Control?` | `null` | Shows an error body instead of rows; `ErrorContent` overrides `ErrorText`. |
 | `OnRetry` | `Action?` | `null` | When set, the error body shows a **Retry** button that invokes this. |
@@ -123,7 +127,6 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Filter` | `Func<T, string, bool>?` | `null` | Custom row predicate for `FilterText`; defaults to searching rendered cell values. |
 | `Virtualize` | `bool` | `false` | Limits unpaged rendering to `MaxRenderedRows`. |
 | `MaxRenderedRows` | `int` | `200` | Maximum rows rendered when `Virtualize` is enabled and paging is off. |
-| `SelectedItem` | `T?` | `default` | Selected row; row click updates this. Mirrors the reference API's `SelectedItem`. |
 | `Striped` | `bool` | `true` | Alternating row shading. Mirrors the reference API's `Striped`. |
 | `Hover` | `bool` | `true` | Row hover highlight. Mirrors the reference API's `Hover`. |
 | `Dense` | `bool` | `false` | Compact cell padding. Mirrors the reference API's `Dense`. |
@@ -135,7 +138,6 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `EmptyContent` | `Control?` | `null` | Custom empty-state content; overrides `EmptyText` when set. |
 | `FrozenColumns` | `int` | `0` | Number of leading columns to pin while the rest scroll horizontally. Ignored while grouped, or if not less than the column count. Frozen layouts size every column by pixel width. |
 | `RowHeight` | `double` | `0` | Fixed body-row height in px (`0` = auto). Guarantees row alignment across the frozen/scrollable panes for custom-height cells. |
-| `SelectionChanged` | `event Action<T?>?` | — | Raised when a row is clicked and `SelectedItem` changes. |
 
 ### DataGridColumn&lt;T&gt; properties
 

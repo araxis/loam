@@ -7,6 +7,48 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.20 — DataGrid row selection (single + multiple)
+
+Built on an existing single-select foundation (`_selectedItem`, `SelectRow`, `SelectionChanged`,
+`RowVisual.Selected`, `ApplyRowBackgrounds` PaletteSelected highlight, rows already wiring click + activation).
+Added: `DataGridSelectionMode` enum (None/Single/Multiple); fields `_selectionMode` (default **Single**, to
+preserve the shipped always-select behavior — deviates from the "None default" ask deliberately), `_selection`
+(List<T>, ordered, identity-deduped), `_anchorItem`. Public `SelectionMode`, `SelectedItems`
+(IReadOnlyList<T> snapshot); reworked `SelectedItem` setter to drive `_selection`. `SelectRow(item, modifiers)`:
+None→noop; Single→replace; Multiple→Shift range from anchor (CurrentViewRows order), Ctrl toggle, plain replace.
+`SetSelection` dedupes, no-ops when unchanged (only moves anchor), sets primary `_selectedItem`, fires
+`SelectionChanged`, Rebuilds. Row PointerPressed passes `e.KeyModifiers`; row KeyDown: Multiple plain Space →
+Control (toggle), Shift+Space → range — so range/toggle are keyboard-testable (a11y win). Rebuild prunes
+filtered-out items from `_selection` (fires SelectionChanged on change) so selection survives sort/filter/page
+by identity (EqualityComparer<T>.Default). Ctrl+C now copies `RowsToCopy()` = selected-in-view-order when a
+selection exists, else the whole view (3.19 path).
+
+**Verified:** build 0/0 (solution); full suite **587** (+10): single-select via Space + highlight; None no-op;
+Multiple Space toggle; multi-row; Shift+Space range; SelectionChanged primary; survives Rebuild (Striped toggle)
+by identity + highlight reapplied; filtered-out clears + fires default; programmatic SelectedItem highlights;
+Ctrl+C copies only selected rows. Fix: CA1720 on enum member `Single` (type-name) → SuppressMessage (matches
+WPF/Avalonia SelectionMode.Single convention). Gallery: "Row selection" DataGrid (Multiple) sample. Docs:
+data-display.md SelectionMode/SelectedItem/SelectedItems/SelectionChanged rows + updated CopyToClipboardAsync;
+changelog 3.20.0.
+
+**Adversarial review (30 agents, 21 confirmed) → hardening:** (1) Shift-range when the anchor was filtered out
+silently degraded to a plain click — now falls back to the surviving primary selection (`_anchorItem ?? _selectedItem`).
+(2) `SelectedItem` setter didn't raise `SelectionChanged` and didn't replace a multi-selection — rerouted through
+`SetSelection` (fires on change, no-ops on same value, replaces). (3) Disabled grid was still pointer-selectable —
+`SelectRow` now early-returns when `!IsEnabled`. (4) Re-entrancy: a `SelectionChanged` handler mutating the grid mid-
+rebuild (e.g. during prune) could restructure a half-built tree — `Rebuild()` now guards with `_rebuilding` and
+coalesces a re-entrant request into one follow-up pass (body moved to `RebuildCore`). (5) a11y: selected rows now set
+`AutomationProperties.ItemStatus = "Selected"` (full SelectionItemPattern peer left as a follow-up). Plus frozen
+shared-`RowVisual` and `RowsToCopy` (sorted, not grouped) clarifying comments. Tests **587 → 598 (+11)**: real
+pointer Ctrl/Shift/plain clicks (new `PointerArgs` helper synthesizing `PointerPressedEventArgs`), shift-reanchor,
+shift-after-anchor-filtered, survives sort reorder, setter replaces multi + fires, single re-select no-op, frozen
+multi-select both panes, ItemStatus, prune-time re-entrant reassign. Docs: removed two stale duplicate rows
+(`SelectedItem`/`SelectionChanged`), documented plain-click + disabled. Gallery: live selection-count status line.
+
+**Next:** AutomationPeers (SelectionItemPattern) / header context-menu / true virtualization for DataGrid; HSV editor; CalendarView.
+
+---
+
 ## 2026-06-14 — 3.19 — DataGrid clipboard copy (closes the 3.6 loose end)
 
 Switched off the Pickers track. `DataGrid<T>` gains `public async Task<string?> CopyToClipboardAsync()` —
