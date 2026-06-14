@@ -15,6 +15,8 @@ Notable changes per release. Dates are when the work landed on the development b
   `YAxisTickCount`, and `YAxisFormat` controls. Off by default, so existing charts are unchanged.
 - New pure `Charts.NiceScale` helper (1/2/5×10ⁿ rounding). Bar/line scaling unified over a value-axis
   domain (the signed-value helpers generalized), so axes, signed data, and explicit ranges share one path.
+- **`ItemsSource` binding** (all charts): project items via `ValueSelector`/`LabelSelector`/`ColorSelector`;
+  an `INotifyCollectionChanged` source (e.g. `ObservableCollection<T>`) refreshes the chart live.
 
 ## 3.3.0
 

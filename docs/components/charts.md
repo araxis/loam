@@ -33,6 +33,30 @@ new BarChart { Values = new[] { 12d, 19d, 8d }, ShowDataLabels = true };
 new PieChart { Donut = true, Values = data, ShowDataLabels = true, DataLabelFormat = p => $"{p.Percent:P0}" };
 ```
 
+### Data binding (all charts)
+
+Instead of assembling `Values`/`Labels`/`Colors` by hand, bind a collection and project each item:
+
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `ItemsSource` | `IEnumerable?` | `null` | Bound source; when set, items are projected into the chart and an `INotifyCollectionChanged` source (e.g. `ObservableCollection<T>`) refreshes it live. |
+| `ValueSelector` | `Func<object, double>?` | `null` | Item → numeric value. |
+| `LabelSelector` | `Func<object, string>?` | `null` | Item → label (optional). |
+| `ColorSelector` | `Func<object, Color?>?` | `null` | Item → color; return `null` to use the theme series color for that point. |
+
+```csharp
+var orders = new ObservableCollection<Order>(initial);
+var chart = new BarChart
+{
+    ItemsSource = orders,
+    ValueSelector = o => ((Order)o).Total,
+    LabelSelector = o => ((Order)o).Month,
+    ColorSelector = o => ((Order)o).IsLate ? Colors.Red : (Color?)null,
+    ShowAxes = true,
+};
+orders.Add(next); // chart updates automatically
+```
+
 ### Hover, tooltips, and clicks (all charts)
 
 All charts hit-test the pointer against their datapoints (slice / bar / nearest line point) and surface it:

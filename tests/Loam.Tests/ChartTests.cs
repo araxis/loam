@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -464,6 +465,42 @@ public class ChartTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void ItemsSource_projects_items_and_updates_live()
+    {
+        var data = new ObservableCollection<Order>
+        {
+            new("A", 10),
+            new("B", 20),
+        };
+        var bar = new BarChart
+        {
+            ItemsSource = data,
+            ValueSelector = o => ((Order)o).Total,
+            LabelSelector = o => ((Order)o).Name,
+        };
+        var window = Show(bar, ThemeVariant.Light);
+        try
+        {
+            bar.Values.Count.ShouldBe(2);
+            bar.Values[0].ShouldBe(10);
+            bar.ResolvedPoints[1].Label.ShouldBe("B");
+
+            data.Add(new Order("C", 30));
+            Dispatcher.UIThread.RunJobs();
+
+            bar.Values.Count.ShouldBe(3);
+            bar.ResolvedPoints[2].Value.ShouldBe(30);
+            bar.ResolvedPoints[2].Label.ShouldBe("C");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)
     {

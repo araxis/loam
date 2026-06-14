@@ -7,6 +7,17 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.4 (sub-slice 2) — Charts ItemsSource binding
+
+`ChartBase` gains `ItemsSource` + `ValueSelector`/`LabelSelector`/`ColorSelector`. When set, items project
+into Values/Labels/Colors and an `INotifyCollectionChanged` source refreshes live (subscribe in setter +
+`OnAttached`, unsubscribe in `OnDetached`; re-project in `RefreshVisuals` so color nulls resolve to fresh
+theme colors). ColorSelector null → theme series color for that point. Gallery: BarChart "Bound data"
+sample (ObservableCollection + Add-point button). Verified: build 0/0, full suite **472 passing** (+1
+live-update test). Next: sub-slice 3 — multi-series/stacked (XL).
+
+---
+
 ## 2026-06-14 — 3.4 (sub-slice 1) — Charts axes + nice-number scaling
 
 First of four 3.4 sub-slices (axes → ItemsSource → multi-series → bound legend).

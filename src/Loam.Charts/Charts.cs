@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Specialized;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
@@ -267,6 +269,11 @@ public abstract class ChartBase : Control
     private Func<ChartPoint, string>? _tooltipFormat;
     private int _hoveredIndex = -1;
     private Point _pointer;
+    private IEnumerable? _itemsSource;
+    private Func<object, double>? _valueSelector;
+    private Func<object, string>? _labelSelector;
+    private Func<object, Color?>? _colorSelector;
+    private INotifyCollectionChanged? _incc;
     private ChartVisuals _visuals = ChartVisuals.Fallback;
 
     /// <summary>The data values.</summary>
@@ -305,6 +312,48 @@ public abstract class ChartBase : Control
             UpdateAutomation();
             InvalidateVisual();
         }
+    }
+
+    /// <summary>
+    /// Optional bound data source. When non-null, each item is projected via <see cref="ValueSelector"/>/
+    /// <see cref="LabelSelector"/>/<see cref="ColorSelector"/> into <see cref="Values"/>/<see cref="Labels"/>/
+    /// <see cref="Colors"/>, and an <see cref="INotifyCollectionChanged"/> source refreshes the chart live.
+    /// </summary>
+    public IEnumerable? ItemsSource
+    {
+        get => _itemsSource;
+        set
+        {
+            if (ReferenceEquals(_itemsSource, value))
+            {
+                return;
+            }
+
+            _itemsSource = value;
+            SubscribeItems();
+            ProjectItemsSource();
+        }
+    }
+
+    /// <summary>Projects an <see cref="ItemsSource"/> item to its numeric value.</summary>
+    public Func<object, double>? ValueSelector
+    {
+        get => _valueSelector;
+        set { _valueSelector = value; ProjectItemsSource(); }
+    }
+
+    /// <summary>Projects an <see cref="ItemsSource"/> item to its label (optional).</summary>
+    public Func<object, string>? LabelSelector
+    {
+        get => _labelSelector;
+        set { _labelSelector = value; ProjectItemsSource(); }
+    }
+
+    /// <summary>Projects an <see cref="ItemsSource"/> item to a color; return null to use the theme series color for that point.</summary>
+    public Func<object, Color?>? ColorSelector
+    {
+        get => _colorSelector;
+        set { _colorSelector = value; ProjectItemsSource(); }
     }
 
     /// <summary>When true, draws per-point value annotations on the chart (with responsive thinning to avoid overlap).</summary>
@@ -375,6 +424,7 @@ public abstract class ChartBase : Control
     {
         base.OnAttachedToVisualTree(e);
         SubscribeVisualTokens();
+        SubscribeItems();
         RefreshVisuals();
         UpdateAutomation();
     }
@@ -384,6 +434,7 @@ public abstract class ChartBase : Control
     {
         base.OnDetachedFromVisualTree(e);
         DisposeVisualSubscriptions();
+        UnsubscribeItems();
     }
 
     /// <inheritdoc />
@@ -585,7 +636,64 @@ public abstract class ChartBase : Control
     private void RefreshVisuals()
     {
         _visuals = ChartVisuals.From(this);
+        if (_itemsSource is not null)
+        {
+            ProjectItemsSource();
+        }
+        else
+        {
+            RebuildPoints();
+        }
+
+        InvalidateVisual();
+    }
+
+    private void SubscribeItems()
+    {
+        UnsubscribeItems();
+        if (_itemsSource is INotifyCollectionChanged incc)
+        {
+            _incc = incc;
+            incc.CollectionChanged += OnItemsCollectionChanged;
+        }
+    }
+
+    private void UnsubscribeItems()
+    {
+        if (_incc is not null)
+        {
+            _incc.CollectionChanged -= OnItemsCollectionChanged;
+            _incc = null;
+        }
+    }
+
+    private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => ProjectItemsSource();
+
+    private void ProjectItemsSource()
+    {
+        if (_itemsSource is null)
+        {
+            return;
+        }
+
+        var values = new List<double>();
+        var labels = _labelSelector is not null ? new List<string>() : null;
+        List<Color>? colors = _colorSelector is not null ? new List<Color>() : null;
+        var palette = _visuals.SeriesColors.Count > 0 ? _visuals.SeriesColors : Charts.Palette;
+        var index = 0;
+        foreach (var item in _itemsSource)
+        {
+            values.Add(_valueSelector?.Invoke(item) ?? 0);
+            labels?.Add(_labelSelector!.Invoke(item) ?? string.Empty);
+            colors?.Add(_colorSelector!.Invoke(item) ?? palette[index % palette.Count]);
+            index++;
+        }
+
+        _values = values.ToArray();
+        _labels = labels?.ToArray();
+        _colors = colors?.ToArray();
         RebuildPoints();
+        UpdateAutomation();
         InvalidateVisual();
     }
 

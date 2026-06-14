@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -990,6 +991,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Charts", "BarChart", "Bar chart rendering from numeric values.",
             Sample("Themed bars", BuildBarChartThemedBars),
             Sample("Axes", BuildBarChartAxes),
+            Sample("Bound data", BuildBarChartBound),
             Sample("Signed values", BuildBarChartSigned),
             Sample("Data labels", BuildBarChartDataLabels),
             Sample("Interactive", BuildBarChartInteractive),
@@ -8243,6 +8245,52 @@ public sealed class ComponentsView : UserControl
                         CenterSubText = "sessions",
                     },
                     new ChartLegend { Labels = { "Desktop", "Browser", "Mobile" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartBound()
+    {
+        var data = new ObservableCollection<(string Label, double Value)>
+        {
+            ("Mon", 12d),
+            ("Tue", 19d),
+            ("Wed", 8d),
+            ("Thu", 22d),
+        };
+        var day = data.Count;
+
+        var chart = new BarChart
+        {
+            Width = 320,
+            Height = 180,
+            ShowAxes = true,
+            ItemsSource = data,
+            ValueSelector = o => ((ValueTuple<string, double>)o).Item2,
+            LabelSelector = o => ((ValueTuple<string, double>)o).Item1,
+        };
+
+        var add = new LoamButton { Content = "Add point", Variant = Variant.Outlined };
+        add.Click += (_, _) =>
+        {
+            day++;
+            data.Add(($"D{day}", 8 + day * 4));
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Bound to an ObservableCollection via selectors; adding items updates the chart live.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    chart,
+                    add,
                 },
             },
         };
