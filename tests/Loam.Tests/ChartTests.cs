@@ -1,6 +1,8 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -362,6 +364,62 @@ public class ChartTests
         signed.HasSignedData.ShouldBeTrue();
         pie.Bounds.Width.ShouldBeGreaterThan(0);
         line.Bounds.Height.ShouldBeGreaterThan(0);
+    }
+
+    [AvaloniaFact]
+    public void Bar_chart_hover_and_click_hit_test_the_correct_bar()
+    {
+        var bar = new BarChart { Values = [10d, 20d, 30d] };
+        var window = new Window { Width = 320, Height = 200, Content = bar };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        bar.HoverChanged += (_, e) => hovered = e;
+        ChartPointEventArgs? clicked = null;
+        bar.PointClicked += (_, e) => clicked = e;
+
+        // The chart fills the window from the client origin; the middle bar sits under its center.
+        var center = new Avalonia.Point(bar.Bounds.Width / 2, bar.Bounds.Height / 2);
+
+        window.MouseMove(center);
+        Dispatcher.UIThread.RunJobs();
+
+        bar.HoveredIndex.ShouldBe(1);
+        hovered.ShouldNotBeNull();
+        hovered!.Index.ShouldBe(1);
+        hovered.Point!.Value.Value.ShouldBe(20d);
+
+        window.MouseDown(center, MouseButton.Left);
+        window.MouseUp(center, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        clicked.ShouldNotBeNull();
+        clicked!.Index.ShouldBe(1);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Moving_off_all_bars_clears_the_hovered_index()
+    {
+        var bar = new BarChart { Values = [10d, 20d, 30d] };
+        var window = new Window { Width = 320, Height = 200, Content = bar };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        window.MouseMove(new Avalonia.Point(bar.Bounds.Width / 2, bar.Bounds.Height / 2));
+        Dispatcher.UIThread.RunJobs();
+        bar.HoveredIndex.ShouldBe(1);
+
+        // The top-left padding area holds no bar.
+        window.MouseMove(new Avalonia.Point(2, 2));
+        Dispatcher.UIThread.RunJobs();
+        bar.HoveredIndex.ShouldBe(-1);
+
+        window.Close();
     }
 
     private static Window Show(Control content, ThemeVariant theme)

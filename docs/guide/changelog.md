@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.3.0 (in progress)
+
+**`Loam.Charts` interactivity** — charts become pointer-aware (additive; default-on tooltips):
+
+- **Hit-testing.** Each chart resolves the datapoint under the pointer (pie slice by angle/radius, bar by
+  rect, line by nearest point), exposed as `HoveredIndex` with `HoverChanged`/`PointClicked` events
+  (`ChartPointEventArgs`). The hovered element is lightly emphasized.
+- **Hover tooltips.** A self-drawn, tokenized tooltip follows the pointer for the hovered datapoint —
+  `ShowTooltip` (on by default) and `TooltipFormat` control it.
+
 ## 3.2.0
 
 First milestone of the **`Loam.Charts` enrichment** roadmap — all additive, no breaking changes:
