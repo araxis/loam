@@ -4,10 +4,9 @@ title: Migrating from v2 to v3
 
 # Migrating from Loam v2 to v3
 
-> **Status: in progress (preview).** Loam v3 (“vNext”) is under active development on the
-> `work/vnext` branch. This guide is the living record of every breaking change. It is filled in
-> phase by phase as the work lands, so sections marked _Planned_ describe decisions that are agreed
-> but not yet shipped. The current package version is **`3.0.0-preview.2`**.
+> **Status: released.** Loam **v3.0.0** is published. This guide is the living record of every breaking
+> change; sections still marked _Planned_ (e.g. the package split) describe decisions that are agreed
+> but not yet shipped. The current package version is **`3.0.0`**.
 
 The v3 plan and the independent review that drives it live at the repository root:
 [`PLAN.md`](https://github.com/araxis/loam/blob/main/PLAN.md) and

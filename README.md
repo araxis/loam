@@ -7,10 +7,9 @@
 Loam gives Avalonia apps a complete themed control set with a familiar, compact API, runtime
 theming, and no XAML.
 
-> **Status:** 🚧 **v3 (vNext) in development** on branch `work/vnext` (`3.0.0-preview.2`). The released
-> baseline is **v2.0** (role-based light/dark color schemes, expanded foundation tokens, tokenized
-> state feedback). v3 adds end-to-end theme consistency, Material You, ergonomics fixes, and new shell
-> controls — the full solution builds clean with **414 headless/unit tests passing**.
+> **Status:** **v3.0.0 released** — published as [`Loam` 3.0.0 on NuGet](https://www.nuget.org/packages/Loam).
+> Over the v2 baseline, v3 adds end-to-end theme consistency, Material You, ergonomics fixes, and new
+> shell controls — the full solution builds clean with **425 headless/unit tests passing**.
 > See the **[v3 plan](PLAN.md)** and **[review](REVIEW.md)**, the
 > **[v2 → v3 migration guide](docs/migration/v2-to-v3.md)**, the **[Development Plan](DEVELOPMENT_PLAN.md)**,
 > and the project **[memory](memory/README.md)** (decisions, progress log, learnings, and the

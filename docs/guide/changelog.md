@@ -7,7 +7,7 @@ title: Changelog
 Notable changes per release. Dates are when the work landed on the development branch; v3 is shipping as
 previews while the phases complete.
 
-## 3.0.0 (preview)
+## 3.0.0
 
 Loam v3 ("vNext") — a major version that keeps the v2 authoring model and fixes the rough edges found
 building real apps on v2. It **may break source compatibility, but never silently**: every rename ships

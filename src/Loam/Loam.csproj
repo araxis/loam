@@ -9,9 +9,9 @@
     <!-- Packaging -->
     <IsPackable>true</IsPackable>
     <PackageId>Loam</PackageId>
-    <Version>3.0.0-preview.2</Version>
+    <Version>3.0.0</Version>
     <Description>Pure C# themed controls for Avalonia applications.</Description>
-    <PackageReleaseNotes>v3 preview: theme consistency, Material You, ergonomics fixes, NavigationRail/BottomNavigation/CommandPalette, and a matured DataGrid (grouping, frozen columns, aggregates). See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <PackageReleaseNotes>Loam v3.0.0: end-to-end theme consistency, Material You, ergonomics fixes, NavigationRail/BottomNavigation/CommandPalette, and a matured DataGrid (grouping, frozen columns, aggregates). See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageTags>avalonia;ui;controls;theme;csharp;material</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
