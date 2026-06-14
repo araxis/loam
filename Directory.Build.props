@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.9.0</Version>
-    <PackageReleaseNotes>Loam 3.9.0: Loam.Pickers clearable fields — DatePicker, TimePicker, and DateRangePicker gain an opt-in Clearable flag that surfaces an inline trailing × button to clear the value (raising the change event with null) without opening the flyout. Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.10.0</Version>
+    <PackageReleaseNotes>Loam 3.10.0: Loam.Pickers DateRangePicker quick-select presets — set ShowPresets to add a one-click shortcut rail (Today, Last 7 days, This month, …) beside the calendar that stages a pending range to confirm with OK; clamped to MinDate/MaxDate. Customize via the Presets collection (DateRangePreset). Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

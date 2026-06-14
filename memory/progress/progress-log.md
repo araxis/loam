@@ -7,6 +7,45 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.10 — DateRangePicker quick-select preset rail
+
+Second Pickers milestone. `DateRangePicker` gains `ShowPresets` (StyledProperty<bool>, opt-in), a mutable
+`Presets` (`AvaloniaList<DateRangePreset>`, mirrors ColorPicker.Palette house style), and a static
+`DefaultPresets` (`IReadOnlyList<DateRangePreset>`: Today, Yesterday, Last 7 days, Last 30 days, This
+month, Last month, This year). New public type `DateRangePreset(string Label, Func<DateTime,(DateTime
+Start,DateTime End)> Resolve)` in its own file. In `Open()`, when `ShowPresets`, a left-docked rail
+(`BuildPresetRail`) of Text-variant buttons sits beside the calendar inside a DockPanel; the flyout paper
+widens by `PresetRailWidth (168) + 16`. A preset click resolves against `DateTime.Today`, auto-orders,
+clamps to `MinDate`/`MaxDate` (no-op if fully out of range), sets the **pending** range, moves
+`calendar.DisplayMonth`, and calls `SyncPendingDisplay()` — OK still commits. Presets read at Open() time
+(flyout rebuilt per open), so no CollectionChanged plumbing needed.
+
+**Decisions:** presets stage pending (not instant-commit) to compose with the two-step OK/Cancel model;
+`Presets` non-empty replaces `DefaultPresets` (not merge); `ShowPresets` is the single visibility gate.
+`DefaultPresets` lambdas are `static` (capture nothing) to satisfy analyzers; the apply-closure captures
+Open()'s pending locals.
+
+**Verified:** build 0/0 (solution); full suite **497** (+8 picker tests). Initial 5: pure DefaultPresets.Resolve
+table for a fixed anchor; rail stages pending then OK commits Last-7-days = 6-day span; rail absent without
+ShowPresets; custom Presets replace defaults; preset clamps to MinDate. Gallery: "Quick-select presets"
+sample (defaults + custom) on the DateRangePicker page. Docs: pickers.md table rows + "Quick-select presets"
+subsection; changelog 3.10.0. Fix: CA1859 on a test helper (List<string?> not IReadOnlyList).
+
+**Adversarial review (workflow, 4 dims × verify) → 6 confirmed fixes applied:** (1) title MaxWidth was pinned
+to PickerWidth(360) so it stayed narrow on the 544-wide preset paper → `PopupSurface.PickerContent` now takes
+an optional `width` and DateRangePicker passes `paperWidth`; (2) rail could overflow for many custom presets →
+`BuildPresetRail` now returns a `ScrollViewer` (Width=168, MaxHeight=360, Auto vertical scrollbar) so 7 defaults
+fit but long lists scroll; (3) redundant `AutomationProperties.SetName` on text buttons removed (Content is the
+accessible name; house pattern reserves SetName for icon-only buttons); (4) +test preset buttons keyboard-focusable;
+(5) +test MaxDate clamp (custom far-future preset clamps end down to MaxDate); (6) +test fully-out-of-bounds preset
+stages nothing (calendar RangeStart/End stay null). Two findings dismissed on verification: record-vs-class (value
+vs reference-type pattern) and "missing divider" (4px margin spacing is adequate).
+
+**Next:** Pickers — TimePicker auto-scroll to selected; adornment (leading) icons; then CalendarView
+state machine / editable entry / validation. Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.9 — Pickers clearable fields (inline × affordance)
 
 Opened the **Pickers track**. `DatePicker`, `TimePicker`, and `DateRangePicker` gain an opt-in

@@ -126,6 +126,164 @@ public class PickerTests
         range.End.ShouldBeNull();
     }
 
+    private static Loam.Controls.Button PopupButton(Paper paper, string content) =>
+        paper.GetVisualDescendants().OfType<Loam.Controls.Button>().First(b => (string?)b.Content == content);
+
+    private static List<string?> PopupButtonLabels(Paper paper) =>
+        paper.GetVisualDescendants().OfType<Loam.Controls.Button>().Select(b => (string?)b.Content).ToList();
+
+    [Fact]
+    public void DateRangePicker_default_presets_resolve_expected_ranges()
+    {
+        var anchor = new DateTime(2026, 6, 15); // mid-month, mid-year
+        var byLabel = DateRangePicker.DefaultPresets.ToDictionary(p => p.Label, p => p.Resolve(anchor));
+
+        byLabel["Today"].ShouldBe((anchor, anchor));
+        byLabel["Yesterday"].ShouldBe((anchor.AddDays(-1), anchor.AddDays(-1)));
+        byLabel["Last 7 days"].ShouldBe((anchor.AddDays(-6), anchor));
+        byLabel["Last 30 days"].ShouldBe((anchor.AddDays(-29), anchor));
+        byLabel["This month"].ShouldBe((new DateTime(2026, 6, 1), new DateTime(2026, 6, 30)));
+        byLabel["Last month"].ShouldBe((new DateTime(2026, 5, 1), new DateTime(2026, 5, 31)));
+        byLabel["This year"].ShouldBe((new DateTime(2026, 1, 1), new DateTime(2026, 12, 31)));
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_preset_rail_sets_pending_then_ok_commits()
+    {
+        var committed = false;
+        var picker = new DateRangePicker { ShowPresets = true };
+        picker.RangeSelected += (_, _) => committed = true;
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        PopupButton(paper, "Last 7 days").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBeNull(); // preset only stages a pending range
+        committed.ShouldBeFalse();
+
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        committed.ShouldBeTrue();
+        picker.Start.ShouldNotBeNull();
+        picker.End.ShouldNotBeNull();
+        (picker.Start!.Value <= picker.End!.Value).ShouldBeTrue();
+        (picker.End!.Value - picker.Start!.Value).Days.ShouldBe(6); // last 7 days, inclusive
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_preset_rail_absent_without_ShowPresets()
+    {
+        var picker = new DateRangePicker();
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var labels = PopupButtonLabels(paper);
+        labels.ShouldContain("OK");            // flyout built
+        labels.ShouldNotContain("Last 7 days"); // but no preset rail
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_custom_presets_replace_defaults()
+    {
+        var picker = new DateRangePicker { ShowPresets = true };
+        picker.Presets.Add(new DateRangePreset("Just today", a => (a, a)));
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var labels = PopupButtonLabels(paper);
+        labels.ShouldContain("Just today");
+        labels.ShouldNotContain("Last 7 days"); // defaults no longer used
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_preset_clamps_to_min_bound()
+    {
+        var picker = new DateRangePicker { ShowPresets = true, MinDate = DateTime.Today };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        // "Last 7 days" would start before today, but MinDate clamps the start up to today.
+        PopupButton(paper, "Last 7 days").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBe(DateTime.Today);
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_preset_clamps_to_max_bound()
+    {
+        var committed = false;
+        var picker = new DateRangePicker { ShowPresets = true, MaxDate = new DateTime(2026, 6, 30) };
+        picker.RangeSelected += (_, _) => committed = true;
+        picker.Presets.Add(new DateRangePreset("Wide year", _ => (new DateTime(2026, 1, 1), new DateTime(2026, 12, 31))));
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        PopupButton(paper, "Wide year").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        committed.ShouldBeTrue();
+        picker.Start.ShouldBe(new DateTime(2026, 1, 1));
+        picker.End.ShouldBe(new DateTime(2026, 6, 30)); // end clamped down to MaxDate
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_preset_outside_bounds_stages_nothing()
+    {
+        var picker = new DateRangePicker
+        {
+            ShowPresets = true,
+            MinDate = new DateTime(2026, 6, 1),
+            MaxDate = new DateTime(2026, 6, 30),
+        };
+        picker.Presets.Add(new DateRangePreset("Far past", _ => (new DateTime(2020, 1, 1), new DateTime(2020, 1, 31))));
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var calendar = paper.GetVisualDescendants().OfType<MonthCalendar>().Single();
+        PopupButton(paper, "Far past").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        // The preset is entirely outside [Min, Max]; clamping leaves start > end, so it must stage nothing.
+        calendar.RangeStart.ShouldBeNull();
+        calendar.RangeEnd.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_preset_buttons_are_keyboard_focusable()
+    {
+        var picker = new DateRangePicker { ShowPresets = true };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var button = PopupButton(paper, "Last 7 days");
+        button.Focusable.ShouldBeTrue();
+
+        button.Focus();
+        Dispatcher.UIThread.RunJobs();
+        button.IsFocused.ShouldBeTrue();
+    }
+
     [AvaloniaFact]
     public void DatePicker_display_shows_placeholder_then_formatted_date()
     {

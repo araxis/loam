@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -85,6 +86,30 @@ public class DateRangePicker : TemplatedControl
     public static readonly StyledProperty<bool> ClearableProperty =
         AvaloniaProperty.Register<DateRangePicker, bool>(nameof(Clearable));
 
+    /// <summary>Identifies the <see cref="ShowPresets"/> property.</summary>
+    public static readonly StyledProperty<bool> ShowPresetsProperty =
+        AvaloniaProperty.Register<DateRangePicker, bool>(nameof(ShowPresets));
+
+    /// <summary>The built-in quick-select presets used when <see cref="ShowPresets"/> is true and <see cref="Presets"/> is empty.</summary>
+    public static readonly IReadOnlyList<DateRangePreset> DefaultPresets = new[]
+    {
+        new DateRangePreset("Today", static a => (a, a)),
+        new DateRangePreset("Yesterday", static a => (a.AddDays(-1), a.AddDays(-1))),
+        new DateRangePreset("Last 7 days", static a => (a.AddDays(-6), a)),
+        new DateRangePreset("Last 30 days", static a => (a.AddDays(-29), a)),
+        new DateRangePreset("This month", static a => (
+            new DateTime(a.Year, a.Month, 1),
+            new DateTime(a.Year, a.Month, DateTime.DaysInMonth(a.Year, a.Month)))),
+        new DateRangePreset("Last month", static a => PreviousMonth(a)),
+        new DateRangePreset("This year", static a => (new DateTime(a.Year, 1, 1), new DateTime(a.Year, 12, 31))),
+    };
+
+    /// <summary>Width (excluding margins) of the preset rail shown beside the calendar.</summary>
+    private const double PresetRailWidth = 168;
+
+    /// <summary>Maximum rail height; longer custom preset lists scroll rather than stretching the flyout.</summary>
+    private const double PresetRailMaxHeight = 360;
+
     private Border? _box;
     private IconButton? _clear;
     private Border? _labelHost;
@@ -132,6 +157,16 @@ public class DateRangePicker : TemplatedControl
         get => GetValue(ClearableProperty);
         set => SetValue(ClearableProperty, value);
     }
+
+    /// <summary>When true, the flyout shows a quick-select rail of <see cref="Presets"/> (or <see cref="DefaultPresets"/> when none are set).</summary>
+    public bool ShowPresets
+    {
+        get => GetValue(ShowPresetsProperty);
+        set => SetValue(ShowPresetsProperty, value);
+    }
+
+    /// <summary>Custom quick-select presets shown when <see cref="ShowPresets"/> is true. When empty, <see cref="DefaultPresets"/> is used.</summary>
+    public AvaloniaList<DateRangePreset> Presets { get; } = [];
 
     /// <summary>The field label.</summary>
     public string? Label
@@ -246,6 +281,14 @@ public class DateRangePicker : TemplatedControl
     {
         Start = null;
         End = null;
+    }
+
+    /// <summary>Returns the first and last day of the calendar month before <paramref name="anchor"/>.</summary>
+    private static (DateTime Start, DateTime End) PreviousMonth(DateTime anchor)
+    {
+        var lastDayOfPreviousMonth = new DateTime(anchor.Year, anchor.Month, 1).AddDays(-1);
+        var firstDayOfPreviousMonth = new DateTime(lastDayOfPreviousMonth.Year, lastDayOfPreviousMonth.Month, 1);
+        return (firstDayOfPreviousMonth, lastDayOfPreviousMonth);
     }
 
     /// <summary>Formats a range for display (null when empty).</summary>
@@ -457,11 +500,51 @@ public class DateRangePicker : TemplatedControl
             ApplyBoxChrome();
         };
 
-        var body = new StackPanel
+        var calendarColumn = new StackPanel
         {
             Spacing = 0,
             Children = { preview, calendar },
         };
+
+        Control body = calendarColumn;
+        var paperWidth = PopupSurface.PickerWidth;
+        if (ShowPresets)
+        {
+            var presets = Presets.Count > 0 ? (IReadOnlyList<DateRangePreset>)Presets : DefaultPresets;
+            var rail = BuildPresetRail(presets, preset =>
+            {
+                var (start, end) = preset.Resolve(DateTime.Today);
+                if (end < start)
+                {
+                    (start, end) = (end, start);
+                }
+
+                if (MinDate is { } min && start < min)
+                {
+                    start = min;
+                }
+
+                if (MaxDate is { } max && end > max)
+                {
+                    end = max;
+                }
+
+                if (start > end)
+                {
+                    return; // preset falls entirely outside the allowed bounds
+                }
+
+                pendingStart = start;
+                pendingEnd = end;
+                calendar.DisplayMonth = new DateTime(start.Year, start.Month, 1);
+                SyncPendingDisplay();
+            });
+
+            DockPanel.SetDock(rail, Dock.Left);
+            body = new DockPanel { LastChildFill = true, Children = { rail, calendarColumn } };
+            paperWidth += PresetRailWidth + 16; // rail width plus its horizontal margins
+        }
+
         var actions = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -472,7 +555,7 @@ public class DateRangePicker : TemplatedControl
         _flyout = new Flyout
         {
             Content = PopupSurface.PickerPaper(
-                PopupSurface.PickerContent(PickerTitle, body, actions)),
+                PopupSurface.PickerContent(PickerTitle, body, actions, paperWidth), paperWidth),
             Placement = PlacementMode.BottomEdgeAlignedLeft,
             FlyoutPresenterTheme = PopupSurface.FlyoutPresenterTheme,
         };
@@ -484,6 +567,42 @@ public class DateRangePicker : TemplatedControl
         _flyoutOpen = true;
         _flyout.ShowAt(_box ?? (Control)this);
         ApplyBoxChrome();
+    }
+
+    private static ScrollViewer BuildPresetRail(IReadOnlyList<DateRangePreset> presets, Action<DateRangePreset> apply)
+    {
+        var rail = new StackPanel
+        {
+            Spacing = 2,
+        };
+
+        foreach (var preset in presets)
+        {
+            var captured = preset;
+            var button = new Button
+            {
+                // Text content is the accessible name; no extra AutomationProperties.SetName needed.
+                Content = captured.Label,
+                Variant = Variant.Text,
+                Color = LoamColor.Primary,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+            };
+            button.Click += (_, _) => apply(captured);
+            rail.Children.Add(button);
+        }
+
+        // Cap the rail height so a long custom preset list scrolls instead of stretching the flyout.
+        return new ScrollViewer
+        {
+            Content = rail,
+            Width = PresetRailWidth,
+            MaxHeight = PresetRailMaxHeight,
+            Margin = new Thickness(12, 4, 4, 8),
+            VerticalAlignment = VerticalAlignment.Top,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+        };
     }
 
     private void UpdateLabel()

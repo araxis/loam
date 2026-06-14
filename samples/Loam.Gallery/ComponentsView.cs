@@ -840,6 +840,7 @@ public sealed class ComponentsView : UserControl
             Sample("Variants", BuildDateRangePickerVariants),
             Sample("Selected & custom format", BuildDateRangePickerSelected),
             Sample("Clearable", BuildDateRangePickerClearable),
+            Sample("Quick-select presets", BuildDateRangePickerPresets),
             Sample("Constrained & floating label", BuildDateRangePickerConstrained),
             Sample("States", BuildDateRangePickerStates)),
         PageWithSamples("Pickers", "ColorPicker", "Swatch picker with hex display.",
@@ -7638,6 +7639,42 @@ public sealed class ComponentsView : UserControl
                     Clearable = true,
                     HelperText = "Clear button appears once a range is set",
                 },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDateRangePickerPresets()
+    {
+        var custom = new Loam.Controls.DateRangePicker
+        {
+            Width = 360,
+            Margin = new Thickness(0, 0, 24, 24),
+            Label = "Custom presets",
+            ShowPresets = true,
+            DateFormat = "MMM d",
+            HelperText = "Tailored quick ranges",
+        };
+        custom.Presets.Add(new DateRangePreset("This week", a => (a.AddDays(-(int)a.DayOfWeek), a)));
+        custom.Presets.Add(new DateRangePreset("Next 14 days", a => (a, a.AddDays(13))));
+        custom.Presets.Add(new DateRangePreset(
+            "This quarter",
+            a => (new DateTime(a.Year, (((a.Month - 1) / 3) * 3) + 1, 1), a)));
+
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Quick ranges",
+                    ShowPresets = true,
+                    HelperText = "Pick a preset, then confirm with OK",
+                },
+                custom,
             },
         };
     }

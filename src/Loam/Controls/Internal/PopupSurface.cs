@@ -73,7 +73,7 @@ internal static class PopupSurface
         return paper;
     }
 
-    public static StackPanel PickerContent(string title, Control body, Control? actions = null)
+    public static StackPanel PickerContent(string title, Control body, Control? actions = null, double width = PickerWidth)
     {
         var content = new StackPanel
         {
@@ -87,7 +87,7 @@ internal static class PopupSurface
                     Color = LoamColor.Default,
                     TextWrapping = TextWrapping.Wrap,
                     Margin = PickerTitleMargin,
-                    MaxWidth = PickerWidth - PickerTitleMargin.Left - PickerTitleMargin.Right,
+                    MaxWidth = width - PickerTitleMargin.Left - PickerTitleMargin.Right,
                 },
                 body,
             },
