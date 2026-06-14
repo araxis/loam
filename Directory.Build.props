@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.1.0</Version>
-    <PackageReleaseNotes>Loam 3.1.0: the chart, picker, and heavy data controls move out of the core package into opt-in satellites (Loam.Charts, Loam.Pickers, Loam.Data). Namespaces are unchanged; add the matching registrar to Application.Styles for the controls you use. See https://araxis.github.io/loam/migration/v3-to-v3.1</PackageReleaseNotes>
+    <Version>3.2.0</Version>
+    <PackageReleaseNotes>Loam 3.2.0: Loam.Charts enrichment — a per-point snapshot (ChartPoint/Labels/ResolvedPoints), donut center text, opt-in signed values (AllowNegative) for diverging bar/line data, and on-chart data labels (ShowDataLabels). Additive; no breaking changes. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

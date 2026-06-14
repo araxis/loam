@@ -6,9 +6,9 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
-## 3.2.0 (in progress)
+## 3.2.0
 
-First slice of the **`Loam.Charts` enrichment** roadmap — all additive, no breaking changes:
+First milestone of the **`Loam.Charts` enrichment** roadmap — all additive, no breaking changes:
 
 - **Per-point snapshot.** `ChartBase` gains `Labels` and a `ResolvedPoints` projection (`ChartPoint`
   record struct: index, value, percent-of-positive-total, label, color). Labels enrich the chart's
