@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -366,6 +367,49 @@ public class ChartTests
         line.Bounds.Height.ShouldBeGreaterThan(0);
     }
 
+    [Fact]
+    public void Charts_nice_scale_rounds_to_clean_ticks()
+    {
+        var (min, max, step) = Charts.NiceScale(0, 65, 4);
+        min.ShouldBe(0);
+        max.ShouldBe(80);
+        step.ShouldBe(20);
+
+        Charts.NiceScale(65, 4).ShouldBe((0d, 80d, 20d)); // zero-based overload
+    }
+
+    [Fact]
+    public void Charts_scaled_line_points_in_rect_map_over_domain()
+    {
+        var plot = new Avalonia.Rect(10, 10, 100, 100);
+        var points = Charts.ScaledLinePoints(new[] { -10d, 0d, 10d }, plot, -10, 10);
+
+        points.Count.ShouldBe(3);
+        points[0].ShouldBe(new Avalonia.Point(10, 110));  // -10 at the bottom edge
+        points[1].ShouldBe(new Avalonia.Point(60, 60));   // 0 at the middle
+        points[2].ShouldBe(new Avalonia.Point(110, 10));  // +10 at the top edge
+    }
+
+    [AvaloniaFact]
+    public void Axes_render_without_throwing()
+    {
+        var labels = new[] { "Q1", "Q2", "Q3", "Q4" };
+        var bar = new BarChart { Width = 320, Height = 200, Values = [30d, 45, 28, 60], Labels = labels, ShowAxes = true, YAxisFormat = v => $"${v:N0}" };
+        var line = new LineChart { Width = 320, Height = 200, Values = [30d, 45, 28, 60], Labels = labels, ShowAxes = true };
+
+        var window = Show(new StackPanel { Children = { bar, line } }, ThemeVariant.Light);
+        try
+        {
+            bar.ShowAxes.ShouldBeTrue();
+            bar.Bounds.Width.ShouldBeGreaterThan(0);
+            line.Bounds.Height.ShouldBeGreaterThan(0);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     [AvaloniaFact]
     public void Bar_chart_hover_and_click_hit_test_the_correct_bar()
     {
@@ -421,6 +465,42 @@ public class ChartTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void ItemsSource_projects_items_and_updates_live()
+    {
+        var data = new ObservableCollection<Order>
+        {
+            new("A", 10),
+            new("B", 20),
+        };
+        var bar = new BarChart
+        {
+            ItemsSource = data,
+            ValueSelector = o => ((Order)o).Total,
+            LabelSelector = o => ((Order)o).Name,
+        };
+        var window = Show(bar, ThemeVariant.Light);
+        try
+        {
+            bar.Values.Count.ShouldBe(2);
+            bar.Values[0].ShouldBe(10);
+            bar.ResolvedPoints[1].Label.ShouldBe("B");
+
+            data.Add(new Order("C", 30));
+            Dispatcher.UIThread.RunJobs();
+
+            bar.Values.Count.ShouldBe(3);
+            bar.ResolvedPoints[2].Value.ShouldBe(30);
+            bar.ResolvedPoints[2].Label.ShouldBe("C");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)
     {

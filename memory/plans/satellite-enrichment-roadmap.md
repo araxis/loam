@@ -137,7 +137,7 @@ still hold (snapshot in M1, export in M3, peers in M7).
 | **3.2 (M1)** | Charts: dashboard foundation | per-point snapshot, donut center text, signed values (fix), data labels |
 | **3.3 (M2)** | Charts: interactivity | hit-testing, hover tooltips |
 | **3.4 (M3)** | Live dashboard data | DataGrid live binding, footer aggregates, CSV/export+copy, async states, pagination; **Chart `ItemsSource`** |
-| **3.5 (M4)** | Charts: analytical depth | axes + nice-number scaling, multi-series/stacked, bound interactive legend, time-series |
+| **3.5 (M4)** | Charts: analytical depth | ✅ axes + nice-number scaling and chart `ItemsSource` shipped in **v3.4.0**; remaining: multi-series/stacked, bound interactive legend, time-series |
 | **3.6 (M5)** | Dashboard filtering + chart polish | Pickers: preset rail, visible Clear, adornment icons, TimePicker auto-scroll. Charts: loading/error, animated transitions |
 | **3.7 (M6)** | Grid power | multi-select, header-menu (multi-sort + filtering), sticky header |
 | **3.8 (M7)** | Accessibility pass | chart keyboard nav + per-point peers, DataGrid AutomationPeers |

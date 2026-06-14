@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -989,12 +990,15 @@ public sealed class ComponentsView : UserControl
             Sample("Slice percentages", BuildPieChartDataLabels)),
         PageWithSamples("Charts", "BarChart", "Bar chart rendering from numeric values.",
             Sample("Themed bars", BuildBarChartThemedBars),
+            Sample("Axes", BuildBarChartAxes),
+            Sample("Bound data", BuildBarChartBound),
             Sample("Signed values", BuildBarChartSigned),
             Sample("Data labels", BuildBarChartDataLabels),
             Sample("Interactive", BuildBarChartInteractive),
             Sample("No data", BuildBarChartNoData)),
         PageWithSamples("Charts", "LineChart", "Line and area chart rendering.",
             Sample("Line", BuildLineChartLine),
+            Sample("Axes", BuildLineChartAxes),
             Sample("Area", BuildLineChartArea),
             Sample("Signed values", BuildLineChartSigned),
             Sample("Data labels", BuildLineChartDataLabels)),
@@ -8241,6 +8245,96 @@ public sealed class ComponentsView : UserControl
                         CenterSubText = "sessions",
                     },
                     new ChartLegend { Labels = { "Desktop", "Browser", "Mobile" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartBound()
+    {
+        var data = new ObservableCollection<(string Label, double Value)>
+        {
+            ("Mon", 12d),
+            ("Tue", 19d),
+            ("Wed", 8d),
+            ("Thu", 22d),
+        };
+        var day = data.Count;
+
+        var chart = new BarChart
+        {
+            Width = 320,
+            Height = 180,
+            ShowAxes = true,
+            ItemsSource = data,
+            ValueSelector = o => ((ValueTuple<string, double>)o).Item2,
+            LabelSelector = o => ((ValueTuple<string, double>)o).Item1,
+        };
+
+        var add = new LoamButton { Content = "Add point", Variant = Variant.Outlined };
+        add.Click += (_, _) =>
+        {
+            day++;
+            data.Add(($"D{day}", 8 + day * 4));
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Bound to an ObservableCollection via selectors; adding items updates the chart live.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    chart,
+                    add,
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartAxes()
+    {
+        var revenue = new[] { 30d, 45d, 28d, 60d, 42d };
+        var labels = new[] { "Q1", "Q2", "Q3", "Q4", "Q5" };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "ShowAxes adds a nice-number Y-axis and a category X-axis.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BarChart { Width = 340, Height = 200, Values = revenue, Labels = labels, ShowAxes = true, YAxisFormat = v => $"${v:N0}k" },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildLineChartAxes()
+    {
+        var trend = new[] { 30d, 45d, 28d, 60d, 42d, 70d };
+        var labels = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun" };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Axes turn the line into a readable, scaled plot.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new LineChart { Width = 340, Height = 200, Values = trend, Labels = labels, ShowAxes = true, Area = true },
                 },
             },
         };

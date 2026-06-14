@@ -6,6 +6,20 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.4.0
+
+**`Loam.Charts` analytical depth** — axes and data binding (additive; no breaking changes):
+
+- **Axes.** `BarChart`/`LineChart` share a new `CartesianChartBase` with an opt-in `ShowAxes` that draws a
+  nice-number numeric Y-axis (ticks + labels) and a category X-axis (from `Labels`), with `Min`/`Max`,
+  `YAxisTickCount`, and `YAxisFormat` controls. Off by default, so existing charts are unchanged. New pure
+  `Charts.NiceScale` helper (1/2/5×10ⁿ rounding); bar/line scaling unified over a value-axis domain (the
+  signed-value helpers generalized), so axes, signed data, and explicit ranges share one path.
+- **`ItemsSource` binding** (all charts): project items via `ValueSelector`/`LabelSelector`/`ColorSelector`;
+  an `INotifyCollectionChanged` source (e.g. `ObservableCollection<T>`) refreshes the chart live.
+
+_Multi-series/stacked charts and the chart-bound interactive legend are the next charts milestone._
+
 ## 3.3.0
 
 **`Loam.Charts` interactivity** — charts become pointer-aware (additive; default-on tooltips):
