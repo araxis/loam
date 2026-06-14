@@ -83,6 +83,10 @@ scrollable hour and minute columns. Row selection updates the pending time, Canc
 changing `Time`, and OK commits the pending value and raises `TimeSelected`. Disabled pickers suppress
 pointer, keyboard, and `OpenPicker()` flyout opening while still allowing programmatic time updates.
 
+When the flyout opens, both columns automatically scroll to center the selected (or closest) hour and
+minute, so a late time such as `22:55` is in view immediately instead of off-screen at the top. During
+keyboard navigation the focused row is kept in view.
+
 ### Properties
 
 | Property | Type | Default | Description |

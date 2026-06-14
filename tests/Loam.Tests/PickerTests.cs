@@ -284,6 +284,127 @@ public class PickerTests
         button.IsFocused.ShouldBeTrue();
     }
 
+    // Find a time column by its heading ("Hour"/"Minute") rather than child order, so the test does
+    // not silently bind to the wrong column if the layout is reordered or another scroller is added.
+    private static ScrollViewer TimeColumn(Paper paper, string heading) =>
+        paper.GetVisualDescendants().OfType<ScrollViewer>()
+            .First(sv => sv.Parent is StackPanel column && column.Children.OfType<Text>().Any(t => t.Text == heading));
+
+    private static void ShouldBeWithinViewport(ScrollViewer column, Border row)
+    {
+        var top = row.Bounds.Y - column.Offset.Y;
+        top.ShouldBeGreaterThanOrEqualTo(-0.5);
+        (top + row.Bounds.Height).ShouldBeLessThanOrEqualTo(column.Viewport.Height + 0.5);
+    }
+
+    private static void ShouldBeCenteredIn(ScrollViewer column, Border row)
+    {
+        var centerInViewport = (row.Bounds.Y - column.Offset.Y) + (row.Bounds.Height / 2);
+        centerInViewport.ShouldBe(column.Viewport.Height / 2, 3.0);
+    }
+
+    // BringIntoView only guarantees the row is visible (it may align to an edge), so assert overlap, not containment.
+    private static void ShouldOverlapViewport(ScrollViewer column, Border row)
+    {
+        var top = row.Bounds.Y - column.Offset.Y;
+        (top + row.Bounds.Height).ShouldBeGreaterThan(0);  // row bottom is below the viewport top
+        top.ShouldBeLessThan(column.Viewport.Height);      // row top is above the viewport bottom
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_scrolls_columns_to_selected_time_on_open()
+    {
+        var picker = new Loam.Controls.TimePicker { Time = new TimeSpan(22, 55, 0) };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        paper.GetVisualDescendants().OfType<ScrollViewer>().Count().ShouldBe(2);
+
+        var hourColumn = TimeColumn(paper, "Hour");
+        var minuteColumn = TimeColumn(paper, "Minute");
+        hourColumn.Offset.Y.ShouldBeGreaterThan(0);   // hour 22 scrolled down
+        minuteColumn.Offset.Y.ShouldBeGreaterThan(0); // minute 55 scrolled down
+
+        // ...and the selected rows are actually visible in the viewport, not just "some offset applied".
+        ShouldBeWithinViewport(hourColumn, PopupRow(paper, "Hour 22"));
+        ShouldBeWithinViewport(minuteColumn, PopupRow(paper, "Minute 55"));
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_centers_mid_list_selection_in_viewport()
+    {
+        var picker = new Loam.Controls.TimePicker { Time = new TimeSpan(12, 30, 0) };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        // Mid-list values are not clamped, so the centering math lands them at the viewport center.
+        ShouldBeCenteredIn(TimeColumn(paper, "Hour"), PopupRow(paper, "Hour 12"));
+        ShouldBeCenteredIn(TimeColumn(paper, "Minute"), PopupRow(paper, "Minute 30"));
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_does_not_scroll_when_selection_at_top()
+    {
+        var picker = new Loam.Controls.TimePicker { Time = new TimeSpan(0, 0, 0) };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        TimeColumn(paper, "Hour").Offset.Y.ShouldBe(0);   // hour 0 already at the top
+        TimeColumn(paper, "Minute").Offset.Y.ShouldBe(0); // minute 0 already at the top
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_defaults_to_top_when_time_is_null()
+    {
+        var picker = new Loam.Controls.TimePicker(); // Time is null -> Open() falls back to 00:00
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        TimeColumn(paper, "Hour").Offset.Y.ShouldBe(0);
+        TimeColumn(paper, "Minute").Offset.Y.ShouldBe(0);
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_scrolls_to_closest_stepped_minute()
+    {
+        // 18:50 with a 15-minute step rounds down to minute 45; that row must be the one brought into view.
+        var picker = new Loam.Controls.TimePicker { Time = new TimeSpan(18, 50, 0), MinuteStep = 15 };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var minuteColumn = TimeColumn(paper, "Minute");
+        minuteColumn.Offset.Y.ShouldBeGreaterThan(0);
+        ShouldBeWithinViewport(minuteColumn, PopupRow(paper, "Minute 45"));
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_keyboard_focus_brings_row_into_view()
+    {
+        var picker = new Loam.Controls.TimePicker { Time = new TimeSpan(0, 0, 0) };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var hourColumn = TimeColumn(paper, "Hour");
+        hourColumn.Offset.Y.ShouldBe(0); // starts at the top (hour 0)
+
+        PopupRow(paper, "Hour 20").Focus();
+        Dispatcher.UIThread.RunJobs();
+        hourColumn.Offset.Y.ShouldBeGreaterThan(0);                     // focusing a far row scrolls
+        ShouldOverlapViewport(hourColumn, PopupRow(paper, "Hour 20")); // ...and it is now in view
+    }
+
     [AvaloniaFact]
     public void DatePicker_display_shows_placeholder_then_formatted_date()
     {
@@ -1216,7 +1337,7 @@ public class PickerTests
         foreach (var scroller in scrollers)
         {
             scroller.HorizontalScrollBarVisibility.ShouldBe(ScrollBarVisibility.Disabled);
-            scroller.VerticalScrollBarVisibility.ShouldBe(ScrollBarVisibility.Disabled);
+            scroller.VerticalScrollBarVisibility.ShouldBe(ScrollBarVisibility.Hidden); // scrollable, no visible scrollbar
         }
 
         var hour = PopupRow(paper, "Hour 09");

@@ -6,6 +6,15 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.11.0
+
+**`Loam.Pickers` TimePicker auto-scrolls to the selected time.** When the flyout opens, the hour and
+minute columns now scroll to center the selected (or closest) value instead of starting at the top, so a
+late time like `22:55` is visible immediately. The focused row is also kept in view during keyboard
+navigation. This required making the columns actually scrollable (the vertical scroll mode was previously
+`Disabled`, which pinned content to the viewport); they are now `Hidden` — scrollable with no visible
+scrollbar.
+
 ## 3.10.0
 
 **`Loam.Pickers` DateRangePicker quick-select presets.** Set `ShowPresets` to add a one-click shortcut
