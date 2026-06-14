@@ -6,7 +6,7 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
-## 3.5.0 (in progress)
+## 3.5.0
 
 **`Loam.Charts` multi-series.** Set `Series` (a list of `ChartSeries`) on bar/line charts:
 
