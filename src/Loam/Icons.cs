@@ -169,6 +169,12 @@ public static class Icons
             /// <summary>Arrow forward.</summary>
             public const string ArrowForward = "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z";
 
+            /// <summary>First page (skip to start).</summary>
+            public const string FirstPage = "M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6 1.41-1.41zM6 6h2v12H6z";
+
+            /// <summary>Last page (skip to end).</summary>
+            public const string LastPage = "M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6-1.41 1.41zM16 6h2v12h-2z";
+
             /// <summary>Edit / pencil.</summary>
             public const string Edit = "M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z";
 

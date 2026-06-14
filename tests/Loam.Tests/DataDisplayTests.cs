@@ -164,6 +164,56 @@ public class DataDisplayTests
         lines.ShouldContain("Alice,25");
     }
 
+    [AvaloniaFact]
+    public void DataGrid_loading_state_shows_skeleton_and_hides_rows()
+    {
+        var grid = new DataGrid<Person> { IsLoading = true };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Skeleton>().ShouldNotBeEmpty();
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldNotContain("Alice");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_error_state_shows_message_and_retry()
+    {
+        var grid = new DataGrid<Person> { ErrorText = "Could not load", OnRetry = () => { } };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldContain("Could not load");
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldNotContain("Alice");
+        grid.GetVisualDescendants().OfType<Loam.Controls.Button>().Any(b => (b.Content as string) == "Retry").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Pagination_shows_first_last_buttons_and_range_summary()
+    {
+        var pager = new Pagination
+        {
+            Count = 5,
+            Selected = 2,
+            PageSize = 10,
+            TotalItems = 48,
+            ShowFirstLast = true,
+            ShowRange = true,
+        };
+        Show(pager);
+        Dispatcher.UIThread.RunJobs();
+
+        pager.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldContain("Showing 11–20 of 48");
+        var iconNames = pager.GetVisualDescendants().OfType<IconButton>()
+            .Select(b => AutomationProperties.GetName(b))
+            .ToList();
+        iconNames.ShouldContain("First page");
+        iconNames.ShouldContain("Last page");
+    }
+
     [Fact]
     public void DataGrids_group_preserves_first_appearance_order()
     {

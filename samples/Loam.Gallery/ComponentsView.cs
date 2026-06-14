@@ -887,6 +887,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.",
             Sample("Sortable · filtered · paged", BuildDataGridPaged),
             Sample("Live data — bound to an ObservableCollection", BuildDataGridLive),
+            Sample("Async states — loading / error / ready", BuildDataGridAsyncStates),
             Sample("Grouped with aggregate — click a header to collapse", BuildDataGridGrouped),
             Sample("Frozen first column — scroll the rest horizontally", BuildDataGridFrozen),
             Sample("Editable cells", BuildDataGridEditable),
@@ -6821,6 +6822,44 @@ public sealed class ComponentsView : UserControl
         });
         grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
         grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
+    }
+
+    private static StackPanel BuildDataGridAsyncStates()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            MaxWidth = 720,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            SkeletonRowCount = 5,
+        };
+        AddDessertColumns(grid);
+        grid.Items = SampleDesserts();
+
+        var loading = new LoamButton { Content = "Loading", Variant = Variant.Outlined };
+        loading.Click += (_, _) => { grid.ErrorText = null; grid.IsLoading = true; };
+        var error = new LoamButton { Content = "Error", Variant = Variant.Outlined };
+        error.Click += (_, _) =>
+        {
+            grid.IsLoading = false;
+            grid.OnRetry = () => grid.ErrorText = null;
+            grid.ErrorText = "Couldn't load desserts.";
+        };
+        var ready = new LoamButton { Content = "Ready", Variant = Variant.Text };
+        ready.Click += (_, _) => { grid.IsLoading = false; grid.ErrorText = null; };
+
+        return new StackPanel
+        {
+            Spacing = 10,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Toggle the loading skeleton, an error with Retry, or the loaded data.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                grid,
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { loading, error, ready } },
+            },
+        };
     }
 
     private static StackPanel BuildDataGridLive()
