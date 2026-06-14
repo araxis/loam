@@ -6,6 +6,15 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.17.0
+
+**`Loam.Pickers` field-picker validation hooks.** `DatePicker`, `TimePicker`, and `DateRangePicker` gain
+`Required` (with `RequiredText`), a `Validation` delegate (returns an error message or `null`), and a public
+`Validate()` — mirroring `TextField`. Validation runs automatically whenever the value changes (flyout OK,
+editable commit, `Clear()`, programmatic) and drives `Error`/`ErrorText`. It self-gates so a manually-set
+`Error`/`ErrorText` is preserved when neither `Required` nor `Validation` is configured, and in editable mode a
+parse/format error takes precedence over business validation. Additive and off by default.
+
 ## 3.16.0
 
 **`Loam.Pickers` ColorPicker editable hex entry.** Set `Editable` on `ColorPicker` to type or paste a hex

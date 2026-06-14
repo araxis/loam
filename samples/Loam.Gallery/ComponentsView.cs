@@ -828,6 +828,7 @@ public sealed class ComponentsView : UserControl
             Sample("Variants", BuildDatePickerVariants),
             Sample("Selected & custom format", BuildDatePickerSelected),
             Sample("Editable text entry", BuildDatePickerEditable),
+            Sample("Required & validation", BuildDatePickerValidation),
             Sample("Clearable", BuildDatePickerClearable),
             Sample("Leading icon", BuildDatePickerAdornment),
             Sample("Constrained & floating label", BuildDatePickerConstrained),
@@ -7913,6 +7914,39 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Formatted display text",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerValidation()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Required",
+                    Required = true,
+                    RequiredText = "A date is required",
+                    HelperText = "Shows an error until a date is chosen",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Weekdays only",
+                    Editable = true,
+                    DateFormat = "yyyy-MM-dd",
+                    Validation = d => d is { } x && (x.DayOfWeek == DayOfWeek.Saturday || x.DayOfWeek == DayOfWeek.Sunday)
+                        ? "Pick a weekday"
+                        : null,
+                    HelperText = "Weekends are rejected on commit",
                 },
             },
         };

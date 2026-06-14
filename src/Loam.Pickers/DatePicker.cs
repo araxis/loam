@@ -92,6 +92,18 @@ public class DatePicker : TemplatedControl
     public static readonly StyledProperty<string> InvalidDateTextProperty =
         AvaloniaProperty.Register<DatePicker, string>(nameof(InvalidDateText), "Invalid date");
 
+    /// <summary>Identifies the <see cref="Required"/> property.</summary>
+    public static readonly StyledProperty<bool> RequiredProperty =
+        AvaloniaProperty.Register<DatePicker, bool>(nameof(Required));
+
+    /// <summary>Identifies the <see cref="RequiredText"/> property.</summary>
+    public static readonly StyledProperty<string> RequiredTextProperty =
+        AvaloniaProperty.Register<DatePicker, string>(nameof(RequiredText), "Required");
+
+    /// <summary>Identifies the <see cref="Validation"/> property.</summary>
+    public static readonly StyledProperty<Func<DateTime?, string?>?> ValidationProperty =
+        AvaloniaProperty.Register<DatePicker, Func<DateTime?, string?>?>(nameof(Validation));
+
     private Border? _box;
     private IconButton? _clear;
     private IconButton? _calendarButton;
@@ -149,6 +161,27 @@ public class DatePicker : TemplatedControl
     {
         get => GetValue(InvalidDateTextProperty);
         set => SetValue(InvalidDateTextProperty, value);
+    }
+
+    /// <summary>When true, a null <see cref="Date"/> fails <see cref="Validate"/> with <see cref="RequiredText"/>.</summary>
+    public bool Required
+    {
+        get => GetValue(RequiredProperty);
+        set => SetValue(RequiredProperty, value);
+    }
+
+    /// <summary>Error message used when <see cref="Required"/> fails.</summary>
+    public string RequiredText
+    {
+        get => GetValue(RequiredTextProperty);
+        set => SetValue(RequiredTextProperty, value);
+    }
+
+    /// <summary>A validator returning an error message (or null when valid) for the current <see cref="Date"/>.</summary>
+    public Func<DateTime?, string?>? Validation
+    {
+        get => GetValue(ValidationProperty);
+        set => SetValue(ValidationProperty, value);
     }
 
     /// <summary>The selected date (two-way). Mirrors the reference API's <c>Date</c>.</summary>
@@ -268,6 +301,32 @@ public class DatePicker : TemplatedControl
 
     /// <summary>Clears the selected date.</summary>
     public void Clear() => Date = null;
+
+    /// <summary>
+    /// Runs <see cref="Required"/>/<see cref="Validation"/>, updates <see cref="Error"/>/<see cref="ErrorText"/>,
+    /// and returns the error (or null). A no-op that preserves any manually-set error when neither is configured.
+    /// </summary>
+    public string? Validate()
+    {
+        if (!Required && Validation is null)
+        {
+            return ErrorText;
+        }
+
+        string? error = null;
+        if (Required && Date is null)
+        {
+            error = RequiredText;
+        }
+        else if (Validation is { } validate)
+        {
+            error = validate(Date);
+        }
+
+        Error = error is not null;
+        ErrorText = error;
+        return error;
+    }
 
     /// <summary>
     /// Parses typed date text. Returns <c>true</c> when the text is empty (yielding <paramref name="value"/> =
@@ -438,6 +497,7 @@ public class DatePicker : TemplatedControl
         Error = false;
         Date = parsed;
         UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        Validate();             // business validation runs even on a same-value commit
         DateSelected?.Invoke(parsed);
     }
 
@@ -479,6 +539,12 @@ public class DatePicker : TemplatedControl
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
             UpdateLabel();
+        }
+
+        if (change.Property == DateProperty || change.Property == RequiredProperty ||
+            change.Property == ValidationProperty || change.Property == RequiredTextProperty)
+        {
+            Validate();
         }
 
         if (change.Property == AdornmentIconProperty)
@@ -597,6 +663,7 @@ public class DatePicker : TemplatedControl
             Error = false; // picking a valid date clears any prior typed-input error
             Date = pending;
             UpdateDisplay();
+            Validate();    // re-run business validation on the committed value (also covers same-value picks)
             DateSelected?.Invoke(Date);
             _flyout?.Hide();
             ApplyBoxChrome();

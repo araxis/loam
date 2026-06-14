@@ -94,6 +94,18 @@ public class TimePicker : TemplatedControl
     public static readonly StyledProperty<string> InvalidTimeTextProperty =
         AvaloniaProperty.Register<TimePicker, string>(nameof(InvalidTimeText), "Invalid time");
 
+    /// <summary>Identifies the <see cref="Required"/> property.</summary>
+    public static readonly StyledProperty<bool> RequiredProperty =
+        AvaloniaProperty.Register<TimePicker, bool>(nameof(Required));
+
+    /// <summary>Identifies the <see cref="RequiredText"/> property.</summary>
+    public static readonly StyledProperty<string> RequiredTextProperty =
+        AvaloniaProperty.Register<TimePicker, string>(nameof(RequiredText), "Required");
+
+    /// <summary>Identifies the <see cref="Validation"/> property.</summary>
+    public static readonly StyledProperty<Func<TimeSpan?, string?>?> ValidationProperty =
+        AvaloniaProperty.Register<TimePicker, Func<TimeSpan?, string?>?>(nameof(Validation));
+
     private Border? _box;
     private IconButton? _clear;
     private IconButton? _clockButton;
@@ -166,6 +178,27 @@ public class TimePicker : TemplatedControl
     {
         get => GetValue(InvalidTimeTextProperty);
         set => SetValue(InvalidTimeTextProperty, value);
+    }
+
+    /// <summary>When true, a null <see cref="Time"/> fails <see cref="Validate"/> with <see cref="RequiredText"/>.</summary>
+    public bool Required
+    {
+        get => GetValue(RequiredProperty);
+        set => SetValue(RequiredProperty, value);
+    }
+
+    /// <summary>Error message used when <see cref="Required"/> fails.</summary>
+    public string RequiredText
+    {
+        get => GetValue(RequiredTextProperty);
+        set => SetValue(RequiredTextProperty, value);
+    }
+
+    /// <summary>A validator returning an error message (or null when valid) for the current <see cref="Time"/>.</summary>
+    public Func<TimeSpan?, string?>? Validation
+    {
+        get => GetValue(ValidationProperty);
+        set => SetValue(ValidationProperty, value);
     }
 
     /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
@@ -271,6 +304,32 @@ public class TimePicker : TemplatedControl
 
     /// <summary>Clears the selected time.</summary>
     public void Clear() => Time = null;
+
+    /// <summary>
+    /// Runs <see cref="Required"/>/<see cref="Validation"/>, updates <see cref="Error"/>/<see cref="ErrorText"/>,
+    /// and returns the error (or null). A no-op that preserves any manually-set error when neither is configured.
+    /// </summary>
+    public string? Validate()
+    {
+        if (!Required && Validation is null)
+        {
+            return ErrorText;
+        }
+
+        string? error = null;
+        if (Required && Time is null)
+        {
+            error = RequiredText;
+        }
+        else if (Validation is { } validate)
+        {
+            error = validate(Time);
+        }
+
+        Error = error is not null;
+        ErrorText = error;
+        return error;
+    }
 
     /// <summary>
     /// Parses typed time text. Returns <c>true</c> when the text is empty (yielding <paramref name="value"/> =
@@ -451,6 +510,7 @@ public class TimePicker : TemplatedControl
         Error = false;
         Time = parsed;
         UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        Validate();             // business validation runs even on a same-value commit
         TimeSelected?.Invoke(parsed);
     }
 
@@ -476,6 +536,12 @@ public class TimePicker : TemplatedControl
         if (change.Property == TimeProperty || change.Property == ClearableProperty)
         {
             UpdateClearButton();
+        }
+
+        if (change.Property == TimeProperty || change.Property == RequiredProperty ||
+            change.Property == ValidationProperty || change.Property == RequiredTextProperty)
+        {
+            Validate();
         }
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
@@ -603,6 +669,7 @@ public class TimePicker : TemplatedControl
             Error = false; // picking a valid time clears any prior typed-input error
             Time = new TimeSpan(pendingHour, pendingMinute, 0);
             UpdateDisplay();
+            Validate();    // re-run business validation on the committed value (also covers same-value picks)
             TimeSelected?.Invoke(Time);
             _flyout?.Hide();
             ApplyBoxChrome();

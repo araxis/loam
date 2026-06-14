@@ -17,6 +17,8 @@ Set `Clearable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to surface a
 
 Set `AdornmentIcon` (a glyph from `Loam.Icons`, e.g. `Icons.Material.Filled.Person`) on the same three field pickers to show a leading icon at the start of the field. The value text, resting label, and floating label all indent to the icon's right so nothing overlaps, across every variant.
 
+`DatePicker`, `TimePicker`, and `DateRangePicker` also share validation members: set `Required` (with optional `RequiredText`, default `"Required"`) and/or `Validation` (a `Func` returning an error message, or `null` when valid) and call — or let the control call — `Validate()`. Validation runs automatically whenever the value changes (covering flyout OK, editable commit, `Clear()`, and programmatic updates) and drives `Error`/`ErrorText`. It self-gates: when neither `Required` nor `Validation` is set, any manually-assigned `Error`/`ErrorText` is left untouched. In editable mode a parse/format error takes precedence over business validation.
+
 Set `Editable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to let the user type the value directly into the field. The text is parsed and committed on Enter or focus loss — exact format first (`DateFormat`/`TimeFormat`), then a loose current-culture parse — and validated against `MinDate`/`MaxDate` (for the date pickers); unparseable or out-of-range input leaves the value unchanged and shows `InvalidDateText`/`InvalidTimeText`/`InvalidRangeText` in the error slot. `DateRangePicker` accepts a `"start – end"` range (also `" to "` or `" - "`, a single date sets only `Start`, and the pair is auto-ordered). The trailing icon (now a button) and `Alt+Down` still open the flyout, which stays in sync with the typed value.
 
 ---
@@ -49,6 +51,10 @@ still allowing programmatic date updates.
 | `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the value text and label indent to its right. |
 | `Editable` | `bool` | `false` | Lets the user type a date into the field. Text is committed on Enter or focus loss; the trailing calendar icon (or Alt+Down) still opens the flyout. |
 | `InvalidDateText` | `string` | `"Invalid date"` | `ErrorText` shown when typed text cannot be parsed or falls outside `MinDate`/`MaxDate` (editable mode). |
+| `Required` | `bool` | `false` | When set, a `null` `Date` fails validation with `RequiredText`. Shared by all three date/time field pickers. |
+| `RequiredText` | `string` | `"Required"` | Error message used when `Required` fails. |
+| `Validation` | `Func<DateTime?, string?>?` | `null` | Returns an error message (or `null` when valid) for the current value; run on every value change. |
+| `Validate()` | `string?` | — | Runs `Required`/`Validation`, updates `Error`/`ErrorText`, returns the error. No-op when neither is configured. |
 | `TryParseDate(text, format, out value)` _(static)_ | `bool` | — | Parses typed text: `true` for empty (→ `null`) or text parseable via `format` (exact) or the current culture (loose); `false` otherwise. |
 | `PickerTitle` | `string` | `"Select date"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
@@ -114,6 +120,10 @@ keyboard navigation the focused row is kept in view.
 | `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the value text and label indent to its right. |
 | `Editable` | `bool` | `false` | Lets the user type a time into the field. Text is committed on Enter or focus loss; the trailing clock icon (or Alt+Down) still opens the flyout. |
 | `InvalidTimeText` | `string` | `"Invalid time"` | `ErrorText` shown when typed text cannot be parsed as a time (editable mode). |
+| `Required` | `bool` | `false` | When set, a `null` `Time` fails validation with `RequiredText`. |
+| `RequiredText` | `string` | `"Required"` | Error message used when `Required` fails. |
+| `Validation` | `Func<TimeSpan?, string?>?` | `null` | Returns an error message (or `null` when valid) for the current value; run on every value change. |
+| `Validate()` | `string?` | — | Runs `Required`/`Validation`, updates `Error`/`ErrorText`, returns the error. No-op when neither is configured. |
 | `TryParseTime(text, format, out value)` _(static)_ | `bool` | — | Parses typed text: `true` for empty (→ `null`) or text parseable via `format` (exact), the current culture, or `TimeSpan`; `false` otherwise. |
 | `PickerTitle` | `string` | `"Select time"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
@@ -246,6 +256,10 @@ while still allowing programmatic range updates.
 | `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the range text and label indent to its right. |
 | `Editable` | `bool` | `false` | Lets the user type a range (`"start – end"`, also `" to "`/`" - "`) into the field; a single date sets only `Start`. Committed on Enter or focus loss; the trailing calendar icon (or Alt+Down) still opens the flyout. |
 | `InvalidRangeText` | `string` | `"Invalid range"` | `ErrorText` shown when typed text cannot be parsed or is out of range (editable mode). |
+| `Required` | `bool` | `false` | When set, a missing `Start` fails validation with `RequiredText`. |
+| `RequiredText` | `string` | `"Required"` | Error message used when `Required` fails. |
+| `Validation` | `Func<DateTime?, DateTime?, string?>?` | `null` | Returns an error message (or `null` when valid) for the current `Start`/`End`; run on every value change. |
+| `Validate()` | `string?` | — | Runs `Required`/`Validation`, updates `Error`/`ErrorText`, returns the error. No-op when neither is configured. |
 | `TryParseRange(text, format, out start, out end)` _(static)_ | `bool` | — | Parses typed range text (empty → both `null`; single date → `start` only; two dates → auto-ordered). Each half uses `DatePicker.TryParseDate`. |
 | `ShowPresets` | `bool` | `false` | Shows a quick-select rail in the flyout listing `Presets` (or `DefaultPresets` when none are set). |
 | `Presets` | `AvaloniaList<DateRangePreset>` | empty | Custom quick-select shortcuts. When empty and `ShowPresets` is `true`, `DefaultPresets` is used. |
