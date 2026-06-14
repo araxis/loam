@@ -7,6 +7,38 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.2 — Charts enrichment, first slice (snapshot + donut center text + signed values)
+
+First slice of the value/demand-first enrichment roadmap ([satellite-enrichment-roadmap.md](../plans/satellite-enrichment-roadmap.md)).
+All additive in `src/Loam.Charts/Charts.cs`; no breaking changes.
+
+**Done**
+- **Per-point snapshot:** `public readonly record struct ChartPoint(int Index, double Value, double Percent,
+  string? Label, Color Color)`; `ChartBase.Labels` + `protected internal ResolvedPoints`, rebuilt on
+  Values/Colors/Labels/visuals change. `UpdateAutomation` now appends positive-point labels when present
+  (kept the bare "{n} value(s)"/"No data" format when no labels — existing tests rely on it).
+- **Donut center text:** `PieChart.CenterText`/`CenterSubText`/`CenterValue`/`CenterValueFormat` drawn in
+  the hole with `FormattedText` (MaxTextWidth + ellipsis trimming), only when `Donut`.
+- **Signed values:** opt-in `AllowNegative` on `BarChart`/`LineChart` (default false → unchanged clamping).
+  New pure helpers in static `Charts`: `SignedDomain`, `ZeroBaselineOffset` (public), `SignedBarLayout`
+  (public), `ScaledLinePoints` (internal). Bars grow up/down from a drawn zero baseline; signed lines plot
+  around it and Area fills to it.
+- Gallery: +3 samples (PieChart "Donut with center total", Bar/Line "Signed values"). Docs: charts.md
+  property tables + examples, changelog 3.2.0 entry. 7 new xUnit/headless tests in ChartTests.cs.
+
+**Decisions**
+- Kept default clamping behavior (AllowNegative defaults false) so existing all-positive callers and the
+  `Charts_math_clamps_negative_values` test are unaffected — signed math lives in *new* helpers, not in
+  `BarHeights`/`SliceSweeps`/`LinePoints`.
+- Hoisted inline `string[]` label literals to locals to satisfy CA1861 under TreatWarningsAsErrors.
+
+**Verified:** Release build 0/0; full suite **465 passing** (458 + 7). **Gap:** donut-center-text layout
+and signed-bar baseline are render-without-throw + math-tested headlessly, not pixel-verified in the GUI.
+
+**Next:** 3.3 — chart hit-testing + hover tooltips (builds on the snapshot).
+
+---
+
 ## 2026-06-14 — 3.1 cycle — Package split Phase C (versioning, CI, guard test, docs)
 
 **Done**

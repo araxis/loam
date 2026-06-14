@@ -12,11 +12,22 @@ Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineCh
 
 Chart visuals are theme-aware by default. If `Colors` is `null`, series colors resolve from the active light/dark role tokens. Supplying `Colors` overrides theme roles for that chart. `Charts.Palette` remains available as a compatibility fallback for custom math/rendering scenarios.
 
+### Per-point labels and snapshot (all charts)
+
+All chart controls share two members on their `ChartBase`:
+
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `Labels` | `IReadOnlyList<string>?` | `null` | Optional per-point labels aligned by index to `Values`. When set, they enrich the chart's accessibility help text (e.g. `"3 values: Web, Direct, Mobile"`). |
+| `ResolvedPoints` | `IReadOnlyList<ChartPoint>` | — | The current per-point snapshot, rebuilt whenever `Values`, `Colors`, or `Labels` change. |
+
+`ChartPoint` is a `readonly record struct (int Index, double Value, double Percent, string? Label, Color Color)`, where `Percent` is the value's share of the positive total (0 for non-positive values). It is the single projection shared by rendering, accessibility, and (in later releases) tooltips and legends, so visible and spoken output never drift.
+
 ---
 
 ## PieChart
 
-Draws one filled slice per positive value, sized by its share of the positive-value total. Negative values are clamped to zero. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`. Empty and zero-only charts render a tokenized `No data` state instead of a blank surface.
+Draws one filled slice per positive value, sized by its share of the positive-value total. Negative values are clamped to zero. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`, and fill the hole with a KPI total via the `Center*` properties. Empty and zero-only charts render a tokenized `No data` state instead of a blank surface.
 
 ### Properties
 
@@ -26,6 +37,10 @@ Draws one filled slice per positive value, sized by its share of the positive-va
 | `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. When `null`, defaults resolve from theme role tokens; `Charts.Palette` is only the compatibility fallback. |
 | `Donut` | `bool` | `false` | When `true`, renders a center hole to produce a donut chart. |
 | `HoleRatio` | `double` | `0.6` | Hole radius as a fraction of the chart radius. Clamped to 0–0.95. |
+| `CenterText` | `string?` | `null` | Primary text drawn in the donut hole. Ignored unless `Donut` is `true`. |
+| `CenterSubText` | `string?` | `null` | Secondary caption drawn under `CenterText`. |
+| `CenterValue` | `double?` | `null` | Value formatted by `CenterValueFormat`; when `null`, the positive-value total is used. |
+| `CenterValueFormat` | `string?` | `null` | .NET numeric format string (e.g. `"C0"`, `"N0"`) rendered in the hole when `CenterText` is not set. |
 
 ### Example
 
@@ -62,20 +77,33 @@ new PieChart
         Color.Parse("#F67280"),
     },
 }
+
+// Donut with a KPI total in the hole
+new PieChart
+{
+    Width = 180,
+    Height = 180,
+    Donut = true,
+    Values = new[] { 540d, 320d, 380d },
+    Labels = new[] { "Desktop", "Browser", "Mobile" },
+    CenterValueFormat = "N0", // formats the positive-value total (1,240)
+    CenterSubText = "sessions",
+}
 ```
 
 ---
 
 ## BarChart
 
-Renders a vertical bar per value, scaled against the largest positive value in the series. Negative values are clamped to zero. The default measured size is 320 x 180. Bars are drawn with tokenized grid lines and rounded corners. Empty and zero-only charts render the shared `No data` state.
+Renders a vertical bar per value, scaled against the largest positive value in the series. By default negative values are clamped to zero; set `AllowNegative = true` to draw them as bars below a zero baseline (for P&L, variance, net-flow, and similar diverging data). The default measured size is 320 x 180. Bars are drawn with tokenized grid lines and rounded corners. Empty and zero-only charts render the shared `No data` state.
 
 ### Properties
 
 | Member | Type | Default | Description |
 |---|---|---|---|
-| `Values` | `IReadOnlyList<double>` | `[]` | Data values; each entry becomes one bar and negative values are clamped to zero. |
+| `Values` | `IReadOnlyList<double>` | `[]` | Data values; each entry becomes one bar. Negative values are clamped to zero unless `AllowNegative` is set. |
 | `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. When `null`, defaults resolve from theme role tokens; `Charts.Palette` is only the compatibility fallback. |
+| `AllowNegative` | `bool` | `false` | When `true`, negative values render as bars below a tokenized zero baseline instead of being clamped to zero. |
 
 ### Example
 
@@ -85,6 +113,16 @@ new BarChart
     Width = 320,
     Height = 180,
     Values = new[] { 12d, 48d, 30d, 65d, 22d },
+}
+
+// Signed (diverging) data with a zero baseline
+new BarChart
+{
+    Width = 320,
+    Height = 180,
+    AllowNegative = true,
+    Values = new[] { 12d, -5d, 8d, -3d, 15d },
+    Labels = new[] { "Jan", "Feb", "Mar", "Apr", "May" },
 }
 
 // Visible empty state
@@ -100,15 +138,16 @@ new BarChart
 
 ## LineChart
 
-Plots values as a connected polyline with a dot at each data point, scaled against the largest positive value. Negative values are clamped to zero. Set `Area = true` to fill the region beneath the line with a tokenized translucent wash. Empty and zero-only charts render the shared `No data` state; a single positive value renders as one centered dot.
+Plots values as a connected polyline with a dot at each data point, scaled against the largest positive value. By default negative values are clamped to zero; set `AllowNegative = true` to plot them below a zero baseline. Set `Area = true` to fill the region beneath the line with a tokenized translucent wash (filled to the zero baseline when `AllowNegative` is set). Empty and zero-only charts render the shared `No data` state; a single positive value renders as one centered dot.
 
 ### Properties
 
 | Member | Type | Default | Description |
 |---|---|---|---|
-| `Values` | `IReadOnlyList<double>` | `[]` | Data values plotted left-to-right; negative values are clamped to zero. |
+| `Values` | `IReadOnlyList<double>` | `[]` | Data values plotted left-to-right. Negative values are clamped to zero unless `AllowNegative` is set. |
 | `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit series colors. Index 0 is used for the line and fill. When `null`, defaults resolve from theme role tokens; `Charts.Palette` is only the compatibility fallback. |
 | `Area` | `bool` | `false` | When `true`, fills the area beneath the line at 18 % opacity. |
+| `AllowNegative` | `bool` | `false` | When `true`, negative values plot below a tokenized zero baseline instead of being clamped to zero. |
 
 ### Example
 
@@ -119,6 +158,16 @@ new LineChart
     Height = 180,
     Values = new[] { 10d, 35d, 20d, 55d, 40d, 70d },
     Area = true,
+}
+
+// Signed values around a zero baseline
+new LineChart
+{
+    Width = 320,
+    Height = 180,
+    AllowNegative = true,
+    Area = true,
+    Values = new[] { 4d, -2d, 6d, -1d, 3d, -4d },
 }
 ```
 
@@ -135,6 +184,9 @@ Static class containing the compatibility series color palette and math helpers 
 | `Palette` | `IReadOnlyList<Color>` | Eight categorical colors retained as a compatibility fallback and for custom code. Built-in charts prefer theme roles when `Colors` is `null`. |
 | `SliceSweeps(values)` | `IReadOnlyList<double>` | Converts positive values to per-slice sweep angles in degrees summing to 360. Negative values count as zero; returns empty when the positive total is less than or equal to zero. |
 | `BarHeights(values, maxPixels)` | `IReadOnlyList<double>` | Scales positive values to pixel heights proportional to the largest value. Negative values count as zero; returns all zeros when the maximum is less than or equal to zero. |
+| `SignedDomain(values)` | `(double Min, double Max)` | The value-axis domain for signed data, always including zero (`Min ≤ 0 ≤ Max`) so positive and negative values share one scale. |
+| `ZeroBaselineOffset(min, max, plotHeight)` | `double` | The pixel offset of the zero baseline from the top of a plot for a signed `min..max` domain. |
+| `SignedBarLayout(values, min, max, plotHeight)` | `IReadOnlyList<(double Y, double Height)>` | Lays out signed bars: each `(Y, Height)` is the bar's top offset from the plot top and its pixel height, growing up from the zero baseline for positive values and down for negative. |
 
 ### Example
 
@@ -146,6 +198,11 @@ var sweeps = Charts.SliceSweeps(new[] { 40d, 25d, 20d, 15d });
 // Scale bar data to a 160 px plot height
 var heights = Charts.BarHeights(new[] { 20d, 80d, 50d }, maxPixels: 160d);
 // heights → [40, 160, 100] pixels
+
+// Lay out signed (diverging) bars around a zero baseline
+var (min, max) = Charts.SignedDomain(new[] { 10d, -5d, 0d }); // (-5, 10)
+var layout = Charts.SignedBarLayout(new[] { 10d, -5d, 0d }, min, max, plotHeight: 150d);
+// layout → [(0, 100), (100, 50), (100, 0)]  (Y, Height) from the plot top
 
 // Access the compatibility palette for custom code
 Color first = Charts.Palette[0]; // #2196F3

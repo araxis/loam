@@ -984,13 +984,16 @@ public sealed class ComponentsView : UserControl
 
         PageWithSamples("Charts", "PieChart", "Pie and donut chart rendering.",
             Sample("Themed pie", BuildPieChartThemedPie),
-            Sample("Explicit donut", BuildPieChartExplicitDonut)),
+            Sample("Explicit donut", BuildPieChartExplicitDonut),
+            Sample("Donut with center total", BuildPieChartCenterTotal)),
         PageWithSamples("Charts", "BarChart", "Bar chart rendering from numeric values.",
             Sample("Themed bars", BuildBarChartThemedBars),
+            Sample("Signed values", BuildBarChartSigned),
             Sample("No data", BuildBarChartNoData)),
         PageWithSamples("Charts", "LineChart", "Line and area chart rendering.",
             Sample("Line", BuildLineChartLine),
-            Sample("Area", BuildLineChartArea)),
+            Sample("Area", BuildLineChartArea),
+            Sample("Signed values", BuildLineChartSigned)),
     ];
 
     private NavMenu BuildSideMenu()
@@ -8202,6 +8205,95 @@ public sealed class ComponentsView : UserControl
                 {
                     new Text { Text = "Area fill follows the first resolved series color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
                     new LineChart { Width = 320, Height = 180, Values = revenue, Area = true },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildPieChartCenterTotal()
+    {
+        var split = new[] { 540d, 320d, 380d };
+        var labels = new[] { "Desktop", "Browser", "Mobile" };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "The donut hole shows a KPI total drawn from the data.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new PieChart
+                    {
+                        Width = 180,
+                        Height = 180,
+                        Donut = true,
+                        Values = split,
+                        Labels = labels,
+                        CenterValueFormat = "N0",
+                        CenterSubText = "sessions",
+                    },
+                    new ChartLegend { Labels = { "Desktop", "Browser", "Mobile" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartSigned()
+    {
+        var netFlow = new[] { 12d, -5d, 8d, -3d, 15d };
+        var labels = new[] { "Jan", "Feb", "Mar", "Apr", "May" };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "AllowNegative draws bars above and below a zero baseline.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BarChart
+                    {
+                        Width = 320,
+                        Height = 180,
+                        AllowNegative = true,
+                        Values = netFlow,
+                        Labels = labels,
+                    },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildLineChartSigned()
+    {
+        var variance = new[] { 4d, -2d, 6d, -1d, 3d, -4d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Signed line values plot around a zero baseline; the area fills to it.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new LineChart
+                    {
+                        Width = 320,
+                        Height = 180,
+                        AllowNegative = true,
+                        Area = true,
+                        Values = variance,
+                    },
                 },
             },
         };
