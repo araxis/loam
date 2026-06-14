@@ -634,6 +634,28 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void Stepper_indicator_number_is_centered_in_circle()
+    {
+        var stepper = new Stepper();
+        stepper.Steps.Add(new Step("One", new TextBlock()));
+        stepper.Steps.Add(new Step("Two", new TextBlock()));
+        Show(stepper);
+        stepper.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var circle = stepper.GetVisualDescendants().OfType<Border>()
+            .First(border => border.Width == 28 && border.Height == 28);
+        var number = circle.GetVisualDescendants().OfType<Text>().First(text => text.IsVisible);
+        number.Bounds.Width.ShouldBeGreaterThan(0);
+
+        // The number's box must sit centered in the 28x28 circle (it was top-left before the fix).
+        var centerX = number.Bounds.X + (number.Bounds.Width / 2);
+        var centerY = number.Bounds.Y + (number.Bounds.Height / 2);
+        centerX.ShouldBeInRange(11, 17);
+        centerY.ShouldBeInRange(11, 17);
+    }
+
+    [AvaloniaFact]
     public void Stepper_actions_are_named_and_empty_next_is_safe()
     {
         var stepper = new Stepper();
