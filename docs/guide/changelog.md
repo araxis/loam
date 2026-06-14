@@ -6,7 +6,7 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
-## 3.3.0 (in progress)
+## 3.3.0
 
 **`Loam.Charts` interactivity** — charts become pointer-aware (additive; default-on tooltips):
 
