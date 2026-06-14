@@ -7,6 +7,20 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.6 (sub-slice 1) — DataGrid live data binding
+
+Starts the Data track (value-first "liveness & egress" milestone). `DataGrid<T>.Items` now observes its
+source: if it implements `INotifyCollectionChanged` (e.g. `ObservableCollection<T>`), add/remove/reset
+refresh the grid without reassigning Items. Opt-in `ObserveItemChanges` watches per-row
+`INotifyPropertyChanged`; `Refresh()` for non-observable sources. Subscriptions managed in the Items
+setter + `OnAttachedToVisualTree`, torn down in `OnDetachedFromVisualTree` (DataGrid is a `Decorator`).
+Non-observable sources behave exactly as before. Gallery: DataGrid "Live data" sample (ObservableCollection
++ Add/Remove buttons). Verified: build 0/0, full suite **479 passing** (+2: collection-change refresh,
+row-property-change refresh). Next: pagination first/last + page-size + range; footer aggregates; CSV
+export/copy; async states.
+
+---
+
 ## 2026-06-14 — 3.5 (sub-slice 2) — Chart-bound legend
 
 `ChartLegend.Source : ChartBase?` auto-derives rows from the chart — one per series (name + per-series

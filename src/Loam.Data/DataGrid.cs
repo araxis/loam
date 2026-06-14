@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -134,6 +135,9 @@ public class DataGrid<T> : Decorator
     private static readonly object NullKeyToken = new();
 
     private IEnumerable<T>? _items;
+    private INotifyCollectionChanged? _itemsIncc;
+    private readonly List<INotifyPropertyChanged> _observedRows = new();
+    private bool _observeItemChanges;
     private int _pageSize;
     private int _page = 1;
     private T? _selectedItem;
@@ -169,11 +173,36 @@ public class DataGrid<T> : Decorator
     /// <summary>The column definitions.</summary>
     public ObservableCollection<DataGridColumn<T>> Columns { get; } = new();
 
-    /// <summary>The source rows. Mirrors the reference API's <c>Items</c>.</summary>
+    /// <summary>
+    /// The source rows. Mirrors the reference API's <c>Items</c>. When the assigned source implements
+    /// <see cref="INotifyCollectionChanged"/> (e.g. <see cref="ObservableCollection{T}"/>), the grid
+    /// observes it and refreshes on add/remove/reset without reassigning <c>Items</c>.
+    /// </summary>
     public IEnumerable<T>? Items
     {
         get => _items;
-        set { _items = value; Rebuild(); }
+        set
+        {
+            UnsubscribeItems();
+            _items = value;
+            SubscribeItems();
+            Rebuild();
+        }
+    }
+
+    /// <summary>
+    /// When true and rows implement <see cref="INotifyPropertyChanged"/>, the grid also refreshes when a
+    /// row raises a property change (e.g. an edited cell value). Off by default.
+    /// </summary>
+    public bool ObserveItemChanges
+    {
+        get => _observeItemChanges;
+        set
+        {
+            _observeItemChanges = value;
+            SubscribeItems();
+            Rebuild();
+        }
     }
 
     /// <summary>Rows per page (0 = no paging). Mirrors the reference API's <c>RowsPerPage</c>.</summary>
@@ -319,6 +348,90 @@ public class DataGrid<T> : Decorator
     }
 
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+
+    /// <summary>Forces a refresh — call after mutating a non-observable source in place.</summary>
+    public void Refresh() => Rebuild();
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        SubscribeItems();
+        Rebuild();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        UnsubscribeItems();
+    }
+
+    private void SubscribeItems()
+    {
+        UnsubscribeItems();
+        if (_items is INotifyCollectionChanged incc)
+        {
+            _itemsIncc = incc;
+            incc.CollectionChanged += OnItemsCollectionChanged;
+        }
+
+        if (_observeItemChanges)
+        {
+            SubscribeRows();
+        }
+    }
+
+    private void SubscribeRows()
+    {
+        if (_items is null)
+        {
+            return;
+        }
+
+        foreach (var item in _items)
+        {
+            if (item is INotifyPropertyChanged inpc)
+            {
+                inpc.PropertyChanged += OnItemPropertyChanged;
+                _observedRows.Add(inpc);
+            }
+        }
+    }
+
+    private void UnsubscribeItems()
+    {
+        if (_itemsIncc is not null)
+        {
+            _itemsIncc.CollectionChanged -= OnItemsCollectionChanged;
+            _itemsIncc = null;
+        }
+
+        foreach (var inpc in _observedRows)
+        {
+            inpc.PropertyChanged -= OnItemPropertyChanged;
+        }
+
+        _observedRows.Clear();
+    }
+
+    private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_observeItemChanges)
+        {
+            foreach (var inpc in _observedRows)
+            {
+                inpc.PropertyChanged -= OnItemPropertyChanged;
+            }
+
+            _observedRows.Clear();
+            SubscribeRows();
+        }
+
+        Rebuild();
+    }
+
+    private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
     {

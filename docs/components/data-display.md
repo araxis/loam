@@ -107,7 +107,9 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | Property / Member | Type | Default | Description |
 |-------------------|------|---------|-------------|
 | `Columns` | `ObservableCollection<DataGridColumn<T>>` | empty | Column definitions. |
-| `Items` | `IEnumerable<T>?` | `null` | Source rows. Mirrors the reference API's `Items`. |
+| `Items` | `IEnumerable<T>?` | `null` | Source rows. When the source implements `INotifyCollectionChanged` (e.g. `ObservableCollection<T>`), the grid observes it and refreshes on add/remove/reset — no need to reassign `Items`. |
+| `ObserveItemChanges` | `bool` | `false` | When true and rows implement `INotifyPropertyChanged`, the grid also refreshes when a row raises a property change. |
+| `Refresh()` | `void` | — | Forces a refresh; call after mutating a non-observable source in place. |
 | `PageSize` | `int` | `0` | Rows per page; `0` disables paging. Mirrors the reference API's `RowsPerPage`. |
 | `Page` | `int` | `1` | Current 1-based page. |
 | `FilterText` | `string?` | `null` | Text passed to the filter pipeline before sorting/paging. |

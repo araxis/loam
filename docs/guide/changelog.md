@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.6.0 (in progress)
+
+**`Loam.Data` liveness.** `DataGrid<T>` now observes its source:
+
+- When `Items` implements `INotifyCollectionChanged` (e.g. `ObservableCollection<T>`), add/remove/reset
+  refresh the grid automatically — no more reassigning `Items`. Subscriptions are managed across
+  attach/detach to avoid leaks.
+- Opt-in `ObserveItemChanges` refreshes when a row raises `INotifyPropertyChanged`; `Refresh()` forces a
+  refresh for non-observable sources. Behavior is unchanged for plain (non-observable) sources.
+
 ## 3.5.0
 
 **`Loam.Charts` multi-series.** Set `Series` (a list of `ChartSeries`) on bar/line charts:

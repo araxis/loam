@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -20,6 +22,19 @@ public class DataDisplayTests
     private sealed class EditablePerson
     {
         public string Name { get; set; } = "";
+    }
+
+    private sealed class NotifyingRow : INotifyPropertyChanged
+    {
+        private string _name = "";
+
+        public string Name
+        {
+            get => _name;
+            set { _name = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name))); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
 
     private static void Show(Control content)
@@ -74,6 +89,46 @@ public class DataDisplayTests
         texts.ShouldContain("Name");
         texts.ShouldContain("Alice");
         texts.ShouldContain("30");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_observes_collection_changes_and_refreshes()
+    {
+        var data = new ObservableCollection<Person> { new("Alice", 25), new("Bob", 30) };
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = data;
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldNotContain("Carol");
+
+        data.Add(new Person("Carol", 40));
+        Dispatcher.UIThread.RunJobs();
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldContain("Carol");
+
+        data.RemoveAt(0); // Alice
+        Dispatcher.UIThread.RunJobs();
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldNotContain("Alice");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_observe_item_changes_refreshes_on_row_property_change()
+    {
+        var row = new NotifyingRow { Name = "Old" };
+        var data = new ObservableCollection<NotifyingRow> { row };
+        var grid = new DataGrid<NotifyingRow> { ObserveItemChanges = true };
+        grid.Columns.Add(new DataGridColumn<NotifyingRow>("Name", r => r.Name));
+        grid.Items = data;
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+        grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ShouldContain("Old");
+
+        row.Name = "New";
+        Dispatcher.UIThread.RunJobs();
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("New");
+        texts.ShouldNotContain("Old");
     }
 
     [Fact]
