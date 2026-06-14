@@ -7,6 +7,83 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.1 cycle — Package split Phase C (versioning, CI, guard test, docs)
+
+**Done**
+- Hoisted shared package metadata + `Version=3.1.0` to `Directory.Build.props` (all four packages
+  version in lockstep); added `Directory.Build.targets` to pack README + icon into every packable
+  project (conditioned `IsPackable != false`). Stripped the now-shared props from `src/Loam/Loam.csproj`.
+- `ci.yml` + `package.yml` now `dotnet pack Loam.slnx` → produces all four nupkgs (publish loop already
+  iterates `*.nupkg`); the tag-driven `/p:PackageVersion` override applies to all four.
+- Added `tests/Loam.Tests/PackagingTests.cs` (33 cases): each moved control/registrar lives in its
+  satellite assembly and is absent from core; core keeps `LoamTheme`.
+- Docs: getting-started (satellite install + registrars), changelog (3.1.0 entry + corrected stale
+  3.0.0 "still planned"), new `migration/v3-to-v3.1.md` (+ sidebar/nav wiring; v2→v3 package-split row
+  flipped to ✅ 3.1.0), component callouts on charts/pickers/data-display, README (status, modular
+  bullet, install, catalog tags, repo layout, pack cmd), ADR-0009 status → implemented.
+- **Decision:** kept `ChartBase.TryChartResource` `OfType<LoamTheme>()` fallback — still compiles (core
+  is referenced) and guards token resolution before the chart is attached to the visual tree.
+
+**Verified**
+- `dotnet pack Loam.slnx -c Release` → `Loam`, `Loam.Charts`, `Loam.Pickers`, `Loam.Data` all `3.1.0`;
+  satellite nuspec depends on `Loam 3.1.0` + `Avalonia 12.0.4`, carries MIT/icon/readme/release-notes.
+- Release build 0 warnings / 0 errors; full suite **458 passing** (was 425 + 33 new guards).
+
+**Next:** PR `work/3.1` → main, then tag `v3.1.0` to publish all four packages (outward-facing — awaiting
+go-ahead). Optionally a GitHub Release mirroring the 3.0.0 one.
+
+---
+
+## 2026-06-14 — 3.1 cycle — Package split Phase B (physical split into 3 satellite projects)
+
+**Done**
+- Created `src/Loam.Charts`, `src/Loam.Pickers`, `src/Loam.Data` SDK projects (net8.0, Avalonia via CPM,
+  `ProjectReference` → core, `IsPackable` + `PackageId`/`Description`/`PackageTags`).
+- `git mv` the mapped files (history preserved, namespaces unchanged): Charts (Charts.cs, ChartLegend.cs,
+  LoamCharts.cs); Pickers (Date/Time/Color/DateRange +Themes, MonthCalendar, LoamPickers.cs); Data
+  (DataGrid, DataGridColumn, SimpleTable+Theme, TreeView+Theme, TreeViewItem+Theme, Pagination+Theme,
+  LoamData.cs). Core keeps Tabs/Stepper/Carousel/Timeline/ExpansionPanel(s).
+- `InternalsVisibleTo` from **core** → the 3 satellites (they use internal `FieldChrome`/`PopupSurface`/
+  `InteractionAssist`/`TemplateScope`), and from **each satellite** → `Loam.Tests` (ChartTests etc. read
+  internal chart members — this was the only build break, fixed).
+- Registered the 3 projects in `Loam.slnx`; gallery + tests `ProjectReference` all three satellites.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0 across all 6 projects (`Loam.Charts/Pickers/Data.dll` build as
+  separate assemblies). Full suite **425 passed** — controls render themed via the registrars across the
+  assembly boundary; charts intact. **Core has no reference to any satellite.**
+
+**Next:** Phase C — hoist shared version/packaging metadata to `Directory.Build.props`; `package.yml`/
+`ci.yml` pack all 4 nupkgs (publish loop already handles many); CI guard test (core lacks moved types);
+docs/migration + `v3.1.0`. Optional cleanup: drop the `ChartBase` `OfType<LoamTheme>` fallback.
+
+---
+
+## 2026-06-14 — 3.1 cycle — Package split Phase A (decouple theme registration in-place)
+
+Branch `work/3.1`. First step of the package split (plan: `memory/plans/package-split-3.1.md`, ADR-0009).
+
+**Done**
+- Added per-satellite `Styles` registrars in core: `LoamPickers` (DatePicker/TimePicker/ColorPicker/
+  DateRangePicker), `LoamData` (SimpleTable/Pagination/TreeView/TreeViewItem), `LoamCharts` (empty —
+  charts self-render; shipped for a uniform "add the styles" story) in `src/Loam/Theming/`.
+- Removed the 8 satellite `typeof` registrations from `LoamTheme.RegisterControlThemes` (the only
+  core→satellite coupling). Core no longer references the picker/data control themes.
+- Wired `samples/Loam.Gallery/App.cs` + `tests/Loam.Tests/TestApp.cs` to add the three registrars next
+  to `LoamTheme`.
+- Registrars live in core for now (same assembly → use the internal `*Theme.Create()` directly), so no
+  `InternalsVisibleTo` needed yet. Deferred to Phase B: `InternalsVisibleTo` for the satellite assemblies
+  and dropping the `ChartBase` `OfType<LoamTheme>` fallback (it also guards the not-yet-attached case).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0. Full suite **425 passed** (the test app adds the registrars,
+  so picker/data control rendering/metric assertions still pass — confirms the registration mechanism).
+
+**Next:** Phase B — physical split into `src/Loam.Charts`/`Loam.Pickers`/`Loam.Data` projects (move files,
+project refs, `InternalsVisibleTo`, slnx), then Phase C (packaging/CI + docs + `v3.1.0`).
+
+---
+
 ## 2026-06-13 — v3 — Gallery per-sample layout rolled out to all groups
 
 **Done:** finished the per-sample gallery layout across every component group, so each multi-variant

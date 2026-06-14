@@ -23,6 +23,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Loam\Loam.csproj" />
+    <ProjectReference Include="..\..\src\Loam.Charts\Loam.Charts.csproj" />
+    <ProjectReference Include="..\..\src\Loam.Pickers\Loam.Pickers.csproj" />
+    <ProjectReference Include="..\..\src\Loam.Data\Loam.Data.csproj" />
   </ItemGroup>
 
 </Project>

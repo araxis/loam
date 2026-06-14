@@ -11,18 +11,34 @@ title: Getting Started
 
 ## 1. Reference Loam
 
-Install the package after a release is published, or reference the project while developing from this
-repository:
+Install the core package after a release is published, or reference the project while developing from
+this repository:
 
 ```bash
 dotnet add package Loam
 ```
 
-For source-based development, add a project reference:
+The chart, picker, and heavy data controls ship as **opt-in satellite packages** (since 3.1) — add only
+the ones you use. Each depends on the core package, so you don't reference `Loam` twice:
+
+```bash
+dotnet add package Loam.Charts    # PieChart, BarChart, LineChart
+dotnet add package Loam.Pickers   # DatePicker, TimePicker, ColorPicker, DateRangePicker, MonthCalendar
+dotnet add package Loam.Data      # DataGrid<T>, SimpleTable, TreeView, Pagination
+```
+
+Namespaces are unchanged across the split — everything stays under `Loam.Controls`, so your
+using-directives don't change when you add a satellite. If you're upgrading from 3.0, see the
+[v3 → v3.1 migration guide](/migration/v3-to-v3.1).
+
+For source-based development, add project references instead:
 
 ```xml
 <ItemGroup>
   <ProjectReference Include="..\Loam\src\Loam\Loam.csproj" />
+  <ProjectReference Include="..\Loam\src\Loam.Charts\Loam.Charts.csproj" />
+  <ProjectReference Include="..\Loam\src\Loam.Pickers\Loam.Pickers.csproj" />
+  <ProjectReference Include="..\Loam\src\Loam.Data\Loam.Data.csproj" />
 </ItemGroup>
 ```
 
@@ -42,7 +58,13 @@ public sealed class App : Application
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());   // base templates for the shell + built-in controls
-        Styles.Add(new LoamTheme());     // Loam's pure-C# theming + control themes
+        Styles.Add(new LoamTheme());     // Loam's pure-C# theming + core control themes
+
+        // Add a registrar for each satellite package you reference (omit the ones you don't use):
+        Styles.Add(new LoamCharts());    // from Loam.Charts
+        Styles.Add(new LoamPickers());   // from Loam.Pickers
+        Styles.Add(new LoamData());      // from Loam.Data
+
         RequestedThemeVariant = ThemeVariant.Light;
     }
 
@@ -56,8 +78,11 @@ public sealed class App : Application
 }
 ```
 
-That single `new LoamTheme()` registers every Loam control theme and projects the palette/typography/
-shadows into Avalonia resources.
+`new LoamTheme()` projects the palette/typography/shadows into Avalonia resources and registers every
+**core** control theme. Each satellite registrar (`LoamCharts`, `LoamPickers`, `LoamData`) — all in the
+`Loam.Theming` namespace — adds the control themes for its package and reuses the tokens `LoamTheme`
+already projected, so order them after `LoamTheme`. A satellite control rendered without its registrar
+falls back to unthemed defaults.
 
 ## 3. Build a screen in C#
 

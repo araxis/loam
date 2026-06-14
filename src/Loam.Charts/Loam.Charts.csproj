@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Loam</RootNamespace>
+    <AssemblyName>Loam.Charts</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Packaging -->
+    <IsPackable>true</IsPackable>
+    <PackageId>Loam.Charts</PackageId>
+    <Description>Chart controls (PieChart, BarChart, LineChart) for the Loam Avalonia control library. Add new LoamCharts() to Application.Styles alongside LoamTheme.</Description>
+    <PackageTags>avalonia;ui;controls;charts;loam;material</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Loam\Loam.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Loam.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

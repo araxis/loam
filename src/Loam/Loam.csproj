@@ -6,19 +6,11 @@
     <AssemblyName>Loam</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <!-- Packaging -->
+    <!-- Packaging (shared version/license/icon/readme/urls live in Directory.Build.props) -->
     <IsPackable>true</IsPackable>
     <PackageId>Loam</PackageId>
-    <Version>3.0.0</Version>
-    <Description>Pure C# themed controls for Avalonia applications.</Description>
-    <PackageReleaseNotes>Loam v3.0.0: end-to-end theme consistency, Material You, ergonomics fixes, NavigationRail/BottomNavigation/CommandPalette, and a matured DataGrid (grouping, frozen columns, aggregates). See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Description>Pure C# themed controls for Avalonia applications. The core package; add Loam.Charts, Loam.Pickers, or Loam.Data for those control groups.</Description>
     <PackageTags>avalonia;ui;controls;theme;csharp;material</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>loam-icon.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://araxis.github.io/loam/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/araxis/loam</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,11 +21,15 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>Loam.Tests</_Parameter1>
     </AssemblyAttribute>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\assets\loam-icon-512.png" Pack="true" PackagePath="\loam-icon.png" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Loam.Charts</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Loam.Pickers</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Loam.Data</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

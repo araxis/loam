@@ -6,6 +6,10 @@ title: Charts & effects
 
 Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
 
+> **Package (since 3.1).** The chart controls ship in the **`Loam.Charts`** satellite package. Add the
+> package reference and register its themes with `Styles.Add(new LoamCharts())` after `LoamTheme`.
+> Namespaces are unchanged (`Loam.Controls`). See the [v3 → v3.1 migration guide](/migration/v3-to-v3.1).
+
 Chart visuals are theme-aware by default. If `Colors` is `null`, series colors resolve from the active light/dark role tokens. Supplying `Colors` overrides theme roles for that chart. `Charts.Palette` remains available as a compatibility fallback for custom math/rendering scenarios.
 
 ---

@@ -15,6 +15,9 @@ public sealed class TestApp : Application
         // Fluent supplies Window/built-in templates for the headless host; Loam is the subject.
         Styles.Add(new FluentTheme());
         Styles.Add(new LoamTheme());
+        Styles.Add(new LoamPickers());
+        Styles.Add(new LoamData());
+        Styles.Add(new LoamCharts());
     }
 }
 

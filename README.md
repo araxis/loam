@@ -7,13 +7,14 @@
 Loam gives Avalonia apps a complete themed control set with a familiar, compact API, runtime
 theming, and no XAML.
 
-> **Status:** **v3.0.0 released** — published as [`Loam` 3.0.0 on NuGet](https://www.nuget.org/packages/Loam).
+> **Status:** **v3.1.0 released** — published as [`Loam` on NuGet](https://www.nuget.org/packages/Loam).
 > Over the v2 baseline, v3 adds end-to-end theme consistency, Material You, ergonomics fixes, and new
-> shell controls — the full solution builds clean with **425 headless/unit tests passing**.
-> See the **[v3 plan](PLAN.md)** and **[review](REVIEW.md)**, the
-> **[v2 → v3 migration guide](docs/migration/v2-to-v3.md)**, the **[Development Plan](DEVELOPMENT_PLAN.md)**,
-> and the project **[memory](memory/README.md)** (decisions, progress log, learnings, and the
-> per-component status tracker).
+> shell controls; **3.1 splits charts, pickers, and heavy data controls into opt-in satellite packages**
+> (`Loam.Charts`, `Loam.Pickers`, `Loam.Data`). The full solution builds clean with **458 headless/unit
+> tests passing**. See the **[v3 plan](PLAN.md)** and **[review](REVIEW.md)**, the
+> **[v3 → v3.1](docs/migration/v3-to-v3.1.md)** and **[v2 → v3](docs/migration/v2-to-v3.md)** migration
+> guides, the **[Development Plan](DEVELOPMENT_PLAN.md)**, and the project **[memory](memory/README.md)**
+> (decisions, progress log, learnings, and the per-component status tracker).
 
 ## 📖 Documentation
 
@@ -40,8 +41,10 @@ npm run docs:build    # static build → docs/.vitepress/dist
 - **Polished look.** Role-based light/dark colors, tonal surfaces, elevation/shadows, click ripple,
   state layers, and a full typography scale, all token-driven.
 - **Pure C#.** Controls, `ControlTheme`s, and templates are authored in C# — no `.axaml`.
-- **Self-contained.** Pickers (date/time/color) and the calendar are custom-built, so a LoamTheme-only
-  app needs no extra control packages.
+- **Self-contained.** Pickers (date/time/color) and the calendar are custom-built — no dependency on
+  Avalonia's FluentTheme `Calendar` — and ship in the opt-in `Loam.Pickers` package.
+- **Modular.** A lean core plus opt-in satellites (`Loam.Charts`, `Loam.Pickers`, `Loam.Data`); add only
+  the control groups you use. Namespaces stay `Loam.Controls` across the split.
 - **Highly themeable.** A `LoamTheme` data model with light/dark color schemes, compatibility
   palettes, and runtime token swapping.
 - **Cross-platform.** One library targeting Avalonia 12 everywhere it runs.
@@ -53,15 +56,19 @@ npm run docs:build    # static build → docs/.vitepress/dist
 
 ## Quick start
 
-Install the package after a release is published, or reference `src/Loam/Loam.csproj` while developing
-from this repository.
+Install the core package after a release is published, or reference `src/Loam/Loam.csproj` while
+developing from this repository. Add the satellite packages for the control groups you use — each
+depends on the core package, and namespaces stay `Loam.Controls`:
 
 ```bash
 dotnet add package Loam
+dotnet add package Loam.Charts    # PieChart, BarChart, LineChart
+dotnet add package Loam.Pickers   # DatePicker, TimePicker, ColorPicker, DateRangePicker, MonthCalendar
+dotnet add package Loam.Data      # DataGrid<T>, SimpleTable, TreeView, Pagination
 ```
 
 **1. Register the theme** in your `Application` (add Avalonia's `FluentTheme` for the base controls
-Loam composes, then `LoamTheme` on top):
+Loam composes, then `LoamTheme`, then a registrar for each satellite you reference):
 
 ```csharp
 using Avalonia;
@@ -74,7 +81,12 @@ public sealed class App : Application
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());   // base templates for the window shell + built-in controls
-        Styles.Add(new LoamTheme());     // Loam's pure-C# theming + control themes on top
+        Styles.Add(new LoamTheme());     // Loam's pure-C# theming + core control themes on top
+
+        Styles.Add(new LoamCharts());    // only if you reference Loam.Charts
+        Styles.Add(new LoamPickers());   // only if you reference Loam.Pickers
+        Styles.Add(new LoamData());      // only if you reference Loam.Data
+
         RequestedThemeVariant = ThemeVariant.Light;
     }
 }
@@ -130,12 +142,15 @@ automatically. Per-control overrides use the same Loam knobs: `Variant`, `Color`
 | **Primitives** | `Text`, `Icon`, `Button`, `IconButton`, `ToggleIconButton`, `ButtonGroup`, `Fab`, `Paper`, `Card` (+`CardHeader`/`CardMedia`/`CardContent`/`CardActions`), `Divider`, `Chip`/`ChipSet`, `Badge`, `Avatar`/`AvatarGroup` |
 | **Layout & shell** | `Container`, `ResponsiveGrid`/`Col`, `Spacer`, `Hidden`, `ScrollToTop`, `Layout`, `AppBar`, `Drawer`, `MainContent` |
 | **Inputs** | `Field`, `TextField`, `NumericField`, `MaskedTextField` (+`Mask`), `Select`, `Autocomplete`, `CheckBox`, `Switch`, `Radio`/`RadioGroup`, `Slider`, `Rating`, `ToggleGroup`, `FileUpload`, `Form` |
-| **Pickers** | `DatePicker`, `TimePicker`, `ColorPicker`, `DateRangePicker` (+ self-contained `MonthCalendar`) |
+| **Pickers** *(`Loam.Pickers`)* | `DatePicker`, `TimePicker`, `ColorPicker`, `DateRangePicker` (+ self-contained `MonthCalendar`) |
 | **Overlays & feedback** | `DialogService`/`MessageBoxAsync`, `SnackbarService`, `CommandPalette`, `Overlay`, `Popover`, `Tooltip`, `Menu`, `Alert`, `ProgressLinear`, `ProgressCircular`, `Skeleton`, `Collapse` |
-| **Data display** | `List`/`ListItem`/`ListSubheader`, `SimpleTable`, `DataGrid<T>`, `TreeView`, `Tabs`, `ExpansionPanels`, `Timeline`, `Carousel`, `Pagination`, `Stepper` |
+| **Data display** | `List`/`ListItem`/`ListSubheader`, `Tabs`, `ExpansionPanels`, `Timeline`, `Carousel`, `Stepper` — plus *(`Loam.Data`)* `SimpleTable`, `DataGrid<T>`, `TreeView`, `Pagination` |
 | **Navigation** | `Link`, `Breadcrumbs`, `NavMenu`/`NavLink`/`NavGroup`, `NavigationRail`, `BottomNavigation` |
-| **Charts** | `PieChart`, `BarChart`, `LineChart` (+ donut mode) |
+| **Charts** *(`Loam.Charts`)* | `PieChart`, `BarChart`, `LineChart` (+ donut mode) |
 | **Effects** | `Ripple` |
+
+Groups tagged with a package name ship in that opt-in satellite (since 3.1); everything else is in the
+core `Loam` package. See the **[v3 → v3.1 migration guide](docs/migration/v3-to-v3.1.md)**.
 
 See **[`memory/component-inventory.md`](memory/component-inventory.md)** for the full component catalog
 and the live status of each control, including documented future enhancements such as richer
@@ -153,7 +168,10 @@ The gallery has a side menu and focused pages for the component catalog.
 
 | Path | Purpose |
 | --- | --- |
-| `src/Loam/` | The control library (net8.0, packable as `Loam`). |
+| `src/Loam/` | The core control library (net8.0, packable as `Loam`). |
+| `src/Loam.Charts/` | Chart controls satellite (packable as `Loam.Charts`). |
+| `src/Loam.Pickers/` | Picker controls satellite (packable as `Loam.Pickers`). |
+| `src/Loam.Data/` | Data controls satellite (packable as `Loam.Data`). |
 | `samples/Loam.Gallery/` | Live component gallery. |
 | `tests/Loam.Tests/` | Headless + unit tests (xUnit + `Avalonia.Headless`). |
 | `DEVELOPMENT_PLAN.md` | Phased roadmap with per-phase & per-component Definition of Done. |
@@ -163,7 +181,7 @@ The gallery has a side menu and focused pages for the component catalog.
 
 - Avalonia **12.x**, .NET **8** library target, C# pure code-only UI.
 - xUnit + `Avalonia.Headless.XUnit` for behavior tests; `.slnx` solution; SDK pinned via `global.json`.
-- Build: `dotnet build`  ·  Test: `dotnet test`  ·  Pack: `dotnet pack src/Loam/Loam.csproj`.
+- Build: `dotnet build`  ·  Test: `dotnet test`  ·  Pack all four packages: `dotnet pack Loam.slnx`.
 
 ## License
 

@@ -30,7 +30,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/introduction', activeMatch: '/guide/' },
       { text: 'Components', link: '/components/overview', activeMatch: '/components/' },
-      { text: 'Migrate', link: '/migration/v2-to-v3', activeMatch: '/migration/' },
+      { text: 'Migrate', link: '/migration/v3-to-v3.1', activeMatch: '/migration/' },
       {
         text: 'Project',
         items: [
@@ -78,6 +78,7 @@ export default defineConfig({
         {
           text: 'Migration',
           items: [
+            { text: 'v3.0 → v3.1', link: '/migration/v3-to-v3.1' },
             { text: 'v2 → v3', link: '/migration/v2-to-v3' },
           ],
         },

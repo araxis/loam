@@ -4,6 +4,9 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Loam/Loam.csproj" />
+    <Project Path="src/Loam.Charts/Loam.Charts.csproj" />
+    <Project Path="src/Loam.Pickers/Loam.Pickers.csproj" />
+    <Project Path="src/Loam.Data/Loam.Data.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Loam.Tests/Loam.Tests.csproj" />
