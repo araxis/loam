@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Text;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -85,6 +87,38 @@ public static class DataGrids
             .ToList();
     }
 
+    /// <summary>
+    /// Serializes rows to delimited text (CSV when <paramref name="separator"/> is a comma, TSV for a tab):
+    /// a header row of column headers followed by one row per item using each column's display text, with
+    /// RFC-4180 quoting (fields containing the separator, a quote, or a newline are quoted and embedded
+    /// quotes doubled).
+    /// </summary>
+    public static string ToDelimited<T>(IEnumerable<T> rows, IEnumerable<DataGridColumn<T>> columns, char separator = ',')
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        ArgumentNullException.ThrowIfNull(columns);
+
+        var cols = columns.ToList();
+        var builder = new StringBuilder();
+        builder.AppendLine(string.Join(separator, cols.Select(c => QuoteField(c.Header, separator))));
+        foreach (var row in rows)
+        {
+            builder.AppendLine(string.Join(separator, cols.Select(c => QuoteField(c.Display(row), separator))));
+        }
+
+        return builder.ToString();
+    }
+
+    private static string QuoteField(string? value, char separator)
+    {
+        value ??= string.Empty;
+        var needsQuote = value.Contains(separator)
+            || value.Contains('"', StringComparison.Ordinal)
+            || value.Contains('\n', StringComparison.Ordinal)
+            || value.Contains('\r', StringComparison.Ordinal);
+        return needsQuote ? $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"" : value;
+    }
+
     internal sealed class CellComparer : IComparer<object?>
     {
         public static readonly CellComparer Instance = new();
@@ -134,6 +168,9 @@ public class DataGrid<T> : Decorator
     private static readonly object NullKeyToken = new();
 
     private IEnumerable<T>? _items;
+    private INotifyCollectionChanged? _itemsIncc;
+    private readonly List<INotifyPropertyChanged> _observedRows = new();
+    private bool _observeItemChanges;
     private int _pageSize;
     private int _page = 1;
     private T? _selectedItem;
@@ -169,11 +206,36 @@ public class DataGrid<T> : Decorator
     /// <summary>The column definitions.</summary>
     public ObservableCollection<DataGridColumn<T>> Columns { get; } = new();
 
-    /// <summary>The source rows. Mirrors the reference API's <c>Items</c>.</summary>
+    /// <summary>
+    /// The source rows. Mirrors the reference API's <c>Items</c>. When the assigned source implements
+    /// <see cref="INotifyCollectionChanged"/> (e.g. <see cref="ObservableCollection{T}"/>), the grid
+    /// observes it and refreshes on add/remove/reset without reassigning <c>Items</c>.
+    /// </summary>
     public IEnumerable<T>? Items
     {
         get => _items;
-        set { _items = value; Rebuild(); }
+        set
+        {
+            UnsubscribeItems();
+            _items = value;
+            SubscribeItems();
+            Rebuild();
+        }
+    }
+
+    /// <summary>
+    /// When true and rows implement <see cref="INotifyPropertyChanged"/>, the grid also refreshes when a
+    /// row raises a property change (e.g. an edited cell value). Off by default.
+    /// </summary>
+    public bool ObserveItemChanges
+    {
+        get => _observeItemChanges;
+        set
+        {
+            _observeItemChanges = value;
+            SubscribeItems();
+            Rebuild();
+        }
     }
 
     /// <summary>Rows per page (0 = no paging). Mirrors the reference API's <c>RowsPerPage</c>.</summary>
@@ -319,6 +381,104 @@ public class DataGrid<T> : Decorator
     }
 
     private void OnColumnsChanged(object? sender, NotifyCollectionChangedEventArgs e) => Rebuild();
+
+    /// <summary>Forces a refresh — call after mutating a non-observable source in place.</summary>
+    public void Refresh() => Rebuild();
+
+    /// <summary>The current view rows: filtered and sorted, across all pages.</summary>
+    private List<T> CurrentViewRows()
+    {
+        var all = _items?.ToList() ?? new List<T>();
+        var filtered = DataGrids.Filter(all, _filterText, MatchesFilter);
+        return DataGrids.Sort(filtered, _sortColumn, _sortDescending).ToList();
+    }
+
+    /// <summary>Returns the current view (filtered and sorted, all pages) as CSV.</summary>
+    public string ExportCsv() => DataGrids.ToDelimited(CurrentViewRows(), Columns, ',');
+
+    /// <summary>Returns the current view as tab-separated values (spreadsheet-paste friendly).</summary>
+    public string ExportTsv() => DataGrids.ToDelimited(CurrentViewRows(), Columns, '\t');
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        SubscribeItems();
+        Rebuild();
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        UnsubscribeItems();
+    }
+
+    private void SubscribeItems()
+    {
+        UnsubscribeItems();
+        if (_items is INotifyCollectionChanged incc)
+        {
+            _itemsIncc = incc;
+            incc.CollectionChanged += OnItemsCollectionChanged;
+        }
+
+        if (_observeItemChanges)
+        {
+            SubscribeRows();
+        }
+    }
+
+    private void SubscribeRows()
+    {
+        if (_items is null)
+        {
+            return;
+        }
+
+        foreach (var item in _items)
+        {
+            if (item is INotifyPropertyChanged inpc)
+            {
+                inpc.PropertyChanged += OnItemPropertyChanged;
+                _observedRows.Add(inpc);
+            }
+        }
+    }
+
+    private void UnsubscribeItems()
+    {
+        if (_itemsIncc is not null)
+        {
+            _itemsIncc.CollectionChanged -= OnItemsCollectionChanged;
+            _itemsIncc = null;
+        }
+
+        foreach (var inpc in _observedRows)
+        {
+            inpc.PropertyChanged -= OnItemPropertyChanged;
+        }
+
+        _observedRows.Clear();
+    }
+
+    private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_observeItemChanges)
+        {
+            foreach (var inpc in _observedRows)
+            {
+                inpc.PropertyChanged -= OnItemPropertyChanged;
+            }
+
+            _observedRows.Clear();
+            SubscribeRows();
+        }
+
+        Rebuild();
+    }
+
+    private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e) => Rebuild();
 
     private void Rebuild()
     {

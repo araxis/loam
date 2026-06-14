@@ -886,6 +886,7 @@ public sealed class ComponentsView : UserControl
             Sample("Empty", BuildTableEmpty)),
         PageWithSamples("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.",
             Sample("Sortable · filtered · paged", BuildDataGridPaged),
+            Sample("Live data — bound to an ObservableCollection", BuildDataGridLive),
             Sample("Grouped with aggregate — click a header to collapse", BuildDataGridGrouped),
             Sample("Frozen first column — scroll the rest horizontally", BuildDataGridFrozen),
             Sample("Editable cells", BuildDataGridEditable),
@@ -6820,6 +6821,49 @@ public sealed class ComponentsView : UserControl
         });
         grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
         grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
+    }
+
+    private static StackPanel BuildDataGridLive()
+    {
+        var data = new ObservableCollection<Dessert>(SampleDesserts().Take(4));
+        var grid = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            Hover = true,
+            MaxWidth = 720,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        AddDessertColumns(grid);
+        grid.Items = data;
+
+        var pool = SampleDesserts();
+        var add = new LoamButton { Content = "Add row", Variant = Variant.Outlined };
+        add.Click += (_, _) =>
+        {
+            var next = pool[data.Count % pool.Count];
+            data.Add(new Dessert(next.Name, next.Calories, next.Fat));
+        };
+        var remove = new LoamButton { Content = "Remove last", Variant = Variant.Text };
+        remove.Click += (_, _) =>
+        {
+            if (data.Count > 0)
+            {
+                data.RemoveAt(data.Count - 1);
+            }
+        };
+
+        return new StackPanel
+        {
+            Spacing = 10,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Text { Text = "Bound to an ObservableCollection; Add/Remove updates the grid live.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                grid,
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { add, remove } },
+            },
+        };
     }
 
     private static Loam.Controls.DataGrid<Dessert> BuildDataGridPaged()

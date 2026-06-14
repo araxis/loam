@@ -7,6 +7,30 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.6 — DataGrid liveness & egress (live binding + CSV/TSV export)
+
+Starts the Data track (value-first "liveness & egress" milestone).
+
+**Live binding:** `DataGrid<T>.Items` now observes its source: if it implements
+`INotifyCollectionChanged` (e.g. `ObservableCollection<T>`), add/remove/reset refresh the grid without
+reassigning Items. Opt-in `ObserveItemChanges` watches per-row `INotifyPropertyChanged`; `Refresh()` for
+non-observable sources. Subscriptions managed in the Items setter + `OnAttachedToVisualTree`, torn down
+in `OnDetachedFromVisualTree` (DataGrid is a `Decorator`). Non-observable sources behave exactly as
+before. Gallery: DataGrid "Live data" sample (ObservableCollection + Add/Remove buttons).
+
+**Export:** pure `DataGrids.ToDelimited<T>(rows, columns, separator)` (header + per-column `Display`,
+RFC-4180 quoting) + instance `ExportCsv()`/`ExportTsv()` over the current filtered+sorted view (all
+pages). **Clipboard copy deferred:** Avalonia 12's `IClipboard` has no `SetTextAsync` (compile error) —
+needs API verification before adding `CopyToClipboardAsync`.
+
+**Verified:** build 0/0; full suite **481 passing** (+4: collection-change refresh, row-property-change
+refresh, RFC-4180 quoting, export covers current view).
+
+**Next (3.7):** pagination first/last + page-size + range; footer aggregates; async loading/error states;
+then the selection/a11y/header-tooling cluster.
+
+---
+
 ## 2026-06-14 — 3.5 (sub-slice 2) — Chart-bound legend
 
 `ChartLegend.Source : ChartBase?` auto-derives rows from the chart — one per series (name + per-series

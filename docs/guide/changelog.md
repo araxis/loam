@@ -6,6 +6,18 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.6.0
+
+**`Loam.Data` liveness & egress.** `DataGrid<T>` becomes live and exportable:
+
+- **Live binding.** When `Items` implements `INotifyCollectionChanged` (e.g. `ObservableCollection<T>`),
+  add/remove/reset refresh the grid automatically — no more reassigning `Items`. Subscriptions are
+  managed across attach/detach to avoid leaks. Opt-in `ObserveItemChanges` refreshes when a row raises
+  `INotifyPropertyChanged`; `Refresh()` forces a refresh for non-observable sources. Behavior is
+  unchanged for plain sources.
+- **Export.** `ExportCsv()`/`ExportTsv()` return the current view (filtered + sorted, all pages) using
+  each column's display text with RFC-4180 quoting, backed by the pure `DataGrids.ToDelimited` helper.
+
 ## 3.5.0
 
 **`Loam.Charts` multi-series.** Set `Series` (a list of `ChartSeries`) on bar/line charts:
