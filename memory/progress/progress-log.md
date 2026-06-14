@@ -7,6 +7,46 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.5 (sub-slice 2) — Chart-bound legend
+
+`ChartLegend.Source : ChartBase?` auto-derives rows from the chart — one per series (name + per-series
+color) for multi-series, else one per category — and refreshes on the chart's new internal
+`SnapshotChanged` event (raised in `RebuildPoints`). Backed by `ChartBase.GetLegendEntries()` (internal
+virtual; `CartesianChartBase` overrides for series). Subscription managed across attach/detach; manual
+`Labels`/`Colors` still work when `Source` is null. Gallery multi-series samples now use `Source`.
+Verified: build 0/0, full suite **477 passing** (+1: legend rows/colors/labels derived from series).
+Deferred (documented): interactive series toggle + hover-highlight sync, and time-series X mapping.
+
+---
+
+## 2026-06-14 — 3.5 (sub-slice 1) — Charts multi-series (grouped/stacked/percent bars, multi-line)
+
+**Done**
+- `ChartSeries(IReadOnlyList<double> Values, string? Name, Color? Color)` record; `BarStackMode` enum;
+  `ChartPoint.SeriesIndex` (non-positional init prop, default 0 — non-breaking).
+- `CartesianChartBase.Series` (overrides Values when set). Snapshot generalized via a virtual
+  `ChartBase.BuildPoints()` override that emits flat **series-major** points (s*categories + c) with
+  per-series color and category labels. `Charts.StackedBarHeights` pure helper.
+- BarChart `RenderSeries`: grouped (sub-bars per category), Stacked, StackedPercent (per-category
+  normalize to 100). LineChart `RenderSeries`: one polyline+dots per series. Both reserve axis gutters,
+  span the domain across all series, and feed `_barRects`/`_pointPositions` flat indices so hit-testing,
+  tooltips, and hover emphasis generalize automatically.
+- **Single-series path untouched** (Series==null → existing render + base.BuildPoints). Gallery: BarChart
+  "Grouped series"/"Stacked series", LineChart "Multiple series". Docs: charts.md multi-series section.
+
+**Decisions / limits**
+- Multi-series colors are per-series (vs single-series per-category) via the snapshot; drawing reads
+  `ResolvedPoints[flat].Color`. Multi-series data labels and signed/negative multi-series bars are not
+  drawn this release (documented).
+
+**Verified:** build 0/0; full suite **476 passing** (+4: StackedBarHeights, multi-series snapshot/
+SeriesIndex/color, render-without-throw across all 4 modes, grouped-bar hover). Visually confirmed
+offscreen: grouped, stacked, 100%-stacked bars, and multi-line — all with axes and per-series colors.
+
+**Next:** 3.5 sub-slice 2 — chart-bound interactive legend (`ChartLegend.Source`).
+
+---
+
 ## 2026-06-14 — 3.4 (sub-slice 2) — Charts ItemsSource binding
 
 `ChartBase` gains `ItemsSource` + `ValueSelector`/`LabelSelector`/`ColorSelector`. When set, items project

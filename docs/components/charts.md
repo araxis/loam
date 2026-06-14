@@ -96,6 +96,41 @@ new BarChart
 };
 ```
 
+### Multiple series (bar & line)
+
+Set `Series` (a list of `ChartSeries`) to plot several series. It overrides `Values`; categories come
+from `Labels`, and each series gets one color (its `ChartSeries.Color`, or a theme color by index).
+
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `Series` | `IReadOnlyList<ChartSeries>?` | `null` | Multiple series; `ChartSeries(IReadOnlyList<double> Values, string? Name, Color? Color)`. |
+| `StackMode` (BarChart) | `BarStackMode` | `Grouped` | `Grouped` (side-by-side), `Stacked`, or `StackedPercent` (each category normalized to 100%). |
+
+`LineChart` draws one line per series. The Y-axis domain spans all series (and stacked totals). The
+per-point snapshot, hover/tooltips, and hit-testing all carry a `ChartPoint.SeriesIndex`. The pure
+`Charts.StackedBarHeights` helper backs stacking. (Multi-series data labels and signed/negative
+multi-series bars are not drawn in this release.)
+
+```csharp
+var series = new[]
+{
+    new ChartSeries(new[] { 30d, 45d, 28d, 60d }, "Web"),
+    new ChartSeries(new[] { 18d, 22d, 35d, 30d }, "Mobile"),
+};
+new BarChart { Labels = new[] { "Q1", "Q2", "Q3", "Q4" }, Series = series, ShowAxes = true };               // grouped
+new BarChart { Labels = quarters, Series = series, StackMode = BarStackMode.Stacked, ShowAxes = true };     // stacked
+new LineChart { Labels = quarters, Series = series, ShowAxes = true };                                      // multi-line
+```
+
+**Bound legend.** Set `ChartLegend.Source` to a chart and the legend derives its rows automatically —
+one per series (name + color) for multi-series charts, otherwise one per category — and refreshes when
+the chart's data changes. No manual `Labels`/`Colors` to keep in sync:
+
+```csharp
+var chart = new BarChart { Labels = quarters, Series = series };
+var legend = new ChartLegend { Source = chart };
+```
+
 ```csharp
 var chart = new BarChart { Values = new[] { 12d, 19d, 8d }, Labels = new[] { "Mon", "Tue", "Wed" } };
 chart.HoverChanged += (_, e) => status.Text = e.Point is { } p ? $"{p.Label}: {p.Value:N0}" : "";

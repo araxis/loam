@@ -25,6 +25,8 @@ public class ChartLegend : StackPanel
     ];
 
     private IReadOnlyList<Color>? _colors;
+    private ChartBase? _source;
+    private IReadOnlyList<(string Label, Color Color)>? _sourceEntries;
 
     /// <summary>Identifies the <see cref="ShowSwatches"/> property.</summary>
     public static readonly StyledProperty<bool> ShowSwatchesProperty =
@@ -51,6 +53,36 @@ public class ChartLegend : StackPanel
         set => SetValue(ShowSwatchesProperty, value);
     }
 
+    /// <summary>
+    /// Optional chart to bind to. When set, the legend derives its rows (labels and colors) from the
+    /// chart — one row per series for multi-series charts, otherwise one per category — and refreshes
+    /// automatically when the chart's data changes. Overrides manual <see cref="Labels"/>/<see cref="Colors"/>.
+    /// </summary>
+    public ChartBase? Source
+    {
+        get => _source;
+        set
+        {
+            if (ReferenceEquals(_source, value))
+            {
+                return;
+            }
+
+            if (_source is not null)
+            {
+                _source.SnapshotChanged -= OnSourceChanged;
+            }
+
+            _source = value;
+            if (_source is not null)
+            {
+                _source.SnapshotChanged += OnSourceChanged;
+            }
+
+            RefreshFromSource();
+        }
+    }
+
     /// <summary>Initializes a new instance of the <see cref="ChartLegend"/> class.</summary>
     public ChartLegend()
     {
@@ -60,18 +92,38 @@ public class ChartLegend : StackPanel
         AutomationProperties.SetName(this, "Chart legend");
     }
 
+    private void OnSourceChanged(object? sender, EventArgs e) => RefreshFromSource();
+
+    private void RefreshFromSource()
+    {
+        _sourceEntries = _source?.GetLegendEntries();
+        RebuildRows();
+    }
+
     private void RebuildRows()
     {
         Children.Clear();
+
+        if (_sourceEntries is { } entries)
+        {
+            for (var i = 0; i < entries.Count; i++)
+            {
+                Children.Add(BuildRow(i, entries[i].Label, entries[i].Color));
+            }
+
+            AutomationProperties.SetHelpText(this, $"{entries.Count} item{(entries.Count == 1 ? string.Empty : "s")}");
+            return;
+        }
+
         for (var i = 0; i < Labels.Count; i++)
         {
-            Children.Add(BuildRow(i, Labels[i]));
+            Children.Add(BuildRow(i, Labels[i], color: null));
         }
 
         AutomationProperties.SetHelpText(this, $"{Labels.Count} item{(Labels.Count == 1 ? string.Empty : "s")}");
     }
 
-    private StackPanel BuildRow(int index, string label)
+    private StackPanel BuildRow(int index, string label, Color? color)
     {
         var swatch = new Border
         {
@@ -81,7 +133,11 @@ public class ChartLegend : StackPanel
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        if (_colors is { Count: > 0 })
+        if (color is { } explicitColor)
+        {
+            swatch.Background = new SolidColorBrush(explicitColor);
+        }
+        else if (_colors is { Count: > 0 })
         {
             swatch.Background = new SolidColorBrush(_colors[index % _colors.Count]);
         }
@@ -110,6 +166,28 @@ public class ChartLegend : StackPanel
         });
 
         return row;
+    }
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (_source is not null)
+        {
+            _source.SnapshotChanged -= OnSourceChanged;
+            _source.SnapshotChanged += OnSourceChanged;
+            RefreshFromSource();
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+        if (_source is not null)
+        {
+            _source.SnapshotChanged -= OnSourceChanged;
+        }
     }
 
     /// <inheritdoc />

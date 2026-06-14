@@ -6,7 +6,17 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
-## 3.4.0
+## 3.5.0
+
+**`Loam.Charts` multi-series.** Set `Series` (a list of `ChartSeries`) on bar/line charts:
+
+- **Bar:** `StackMode` of `Grouped` (side-by-side), `Stacked`, or `StackedPercent` (per-category 100%),
+  backed by the pure `Charts.StackedBarHeights` helper.
+- **Line:** one line per series.
+- The Y-axis domain spans all series (and stacked totals); the per-point snapshot, hover/tooltips, and
+  hit-testing carry a `ChartPoint.SeriesIndex`. The single-series path is unchanged.
+- **Bound legend:** `ChartLegend.Source` derives its rows (one per series, or per category) from a chart
+  and refreshes automatically — no hand-syncing `Labels`/`Colors`.
 
 **`Loam.Charts` analytical depth** — axes and data binding (additive; no breaking changes):
 
