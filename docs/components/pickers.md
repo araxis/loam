@@ -17,7 +17,7 @@ Set `Clearable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to surface a
 
 Set `AdornmentIcon` (a glyph from `Loam.Icons`, e.g. `Icons.Material.Filled.Person`) on the same three field pickers to show a leading icon at the start of the field. The value text, resting label, and floating label all indent to the icon's right so nothing overlaps, across every variant.
 
-Set `Editable` on `DatePicker` to let the user type a date directly into the field. The text is parsed and committed on Enter or focus loss — exact `DateFormat` first, then a loose current-culture parse — and validated against `MinDate`/`MaxDate`; unparseable or out-of-range input leaves `Date` unchanged and shows `InvalidDateText` in the error slot. The trailing calendar icon (now a button) and `Alt+Down` still open the flyout, which stays in sync with the typed value.
+Set `Editable` on `DatePicker` or `TimePicker` to let the user type the value directly into the field. The text is parsed and committed on Enter or focus loss — exact format first (`DateFormat`/`TimeFormat`), then a loose current-culture parse — and (for `DatePicker`) validated against `MinDate`/`MaxDate`; unparseable or out-of-range input leaves the value unchanged and shows `InvalidDateText`/`InvalidTimeText` in the error slot. The trailing icon (now a button) and `Alt+Down` still open the flyout, which stays in sync with the typed value.
 
 ---
 
@@ -112,6 +112,9 @@ keyboard navigation the focused row is kept in view.
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when `Time` is set; clicking it clears the value, raises `TimeSelected` with `null`, and does not open the flyout. |
 | `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the value text and label indent to its right. |
+| `Editable` | `bool` | `false` | Lets the user type a time into the field. Text is committed on Enter or focus loss; the trailing clock icon (or Alt+Down) still opens the flyout. |
+| `InvalidTimeText` | `string` | `"Invalid time"` | `ErrorText` shown when typed text cannot be parsed as a time (editable mode). |
+| `TryParseTime(text, format, out value)` _(static)_ | `bool` | — | Parses typed text: `true` for empty (→ `null`) or text parseable via `format` (exact), the current culture, or `TimeSpan`; `false` otherwise. |
 | `PickerTitle` | `string` | `"Select time"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |

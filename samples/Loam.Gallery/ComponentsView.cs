@@ -835,6 +835,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Pickers", "TimePicker", "Time input with hour and minute columns.",
             Sample("Variants", BuildTimePickerVariants),
             Sample("Selected & custom format", BuildTimePickerSelected),
+            Sample("Editable text entry", BuildTimePickerEditable),
             Sample("Opens at selected time", BuildTimePickerScrollToSelection),
             Sample("Clearable", BuildTimePickerClearable),
             Sample("Leading icon", BuildTimePickerAdornment),
@@ -8089,6 +8090,39 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Quarter-hour choices",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerEditable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Type or pick",
+                    Editable = true,
+                    TimeFormat = "HH:mm",
+                    Time = new TimeSpan(9, 30, 0),
+                    HelperText = "Type a time, then Enter — or use the clock icon",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Editable (empty)",
+                    Editable = true,
+                    TimeFormat = "HH:mm",
+                    Placeholder = "HH:mm",
+                    InvalidTimeText = "Enter a time as HH:mm",
+                    HelperText = "Unparseable input shows an error",
                 },
             },
         };

@@ -86,8 +86,19 @@ public class TimePicker : TemplatedControl
     public static readonly StyledProperty<string?> AdornmentIconProperty =
         AvaloniaProperty.Register<TimePicker, string?>(nameof(AdornmentIcon));
 
+    /// <summary>Identifies the <see cref="Editable"/> property.</summary>
+    public static readonly StyledProperty<bool> EditableProperty =
+        AvaloniaProperty.Register<TimePicker, bool>(nameof(Editable));
+
+    /// <summary>Identifies the <see cref="InvalidTimeText"/> property.</summary>
+    public static readonly StyledProperty<string> InvalidTimeTextProperty =
+        AvaloniaProperty.Register<TimePicker, string>(nameof(InvalidTimeText), "Invalid time");
+
     private Border? _box;
     private IconButton? _clear;
+    private IconButton? _clockButton;
+    private TextBox? _input;
+    private bool _flyoutOpening;
     private Icon? _adornment;
     private Border? _labelHost;
     private Text? _display;
@@ -137,6 +148,24 @@ public class TimePicker : TemplatedControl
     {
         get => GetValue(AdornmentIconProperty);
         set => SetValue(AdornmentIconProperty, value);
+    }
+
+    /// <summary>
+    /// When true, the user can type a time into the field; the trailing clock icon opens the flyout. Typed
+    /// entry accepts any minute (it is not snapped to <see cref="MinuteStep"/>, which only constrains the
+    /// flyout columns); a time of day outside 0–24h cannot be entered.
+    /// </summary>
+    public bool Editable
+    {
+        get => GetValue(EditableProperty);
+        set => SetValue(EditableProperty, value);
+    }
+
+    /// <summary>Error message shown when typed text cannot be parsed as a time (<see cref="Editable"/> mode).</summary>
+    public string InvalidTimeText
+    {
+        get => GetValue(InvalidTimeTextProperty);
+        set => SetValue(InvalidTimeTextProperty, value);
     }
 
     /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
@@ -243,6 +272,44 @@ public class TimePicker : TemplatedControl
     /// <summary>Clears the selected time.</summary>
     public void Clear() => Time = null;
 
+    /// <summary>
+    /// Parses typed time text. Returns <c>true</c> when the text is empty (yielding <paramref name="value"/> =
+    /// <c>null</c>) or parses via <paramref name="format"/> (exact), the current culture, or <see cref="TimeSpan"/>;
+    /// returns <c>false</c> for non-empty unparseable text.
+    /// </summary>
+    public static bool TryParseTime(string? text, string format, out TimeSpan? value)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            value = null;
+            return true;
+        }
+
+        if (DateTime.TryParseExact(text, format, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var exact))
+        {
+            value = exact.TimeOfDay;
+            return true;
+        }
+
+        if (DateTime.TryParse(text, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var loose))
+        {
+            value = loose.TimeOfDay;
+            return true;
+        }
+
+        // Constrain the TimeSpan fallback to a valid time-of-day: TimeSpan.Parse reads bare numbers like
+        // "5" as 5 DAYS and accepts spans >= 24h, which would silently corrupt the time-of-day value.
+        if (TimeSpan.TryParse(text, CultureInfo.CurrentCulture, out var span)
+            && span >= TimeSpan.Zero && span < TimeSpan.FromDays(1))
+        {
+            value = span;
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(TimePicker);
 
@@ -257,6 +324,8 @@ public class TimePicker : TemplatedControl
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        _clockButton = e.NameScope.Find("PART_ClockButton") as IconButton;
+        _input = e.NameScope.Find("PART_Input") as TextBox;
         _adornment = e.NameScope.Find("PART_Adornment") as Icon;
         if (_clear is not null)
         {
@@ -265,6 +334,51 @@ public class TimePicker : TemplatedControl
             {
                 Clear();
                 TimeSelected?.Invoke(null);
+            };
+        }
+
+        if (_clockButton is not null)
+        {
+            Avalonia.Automation.AutomationProperties.SetName(_clockButton, "Open clock");
+            // Pressing the button blurs the input before Click fires; flag it so the resulting commit is
+            // suppressed (the flyout selection sets the value instead of in-progress typed text).
+            _clockButton.AddHandler(
+                InputElement.PointerPressedEvent,
+                (_, _) => _flyoutOpening = true,
+                Avalonia.Interactivity.RoutingStrategies.Tunnel,
+                handledEventsToo: true);
+            _clockButton.Click += (_, _) =>
+            {
+                Open();
+                _flyoutOpening = false;
+            };
+        }
+
+        if (_input is not null)
+        {
+            FieldChrome.ResetInnerTextBox(_input);
+            _input.GotFocus += (_, _) =>
+            {
+                FieldChrome.ResetInnerTextBox(_input);
+                ApplyBoxChrome();
+            };
+            _input.LostFocus += (_, _) =>
+            {
+                CommitText();
+                ApplyBoxChrome();
+            };
+            _input.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Enter)
+                {
+                    CommitText();
+                    args.Handled = true;
+                }
+                else if (args.Key is Key.Down && args.KeyModifiers.HasFlag(KeyModifiers.Alt))
+                {
+                    Open();
+                    args.Handled = true;
+                }
             };
         }
 
@@ -279,13 +393,22 @@ public class TimePicker : TemplatedControl
                     return;
                 }
 
-                Focus();
-                Open();
+                if (Editable)
+                {
+                    _input?.Focus();
+                }
+                else
+                {
+                    Focus();
+                    Open();
+                }
+
                 args.Handled = true;
             };
         }
 
         UpdateAdornment();
+        UpdateEditMode();
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
@@ -298,6 +421,37 @@ public class TimePicker : TemplatedControl
         {
             _clear.IsVisible = Clearable && Time is not null;
         }
+    }
+
+    private void UpdateEditMode()
+    {
+        if (_input is not null)
+        {
+            _input.IsVisible = Editable;
+            _input.IsReadOnly = !Editable;
+        }
+    }
+
+    private void CommitText()
+    {
+        // Skip while the flyout is open/opening: the popup steals focus and the flyout selection,
+        // not the in-progress typed text, is what should set the value.
+        if (_input is null || !Editable || _flyoutOpen || _flyoutOpening)
+        {
+            return;
+        }
+
+        if (!TryParseTime(_input.Text, TimeFormat, out var parsed))
+        {
+            Error = true;
+            ErrorText = InvalidTimeText;
+            return; // keep the user's text so they can correct it
+        }
+
+        Error = false;
+        Time = parsed;
+        UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        TimeSelected?.Invoke(parsed);
     }
 
     private void UpdateAdornment()
@@ -335,6 +489,13 @@ public class TimePicker : TemplatedControl
             UpdateLabel();
         }
 
+        if (change.Property == EditableProperty)
+        {
+            UpdateEditMode();
+            UpdateDisplay();
+            ApplyBoxChrome();
+        }
+
         if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
@@ -352,7 +513,8 @@ public class TimePicker : TemplatedControl
             return;
         }
 
-        if (InteractionAssist.IsActivationKey(e.Key))
+        // In editable mode, Space/Enter belong to the text box; the flyout opens via the icon or Alt+Down.
+        if (!Editable && InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
             e.Handled = true;
@@ -438,7 +600,9 @@ public class TimePicker : TemplatedControl
         };
         ok.Click += (_, _) =>
         {
+            Error = false; // picking a valid time clears any prior typed-input error
             Time = new TimeSpan(pendingHour, pendingMinute, 0);
+            UpdateDisplay();
             TimeSelected?.Invoke(Time);
             _flyout?.Hide();
             ApplyBoxChrome();
@@ -726,7 +890,8 @@ public class TimePicker : TemplatedControl
         var labelForeground = LabelForegroundKey();
         var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
         var hasLabel = !string.IsNullOrEmpty(Label);
-        var floating = hasLabel && (ShrinkLabel || IsActive() || Time is not null);
+        var hasTypedText = Editable && _input is not null && !string.IsNullOrEmpty(_input.Text);
+        var floating = hasLabel && (ShrinkLabel || IsActive() || Time is not null || hasTypedText);
         var resting = hasLabel && !floating;
 
         if (_label is not null)
@@ -747,7 +912,13 @@ public class TimePicker : TemplatedControl
 
         if (_display is not null)
         {
-            _display.IsVisible = !resting;
+            _display.IsVisible = !resting && !Editable;
+        }
+
+        if (_input is not null)
+        {
+            _input.PlaceholderText = resting ? null : Placeholder;
+            Avalonia.Automation.AutomationProperties.SetName(_input, Label ?? Placeholder ?? "Time");
         }
 
         var leadingInset = string.IsNullOrEmpty(AdornmentIcon) ? 0 : FieldChrome.LeadingAdornmentInset(this);
@@ -773,12 +944,18 @@ public class TimePicker : TemplatedControl
         }
 
         var hasTime = Time is not null;
-        _display.Text = hasTime
-            ? DateTime.Today.Add(Time!.Value).ToString(TimeFormat, CultureInfo.CurrentCulture)
-            : Placeholder;
+        var formatted = hasTime ? DateTime.Today.Add(Time!.Value).ToString(TimeFormat, CultureInfo.CurrentCulture) : null;
+        _display.Text = formatted ?? Placeholder;
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasTime ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+
+        // Keep the editable text box in sync with the committed value (empty when cleared).
+        if (_input is not null && Editable)
+        {
+            _input.Text = formatted ?? string.Empty;
+        }
+
         InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
         UpdateLabel();
     }
@@ -793,11 +970,13 @@ public class TimePicker : TemplatedControl
         FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
         _box.IsEnabled = IsEnabled;
-        _box.Cursor = IsEnabled ? HandCursor : Cursor.Default;
+        _box.Cursor = !IsEnabled ? Cursor.Default
+            : Editable ? new Cursor(StandardCursorType.Ibeam)
+            : HandCursor;
         UpdateLabel();
     }
 
-    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true || _input?.IsFocused == true;
 
     private string LabelForegroundKey()
     {

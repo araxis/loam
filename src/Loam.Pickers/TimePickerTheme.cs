@@ -47,15 +47,23 @@ internal static class TimePickerTheme
             }
                 .Named("PART_Display", scope);
 
-            var icon = new Icon
+            // Hosted, chrome-stripped text box shown only in Editable mode (see TimePicker.UpdateEditMode).
+            var input = new TextBox
             {
-                Data = Icons.Material.Filled.Schedule,
-                Color = LoamColor.Default,
-                Size = LoamSize.Small,
-                Margin = new Thickness(12, 0, 0, 0),
+                IsVisible = false,
                 VerticalAlignment = VerticalAlignment.Center,
-            };
-            DockPanel.SetDock(icon, Dock.Right);
+                VerticalContentAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            }.Named("PART_Input", scope);
+
+            var clockButton = new IconButton
+            {
+                Icon = Icons.Material.Filled.Schedule,
+                Size = LoamSize.Small,
+                Margin = new Thickness(4, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            }.Named("PART_ClockButton", scope);
+            DockPanel.SetDock(clockButton, Dock.Right);
 
             var clear = new IconButton
             {
@@ -81,13 +89,13 @@ internal static class TimePickerTheme
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
-                Children = { display, restingLabel },
+                Children = { display, input, restingLabel },
             };
             var box = new Border
             {
                 MinWidth = 240,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Child = new DockPanel { LastChildFill = true, Children = { icon, clear, adornment, textLayer } },
+                Child = new DockPanel { LastChildFill = true, Children = { clockButton, clear, adornment, textLayer } },
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
