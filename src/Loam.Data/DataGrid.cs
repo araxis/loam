@@ -194,6 +194,7 @@ public class DataGrid<T> : Decorator
     private Control? _errorContent;
     private Action? _onRetry;
     private int _skeletonRowCount = 6;
+    private bool _showFooter;
     private int _frozenColumns;
     private double _rowHeight;
     private Func<IReadOnlyList<T>, string>? _groupAggregate;
@@ -391,6 +392,13 @@ public class DataGrid<T> : Decorator
         set { _skeletonRowCount = Math.Max(1, value); Rebuild(); }
     }
 
+    /// <summary>When true, renders a footer row of per-column aggregates (<see cref="DataGridColumn{T}.Summary"/>/<see cref="DataGridColumn{T}.SummaryKind"/>) computed over the current filtered rows.</summary>
+    public bool ShowFooter
+    {
+        get => _showFooter;
+        set { _showFooter = value; Rebuild(); }
+    }
+
     /// <summary>
     /// Number of leading columns to freeze (pin) while the remaining columns scroll horizontally;
     /// <c>0</c> disables. Ignored while grouped, or when it is not less than the column count. Frozen
@@ -549,7 +557,8 @@ public class DataGrid<T> : Decorator
             : sorted.Skip((page - 1) * _pageSize).Take(_pageSize).ToList();
 
         var inState = HasError || _isLoading;
-        var grid = BuildGrid(inState ? Array.Empty<T>() : rows);
+        var footer = _showFooter && !inState ? Columns.Select(c => c.SummaryText(sorted)).ToArray() : null;
+        var grid = BuildGrid(inState ? Array.Empty<T>() : rows, footer);
 
         Control content = grid;
         if (!inState && _pageSize > 0 && pageCount > 1)
@@ -578,10 +587,10 @@ public class DataGrid<T> : Decorator
         Child = new Paper { Elevation = _elevation, Content = content };
     }
 
-    private AvaGrid BuildGrid(IReadOnlyList<T> rows)
+    private AvaGrid BuildGrid(IReadOnlyList<T> rows, IReadOnlyList<string?>? footer)
     {
         var useFrozen = _frozenColumns > 0 && _groupBy is null && _frozenColumns < Columns.Count;
-        return useFrozen ? BuildFrozenGrid(rows) : BuildSingleGrid(rows);
+        return useFrozen ? BuildFrozenGrid(rows, footer) : BuildSingleGrid(rows, footer);
     }
 
     private static ColumnDefinition StarOrWidth(DataGridColumn<T> column) =>
@@ -593,7 +602,7 @@ public class DataGrid<T> : Decorator
     private RowDefinition BodyRowDef() =>
         new(_rowHeight > 0 ? new GridLength(_rowHeight, GridUnitType.Pixel) : GridLength.Auto);
 
-    private AvaGrid BuildSingleGrid(IReadOnlyList<T> rows)
+    private AvaGrid BuildSingleGrid(IReadOnlyList<T> rows, IReadOnlyList<string?>? footer)
     {
         var grid = new AvaGrid();
         for (var c = 0; c < Columns.Count; c++)
@@ -668,11 +677,22 @@ public class DataGrid<T> : Decorator
             AvaGrid.SetColumnSpan(empty, Columns.Count);
             grid.Children.Add(empty);
         }
+        else if (footer is not null)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            for (var c = 0; c < Columns.Count; c++)
+            {
+                var cell = BuildFooterCell(Columns[c], c < footer.Count ? footer[c] : null);
+                AvaGrid.SetRow(cell, rowIndex);
+                AvaGrid.SetColumn(cell, c);
+                grid.Children.Add(cell);
+            }
+        }
 
         return grid;
     }
 
-    private AvaGrid BuildFrozenGrid(IReadOnlyList<T> rows)
+    private AvaGrid BuildFrozenGrid(IReadOnlyList<T> rows, IReadOnlyList<string?>? footer)
     {
         var frozen = _frozenColumns;
         var scrollCount = Columns.Count - frozen;
@@ -748,6 +768,26 @@ public class DataGrid<T> : Decorator
             AvaGrid.SetColumn(empty, 0);
             AvaGrid.SetColumnSpan(empty, scrollCount);
             rightGrid.Children.Add(empty);
+        }
+        else if (footer is not null)
+        {
+            leftGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            rightGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            for (var c = 0; c < frozen; c++)
+            {
+                var cell = BuildFooterCell(Columns[c], c < footer.Count ? footer[c] : null);
+                AvaGrid.SetRow(cell, rowIndex);
+                AvaGrid.SetColumn(cell, c);
+                leftGrid.Children.Add(cell);
+            }
+
+            for (var c = frozen; c < Columns.Count; c++)
+            {
+                var cell = BuildFooterCell(Columns[c], c < footer.Count ? footer[c] : null);
+                AvaGrid.SetRow(cell, rowIndex);
+                AvaGrid.SetColumn(cell, c - frozen);
+                rightGrid.Children.Add(cell);
+            }
         }
 
         var scroller = new ScrollViewer
@@ -862,6 +902,30 @@ public class DataGrid<T> : Decorator
         }
 
         return stack;
+    }
+
+    private Border BuildFooterCell(DataGridColumn<T> column, string? text)
+    {
+        var pad = InteractionAssist.ThicknessToken(this,
+            _dense ? LoamTokens.DensityDataHeaderPaddingDense : LoamTokens.DensityDataHeaderPadding,
+            _dense ? new Thickness(8, 6) : new Thickness(16, 12));
+        var label = new Text
+        {
+            Text = text ?? string.Empty,
+            Typo = Typo.Subtitle2,
+            Color = LoamColor.Default,
+            HorizontalAlignment = column.Align,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var cell = new Border
+        {
+            Child = label,
+            Padding = pad,
+            BorderThickness = new Thickness(0, 1, 0, 0),
+        };
+        cell.Bind(Border.BorderBrushProperty, this.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.TableLines))));
+        InteractionAssist.SetAutomationName(cell, text is null ? $"{column.Header} total" : $"{column.Header} total {text}");
+        return cell;
     }
 
     private Border BuildHeaderCell(DataGridColumn<T> column)

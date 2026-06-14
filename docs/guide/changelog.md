@@ -6,6 +6,13 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.8.0
+
+**`Loam.Data` DataGrid footer aggregates.** Opt-in `ShowFooter` renders a totals row aligned to the
+column layout (single-grid and frozen-pane), computed over the current filtered rows (all pages).
+`DataGridColumn<T>` gains `Summary` (custom `Func<IReadOnlyList<T>, string>`) and a `SummaryKind` preset
+(`Sum`/`Average`/`Min`/`Max`/`Count`, honoring `Format`). Additive.
+
 ## 3.7.0
 
 **`Loam.Data` async states & pagination polish:**

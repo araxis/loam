@@ -7,6 +7,24 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.8 — DataGrid footer aggregates (totals row)
+
+`DataGridColumn<T>` gains `Summary` (Func<IReadOnlyList<T>,string>?) and `SummaryKind` enum
+(Sum/Average/Min/Max/Count, honoring Format) + `SummaryText(rows)` (numeric via an `AsNumber` switch).
+`DataGrid<T>.ShowFooter` computes footer values over the filtered `sorted` set in Rebuild and passes a
+`string?[]` to the grid builders; both `BuildSingleGrid` and `BuildFrozenGrid` (left + right panes) render
+a footer row (`BuildFooterCell`: Subtitle2, column-aligned, top-border separator) at `rowIndex` when there
+are data rows. Footer skipped in empty/loading/error states.
+
+**Verified:** build 0/0; full suite **486 passing** (+2: column SummaryText aggregates, grid footer shows
+"2 people"/"60"). Visually confirmed offscreen: "4 regions / 435 / $35,500" totals row, right-aligned,
+currency-formatted, separated by a top border. Gallery: DataGrid "Footer totals" sample.
+
+**Next:** sticky header + footer pinning; then the selection / AutomationPeers / header-menu /
+virtualization cluster. Loose end: Avalonia 12 clipboard API + copy.
+
+---
+
 ## 2026-06-14 — 3.7 — DataGrid async states + Pagination polish
 
 **Async states:** `DataGrid<T>` gains `IsLoading` (skeleton body via `Loam.Controls.Skeleton` rows),

@@ -115,6 +115,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `ErrorText` / `ErrorContent` | `string?` / `Control?` | `null` | Shows an error body instead of rows; `ErrorContent` overrides `ErrorText`. |
 | `OnRetry` | `Action?` | `null` | When set, the error body shows a **Retry** button that invokes this. |
 | `SkeletonRowCount` | `int` | `6` | Number of skeleton rows in the loading state. |
+| `ShowFooter` | `bool` | `false` | Renders a footer row of per-column aggregates (over the current filtered rows, all pages), aligned to the column layout. |
 | `PageSize` | `int` | `0` | Rows per page; `0` disables paging. Mirrors the reference API's `RowsPerPage`. |
 | `Page` | `int` | `1` | Current 1-based page. |
 | `FilterText` | `string?` | `null` | Text passed to the filter pipeline before sorting/paging. |
@@ -148,6 +149,8 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `CellTemplate` | `Func<T, Control>?` | `null` | Custom cell content. |
 | `Editable` | `bool` | `false` | Renders a text editor for this column when `SetText` is provided. |
 | `SetText` | `Action<T, string?>?` | `null` | Applies edited text back to the row. |
+| `Summary` | `Func<IReadOnlyList<T>, string>?` | `null` | Custom footer text for this column (shown when the grid's `ShowFooter` is on). |
+| `SummaryKind` | `DataGridSummary?` | `null` | Built-in footer aggregate when `Summary` is null: `Sum`/`Average`/`Min`/`Max` over the column's numeric values, or `Count`. Honors `Format`. |
 
 ### DataGrids static helpers
 
