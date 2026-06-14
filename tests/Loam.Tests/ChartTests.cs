@@ -500,6 +500,115 @@ public class ChartTests
         }
     }
 
+    [Fact]
+    public void Charts_stacked_bar_heights_stack_positive_values()
+    {
+        // values [3, 1], domain max 4, 100px tall -> series 0 sits on top of series 1.
+        var values = new[] { 3d, 1d };
+        var segments = Charts.StackedBarHeights(values, 4, 100);
+
+        segments.Count.ShouldBe(2);
+        segments[0].ShouldBe((25d, 75d)); // 3/4 of the height, from y=25
+        segments[1].ShouldBe((0d, 25d));  // 1/4, stacked above
+    }
+
+    [AvaloniaFact]
+    public void Multi_series_snapshot_carries_series_index_and_per_series_color()
+    {
+        var labels = new[] { "Q1", "Q2" };
+        var web = new[] { 10d, 20d };
+        var mobile = new[] { 5d, 8d };
+        var bar = new BarChart
+        {
+            Labels = labels,
+            Series = new[]
+            {
+                new ChartSeries(web, "Web"),
+                new ChartSeries(mobile, "Mobile"),
+            },
+        };
+        var window = Show(bar, ThemeVariant.Light);
+        try
+        {
+            bar.ResolvedPoints.Count.ShouldBe(4); // 2 series x 2 categories, series-major
+
+            bar.ResolvedPoints[0].SeriesIndex.ShouldBe(0);
+            bar.ResolvedPoints[0].Value.ShouldBe(10);
+            bar.ResolvedPoints[0].Label.ShouldBe("Q1");
+            bar.ResolvedPoints[2].SeriesIndex.ShouldBe(1); // series 1, category 0
+            bar.ResolvedPoints[2].Value.ShouldBe(5);
+
+            bar.ResolvedPoints[0].Color.ShouldBe(LoamColorScheme.DefaultLight.Primary);
+            bar.ResolvedPoints[2].Color.ShouldBe(LoamColorScheme.DefaultLight.Secondary);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Multi_series_charts_render_without_throwing()
+    {
+        var labels = new[] { "Q1", "Q2", "Q3" };
+        var web = new[] { 10d, 20d, 15d };
+        var mobile = new[] { 6d, 8d, 12d };
+        var series = new[]
+        {
+            new ChartSeries(web, "Web"),
+            new ChartSeries(mobile, "Mobile"),
+        };
+        var grouped = new BarChart { Width = 320, Height = 200, Labels = labels, Series = series, ShowAxes = true };
+        var stacked = new BarChart { Width = 320, Height = 200, Labels = labels, Series = series, StackMode = BarStackMode.Stacked };
+        var percent = new BarChart { Width = 320, Height = 200, Labels = labels, Series = series, StackMode = BarStackMode.StackedPercent };
+        var lines = new LineChart { Width = 320, Height = 200, Labels = labels, Series = series, ShowAxes = true };
+
+        new Window
+        {
+            Width = 820,
+            Height = 940,
+            Content = new StackPanel { Children = { grouped, stacked, percent, lines } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        grouped.ResolvedPoints.Count.ShouldBe(6);
+        lines.ResolvedPoints.Count.ShouldBe(6);
+    }
+
+    [AvaloniaFact]
+    public void Multi_series_grouped_bar_hover_resolves_the_datapoint()
+    {
+        var labels = new[] { "Q1", "Q2" };
+        var web = new[] { 10d, 20d };
+        var mobile = new[] { 30d, 8d }; // Mobile Q1 = 30 is the tallest bar
+        var bar = new BarChart
+        {
+            Labels = labels,
+            Series = new[]
+            {
+                new ChartSeries(web, "Web"),
+                new ChartSeries(mobile, "Mobile"),
+            },
+        };
+        var window = new Window { Width = 320, Height = 200, Content = bar };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        bar.HoverChanged += (_, e) => hovered = e;
+
+        // The tall Mobile bar of category Q1 occupies the right half of the first category slot.
+        window.MouseMove(new Avalonia.Point(120, 100));
+        Dispatcher.UIThread.RunJobs();
+
+        bar.HoveredIndex.ShouldBeGreaterThanOrEqualTo(0);
+        hovered.ShouldNotBeNull();
+        hovered!.Point!.Value.Value.ShouldBe(30);
+
+        window.Close();
+    }
+
     private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)

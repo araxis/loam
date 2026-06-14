@@ -118,6 +118,34 @@ public static class Charts
         }).ToList();
     }
 
+    /// <summary>
+    /// For one category, returns each series segment's <c>(Y, Height)</c> — its top offset from the plot
+    /// top and pixel height — stacking positive values upward over the domain [0, <paramref name="max"/>].
+    /// Negative values are treated as zero (stacked bars are positive).
+    /// </summary>
+    public static IReadOnlyList<(double Y, double Height)> StackedBarHeights(IReadOnlyList<double> categoryValues, double max, double plotHeight)
+    {
+        ArgumentNullException.ThrowIfNull(categoryValues);
+        var height = Math.Max(0, plotHeight);
+        if (max <= 0)
+        {
+            return categoryValues.Select(_ => (height, 0d)).ToList();
+        }
+
+        var result = new List<(double Y, double Height)>(categoryValues.Count);
+        var cumulative = 0d;
+        foreach (var raw in categoryValues)
+        {
+            var value = Math.Max(0, raw);
+            var top = (1 - (cumulative + value) / max) * height;
+            var bottom = (1 - cumulative / max) * height;
+            result.Add((top, bottom - top));
+            cumulative += value;
+        }
+
+        return result;
+    }
+
     /// <summary>Maps values to plot points over an explicit signed domain (the signed generalization of <see cref="LinePoints"/>).</summary>
     internal static IReadOnlyList<Point> ScaledLinePoints(IReadOnlyList<double> values, double width, double height, double min, double max, double pad = 4)
     {
@@ -218,7 +246,27 @@ public static class Charts
 /// legends so visible and spoken output never drift. <see cref="Percent"/> is the value's share of the
 /// positive total (0 for non-positive values).
 /// </summary>
-public readonly record struct ChartPoint(int Index, double Value, double Percent, string? Label, Color Color);
+public readonly record struct ChartPoint(int Index, double Value, double Percent, string? Label, Color Color)
+{
+    /// <summary>The series this point belongs to (0 for single-series charts).</summary>
+    public int SeriesIndex { get; init; }
+}
+
+/// <summary>One named, optionally colored data series for a multi-series chart.</summary>
+public sealed record ChartSeries(IReadOnlyList<double> Values, string? Name = null, Color? Color = null);
+
+/// <summary>How a multi-series <see cref="BarChart"/> arranges its bars.</summary>
+public enum BarStackMode
+{
+    /// <summary>Series render side-by-side within each category.</summary>
+    Grouped,
+
+    /// <summary>Series stack on top of each other within each category.</summary>
+    Stacked,
+
+    /// <summary>Series stack and each category is normalized to 100%.</summary>
+    StackedPercent,
+}
 
 /// <summary>Event data for chart pointer interactions. <see cref="Index"/> is -1 (and <see cref="Point"/> null) when the pointer is over no datapoint.</summary>
 public sealed class ChartPointEventArgs : EventArgs
@@ -697,13 +745,15 @@ public abstract class ChartBase : Control
         InvalidateVisual();
     }
 
-    private void RebuildPoints()
+    private void RebuildPoints() => _points = BuildPoints();
+
+    /// <summary>Builds the per-point snapshot from the current data. Overridden by multi-series charts.</summary>
+    protected virtual ChartPoint[] BuildPoints()
     {
         var values = _values;
         if (values.Count == 0)
         {
-            _points = Array.Empty<ChartPoint>();
-            return;
+            return Array.Empty<ChartPoint>();
         }
 
         var colors = ResolvedSeriesColors;
@@ -720,7 +770,22 @@ public abstract class ChartBase : Control
             points[i] = new ChartPoint(i, value, percent, label, color);
         }
 
-        _points = points;
+        return points;
+    }
+
+    /// <summary>The resolved theme/explicit series color for the given series index.</summary>
+    private protected Color SeriesColorAt(int index)
+    {
+        var colors = ResolvedSeriesColors;
+        return colors.Count > 0 ? colors[index % colors.Count] : Charts.Palette[index % Charts.Palette.Count];
+    }
+
+    /// <summary>Rebuilds the snapshot and accessible state, then invalidates render. Call after data-shaping changes.</summary>
+    private protected void RefreshData()
+    {
+        RebuildPoints();
+        UpdateAutomation();
+        InvalidateVisual();
     }
 
     private void UpdateAutomation()
@@ -1136,6 +1201,53 @@ public abstract class CartesianChartBase : ChartBase
         set { _yAxisFormat = value; InvalidateVisual(); }
     }
 
+    private IReadOnlyList<ChartSeries>? _series;
+
+    /// <summary>Optional multiple data series. When set (non-empty), it drives rendering and the snapshot instead of <see cref="ChartBase.Values"/>.</summary>
+    public IReadOnlyList<ChartSeries>? Series
+    {
+        get => _series;
+        set { _series = value; RefreshData(); }
+    }
+
+    /// <summary>True when a non-empty multi-series collection is set.</summary>
+    protected bool HasSeries => _series is { Count: > 0 };
+
+    /// <summary>The active series collection (non-null only when <see cref="HasSeries"/>).</summary>
+    private protected IReadOnlyList<ChartSeries> SeriesList => _series!;
+
+    /// <summary>The number of categories across all series.</summary>
+    private protected int SeriesCategoryCount => HasSeries ? _series!.Max(s => s.Values.Count) : 0;
+
+    /// <summary>The resolved color for a series (its explicit color, or the theme color for its index).</summary>
+    private protected Color SeriesColor(int seriesIndex) => _series![seriesIndex].Color ?? SeriesColorAt(seriesIndex);
+
+    /// <inheritdoc />
+    protected override ChartPoint[] BuildPoints()
+    {
+        if (_series is not { Count: > 0 } series)
+        {
+            return base.BuildPoints();
+        }
+
+        var categories = series.Max(s => s.Values.Count);
+        var positiveTotal = series.SelectMany(s => s.Values).Where(v => v > 0).Sum();
+        var points = new List<ChartPoint>(series.Count * categories);
+        for (var s = 0; s < series.Count; s++)
+        {
+            var color = series[s].Color ?? SeriesColorAt(s);
+            for (var c = 0; c < categories; c++)
+            {
+                var value = c < series[s].Values.Count ? series[s].Values[c] : 0;
+                var percent = positiveTotal > 0 && value > 0 ? value / positiveTotal : 0d;
+                var label = Labels is { } labels && c < labels.Count ? labels[c] : null;
+                points.Add(new ChartPoint(c, value, percent, label, color) { SeriesIndex = s });
+            }
+        }
+
+        return points.ToArray();
+    }
+
     /// <summary>True when per-point <see cref="ChartBase.Labels"/> are available for the X axis.</summary>
     protected bool HasCategoryLabels => Labels is { Count: > 0 };
 
@@ -1235,6 +1347,7 @@ public abstract class CartesianChartBase : ChartBase
 public sealed class BarChart : CartesianChartBase
 {
     private bool _allowNegative;
+    private BarStackMode _stackMode = BarStackMode.Grouped;
     private (Rect Rect, int Index)[] _barRects = Array.Empty<(Rect, int)>();
 
     /// <summary>When true, negative values render as bars below a zero baseline instead of being clamped to zero.</summary>
@@ -1242,6 +1355,13 @@ public sealed class BarChart : CartesianChartBase
     {
         get => _allowNegative;
         set { _allowNegative = value; InvalidateVisual(); }
+    }
+
+    /// <summary>For multi-series charts: arrange series side-by-side (Grouped), stacked, or stacked to 100%.</summary>
+    public BarStackMode StackMode
+    {
+        get => _stackMode;
+        set { _stackMode = value; InvalidateVisual(); }
     }
 
     /// <inheritdoc />
@@ -1269,6 +1389,12 @@ public sealed class BarChart : CartesianChartBase
     {
         if (Bounds.Width <= 0 || Bounds.Height <= 0)
         {
+            return;
+        }
+
+        if (HasSeries)
+        {
+            RenderSeries(context);
             return;
         }
 
@@ -1365,6 +1491,142 @@ public sealed class BarChart : CartesianChartBase
         DrawXAxisLabels(context, plot, bottomGutter, centers);
         DrawTooltip(context);
     }
+
+    private void RenderSeries(DrawingContext context)
+    {
+        var series = SeriesList;
+        var categories = SeriesCategoryCount;
+        var stacked = StackMode != BarStackMode.Grouped;
+        var percent = StackMode == BarStackMode.StackedPercent;
+
+        double dataMax = 0;
+        if (stacked)
+        {
+            for (var c = 0; c < categories; c++)
+            {
+                var sum = 0d;
+                foreach (var s in series)
+                {
+                    var v = c < s.Values.Count ? s.Values[c] : 0;
+                    if (v > 0)
+                    {
+                        sum += v;
+                    }
+                }
+
+                dataMax = Math.Max(dataMax, sum);
+            }
+
+            if (percent)
+            {
+                dataMax = 100;
+            }
+        }
+        else
+        {
+            foreach (var s in series)
+            {
+                foreach (var v in s.Values)
+                {
+                    dataMax = Math.Max(dataMax, v);
+                }
+            }
+        }
+
+        if (categories == 0 || dataMax <= 0)
+        {
+            DrawNoData(context);
+            return;
+        }
+
+        var (min, max, step) = ResolveDomain(0, dataMax);
+
+        const double gap = 8;
+        const double pad = 8;
+        var leftGutter = MeasureYGutter(min, max, step);
+        var bottomGutter = MeasureXGutter();
+        var plot = new Rect(
+            pad + leftGutter,
+            pad,
+            Math.Max(0, Bounds.Width - pad * 2 - leftGutter),
+            Math.Max(0, Bounds.Height - pad * 2 - bottomGutter));
+
+        if (ShowAxes)
+        {
+            DrawYAxis(context, plot, min, max, step);
+        }
+        else
+        {
+            DrawGrid(context, plot);
+        }
+
+        var slot = plot.Width / categories;
+        var centers = new double[categories];
+        var rects = new List<(Rect, int)>();
+
+        for (var c = 0; c < categories; c++)
+        {
+            centers[c] = plot.Left + c * slot + slot / 2;
+
+            if (stacked)
+            {
+                var values = new double[series.Count];
+                for (var s = 0; s < series.Count; s++)
+                {
+                    values[s] = c < series[s].Values.Count ? series[s].Values[c] : 0;
+                }
+
+                IReadOnlyList<double> stackValues = values;
+                if (percent)
+                {
+                    var sum = values.Where(v => v > 0).Sum();
+                    stackValues = sum > 0 ? values.Select(v => Math.Max(0, v) / sum * 100).ToArray() : values;
+                }
+
+                var segments = Charts.StackedBarHeights(stackValues, max, plot.Height);
+                var barWidth = Math.Max(1, slot - gap);
+                var x = plot.Left + c * slot + (slot - barWidth) / 2;
+                for (var s = 0; s < series.Count; s++)
+                {
+                    var (y, height) = segments[s];
+                    if (height <= 0)
+                    {
+                        continue;
+                    }
+
+                    var flat = s * categories + c;
+                    var rect = new Rect(x, plot.Top + y, barWidth, height);
+                    var pen = flat == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
+                    context.DrawRectangle(new ImmutableSolidColorBrush(ResolvedPoints[flat].Color), pen, rect, 4, 4);
+                    rects.Add((rect, flat));
+                }
+            }
+            else
+            {
+                var sub = Math.Max(1, (slot - gap) / series.Count);
+                for (var s = 0; s < series.Count; s++)
+                {
+                    var v = c < series[s].Values.Count ? series[s].Values[c] : 0;
+                    if (v <= 0)
+                    {
+                        continue;
+                    }
+
+                    var height = v / max * plot.Height;
+                    var x = plot.Left + c * slot + gap / 2 + s * sub;
+                    var flat = s * categories + c;
+                    var rect = new Rect(x, plot.Bottom - height, Math.Max(1, sub - 1), height);
+                    var pen = flat == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
+                    context.DrawRectangle(new ImmutableSolidColorBrush(ResolvedPoints[flat].Color), pen, rect, 3, 3);
+                    rects.Add((rect, flat));
+                }
+            }
+        }
+
+        _barRects = rects.ToArray();
+        DrawXAxisLabels(context, plot, bottomGutter, centers);
+        DrawTooltip(context);
+    }
 }
 
 /// <summary>A line chart. Plots values left-to-right with dots; set <see cref="Area"/> to fill, or <see cref="CartesianChartBase.ShowAxes"/> for labeled axes.</summary>
@@ -1419,6 +1681,12 @@ public sealed class LineChart : CartesianChartBase
     {
         if (Bounds.Width <= 0 || Bounds.Height <= 0)
         {
+            return;
+        }
+
+        if (HasSeries)
+        {
+            RenderSeries(context);
             return;
         }
 
@@ -1537,6 +1805,95 @@ public sealed class LineChart : CartesianChartBase
         }
 
         DrawXAxisLabels(context, plot, bottomGutter, _pointPositions.Select(p => p.X).ToArray());
+        DrawTooltip(context);
+    }
+
+    private void RenderSeries(DrawingContext context)
+    {
+        var series = SeriesList;
+        var categories = SeriesCategoryCount;
+        if (categories == 0 || !series.Any(s => s.Values.Any(v => v != 0)))
+        {
+            DrawNoData(context);
+            return;
+        }
+
+        var allValues = series.SelectMany(s => s.Values).ToList();
+        var dataMax = Math.Max(0, allValues.DefaultIfEmpty(0).Max());
+        var dataMin = AllowNegative ? Math.Min(0, allValues.DefaultIfEmpty(0).Min()) : 0;
+        var (min, max, step) = ResolveDomain(dataMin, dataMax);
+        var span = max - min;
+
+        const double pad = 4;
+        var leftGutter = MeasureYGutter(min, max, step);
+        var bottomGutter = MeasureXGutter();
+        var plot = new Rect(
+            leftGutter,
+            pad,
+            Math.Max(0, Bounds.Width - leftGutter),
+            Math.Max(0, Bounds.Height - pad * 2 - bottomGutter));
+
+        if (ShowAxes)
+        {
+            DrawYAxis(context, plot, min, max, step);
+        }
+        else
+        {
+            DrawGrid(context, plot);
+        }
+
+        if (min < 0)
+        {
+            var zeroY = plot.Top + Charts.ZeroBaselineOffset(min, max, plot.Height);
+            context.DrawLine(new Pen(Visuals.Outline, 1), new Point(plot.Left, zeroY), new Point(plot.Right, zeroY));
+        }
+
+        var positions = new List<Point>(series.Count * categories);
+        var categoryX = new double[categories];
+        for (var s = 0; s < series.Count; s++)
+        {
+            var values = series[s].Values;
+            var pts = new Point[categories];
+            for (var c = 0; c < categories; c++)
+            {
+                var raw = c < values.Count ? values[c] : 0;
+                var v = AllowNegative ? raw : Math.Max(0, raw);
+                var x = categories == 1
+                    ? plot.Left + plot.Width / 2
+                    : plot.Left + c / (double)(categories - 1) * plot.Width;
+                var y = plot.Top + (max - v) / span * plot.Height;
+                pts[c] = new Point(x, y);
+                if (s == 0)
+                {
+                    categoryX[c] = x;
+                }
+            }
+
+            var brush = new ImmutableSolidColorBrush(SeriesColor(s));
+            var pen = new Pen(brush, 2) { LineJoin = PenLineJoin.Round };
+            for (var c = 1; c < categories; c++)
+            {
+                context.DrawLine(pen, pts[c - 1], pts[c]);
+            }
+
+            for (var c = 0; c < categories; c++)
+            {
+                var flat = s * categories + c;
+                if (flat == HoveredIndex)
+                {
+                    context.DrawEllipse(brush, new Pen(Visuals.Surface, 2), pts[c], 5, 5);
+                }
+                else
+                {
+                    context.DrawEllipse(brush, null, pts[c], 3, 3);
+                }
+            }
+
+            positions.AddRange(pts);
+        }
+
+        _pointPositions = positions.ToArray();
+        DrawXAxisLabels(context, plot, bottomGutter, categoryX);
         DrawTooltip(context);
     }
 }

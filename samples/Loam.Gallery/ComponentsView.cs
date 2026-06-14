@@ -992,6 +992,8 @@ public sealed class ComponentsView : UserControl
             Sample("Themed bars", BuildBarChartThemedBars),
             Sample("Axes", BuildBarChartAxes),
             Sample("Bound data", BuildBarChartBound),
+            Sample("Grouped series", BuildBarChartGrouped),
+            Sample("Stacked series", BuildBarChartStacked),
             Sample("Signed values", BuildBarChartSigned),
             Sample("Data labels", BuildBarChartDataLabels),
             Sample("Interactive", BuildBarChartInteractive),
@@ -999,6 +1001,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Charts", "LineChart", "Line and area chart rendering.",
             Sample("Line", BuildLineChartLine),
             Sample("Axes", BuildLineChartAxes),
+            Sample("Multiple series", BuildLineChartSeries),
             Sample("Area", BuildLineChartArea),
             Sample("Signed values", BuildLineChartSigned),
             Sample("Data labels", BuildLineChartDataLabels)),
@@ -8245,6 +8248,82 @@ public sealed class ComponentsView : UserControl
                         CenterSubText = "sessions",
                     },
                     new ChartLegend { Labels = { "Desktop", "Browser", "Mobile" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartGrouped()
+    {
+        var labels = new[] { "Q1", "Q2", "Q3", "Q4" };
+        var web = new[] { 30d, 45d, 28d, 60d };
+        var mobile = new[] { 18d, 22d, 35d, 30d };
+        var series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile") };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Series render side-by-side per category; each series keeps one color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BarChart { Width = 340, Height = 200, Labels = labels, Series = series, ShowAxes = true },
+                    new ChartLegend { Labels = { "Web", "Mobile" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartStacked()
+    {
+        var labels = new[] { "Q1", "Q2", "Q3", "Q4" };
+        var web = new[] { 30d, 45d, 28d, 60d };
+        var mobile = new[] { 18d, 22d, 35d, 30d };
+        var kiosk = new[] { 10d, 14d, 9d, 20d };
+        var series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile"), new ChartSeries(kiosk, "Kiosk") };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "StackMode = Stacked layers series; StackedPercent normalizes each category to 100%.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BarChart { Width = 340, Height = 200, Labels = labels, Series = series, StackMode = BarStackMode.Stacked, ShowAxes = true },
+                    new ChartLegend { Labels = { "Web", "Mobile", "Kiosk" } },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildLineChartSeries()
+    {
+        var labels = new[] { "Q1", "Q2", "Q3", "Q4" };
+        var web = new[] { 30d, 45d, 28d, 60d };
+        var mobile = new[] { 18d, 22d, 35d, 30d };
+        var series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile") };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Each series is its own line and color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new LineChart { Width = 340, Height = 200, Labels = labels, Series = series, ShowAxes = true },
+                    new ChartLegend { Labels = { "Web", "Mobile" } },
                 },
             },
         };
