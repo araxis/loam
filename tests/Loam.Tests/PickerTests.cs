@@ -412,6 +412,187 @@ public class PickerTests
         ShouldOverlapViewport(hourColumn, PopupRow(paper, "Hour 20")); // ...and it is now in view
     }
 
+    [Fact]
+    public void TimePicker_TryParseTime_handles_empty_exact_loose_and_invalid()
+    {
+        Loam.Controls.TimePicker.TryParseTime("  ", "HH:mm", out var empty).ShouldBeTrue();
+        empty.ShouldBeNull();
+
+        Loam.Controls.TimePicker.TryParseTime("21:45", "HH:mm", out var exact).ShouldBeTrue();
+        exact.ShouldBe(new TimeSpan(21, 45, 0));
+
+        // Not the exact HH:mm format, but parseable loosely by the (invariant) culture.
+        Loam.Controls.TimePicker.TryParseTime("9:05 AM", "HH:mm", out var loose).ShouldBeTrue();
+        loose.ShouldBe(new TimeSpan(9, 5, 0));
+
+        Loam.Controls.TimePicker.TryParseTime("not a time", "HH:mm", out var bad).ShouldBeFalse();
+        bad.ShouldBeNull();
+
+        // A bare number parses as DAYS via TimeSpan and a 25h span exceeds a day — both must be rejected,
+        // not silently committed as a corrupt time-of-day.
+        Loam.Controls.TimePicker.TryParseTime("5", "HH:mm", out var bareNumber).ShouldBeFalse();
+        bareNumber.ShouldBeNull();
+        Loam.Controls.TimePicker.TryParseTime("25:00", "HH:mm", out var overflow).ShouldBeFalse();
+        overflow.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_rejects_bare_number_as_invalid()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true, TimeFormat = "HH:mm", Time = new TimeSpan(8, 0, 0) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "5"; // would be 5 days via TimeSpan.Parse — must not be accepted
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.Time.ShouldBe(new TimeSpan(8, 0, 0)); // unchanged, not corrupted to 5 days
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_non_editable_hides_text_input()
+    {
+        var picker = new Loam.Controls.TimePicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        EditableInput(picker).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_parses_typed_time_on_enter()
+    {
+        TimeSpan? captured = null;
+        var raised = false;
+        var picker = new Loam.Controls.TimePicker { Editable = true, TimeFormat = "HH:mm" };
+        picker.TimeSelected += t => { raised = true; captured = t; };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.IsVisible.ShouldBeTrue();
+        input.Text = "21:45";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Time.ShouldBe(new TimeSpan(21, 45, 0));
+        picker.Error.ShouldBeFalse();
+        raised.ShouldBeTrue();
+        captured.ShouldBe(new TimeSpan(21, 45, 0));
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_marks_error_on_invalid_text()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true, TimeFormat = "HH:mm", Time = new TimeSpan(8, 0, 0) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "not a time";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidTimeText);
+        picker.Time.ShouldBe(new TimeSpan(8, 0, 0)); // unchanged
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_empty_text_clears_and_syncs_from_time()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true, TimeFormat = "HH:mm", Time = new TimeSpan(9, 30, 0) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text.ShouldBe("09:30"); // committed value flows into the text box
+
+        input.Text = string.Empty;
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Time.ShouldBeNull();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_loose_parse_reformats_to_time_format()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true, TimeFormat = "HH:mm" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "9:05 AM"; // not exact HH:mm -> loose parse
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Time.ShouldBe(new TimeSpan(9, 5, 0));
+        input.Text.ShouldBe("09:05"); // committed text normalized to TimeFormat
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_clock_button_opens_flyout_and_ok_syncs_input()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true, TimeFormat = "HH:mm", Time = new TimeSpan(14, 0, 0) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+        picker.GetVisualDescendants().OfType<IconButton>().First(b => AutomationProperties.GetName(b) == "Open clock")
+            .RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Time.ShouldBe(new TimeSpan(14, 0, 0));
+        EditableInput(picker).Text.ShouldBe("14:00"); // flyout commit flows back into the text box
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_alt_down_opens_flyout()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Focus();
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+
+        input.RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Alt));
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_floats_label_on_focus()
+    {
+        var picker = new Loam.Controls.TimePicker { Editable = true, Label = "When" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        LabelHost(picker).IsVisible.ShouldBeFalse(); // empty + unfocused -> resting
+        EditableInput(picker).Focus();
+        Dispatcher.UIThread.RunJobs();
+        LabelHost(picker).IsVisible.ShouldBeTrue();  // focusing the text box floats the label
+    }
+
     private static Icon LeadingAdornment(Control picker) =>
         picker.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Adornment");
 
@@ -1318,12 +1499,12 @@ public class PickerTests
             box.Padding.Left.ShouldBeGreaterThanOrEqualTo(16);
             box.HorizontalAlignment.ShouldBe(Avalonia.Layout.HorizontalAlignment.Stretch);
 
-            if (picker is Loam.Controls.DatePicker)
+            if (picker is Loam.Controls.DatePicker or Loam.Controls.TimePicker)
             {
-                // The calendar affordance is an IconButton (clickable to open the flyout in Editable mode).
-                var calendar = box.GetVisualDescendants().OfType<IconButton>()
-                    .First(b => AutomationProperties.GetName(b) == "Open calendar");
-                calendar.Size.ShouldBe(LoamSize.Small);
+                // The calendar/clock affordance is an IconButton (clickable to open the flyout in Editable mode).
+                var button = box.GetVisualDescendants().OfType<IconButton>()
+                    .First(b => AutomationProperties.GetName(b) is "Open calendar" or "Open clock");
+                button.Size.ShouldBe(LoamSize.Small);
             }
             else
             {

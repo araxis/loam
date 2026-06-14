@@ -7,6 +7,38 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.14 — TimePicker editable text entry
+
+Sixth Pickers milestone. Extended the proven DatePicker 3.13 editable pattern to `TimePicker`: `Editable` +
+`InvalidTimeText` StyledProperties; public static `TryParseTime(text, format, out TimeSpan?)` (empty→valid
+null; TryParseExact(format).TimeOfDay → TryParse(culture).TimeOfDay → TimeSpan.TryParse; else false). Theme:
+`PART_Input` TextBox added to textLayer; Schedule `Icon` → `IconButton` `PART_ClockButton` ("Open clock").
+Control mirrors DatePicker exactly, carrying ALL the 3.13 review fixes from the start: same-value reformat
+(explicit UpdateDisplay after Time=parsed), clock-button commit guard (`_flyoutOpening` set on tunnel
+PointerPressed + CommitText skips when `_flyoutOpen || _flyoutOpening`, Click is Open-only), flyout OK clears
+Error + reformats, `_input` automation name, IBeam cursor, IsActive includes `_input.IsFocused`, OnKeyDown
+activation guarded by `!Editable`, box PointerPressed focuses `_input` when Editable. No Min/Max (time has no
+range) → invalid = unparseable only; no IsOutOfRange.
+
+**Verified:** build 0/0 (solution); full suite **530**. Tests: TryParseTime table; typed time on Enter commits +
+TimeSelected; invalid→Error + ErrorText==InvalidTimeText, Time unchanged; empty clears + sync from Time; loose
+"9:05 AM"→"09:05" reformat; clock button opens + OK syncs input; Alt+Down opens; label floats on focus;
+non-editable hides input. Gallery: "Editable text entry" sample. Docs: pickers.md note generalized to Date+Time
++ Editable/InvalidTimeText/TryParseTime rows; changelog 3.14.0.
+
+**Adversarial review (workflow, 3 dims × verify) — caught a CRITICAL bug:** `TimeSpan.TryParse` fallback in
+TryParseTime accepted bare numbers as DAYS ("5"→5 days) and spans ≥24h, silently corrupting Time (display
+masked it via DateTime.Today.Add + time-of-day formatting). Fixed: the TimeSpan branch is now guarded to
+`span >= TimeSpan.Zero && span < TimeSpan.FromDays(1)` (rejects "5", "25:00", negatives). +2 tests (TryParseTime
+rejects "5"/"25:00"; editable rejects bare "5", Time unchanged). Minor (documented, not changed): typed entry
+accepts any minute, not snapped to MinuteStep — intentional asymmetry, noted on the Editable XML summary.
+Parity dim confirmed all 9 carried-over DatePicker fixes present; other findings were verified-correct nits.
+
+**Next:** DateRangePicker editable (two-date parsing — trickier); CalendarView state machine; ColorPicker HSV
+editor. Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.13 — DatePicker editable text entry
 
 Fifth Pickers milestone (XL). `DatePicker` gains `Editable` (opt-in) + `InvalidDateText` (default "Invalid
