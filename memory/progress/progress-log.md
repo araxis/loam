@@ -7,6 +7,32 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.9 — Pickers clearable fields (inline × affordance)
+
+Opened the **Pickers track**. `DatePicker`, `TimePicker`, and `DateRangePicker` gain an opt-in
+`Clearable` StyledProperty. Each `*Theme.cs` adds a `PART_Clear` `IconButton` (Close glyph, Small,
+docked Right before the calendar/clock icon inside the field's DockPanel `{ icon, clear, textLayer }`,
+hidden by default). In `OnApplyTemplate` the control finds `PART_Clear`, sets its automation name
+("Clear date"/"Clear time"/"Clear dates"), and wires `Click` to `Clear()` + the change event with null.
+`UpdateClearButton()` toggles visibility on `Clearable && hasValue`, re-evaluated in `OnPropertyChanged`
+for the value + `Clearable` properties. Because `IconButton : Button` consumes the pointer, clicking the
+clear button does **not** bubble to `PART_Box` and open the flyout.
+
+**Decisions:** surface the existing `Clear()` API rather than add new clearing logic; off by default
+(additive, zero behavior change for existing usage). ColorPicker deferred (no nullable value — `Value`
+is a non-null `Color`).
+
+**Verified:** build 0/0 (solution); full suite **489 passing** (+3: DatePicker clear resets value & does
+not open the flyout + hides once empty; clear hidden without Clearable or value; TimePicker +
+DateRangePicker clear reset). Gallery: "Clearable" sample added to all three picker pages. Docs:
+pickers.md intro note + `Clearable` rows; changelog 3.9.0.
+
+**Next:** Pickers quick wins — TimePicker auto-scroll to selected, adornment icons, date-range preset
+rail; then CalendarView state machine, editable entry, validation. Loose end: Avalonia 12 clipboard API
++ DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.8 — DataGrid footer aggregates (totals row)
 
 `DataGridColumn<T>` gains `Summary` (Func<IReadOnlyList<T>,string>?) and `SummaryKind` enum

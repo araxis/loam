@@ -6,6 +6,14 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.9.0
+
+**`Loam.Pickers` clearable fields.** `DatePicker`, `TimePicker`, and `DateRangePicker` gain an opt-in
+`Clearable` flag. When set and the field holds a value, an inline trailing × button appears; clicking it
+clears the value, raises the change event (`DateSelected`/`TimeSelected`/`RangeSelected`) with `null`,
+and does not open the flyout. The button hides automatically when the field is empty. Surfaces the
+existing `Clear()` API; additive and off by default.
+
 ## 3.8.0
 
 **`Loam.Data` DataGrid footer aggregates.** Opt-in `ShowFooter` renders a totals row aligned to the

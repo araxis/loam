@@ -58,6 +58,16 @@ internal static class DatePickerTheme
             };
             DockPanel.SetDock(icon, Dock.Right);
 
+            var clear = new IconButton
+            {
+                Icon = Icons.Material.Filled.Close,
+                Size = LoamSize.Small,
+                IsVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0, 0, 0),
+            }.Named("PART_Clear", scope);
+            DockPanel.SetDock(clear, Dock.Right);
+
             var textLayer = new Avalonia.Controls.Grid
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -68,7 +78,7 @@ internal static class DatePickerTheme
             {
                 MinWidth = PopupSurface.PickerWidth,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Child = new DockPanel { LastChildFill = true, Children = { icon, textLayer } },
+                Child = new DockPanel { LastChildFill = true, Children = { icon, clear, textLayer } },
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
