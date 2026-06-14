@@ -4,9 +4,9 @@ title: Migrating from v2 to v3
 
 # Migrating from Loam v2 to v3
 
-> **Status: released.** Loam **v3.0.0** is published. This guide is the living record of every breaking
-> change; sections still marked _Planned_ (e.g. the package split) describe decisions that are agreed
-> but not yet shipped. The current package version is **`3.0.0`**.
+> **Status: released.** Loam **v3** is published and the current package version is **`3.1.0`**. This
+> guide is the living record of every v2 → v3 breaking change. The 3.1 package split has its own
+> [v3 → v3.1 guide](/migration/v3-to-v3.1).
 
 The v3 plan and the independent review that drives it live at the repository root:
 [`PLAN.md`](https://github.com/araxis/loam/blob/main/PLAN.md) and
@@ -22,8 +22,9 @@ component API — and fixes the rough edges found while building real apps on v2
 2. **Material You** tonal scheme generation from a single seed color. _(Phase 2 — ✅ done.)_
 3. **Naming & ergonomics**: stop shadowing `Avalonia.Controls` for net-new concepts, and smooth the
    daily collision friction. _(Phase 3 — ✅ done; see the rename map below.)_
-4. **Modular packaging**: a lean core plus optional satellite packages. _(Phase 4 — in progress; new
-   shell controls landed, the package split is deferred.)_
+4. **Modular packaging**: a lean core plus optional satellite packages. _(Phase 4 — ✅ done; new shell
+   controls landed in 3.0, the package split shipped in 3.1 — see the
+   [v3 → v3.1 guide](/migration/v3-to-v3.1).)_
 
 ## Breaking-change & deprecation policy
 
@@ -55,7 +56,7 @@ site — the warnings are there to find them.
 | `Loam.Controls.Item` | `Loam.Controls.Col` | `LOAM0002` | ✅ Done | The responsive grid’s column child. |
 | `Loam.Controls.Stack` | `Avalonia.Controls.StackPanel` | `LOAM0003` | ✅ Done | Thin wrapper over `StackPanel`; deprecated. Use `StackPanel` (`Orientation` = `Horizontal` for the old `Row = true`; set `Spacing`, which defaulted to `8`). |
 | `SimpleTable` + `DataGrid<T>` | `DataGrid<T>` (recommended) | n/a | ✅ Guidance (ADR-0013) | `DataGrid<T>` is the recommended table; `SimpleTable` is kept for trivial static tables. |
-| Charts / Pickers / heavy Data controls | satellite packages (`Loam.Charts`, `Loam.Pickers`, `Loam.Data`) | n/a | 🔜 Planned (Phase 4) | Moves out of the core package; namespaces unchanged. |
+| Charts / Pickers / heavy Data controls | satellite packages (`Loam.Charts`, `Loam.Pickers`, `Loam.Data`) | n/a | ✅ Done (3.1.0) | Moved out of the core package; namespaces unchanged. See the [v3 → v3.1 guide](/migration/v3-to-v3.1). |
 
 ## Done in this preview
 

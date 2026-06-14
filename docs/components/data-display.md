@@ -6,6 +6,13 @@ title: Data display
 
 Controls for presenting structured information: lists, tables, grids, trees, tabs, timelines, carousels, paginators, and step wizards. All controls live in the `Loam.Controls` namespace; enums (`LoamColor`, `LoamSize`, `Variant`, `Typo`, `HorizontalAlignment`) are in the `Loam` namespace.
 
+> **Package (since 3.1).** `DataGrid<T>`, `SimpleTable`, `TreeView`/`TreeViewItem`, and `Pagination` ship
+> in the **`Loam.Data`** satellite package — add the package reference and register its themes with
+> `Styles.Add(new LoamData())` after `LoamTheme`. The remaining controls on this page (List, Tabs,
+> Stepper, Timeline, Carousel, ExpansionPanel) stay in the core `Loam` package and need no extra
+> reference. Namespaces are unchanged (`Loam.Controls`). See the
+> [v3 → v3.1 migration guide](/migration/v3-to-v3.1).
+
 > **Name collision note.** `TreeView`, `TreeViewItem`, and `Carousel` exist in both Loam and `Avalonia.Controls`. Qualify Loam types explicitly — `Loam.Controls.TreeView`, `Loam.Controls.TreeViewItem`, `Loam.Controls.Carousel` — when both namespaces are in scope.
 
 > **Choosing a table.** Reach for **`DataGrid<T>`** by default — it's the recommended table for any

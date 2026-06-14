@@ -70,7 +70,7 @@ jobs:
             pack_args+=("/p:PackageVersion=$PACKAGE_VERSION")
           fi
 
-          dotnet pack src/Loam/Loam.csproj \
+          dotnet pack Loam.slnx \
             -c Release \
             --no-build \
             -o artifacts/packages \

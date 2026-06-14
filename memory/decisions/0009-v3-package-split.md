@@ -1,6 +1,6 @@
 # ADR-0009 — v3 package split (lean core + satellites)
 
-- **Status:** Accepted (direction); **implementation deferred to Phase 4**
+- **Status:** Accepted; **implemented in 3.1.0** (2026-06-14)
 - **Date:** 2026-06-07
 - **Deciders:** engineering
 

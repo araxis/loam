@@ -6,6 +6,11 @@ title: Pickers
 
 Loam provides five picker controls. All controls are self-contained `TemplatedControl` or `Decorator` subclasses that open `Flyout` popups, with no dependency on Avalonia's built-in FluentTheme `Calendar`. Controls live in `Loam.Controls`; when both `Avalonia.Controls` and `Loam.Controls` are imported, qualify the Loam types as `Loam.Controls.DatePicker`, `Loam.Controls.TimePicker`, and `Loam.Controls.ColorPicker` to avoid ambiguity with Avalonia's own types of the same name.
 
+> **Package (since 3.1).** The picker controls (and `MonthCalendar`) ship in the **`Loam.Pickers`**
+> satellite package. Add the package reference and register its themes with
+> `Styles.Add(new LoamPickers())` after `LoamTheme`. Namespaces are unchanged (`Loam.Controls`). See the
+> [v3 → v3.1 migration guide](/migration/v3-to-v3.1).
+
 Field-style pickers are focusable. Enter or Space opens the flyout, Escape closes it, and the automation name is derived from the label or displayed value. Labels rest inside empty fields, float when focused or filled, and can be forced to float with `ShrinkLabel`.
 
 ---

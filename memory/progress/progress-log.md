@@ -7,6 +7,33 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.1 cycle — Package split Phase C (versioning, CI, guard test, docs)
+
+**Done**
+- Hoisted shared package metadata + `Version=3.1.0` to `Directory.Build.props` (all four packages
+  version in lockstep); added `Directory.Build.targets` to pack README + icon into every packable
+  project (conditioned `IsPackable != false`). Stripped the now-shared props from `src/Loam/Loam.csproj`.
+- `ci.yml` + `package.yml` now `dotnet pack Loam.slnx` → produces all four nupkgs (publish loop already
+  iterates `*.nupkg`); the tag-driven `/p:PackageVersion` override applies to all four.
+- Added `tests/Loam.Tests/PackagingTests.cs` (33 cases): each moved control/registrar lives in its
+  satellite assembly and is absent from core; core keeps `LoamTheme`.
+- Docs: getting-started (satellite install + registrars), changelog (3.1.0 entry + corrected stale
+  3.0.0 "still planned"), new `migration/v3-to-v3.1.md` (+ sidebar/nav wiring; v2→v3 package-split row
+  flipped to ✅ 3.1.0), component callouts on charts/pickers/data-display, README (status, modular
+  bullet, install, catalog tags, repo layout, pack cmd), ADR-0009 status → implemented.
+- **Decision:** kept `ChartBase.TryChartResource` `OfType<LoamTheme>()` fallback — still compiles (core
+  is referenced) and guards token resolution before the chart is attached to the visual tree.
+
+**Verified**
+- `dotnet pack Loam.slnx -c Release` → `Loam`, `Loam.Charts`, `Loam.Pickers`, `Loam.Data` all `3.1.0`;
+  satellite nuspec depends on `Loam 3.1.0` + `Avalonia 12.0.4`, carries MIT/icon/readme/release-notes.
+- Release build 0 warnings / 0 errors; full suite **458 passing** (was 425 + 33 new guards).
+
+**Next:** PR `work/3.1` → main, then tag `v3.1.0` to publish all four packages (outward-facing — awaiting
+go-ahead). Optionally a GitHub Release mirroring the 3.0.0 one.
+
+---
+
 ## 2026-06-14 — 3.1 cycle — Package split Phase B (physical split into 3 satellite projects)
 
 **Done**

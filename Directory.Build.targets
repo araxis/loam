@@ -1,0 +1,11 @@
+<Project>
+
+  <!-- README and icon packed into every packable project's nupkg.
+       Anchored to this file's directory (repo root) so the same paths work
+       from each project, and skipped for non-packable projects (tests, gallery). -->
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)assets\loam-icon-512.png" Pack="true" PackagePath="\loam-icon.png" />
+  </ItemGroup>
+
+</Project>

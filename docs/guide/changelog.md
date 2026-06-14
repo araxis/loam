@@ -4,8 +4,25 @@ title: Changelog
 
 # Changelog
 
-Notable changes per release. Dates are when the work landed on the development branch; v3 is shipping as
-previews while the phases complete.
+Notable changes per release. Dates are when the work landed on the development branch.
+
+## 3.1.0
+
+**Modular packaging (ADR-0009).** The chart, picker, and heavy data controls move out of the core
+`Loam` package into three opt-in satellite packages, so apps that don't use them ship a leaner core:
+
+- **`Loam.Charts`** — `PieChart`, `BarChart`, `LineChart`.
+- **`Loam.Pickers`** — `DatePicker`, `TimePicker`, `ColorPicker`, `DateRangePicker`, `MonthCalendar`.
+- **`Loam.Data`** — `DataGrid<T>`, `SimpleTable`, `TreeView`/`TreeViewItem`, `Pagination`.
+
+Each satellite depends on the core package and ships its own `Styles` registrar
+(`LoamCharts`/`LoamPickers`/`LoamData`, in the `Loam.Theming` namespace). **Breaking for these control
+groups only:** add the package reference *and* register its registrar after `LoamTheme`. **Namespaces
+are unchanged** — every type stays under `Loam.Controls`, so call sites and using-directives don't move.
+All four packages version in lockstep. See the [v3 → v3.1 migration guide](/migration/v3-to-v3.1).
+
+The remaining controls (Tabs, Stepper, Carousel, Timeline, ExpansionPanel, lists, and the rest) stay in
+the core package and need no change.
 
 ## 3.0.0
 
@@ -44,10 +61,10 @@ first as an `[Obsolete]` alias with a stable `LOAMxxxx` diagnostic. See the
   (`DataGridColumn<T>.Width`), and **frozen columns** (`FrozenColumns` two-pane layout with
   `RowHeight`), on top of the existing sort/filter/paging/virtualize/inline-edit/selection.
 
-### Still planned
+### Followed in 3.1.0
 
-- The **package split** into `Loam.Charts` / `Loam.Pickers` / `Loam.Data` satellites (Phase 4, ADR-0009).
-- Release polish: visual-regression coverage and the final `3.0.0` cut (Phase 6).
+- The **package split** into `Loam.Charts` / `Loam.Pickers` / `Loam.Data` satellites (ADR-0009) shipped
+  in [3.1.0](#_3-1-0).
 
 ## 2.0.0
 
