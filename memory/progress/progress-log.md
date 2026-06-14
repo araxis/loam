@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.1 cycle — Package split Phase B (physical split into 3 satellite projects)
+
+**Done**
+- Created `src/Loam.Charts`, `src/Loam.Pickers`, `src/Loam.Data` SDK projects (net8.0, Avalonia via CPM,
+  `ProjectReference` → core, `IsPackable` + `PackageId`/`Description`/`PackageTags`).
+- `git mv` the mapped files (history preserved, namespaces unchanged): Charts (Charts.cs, ChartLegend.cs,
+  LoamCharts.cs); Pickers (Date/Time/Color/DateRange +Themes, MonthCalendar, LoamPickers.cs); Data
+  (DataGrid, DataGridColumn, SimpleTable+Theme, TreeView+Theme, TreeViewItem+Theme, Pagination+Theme,
+  LoamData.cs). Core keeps Tabs/Stepper/Carousel/Timeline/ExpansionPanel(s).
+- `InternalsVisibleTo` from **core** → the 3 satellites (they use internal `FieldChrome`/`PopupSurface`/
+  `InteractionAssist`/`TemplateScope`), and from **each satellite** → `Loam.Tests` (ChartTests etc. read
+  internal chart members — this was the only build break, fixed).
+- Registered the 3 projects in `Loam.slnx`; gallery + tests `ProjectReference` all three satellites.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0 across all 6 projects (`Loam.Charts/Pickers/Data.dll` build as
+  separate assemblies). Full suite **425 passed** — controls render themed via the registrars across the
+  assembly boundary; charts intact. **Core has no reference to any satellite.**
+
+**Next:** Phase C — hoist shared version/packaging metadata to `Directory.Build.props`; `package.yml`/
+`ci.yml` pack all 4 nupkgs (publish loop already handles many); CI guard test (core lacks moved types);
+docs/migration + `v3.1.0`. Optional cleanup: drop the `ChartBase` `OfType<LoamTheme>` fallback.
+
+---
+
 ## 2026-06-14 — 3.1 cycle — Package split Phase A (decouple theme registration in-place)
 
 Branch `work/3.1`. First step of the package split (plan: `memory/plans/package-split-3.1.md`, ADR-0009).
