@@ -215,6 +215,38 @@ public class DataDisplayTests
     }
 
     [Fact]
+    public void DataGridColumn_summary_text_computes_aggregates()
+    {
+        var people = new List<Person> { new("A", 10), new("B", 20), new("C", 30) };
+
+        new DataGridColumn<Person>("Age", p => p.Age) { SummaryKind = DataGridSummary.Sum }
+            .SummaryText(people).ShouldBe("60");
+        new DataGridColumn<Person>("Age", p => p.Age) { SummaryKind = DataGridSummary.Average }
+            .SummaryText(people).ShouldBe("20");
+        new DataGridColumn<Person>("Name", p => p.Name) { SummaryKind = DataGridSummary.Count }
+            .SummaryText(people).ShouldBe("3");
+        new DataGridColumn<Person>("Name", p => p.Name) { Summary = rows => $"{rows.Count} people" }
+            .SummaryText(people).ShouldBe("3 people");
+        new DataGridColumn<Person>("Name", p => p.Name)
+            .SummaryText(people).ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_footer_shows_column_aggregates()
+    {
+        var grid = new DataGrid<Person> { ShowFooter = true };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name) { Summary = rows => $"{rows.Count} people" });
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age) { SummaryKind = DataGridSummary.Sum });
+        grid.Items = new List<Person> { new("Alice", 25), new("Bob", 35) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("2 people");
+        texts.ShouldContain("60"); // 25 + 35, summed over the filtered set
+    }
+
+    [Fact]
     public void DataGrids_group_preserves_first_appearance_order()
     {
         var people = new List<Person> { new("Bob", 30), new("Ann", 30), new("Cy", 40), new("Dee", 30) };

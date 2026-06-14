@@ -1,7 +1,27 @@
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Layout;
 
 namespace Loam.Controls;
+
+/// <summary>Built-in aggregate for a <see cref="DataGridColumn{T}"/> footer cell.</summary>
+public enum DataGridSummary
+{
+    /// <summary>Sum of the column's numeric values.</summary>
+    Sum,
+
+    /// <summary>Average of the column's numeric values.</summary>
+    Average,
+
+    /// <summary>Smallest numeric value.</summary>
+    Min,
+
+    /// <summary>Largest numeric value.</summary>
+    Max,
+
+    /// <summary>Row count.</summary>
+    Count,
+}
 
 /// <summary>
 /// A column definition for <see cref="DataGrid{T}"/>, mirroring the reference API's <c>Column</c>/template column.
@@ -51,6 +71,12 @@ public sealed class DataGridColumn<T>
     /// <summary>Receives edited text for editable cells.</summary>
     public Action<T, string?>? SetText { get; init; }
 
+    /// <summary>Custom footer summary text for this column, computed from the current (filtered) rows.</summary>
+    public Func<IReadOnlyList<T>, string>? Summary { get; init; }
+
+    /// <summary>Built-in footer aggregate; used when <see cref="Summary"/> is null. Sum/Average/Min/Max use the column's numeric values; Count uses the row count.</summary>
+    public DataGridSummary? SummaryKind { get; init; }
+
     /// <summary>Formats a row's cell value to display text.</summary>
     public string Display(T item)
     {
@@ -62,4 +88,53 @@ public sealed class DataGridColumn<T>
 
         return Format is null ? value.ToString() ?? string.Empty : string.Format($"{{0:{Format}}}", value);
     }
+
+    /// <summary>The footer text for this column over the given rows, or null when the column has no summary.</summary>
+    public string? SummaryText(IReadOnlyList<T> rows)
+    {
+        if (Summary is not null)
+        {
+            return Summary(rows);
+        }
+
+        if (SummaryKind is not { } kind)
+        {
+            return null;
+        }
+
+        if (kind == DataGridSummary.Count)
+        {
+            return rows.Count.ToString(CultureInfo.CurrentCulture);
+        }
+
+        var numbers = rows.Select(Value).Select(AsNumber).Where(n => n is not null).Select(n => n!.Value).ToList();
+        if (numbers.Count == 0)
+        {
+            return null;
+        }
+
+        var result = kind switch
+        {
+            DataGridSummary.Sum => numbers.Sum(),
+            DataGridSummary.Average => numbers.Average(),
+            DataGridSummary.Min => numbers.Min(),
+            DataGridSummary.Max => numbers.Max(),
+            _ => 0d,
+        };
+
+        return Format is null ? result.ToString(CultureInfo.CurrentCulture) : string.Format($"{{0:{Format}}}", result);
+    }
+
+    private static double? AsNumber(object? value) => value switch
+    {
+        null => null,
+        double d => d,
+        float f => f,
+        decimal m => (double)m,
+        int i => i,
+        long l => l,
+        short s => s,
+        byte b => b,
+        _ => double.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.CurrentCulture, out var parsed) ? parsed : null,
+    };
 }

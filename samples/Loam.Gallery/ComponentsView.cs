@@ -888,6 +888,7 @@ public sealed class ComponentsView : UserControl
             Sample("Sortable · filtered · paged", BuildDataGridPaged),
             Sample("Live data — bound to an ObservableCollection", BuildDataGridLive),
             Sample("Async states — loading / error / ready", BuildDataGridAsyncStates),
+            Sample("Footer totals", BuildDataGridFooter),
             Sample("Grouped with aggregate — click a header to collapse", BuildDataGridGrouped),
             Sample("Frozen first column — scroll the rest horizontally", BuildDataGridFrozen),
             Sample("Editable cells", BuildDataGridEditable),
@@ -6822,6 +6823,23 @@ public sealed class ComponentsView : UserControl
         });
         grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right });
         grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right });
+    }
+
+    private static Loam.Controls.DataGrid<Dessert> BuildDataGridFooter()
+    {
+        var grid = new Loam.Controls.DataGrid<Dessert>
+        {
+            Dense = true,
+            Striped = true,
+            ShowFooter = true,
+            MaxWidth = 720,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        grid.Columns.Add(new DataGridColumn<Dessert>("Dessert", d => d.Name) { Summary = rows => $"{rows.Count} desserts" });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Calories", d => d.Calories) { Align = HorizontalAlignment.Right, SummaryKind = DataGridSummary.Sum });
+        grid.Columns.Add(new DataGridColumn<Dessert>("Fat (g)", d => d.Fat) { Format = "0.0", Align = HorizontalAlignment.Right, SummaryKind = DataGridSummary.Average });
+        grid.Items = SampleDesserts();
+        return grid;
     }
 
     private static StackPanel BuildDataGridAsyncStates()
