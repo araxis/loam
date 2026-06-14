@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.12.0</Version>
-    <PackageReleaseNotes>Loam 3.12.0: Loam.Pickers leading adornment icons — DatePicker, TimePicker, and DateRangePicker gain an opt-in AdornmentIcon glyph at the start of the field, with the value text and floating label indenting to its right so nothing overlaps, across all variants. Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.13.0</Version>
+    <PackageReleaseNotes>Loam 3.13.0: Loam.Pickers DatePicker editable text entry — set Editable to type a date into the field; committed on Enter/blur, parsed against DateFormat then loosely, validated against MinDate/MaxDate (InvalidDateText on failure). The trailing calendar icon becomes a button (Alt+Down also opens) and the flyout stays in sync. Public static TryParseDate exposes the parse rule. Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
