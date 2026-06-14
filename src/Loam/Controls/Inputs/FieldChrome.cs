@@ -98,18 +98,23 @@ internal static class FieldChrome
         return host;
     }
 
+    /// <summary>The horizontal space a small leading adornment icon occupies inside a field (icon width + gap).</summary>
+    public static double LeadingAdornmentInset(Control host) =>
+        Icon.PixelSize(LoamSize.Small) + ReadFieldMetrics(host).IconSpacing;
+
     public static void ApplyLabelLayout(
         Control owner,
         Border? inputBorder,
         Border? labelHost,
         bool showLabel,
-        Variant variant = Variant.Outlined)
+        Variant variant = Variant.Outlined,
+        double leadingInset = 0)
     {
         var metrics = ReadFieldMetrics(owner);
         if (labelHost is not null)
         {
             labelHost.IsVisible = showLabel;
-            labelHost.Margin = new Thickness(metrics.LabelX, 0, 0, 0);
+            labelHost.Margin = new Thickness(metrics.LabelX + leadingInset, 0, 0, 0);
             labelHost.Padding = variant == Variant.Outlined
                 ? new Thickness(metrics.FloatingLabelHorizontalPadding, 0)
                 : default;

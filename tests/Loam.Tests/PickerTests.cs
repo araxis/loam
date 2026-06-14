@@ -405,6 +405,118 @@ public class PickerTests
         ShouldOverlapViewport(hourColumn, PopupRow(paper, "Hour 20")); // ...and it is now in view
     }
 
+    private static Icon LeadingAdornment(Control picker) =>
+        picker.GetVisualDescendants().OfType<Icon>().First(i => i.Name == "PART_Adornment");
+
+    private static Border LabelHost(Control picker) =>
+        picker.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_LabelHost");
+
+    private static Text DisplayText(Control picker) =>
+        picker.GetVisualDescendants().OfType<Text>().First(t => t.Name == "PART_Display");
+
+    // Left offset of the value-text region (PART_Display's parent layer) inside the field box;
+    // it shifts right by the icon footprint when a leading adornment is present.
+    private static double TextLayerLeft(Control picker)
+    {
+        var layer = DisplayText(picker).GetVisualParent();
+        layer.ShouldNotBeNull();
+        return layer!.Bounds.X;
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_adornment_icon_shows_only_when_set()
+    {
+        var without = new Loam.Controls.DatePicker();
+        Show(without);
+        LeadingAdornment(without).IsVisible.ShouldBeFalse();
+
+        var with = new Loam.Controls.DatePicker { AdornmentIcon = Icons.Material.Filled.Schedule };
+        Show(with);
+        var icon = LeadingAdornment(with);
+        icon.IsVisible.ShouldBeTrue();
+        icon.Data.ShouldBe(Icons.Material.Filled.Schedule);
+    }
+
+    [AvaloniaFact]
+    public void Adornment_icon_indents_value_and_label_across_variants()
+    {
+        var variants = new[] { Variant.Outlined, Variant.Filled, Variant.Text };
+        foreach (var variant in variants)
+        {
+            var plain = new Loam.Controls.DatePicker { Width = 320, Variant = variant, Label = "Date", ShrinkLabel = true };
+            Show(plain);
+            Dispatcher.UIThread.RunJobs();
+
+            var adorned = new Loam.Controls.DatePicker { Width = 320, Variant = variant, Label = "Date", ShrinkLabel = true, AdornmentIcon = Icons.Material.Filled.Schedule };
+            Show(adorned);
+            Dispatcher.UIThread.RunJobs();
+
+            // Leading Small icon (20px) + IconSpacing (8px) = 28px: the floating label AND the value text both indent.
+            (LabelHost(adorned).Margin.Left - LabelHost(plain).Margin.Left).ShouldBe(28, 0.01);
+            (TextLayerLeft(adorned) - TextLayerLeft(plain)).ShouldBe(28, 0.5);
+        }
+    }
+
+    [AvaloniaFact]
+    public void Adornment_icon_set_and_unset_at_runtime()
+    {
+        var picker = new Loam.Controls.DatePicker { Label = "Date", ShrinkLabel = true };
+        Show(picker);
+        Dispatcher.UIThread.RunJobs();
+        var icon = LeadingAdornment(picker);
+        icon.IsVisible.ShouldBeFalse();
+        var baseLeft = LabelHost(picker).Margin.Left;
+
+        picker.AdornmentIcon = Icons.Material.Filled.Person; // a glyph the gallery also uses
+        Dispatcher.UIThread.RunJobs();
+        icon.IsVisible.ShouldBeTrue();
+        icon.Data.ShouldBe(Icons.Material.Filled.Person);
+        (LabelHost(picker).Margin.Left - baseLeft).ShouldBe(28, 0.01);
+
+        picker.AdornmentIcon = null; // unsetting reverts to the zero-space layout
+        Dispatcher.UIThread.RunJobs();
+        icon.IsVisible.ShouldBeFalse();
+        LabelHost(picker).Margin.Left.ShouldBe(baseLeft, 0.01);
+    }
+
+    [AvaloniaFact]
+    public void Adornment_icon_and_clear_button_coexist()
+    {
+        var picker = new Loam.Controls.DatePicker
+        {
+            Clearable = true,
+            AdornmentIcon = Icons.Material.Filled.Person,
+            Date = new DateTime(2026, 6, 14),
+        };
+        Show(picker);
+        Dispatcher.UIThread.RunJobs();
+
+        LeadingAdornment(picker).IsVisible.ShouldBeTrue();
+        var clear = ClearButton(picker, "Clear date");
+        clear.IsVisible.ShouldBeTrue();
+
+        clear.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBeNull();
+        clear.IsVisible.ShouldBeFalse();                   // trailing clear hides once the value is gone
+        LeadingAdornment(picker).IsVisible.ShouldBeTrue(); // leading adornment persists
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_and_DateRangePicker_show_adornment_icon_when_set()
+    {
+        var time = new Loam.Controls.TimePicker { AdornmentIcon = Icons.Material.Filled.CalendarToday };
+        Show(time);
+        var timeIcon = LeadingAdornment(time);
+        timeIcon.IsVisible.ShouldBeTrue();
+        timeIcon.Data.ShouldBe(Icons.Material.Filled.CalendarToday);
+
+        var range = new DateRangePicker { AdornmentIcon = Icons.Material.Filled.Schedule };
+        Show(range);
+        LeadingAdornment(range).IsVisible.ShouldBeTrue();
+    }
+
     [AvaloniaFact]
     public void DatePicker_display_shows_placeholder_then_formatted_date()
     {

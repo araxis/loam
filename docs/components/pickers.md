@@ -15,6 +15,8 @@ Field-style pickers are focusable. Enter or Space opens the flyout, Escape close
 
 Set `Clearable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to surface an inline trailing × button whenever the field holds a value. Clicking it clears the value, raises the change event with `null`, and intentionally does not open the flyout (the button consumes the pointer before it reaches the field).
 
+Set `AdornmentIcon` (a glyph from `Loam.Icons`, e.g. `Icons.Material.Filled.Person`) on the same three field pickers to show a leading icon at the start of the field. The value text, resting label, and floating label all indent to the icon's right so nothing overlaps, across every variant.
+
 ---
 
 ## DatePicker
@@ -42,6 +44,7 @@ still allowing programmatic date updates.
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when `Date` is set; clicking it clears the value, raises `DateSelected` with `null`, and does not open the flyout. |
+| `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the value text and label indent to its right. |
 | `PickerTitle` | `string` | `"Select date"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |
@@ -103,6 +106,7 @@ keyboard navigation the focused row is kept in view.
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when `Time` is set; clicking it clears the value, raises `TimeSelected` with `null`, and does not open the flyout. |
+| `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the value text and label indent to its right. |
 | `PickerTitle` | `string` | `"Select time"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |
@@ -223,6 +227,7 @@ while still allowing programmatic range updates.
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when a range is set; clicking it clears `Start`/`End`, raises `RangeSelected` with `null, null`, and does not open the flyout. |
+| `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the range text and label indent to its right. |
 | `ShowPresets` | `bool` | `false` | Shows a quick-select rail in the flyout listing `Presets` (or `DefaultPresets` when none are set). |
 | `Presets` | `AvaloniaList<DateRangePreset>` | empty | Custom quick-select shortcuts. When empty and `ShowPresets` is `true`, `DefaultPresets` is used. |
 | `DefaultPresets` _(static)_ | `IReadOnlyList<DateRangePreset>` | 7 built-ins | Today, Yesterday, Last 7 days, Last 30 days, This month, Last month, This year. |

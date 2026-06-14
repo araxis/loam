@@ -7,6 +7,42 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.12 — Field-picker leading adornment icons
+
+Fourth Pickers milestone. `DatePicker`, `TimePicker`, `DateRangePicker` gain `AdornmentIcon`
+(StyledProperty<string?>, a glyph from `Loam.Icons`). Each `*Theme.cs` adds a `PART_Adornment` `Icon`
+(Small, `IsVisible=false`) docked Left at the start of the box DockPanel `{ icon, clear, adornment,
+textLayer }` — collapsed when unset, so zero layout impact and the no-adornment path is unchanged. Each
+control finds `PART_Adornment`, `UpdateAdornment()` sets `Data` + visibility from `AdornmentIcon`, and
+`OnPropertyChanged(AdornmentIconProperty)` re-runs it + `UpdateLabel()`.
+
+**Layout insight (the crux):** the value/resting label sit INSIDE the box DockPanel, so a Left-docked icon
+shifts them automatically. But the floating label is a SIBLING overlay positioned by an absolute
+`metrics.LabelX` margin — it does NOT move with box content. Fix: `FieldChrome.ApplyLabelLayout` gained an
+optional `leadingInset` (default 0, so other inputs unaffected) added to the label's X; pickers pass
+`FieldChrome.LeadingAdornmentInset(this)` = `Icon.PixelSize(Small) + IconSpacing` = 20 + 8 = **28px** when
+an adornment is set. New public `FieldChrome.LeadingAdornmentInset(Control)` helper.
+
+**Decisions:** ColorPicker excluded (already has a leading swatch). Scope = the three field pickers only;
+no change to text inputs.
+
+**Verified:** build 0/0 (solution); full suite **508**. Gallery: "Leading icon"
+sample on all three pages (Person/Edit, Notifications, Favorite). Docs: pickers.md intro note + AdornmentIcon
+rows; changelog 3.12.0.
+
+**Adversarial review (workflow, 3 dims × verify):** correctness-layout and regression-api dims came back CLEAN
+(inset math, DockPanel order, zero-footprint-when-unset, optional-param non-impact on other ApplyLabelLayout
+callers all verified). 6 confirmed test-coverage gaps closed — the indent test now (a) runs across Outlined/
+Filled/Text variants and (b) asserts the value-text region itself shifts 28px (via PART_Display's parent
+`Bounds.X`, since `TranslatePoint` isn't on `Text` in Avalonia 12), plus new tests for runtime set→unset
+(reverts to zero-space) and clear-button + adornment coexistence (also exercises the gallery's Person glyph).
+Dismissed: docs-accuracy and 28px-delta-brittleness (both already correct).
+
+**Next:** Pickers — CalendarView state machine / editable entry / validation; ColorPicker HSV editor; or
+the adornment-on-text-inputs follow-up. Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.11 — TimePicker auto-scroll to selected time
 
 Third Pickers milestone. When the TimePicker flyout opens, the hour and minute `ScrollViewer` columns

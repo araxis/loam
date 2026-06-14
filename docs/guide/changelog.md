@@ -6,6 +6,14 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.12.0
+
+**`Loam.Pickers` leading adornment icons.** `DatePicker`, `TimePicker`, and `DateRangePicker` gain an
+opt-in `AdornmentIcon` (a glyph from `Loam.Icons`) rendered at the start of the field. The value text,
+resting label, and floating label all indent to the icon's right so nothing overlaps — across the
+outlined, filled, and text variants. Additive and off by default; the leading slot takes zero space when
+unset.
+
 ## 3.11.0
 
 **`Loam.Pickers` TimePicker auto-scrolls to the selected time.** When the flyout opens, the hour and

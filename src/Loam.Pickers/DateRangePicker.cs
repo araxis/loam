@@ -86,6 +86,10 @@ public class DateRangePicker : TemplatedControl
     public static readonly StyledProperty<bool> ClearableProperty =
         AvaloniaProperty.Register<DateRangePicker, bool>(nameof(Clearable));
 
+    /// <summary>Identifies the <see cref="AdornmentIcon"/> property.</summary>
+    public static readonly StyledProperty<string?> AdornmentIconProperty =
+        AvaloniaProperty.Register<DateRangePicker, string?>(nameof(AdornmentIcon));
+
     /// <summary>Identifies the <see cref="ShowPresets"/> property.</summary>
     public static readonly StyledProperty<bool> ShowPresetsProperty =
         AvaloniaProperty.Register<DateRangePicker, bool>(nameof(ShowPresets));
@@ -112,6 +116,7 @@ public class DateRangePicker : TemplatedControl
 
     private Border? _box;
     private IconButton? _clear;
+    private Icon? _adornment;
     private Border? _labelHost;
     private Text? _display;
     private Text? _label;
@@ -156,6 +161,13 @@ public class DateRangePicker : TemplatedControl
     {
         get => GetValue(ClearableProperty);
         set => SetValue(ClearableProperty, value);
+    }
+
+    /// <summary>Optional glyph (e.g. from <see cref="Icons"/>) shown as a leading icon at the start of the field.</summary>
+    public string? AdornmentIcon
+    {
+        get => GetValue(AdornmentIconProperty);
+        set => SetValue(AdornmentIconProperty, value);
     }
 
     /// <summary>When true, the flyout shows a quick-select rail of <see cref="Presets"/> (or <see cref="DefaultPresets"/> when none are set).</summary>
@@ -317,6 +329,7 @@ public class DateRangePicker : TemplatedControl
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        _adornment = e.NameScope.Find("PART_Adornment") as Icon;
         if (_clear is not null)
         {
             Avalonia.Automation.AutomationProperties.SetName(_clear, "Clear dates");
@@ -344,6 +357,7 @@ public class DateRangePicker : TemplatedControl
             };
         }
 
+        UpdateAdornment();
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
@@ -355,6 +369,15 @@ public class DateRangePicker : TemplatedControl
         if (_clear is not null)
         {
             _clear.IsVisible = Clearable && (Start is not null || End is not null);
+        }
+    }
+
+    private void UpdateAdornment()
+    {
+        if (_adornment is not null)
+        {
+            _adornment.Data = AdornmentIcon;
+            _adornment.IsVisible = !string.IsNullOrEmpty(AdornmentIcon);
         }
     }
 
@@ -376,6 +399,12 @@ public class DateRangePicker : TemplatedControl
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
+            UpdateLabel();
+        }
+
+        if (change.Property == AdornmentIconProperty)
+        {
+            UpdateAdornment();
             UpdateLabel();
         }
 
@@ -634,7 +663,8 @@ public class DateRangePicker : TemplatedControl
             _display.IsVisible = !resting;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant);
+        var leadingInset = string.IsNullOrEmpty(AdornmentIcon) ? 0 : FieldChrome.LeadingAdornmentInset(this);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant, leadingInset);
 
         if (_helper is not null)
         {
