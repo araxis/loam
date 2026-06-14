@@ -17,6 +17,8 @@ Set `Clearable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to surface a
 
 Set `AdornmentIcon` (a glyph from `Loam.Icons`, e.g. `Icons.Material.Filled.Person`) on the same three field pickers to show a leading icon at the start of the field. The value text, resting label, and floating label all indent to the icon's right so nothing overlaps, across every variant.
 
+Set `Editable` on `DatePicker` to let the user type a date directly into the field. The text is parsed and committed on Enter or focus loss — exact `DateFormat` first, then a loose current-culture parse — and validated against `MinDate`/`MaxDate`; unparseable or out-of-range input leaves `Date` unchanged and shows `InvalidDateText` in the error slot. The trailing calendar icon (now a button) and `Alt+Down` still open the flyout, which stays in sync with the typed value.
+
 ---
 
 ## DatePicker
@@ -45,6 +47,9 @@ still allowing programmatic date updates.
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when `Date` is set; clicking it clears the value, raises `DateSelected` with `null`, and does not open the flyout. |
 | `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the value text and label indent to its right. |
+| `Editable` | `bool` | `false` | Lets the user type a date into the field. Text is committed on Enter or focus loss; the trailing calendar icon (or Alt+Down) still opens the flyout. |
+| `InvalidDateText` | `string` | `"Invalid date"` | `ErrorText` shown when typed text cannot be parsed or falls outside `MinDate`/`MaxDate` (editable mode). |
+| `TryParseDate(text, format, out value)` _(static)_ | `bool` | — | Parses typed text: `true` for empty (→ `null`) or text parseable via `format` (exact) or the current culture (loose); `false` otherwise. |
 | `PickerTitle` | `string` | `"Select date"` | Title shown inside the flyout. |
 | `CancelText` | `string` | `"Cancel"` | Text for the generated cancel action. |
 | `OkText` | `string` | `"OK"` | Text for the generated commit action. |

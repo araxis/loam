@@ -827,6 +827,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Pickers", "DatePicker", "Date input with a calendar flyout.",
             Sample("Variants", BuildDatePickerVariants),
             Sample("Selected & custom format", BuildDatePickerSelected),
+            Sample("Editable text entry", BuildDatePickerEditable),
             Sample("Clearable", BuildDatePickerClearable),
             Sample("Leading icon", BuildDatePickerAdornment),
             Sample("Constrained & floating label", BuildDatePickerConstrained),
@@ -7843,6 +7844,41 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Formatted display text",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerEditable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Type or pick",
+                    Editable = true,
+                    DateFormat = "yyyy-MM-dd",
+                    Date = new DateTime(2026, 6, 14),
+                    HelperText = "Type a date, then Enter — or use the calendar icon",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Constrained & editable",
+                    Editable = true,
+                    DateFormat = "yyyy-MM-dd",
+                    MinDate = new DateTime(2026, 6, 1),
+                    MaxDate = new DateTime(2026, 8, 31),
+                    Placeholder = "yyyy-MM-dd",
+                    InvalidDateText = "Enter a summer date (yyyy-MM-dd)",
+                    HelperText = "Out-of-range or unparseable input shows an error",
                 },
             },
         };

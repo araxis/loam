@@ -84,8 +84,18 @@ public class DatePicker : TemplatedControl
     public static readonly StyledProperty<string?> AdornmentIconProperty =
         AvaloniaProperty.Register<DatePicker, string?>(nameof(AdornmentIcon));
 
+    /// <summary>Identifies the <see cref="Editable"/> property.</summary>
+    public static readonly StyledProperty<bool> EditableProperty =
+        AvaloniaProperty.Register<DatePicker, bool>(nameof(Editable));
+
+    /// <summary>Identifies the <see cref="InvalidDateText"/> property.</summary>
+    public static readonly StyledProperty<string> InvalidDateTextProperty =
+        AvaloniaProperty.Register<DatePicker, string>(nameof(InvalidDateText), "Invalid date");
+
     private Border? _box;
     private IconButton? _clear;
+    private IconButton? _calendarButton;
+    private TextBox? _input;
     private Icon? _adornment;
     private Border? _labelHost;
     private Text? _display;
@@ -100,6 +110,7 @@ public class DatePicker : TemplatedControl
     private IDisposable? _helperForeground;
     private Flyout? _flyout;
     private bool _flyoutOpen;
+    private bool _flyoutOpening;
 
     /// <summary>Raised when the picker commits a date through the generated OK action.</summary>
     public event Action<DateTime?>? DateSelected;
@@ -124,6 +135,20 @@ public class DatePicker : TemplatedControl
     {
         get => GetValue(AdornmentIconProperty);
         set => SetValue(AdornmentIconProperty, value);
+    }
+
+    /// <summary>When true, the user can type a date into the field; the trailing calendar icon opens the flyout.</summary>
+    public bool Editable
+    {
+        get => GetValue(EditableProperty);
+        set => SetValue(EditableProperty, value);
+    }
+
+    /// <summary>Error message shown when typed text cannot be parsed or is out of range (<see cref="Editable"/> mode).</summary>
+    public string InvalidDateText
+    {
+        get => GetValue(InvalidDateTextProperty);
+        set => SetValue(InvalidDateTextProperty, value);
     }
 
     /// <summary>The selected date (two-way). Mirrors the reference API's <c>Date</c>.</summary>
@@ -244,6 +269,35 @@ public class DatePicker : TemplatedControl
     /// <summary>Clears the selected date.</summary>
     public void Clear() => Date = null;
 
+    /// <summary>
+    /// Parses typed date text. Returns <c>true</c> when the text is empty (yielding <paramref name="value"/> =
+    /// <c>null</c>) or parses via <paramref name="format"/> (exact) or the current culture (loose); returns
+    /// <c>false</c> for non-empty unparseable text.
+    /// </summary>
+    public static bool TryParseDate(string? text, string format, out DateTime? value)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            value = null;
+            return true;
+        }
+
+        if (DateTime.TryParseExact(text, format, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var exact))
+        {
+            value = exact;
+            return true;
+        }
+
+        if (DateTime.TryParse(text, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var loose))
+        {
+            value = loose;
+            return true;
+        }
+
+        value = null;
+        return false;
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(DatePicker);
 
@@ -258,6 +312,8 @@ public class DatePicker : TemplatedControl
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        _calendarButton = e.NameScope.Find("PART_CalendarButton") as IconButton;
+        _input = e.NameScope.Find("PART_Input") as TextBox;
         _adornment = e.NameScope.Find("PART_Adornment") as Icon;
         if (_clear is not null)
         {
@@ -268,6 +324,52 @@ public class DatePicker : TemplatedControl
                 DateSelected?.Invoke(null);
             };
         }
+
+        if (_calendarButton is not null)
+        {
+            Avalonia.Automation.AutomationProperties.SetName(_calendarButton, "Open calendar");
+            // Pressing the button blurs the input before Click fires; flag it so the resulting commit is
+            // suppressed (the flyout selection sets the value instead of in-progress typed text).
+            _calendarButton.AddHandler(
+                InputElement.PointerPressedEvent,
+                (_, _) => _flyoutOpening = true,
+                Avalonia.Interactivity.RoutingStrategies.Tunnel,
+                handledEventsToo: true);
+            _calendarButton.Click += (_, _) =>
+            {
+                Open();
+                _flyoutOpening = false;
+            };
+        }
+
+        if (_input is not null)
+        {
+            FieldChrome.ResetInnerTextBox(_input);
+            _input.GotFocus += (_, _) =>
+            {
+                FieldChrome.ResetInnerTextBox(_input);
+                ApplyBoxChrome();
+            };
+            _input.LostFocus += (_, _) =>
+            {
+                CommitText();
+                ApplyBoxChrome();
+            };
+            _input.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Enter)
+                {
+                    CommitText();
+                    args.Handled = true;
+                }
+                else if (args.Key is Key.Down && args.KeyModifiers.HasFlag(KeyModifiers.Alt))
+                {
+                    Open(); // Alt+Down opens the calendar for keyboard users
+                    args.Handled = true;
+                }
+            };
+        }
+
         if (_box is not null)
         {
             _box.GotFocus += (_, _) => ApplyBoxChrome();
@@ -279,18 +381,68 @@ public class DatePicker : TemplatedControl
                     return;
                 }
 
-                Focus();
-                Open();
+                if (Editable)
+                {
+                    _input?.Focus();
+                }
+                else
+                {
+                    Focus();
+                    Open();
+                }
+
                 args.Handled = true;
             };
         }
 
         UpdateAdornment();
+        UpdateEditMode();
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
         UpdateClearButton();
     }
+
+    private void UpdateEditMode()
+    {
+        if (_input is not null)
+        {
+            _input.IsVisible = Editable;
+            _input.IsReadOnly = !Editable;
+        }
+    }
+
+    private void CommitText()
+    {
+        // Skip while the flyout is open/opening: the popup steals focus and the calendar selection,
+        // not the in-progress typed text, is what should set the value.
+        if (_input is null || !Editable || _flyoutOpen || _flyoutOpening)
+        {
+            return;
+        }
+
+        if (!TryParseDate(_input.Text, DateFormat, out var parsed))
+        {
+            Error = true;
+            ErrorText = InvalidDateText;
+            return; // keep the user's text so they can correct it
+        }
+
+        if (parsed is { } picked && IsOutOfRange(picked))
+        {
+            Error = true;
+            ErrorText = InvalidDateText;
+            return;
+        }
+
+        Error = false;
+        Date = parsed;
+        UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        DateSelected?.Invoke(parsed);
+    }
+
+    private bool IsOutOfRange(DateTime value) =>
+        (MinDate is { } min && value.Date < min.Date) || (MaxDate is { } max && value.Date > max.Date);
 
     private void UpdateClearButton()
     {
@@ -335,6 +487,13 @@ public class DatePicker : TemplatedControl
             UpdateLabel();
         }
 
+        if (change.Property == EditableProperty)
+        {
+            UpdateEditMode();
+            UpdateDisplay();
+            ApplyBoxChrome();
+        }
+
         if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
@@ -352,7 +511,8 @@ public class DatePicker : TemplatedControl
             return;
         }
 
-        if (InteractionAssist.IsActivationKey(e.Key))
+        // In editable mode, Space/Enter belong to the text box; the calendar opens via the icon or Alt+Down.
+        if (!Editable && InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
             e.Handled = true;
@@ -434,7 +594,9 @@ public class DatePicker : TemplatedControl
         };
         ok.Click += (_, _) =>
         {
+            Error = false; // picking a valid date clears any prior typed-input error
             Date = pending;
+            UpdateDisplay();
             DateSelected?.Invoke(Date);
             _flyout?.Hide();
             ApplyBoxChrome();
@@ -509,7 +671,8 @@ public class DatePicker : TemplatedControl
         var labelForeground = LabelForegroundKey();
         var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
         var hasLabel = !string.IsNullOrEmpty(Label);
-        var floating = hasLabel && (ShrinkLabel || IsActive() || Date is not null);
+        var hasTypedText = Editable && _input is not null && !string.IsNullOrEmpty(_input.Text);
+        var floating = hasLabel && (ShrinkLabel || IsActive() || Date is not null || hasTypedText);
         var resting = hasLabel && !floating;
 
         if (_label is not null)
@@ -530,7 +693,14 @@ public class DatePicker : TemplatedControl
 
         if (_display is not null)
         {
-            _display.IsVisible = !resting;
+            _display.IsVisible = !resting && !Editable;
+        }
+
+        if (_input is not null)
+        {
+            // Show the placeholder in the text box only when no resting label covers it (mirrors TextField).
+            _input.PlaceholderText = resting ? null : Placeholder;
+            Avalonia.Automation.AutomationProperties.SetName(_input, Label ?? Placeholder ?? "Date");
         }
 
         var leadingInset = string.IsNullOrEmpty(AdornmentIcon) ? 0 : FieldChrome.LeadingAdornmentInset(this);
@@ -556,10 +726,18 @@ public class DatePicker : TemplatedControl
         }
 
         var hasDate = Date is not null;
-        _display.Text = hasDate ? Date!.Value.ToString(DateFormat, CultureInfo.CurrentCulture) : Placeholder;
+        var formatted = hasDate ? Date!.Value.ToString(DateFormat, CultureInfo.CurrentCulture) : null;
+        _display.Text = formatted ?? Placeholder;
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasDate ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+
+        // Keep the editable text box in sync with the committed value (empty when cleared).
+        if (_input is not null && Editable)
+        {
+            _input.Text = formatted ?? string.Empty;
+        }
+
         InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
         UpdateLabel();
     }
@@ -574,11 +752,13 @@ public class DatePicker : TemplatedControl
         FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
         _box.IsEnabled = IsEnabled;
-        _box.Cursor = IsEnabled ? new Cursor(StandardCursorType.Hand) : Cursor.Default;
+        _box.Cursor = !IsEnabled ? Cursor.Default
+            : Editable ? new Cursor(StandardCursorType.Ibeam)
+            : new Cursor(StandardCursorType.Hand);
         UpdateLabel();
     }
 
-    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true || _input?.IsFocused == true;
 
     private string LabelForegroundKey()
     {

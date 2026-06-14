@@ -31,6 +31,13 @@ public class PickerTests
         Key = key,
     };
 
+    private static KeyEventArgs KeyArgs(Key key, KeyModifiers modifiers) => new()
+    {
+        RoutedEvent = InputElement.KeyDownEvent,
+        Key = key,
+        KeyModifiers = modifiers,
+    };
+
     private static Border Box(Control control) =>
         control.GetVisualDescendants().OfType<Border>().First(b => b.Name == "PART_Box");
 
@@ -515,6 +522,223 @@ public class PickerTests
         var range = new DateRangePicker { AdornmentIcon = Icons.Material.Filled.Schedule };
         Show(range);
         LeadingAdornment(range).IsVisible.ShouldBeTrue();
+    }
+
+    private static TextBox EditableInput(Control picker) =>
+        picker.GetVisualDescendants().OfType<TextBox>().First(t => t.Name == "PART_Input");
+
+    [Fact]
+    public void DatePicker_TryParseDate_handles_empty_exact_loose_and_invalid()
+    {
+        Loam.Controls.DatePicker.TryParseDate("   ", "yyyy-MM-dd", out var empty).ShouldBeTrue();
+        empty.ShouldBeNull();
+
+        Loam.Controls.DatePicker.TryParseDate("2026-07-04", "yyyy-MM-dd", out var exact).ShouldBeTrue();
+        exact.ShouldBe(new DateTime(2026, 7, 4));
+
+        // Exact format does not match, but the current culture parses it loosely.
+        Loam.Controls.DatePicker.TryParseDate("2026-07-04", "MMM d, yyyy", out var loose).ShouldBeTrue();
+        loose.ShouldBe(new DateTime(2026, 7, 4));
+
+        Loam.Controls.DatePicker.TryParseDate("not a date", "yyyy-MM-dd", out var bad).ShouldBeFalse();
+        bad.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_non_editable_hides_text_input()
+    {
+        var picker = new Loam.Controls.DatePicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        EditableInput(picker).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_parses_typed_date_on_enter()
+    {
+        DateTime? captured = null;
+        var raised = false;
+        var picker = new Loam.Controls.DatePicker { Editable = true, DateFormat = "yyyy-MM-dd" };
+        picker.DateSelected += d => { raised = true; captured = d; };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.IsVisible.ShouldBeTrue();
+        input.Text = "2026-07-04";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBe(new DateTime(2026, 7, 4));
+        picker.Error.ShouldBeFalse();
+        raised.ShouldBeTrue();
+        captured.ShouldBe(new DateTime(2026, 7, 4));
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_marks_error_on_invalid_text()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true, DateFormat = "yyyy-MM-dd", Date = new DateTime(2026, 1, 1) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "garbage";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidDateText);
+        picker.Date.ShouldBe(new DateTime(2026, 1, 1)); // unchanged
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_rejects_out_of_range_text()
+    {
+        var picker = new Loam.Controls.DatePicker
+        {
+            Editable = true,
+            DateFormat = "yyyy-MM-dd",
+            MinDate = new DateTime(2026, 6, 1),
+            MaxDate = new DateTime(2026, 6, 30),
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "2026-12-25";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidDateText);
+        picker.Date.ShouldBeNull(); // out of range, not committed
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_empty_text_clears_and_syncs_from_date()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true, DateFormat = "yyyy-MM-dd", Date = new DateTime(2026, 6, 14) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text.ShouldBe("2026-06-14"); // committed value flows into the text box
+
+        input.Text = string.Empty;
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBeNull();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_calendar_button_opens_flyout()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+        var calendar = picker.GetVisualDescendants().OfType<IconButton>()
+            .First(b => AutomationProperties.GetName(b) == "Open calendar");
+        calendar.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_loose_parse_reformats_to_date_format()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true, DateFormat = "MMMM d, yyyy" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "2026-07-04"; // ISO form, not the exact DateFormat -> loose parse
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBe(new DateTime(2026, 7, 4));
+        input.Text.ShouldBe("July 4, 2026"); // committed text is normalized to DateFormat
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_calendar_selection_updates_input()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true, DateFormat = "yyyy-MM-dd", Date = new DateTime(2026, 6, 1) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.GetVisualDescendants().OfType<IconButton>().First(b => AutomationProperties.GetName(b) == "Open calendar")
+            .RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var calendar = paper.GetVisualDescendants().OfType<MonthCalendar>().Single();
+        CalendarDay(calendar, new DateTime(2026, 6, 18)).RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBe(new DateTime(2026, 6, 18));
+        EditableInput(picker).Text.ShouldBe("2026-06-18"); // flyout selection flows back into the text box
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_alt_down_opens_flyout()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Focus();
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+
+        input.RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Alt));
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_floats_label_on_focus()
+    {
+        var picker = new Loam.Controls.DatePicker { Editable = true, Label = "When" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        LabelHost(picker).IsVisible.ShouldBeFalse(); // empty + unfocused -> resting
+        EditableInput(picker).Focus();
+        Dispatcher.UIThread.RunJobs();
+        LabelHost(picker).IsVisible.ShouldBeTrue();  // focusing the text box floats the label
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_non_editable_activation_still_opens_flyout()
+    {
+        var picker = new Loam.Controls.DatePicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+        picker.RaiseEvent(KeyArgs(Key.Space)); // non-editable keyboard activation is unchanged
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
     }
 
     [AvaloniaFact]
@@ -1094,9 +1318,19 @@ public class PickerTests
             box.Padding.Left.ShouldBeGreaterThanOrEqualTo(16);
             box.HorizontalAlignment.ShouldBe(Avalonia.Layout.HorizontalAlignment.Stretch);
 
-            var icon = box.GetVisualDescendants().OfType<Icon>().First();
-            icon.Size.ShouldBe(LoamSize.Small);
-            icon.Margin.Left.ShouldBe(12);
+            if (picker is Loam.Controls.DatePicker)
+            {
+                // The calendar affordance is an IconButton (clickable to open the flyout in Editable mode).
+                var calendar = box.GetVisualDescendants().OfType<IconButton>()
+                    .First(b => AutomationProperties.GetName(b) == "Open calendar");
+                calendar.Size.ShouldBe(LoamSize.Small);
+            }
+            else
+            {
+                var icon = box.GetVisualDescendants().OfType<Icon>().First();
+                icon.Size.ShouldBe(LoamSize.Small);
+                icon.Margin.Left.ShouldBe(12);
+            }
         }
     }
 

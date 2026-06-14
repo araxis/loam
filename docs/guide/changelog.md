@@ -6,6 +6,15 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.13.0
+
+**`Loam.Pickers` DatePicker editable text entry.** Set `Editable` on `DatePicker` to let the user type a
+date into the field. The text is committed on Enter or focus loss — parsed exactly against `DateFormat`,
+then loosely against the current culture — and validated against `MinDate`/`MaxDate`; unparseable or
+out-of-range input leaves `Date` unchanged and surfaces `InvalidDateText` in the error slot. The trailing
+calendar icon becomes a button (and `Alt+Down` works) so the flyout still opens and stays in sync. A public
+static `DatePicker.TryParseDate(text, format, out value)` exposes the parse rule. Additive and off by default.
+
 ## 3.12.0
 
 **`Loam.Pickers` leading adornment icons.** `DatePicker`, `TimePicker`, and `DateRangePicker` gain an

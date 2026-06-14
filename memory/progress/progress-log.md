@@ -7,6 +7,47 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.13 — DatePicker editable text entry
+
+Fifth Pickers milestone (XL). `DatePicker` gains `Editable` (opt-in) + `InvalidDateText` (default "Invalid
+date") StyledProperties and a public static `TryParseDate(text, format, out DateTime?)` (empty→valid null;
+TryParseExact(format) then TryParse(culture); else false). Theme: added a chrome-stripped `PART_Input`
+TextBox in the textLayer Grid (hidden unless Editable) and converted the trailing calendar `Icon` to an
+`IconButton` `PART_CalendarButton` (Size Small) so it can open the flyout when box-click now focuses the
+text. Control: finds the new parts; `FieldChrome.ResetInnerTextBox(_input)` (re-applied on focus per house
+pattern); `_input` KeyDown Enter→`CommitText`, Alt+Down→`Open`; LostFocus→`CommitText`; box PointerPressed
+focuses `_input` when Editable (else Focus+Open as before); `_calendarButton.Click`→Focus+Open ("Open
+calendar" automation name). `CommitText` parses, validates `IsOutOfRange` (compares `.Date` vs Min/Max),
+sets Error+InvalidDateText on failure (keeps text), else Error=false + Date + DateSelected. `UpdateDisplay`
+syncs `_input.Text` from Date; `UpdateLabel` hides `_display` when Editable, sets `_input.PlaceholderText`
+(not obsolete Watermark) only when label not resting, and floats the label on typed text; `IsActive`
+includes `_input.IsFocused`; cursor is IBeam in Editable. OnKeyDown activation guarded by `!Editable`.
+
+**Decisions:** DatePicker-only this milestone (Time/Range later). Calendar→IconButton is DatePicker-scoped;
+updated the shared metrics test to assert the DatePicker calendar as an IconButton ("Open calendar") while
+Time/Range keep the plain Icon@12px. Parse keeps user text on failure (no clobber).
+
+**Verified:** build 0/0 (solution); full suite **520** (+12 editable tests). Fix: TextBox.Watermark obsolete →
+PlaceholderText. Gallery: "Editable text entry" sample (free + constrained). Docs: pickers.md intro note +
+Editable/InvalidDateText/TryParseDate rows; changelog 3.13.0.
+
+**Adversarial review (workflow, 3 dims × verify) — found REAL bugs (first milestone with production fixes):**
+13 confirmed. Fixed: (1) same-value commit didn't reformat (Avalonia SetValue no-ops when unchanged so
+OnPropertyChanged→UpdateDisplay never ran) → CommitText now calls UpdateDisplay() explicitly after Date=parsed;
+(2) clicking the calendar button blurred the input and auto-committed/errored partial text → calendar Click is
+now Open()-only plus a `_flyoutOpening` guard set on the button's tunnel PointerPressed (and CommitText skips
+when `_flyoutOpen || _flyoutOpening`); (3) flyout OK now clears Error (stale typed-error survived picking a
+date); (4) a11y — `_input` now gets AutomationProperties.SetName (Label/Placeholder/"Date"). Rejected the
+reviewer's IsHitTestVisible=false on PART_Input (would break editable clicking; non-editable is already inert
+via IsVisible=false). Test gaps closed: loose-parse reformats to DateFormat ("July 4, 2026"); flyout selection
+updates the text box; Alt+Down opens; label floats on focus; non-editable activation still opens; ErrorText ==
+InvalidDateText on both error paths.
+
+**Next:** extend editable entry to TimePicker/DateRangePicker; CalendarView state machine; ColorPicker HSV
+editor. Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.12 — Field-picker leading adornment icons
 
 Fourth Pickers milestone. `DatePicker`, `TimePicker`, `DateRangePicker` gain `AdornmentIcon`
