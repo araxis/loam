@@ -7,6 +7,37 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.16 — ColorPicker editable hex entry (editable across all 4 field pickers)
+
+Eighth Pickers milestone. `ColorPicker` gains `Editable` + `InvalidHexText` and a public static
+`TryParseColor(text, out AvaColor)` (wraps `AvaColor.TryParse`; empty/whitespace → false). Theme: box
+restructured from a horizontal StackPanel to a DockPanel (swatch Dock.Left + textLayer Grid holding PART_Hex +
+new PART_Input TextBox). The control mirrors the editable pattern with carried fixes, adapted to ColorPicker's
+specifics: Value is NON-NULL (no empty state) → empty text reverts to the current value with no error (not a
+clear). No trailing icon exists, so the **swatch is the palette opener** in editable mode (PointerPressed →
+Open, "Open color palette" automation name) — and since the swatch isn't focusable it doesn't blur the input
+(no premature commit); Alt+Down also opens. CommitText parses, honors ShowAlpha (forces opaque when alpha not
+shown), sets Value (ValueChanged auto-raised via OnPropertyChanged) + reformats; invalid → Error +
+InvalidHexText. UpdateEditMode hides PART_Hex + shows PART_Input. IsActive includes input focus; IBeam cursor;
+OnKeyDown activation guarded by !Editable; box PointerPressed focuses input when Editable.
+
+**Adversarial review (workflow, 3 dims × verify):** the correctness dim came back CLEAN (parse, ShowAlpha
+forcing, empty-reverts, ValueChanged semantics, swatch-opener interplay all sound). One production finding
+fixed: the floating label wasn't inset past the leading 30px swatch (pre-existing, now user-facing with the
+editable textbox) → `UpdateLabel` now passes a `SwatchLeadingInset (30)` to `ApplyLabelLayout`, matching the
+DatePicker leading-icon pattern. Closed test gaps: ShowAlpha=false forces typed #AARRGGBB opaque; lowercase/
+same-value commit still reformats to upper-case (exercises the explicit UpdateDisplay-after-set); empty revert
+raises no ValueChanged; non-editable Space still opens. Skipped nits: swatch pointer-open (automation-name +
+Alt+Down adequate; synthetic PointerPressed too fragile), minor doc clarifications.
+
+**Verified:** build 0/0 (solution); full suite **553** (+11). Gallery: "Editable hex entry" sample. Docs:
+ColorPicker note + Editable/InvalidHexText/TryParseColor rows; changelog 3.16.0.
+
+**Next:** CalendarView state machine; HSV spectrum editor for ColorPicker (visual plane); per-picker
+validation hooks (Required/Validation). Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.15 — DateRangePicker editable text entry (completes the editable trio)
 
 Seventh Pickers milestone. `DateRangePicker` gains `Editable` + `InvalidRangeText` and a public static

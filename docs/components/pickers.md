@@ -154,6 +154,11 @@ and the current hex value; pointer or keyboard activation opens a tokenized flyo
 `Value` is two-way by default, and disabled pickers suppress pointer, keyboard, and `OpenPicker()` flyout
 opening while still allowing programmatic value updates.
 
+Set `Editable` to let the user type or paste a hex color directly into the field (the full 24-bit space,
+versus the curated palette). The text is parsed and committed on Enter or focus loss — `#RRGGBB`, or
+`#AARRGGBB` when `ShowAlpha` — and unparseable input leaves `Value` unchanged and shows `InvalidHexText`. In
+editable mode clicking the swatch (or `Alt+Down`) opens the palette flyout, which stays in sync.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -167,7 +172,10 @@ opening while still allowing programmatic value updates.
 | `HelperText` | `string?` | `null` | Hint shown below the field. |
 | `ErrorText` | `string?` | `null` | Error message shown in place of `HelperText` when `Error` is `true`. |
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated. |
+| `Editable` | `bool` | `false` | Lets the user type/paste a hex color (`#RRGGBB`, or `#AARRGGBB` when `ShowAlpha`) into the field. Committed on Enter or focus loss; the swatch (or Alt+Down) opens the palette. |
+| `InvalidHexText` | `string` | `"Invalid color"` | `ErrorText` shown when typed text cannot be parsed as a color (editable mode). |
 | `Palette` | `AvaloniaList<Color>` | empty | Custom swatches shown before falling back to `DefaultPalette`. |
+| `TryParseColor(text, out color)` _(static)_ | `bool` | — | Parses a hex/named color; `false` for empty or unparseable text. |
 | `OpenPicker()` | `void` | — | Opens the swatch flyout when enabled. |
 | `ClosePicker()` | `void` | — | Closes the swatch flyout. |
 | `ValueChanged` | `event EventHandler<Color>` | — | Raised after `Value` changes. |

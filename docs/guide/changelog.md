@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.16.0
+
+**`Loam.Pickers` ColorPicker editable hex entry.** Set `Editable` on `ColorPicker` to type or paste a hex
+color (`#RRGGBB`, or `#AARRGGBB` when `ShowAlpha`) directly into the field — the full 24-bit space rather than
+just the curated palette. The text is committed on Enter or focus loss and parsed via Avalonia's color parser;
+unparseable input leaves `Value` unchanged and shows `InvalidHexText` (empty reverts, since a color has no
+empty state). In editable mode the swatch (or `Alt+Down`) opens the palette flyout, which stays in sync. A
+public static `ColorPicker.TryParseColor(text, out color)` exposes the parse rule. This brings editable entry
+to all four field pickers. Additive and off by default.
+
 ## 3.15.0
 
 **`Loam.Pickers` DateRangePicker editable text entry.** Set `Editable` on `DateRangePicker` to type a range

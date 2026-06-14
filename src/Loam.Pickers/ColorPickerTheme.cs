@@ -44,9 +44,27 @@ internal static class ColorPickerTheme
             var hex = new Text { Color = LoamColor.Default, VerticalAlignment = VerticalAlignment.Center }
                 .Named("PART_Hex", scope);
 
+            // Hosted, chrome-stripped text box shown only in Editable mode (see ColorPicker.UpdateEditMode).
+            var input = new TextBox
+            {
+                IsVisible = false,
+                VerticalAlignment = VerticalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            }.Named("PART_Input", scope);
+
+            DockPanel.SetDock(swatch, Dock.Left);
+            // hex and input share the same cell; UpdateEditMode toggles which one is visible.
+            var textLayer = new Avalonia.Controls.Grid
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Children = { hex, input },
+            };
+
             var box = new Border
             {
-                Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { swatch, hex } },
+                Child = new DockPanel { LastChildFill = true, Children = { swatch, textLayer } },
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
