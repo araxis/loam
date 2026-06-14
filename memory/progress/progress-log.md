@@ -32,8 +32,11 @@ All additive in `src/Loam.Charts/Charts.cs`; no breaking changes.
   `BarHeights`/`SliceSweeps`/`LinePoints`.
 - Hoisted inline `string[]` label literals to locals to satisfy CA1861 under TreatWarningsAsErrors.
 
-**Verified:** Release build 0/0; full suite **465 passing** (458 + 7). **Gap:** donut-center-text layout
-and signed-bar baseline are render-without-throw + math-tested headlessly, not pixel-verified in the GUI.
+**Verified:** Release build 0/0; full suite **465 passing** (458 + 7). Visually confirmed: signed
+LineChart in the live gallery (PrintWindow capture); donut center text ("1,240 / sessions", centered)
+and signed BarChart (bars up/down from a zero baseline) via an offscreen Skia `RenderTargetBitmap`
+harness. (Live-gallery nav was blocked by Windows foreground-lock contention, so the offscreen render
+was used for the two pages that couldn't be reached interactively.)
 
 **Next:** 3.3 — chart hit-testing + hover tooltips (builds on the snapshot).
 
