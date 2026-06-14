@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.17.0</Version>
-    <PackageReleaseNotes>Loam 3.17.0: Loam.Pickers field-picker validation hooks — DatePicker, TimePicker, and DateRangePicker gain Required (+ RequiredText), a Validation delegate, and a public Validate(), mirroring TextField. Validation runs on every value change (flyout OK, editable commit, Clear, programmatic) and drives Error/ErrorText; it self-gates so manual error state is preserved when unconfigured, and editable parse errors take precedence. Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.18.0</Version>
+    <PackageReleaseNotes>Loam 3.18.0: Loam.Pickers ColorPicker validation — adds a Validation delegate (Func&lt;Color,string?&gt;) and a public Validate(), completing validation across all four field pickers. Runs on every value change (palette select, editable hex commit, programmatic), self-gates to preserve manual error state, and lets editable parse errors take precedence. No Required (Value is non-null). Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

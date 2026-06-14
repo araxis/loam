@@ -1970,6 +1970,100 @@ public class PickerTests
     }
 
     [AvaloniaFact]
+    public void ColorPicker_validation_func_sets_and_clears_error()
+    {
+        var picker = new ColorPicker { Validation = c => c == Colors.Black ? "No black" : null };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value = Colors.Black;
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("No black");
+
+        picker.Value = Color.Parse("#2196F3");
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_validate_preserves_manual_error_when_unconfigured()
+    {
+        var picker = new ColorPicker { Error = true, ErrorText = "Manual" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value = Color.Parse("#2196F3"); // value change triggers Validate, but none configured
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Manual");
+        picker.Validate().ShouldBe("Manual");
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_commit_runs_business_validation()
+    {
+        var picker = new ColorPicker
+        {
+            Editable = true,
+            Value = Color.Parse("#FFFFFF"),
+            Validation = c => c == Colors.Black ? "No black" : null,
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "#000000";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value.ShouldBe(Colors.Black); // committed
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("No black");
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_palette_select_runs_validation()
+    {
+        var picker = new ColorPicker { Validation = c => c == Colors.Black ? "No black" : null };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        // The default palette ends with #000000; select it by keyboard to drive SelectColor -> Validate.
+        var blackSwatch = paper.GetVisualDescendants().OfType<Border>()
+            .First(b => AutomationProperties.GetName(b) == "Color #000000");
+        blackSwatch.Focus();
+        blackSwatch.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Value.ShouldBe(Colors.Black);
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("No black"); // committing via the palette runs Validate()
+    }
+
+    [AvaloniaFact]
+    public void ColorPicker_editable_parse_error_precedes_validation()
+    {
+        var picker = new ColorPicker { Editable = true, Validation = _ => "always invalid" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "zzz";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidHexText); // parse error wins over business validation
+    }
+
+    [AvaloniaFact]
     public void ColorPicker_shows_value_swatch_and_hex()
     {
         var picker = new ColorPicker { Value = Color.Parse("#FF5722") };

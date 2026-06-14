@@ -80,6 +80,10 @@ public class ColorPicker : TemplatedControl
     public static readonly StyledProperty<string> InvalidHexTextProperty =
         AvaloniaProperty.Register<ColorPicker, string>(nameof(InvalidHexText), "Invalid color");
 
+    /// <summary>Identifies the <see cref="Validation"/> property.</summary>
+    public static readonly StyledProperty<Func<AvaColor, string?>?> ValidationProperty =
+        AvaloniaProperty.Register<ColorPicker, Func<AvaColor, string?>?>(nameof(Validation));
+
     private Border? _box;
     private Border? _labelHost;
     private Border? _swatch;
@@ -185,6 +189,30 @@ public class ColorPicker : TemplatedControl
     {
         get => GetValue(InvalidHexTextProperty);
         set => SetValue(InvalidHexTextProperty, value);
+    }
+
+    /// <summary>A validator returning an error message (or null when valid) for the current <see cref="Value"/>.</summary>
+    public Func<AvaColor, string?>? Validation
+    {
+        get => GetValue(ValidationProperty);
+        set => SetValue(ValidationProperty, value);
+    }
+
+    /// <summary>
+    /// Runs <see cref="Validation"/>, updates <see cref="Error"/>/<see cref="ErrorText"/>, and returns the error
+    /// (or null). A no-op that preserves any manually-set error when no <see cref="Validation"/> is configured.
+    /// </summary>
+    public string? Validate()
+    {
+        if (Validation is null)
+        {
+            return ErrorText;
+        }
+
+        var error = Validation(Value);
+        Error = error is not null;
+        ErrorText = error;
+        return error;
     }
 
     /// <summary>Opens the color palette flyout.</summary>
@@ -389,6 +417,7 @@ public class ColorPicker : TemplatedControl
         // Honor ShowAlpha: when alpha is not exposed, force opaque even if the user typed #AARRGGBB.
         Value = ShowAlpha ? parsed : AvaColor.FromArgb(255, parsed.R, parsed.G, parsed.B);
         UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        Validate();             // business validation runs even on a same-value commit
     }
 
     /// <inheritdoc />
@@ -407,6 +436,11 @@ public class ColorPicker : TemplatedControl
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
             UpdateLabel();
+        }
+
+        if (change.Property == ValueProperty || change.Property == ValidationProperty)
+        {
+            Validate();
         }
 
         if (change.Property == EditableProperty)
@@ -507,6 +541,7 @@ public class ColorPicker : TemplatedControl
                 Value = ShowAlpha
                     ? AvaColor.FromArgb(Value.A, captured.R, captured.G, captured.B)
                     : captured;
+                Validate(); // run business validation on the picked color (also covers a same-value re-pick)
                 _flyout?.Hide();
                 ApplyBoxChrome();
             }
