@@ -7,6 +7,41 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.11 — TimePicker auto-scroll to selected time
+
+Third Pickers milestone. When the TimePicker flyout opens, the hour and minute `ScrollViewer` columns
+now center the selected (or closest, per MinuteStep) value instead of starting at the top. `Open()`
+captures both column ScrollViewers (`_hourScroll`/`_minuteScroll` via a capture callback on `BuildColumn`),
+and `ScheduleScrollToSelection` centers the target row: if already laid out it centers immediately,
+otherwise it hooks a one-shot `EffectiveViewportChanged` and centers once `Viewport`/`Bounds` are valid
+(offset = rowCenter − viewport/2, clamped to [0, extent−viewport]). Row `GotFocus` now calls
+`BringIntoView()` so keyboard navigation keeps the active row visible.
+
+**Root-cause fix (the enabler):** the columns used `VerticalScrollBarVisibility = Disabled`, which in
+Avalonia pins content to the viewport — i.e. the columns were never actually scrollable (Extent == Viewport,
+offset always clamped to 0; rows past ~3.6 were clipped/unreachable). Changed to `Hidden` (scrollable, no
+visible scrollbar). This is the real correctness win; the auto-centering rides on top.
+
+**Verified:** build 0/0 (solution); full suite **503** (+6 TimePicker tests). Updated 1 pre-existing test that
+asserted the old `Disabled` value → `Hidden`. Headless gotcha confirmed: with `Disabled` the
+offset/`BringIntoView` were no-ops (Extent==Viewport); `Hidden` made them work in headless too. Gallery:
+"Opens at selected time" sample (22:55 + 18:45 quarter-hour). Docs: pickers.md TimePicker behavioral note;
+changelog 3.11.0.
+
+**Adversarial review (workflow, 3 dims × verify):** correctness-timing and regression dims came back CLEAN
+(centering math, Disabled→Hidden, static handler with no `this`-capture all verified sound). 3 confirmed
+test-quality gaps fixed: (a) tests only checked `Offset.Y>0` → added `ShouldBeWithinViewport`/`ShouldBeCenteredIn`
+(mid-list 12:30 lands centered ±3px; clamped 22:55 stays visible) + `ShouldOverlapViewport` for the
+BringIntoView keyboard case; (b) `TimeColumns` index helper was child-order-fragile → replaced with
+`TimeColumn(paper, heading)` matching the column's sibling heading; (c) added null-`Time` default test and a
+MinuteStep-rounding test (18:50 step 15 → row 45 visible). Dismissed: offset-flakiness (math deterministic;
+22:55 gives large offsets) and a claimed MinuteStep "out-of-bounds" bug (code correct — value always present).
+
+**Next:** Pickers — leading adornment icons across field pickers; then CalendarView state machine / editable
+entry / validation; ColorPicker HSV editor. Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.10 — DateRangePicker quick-select preset rail
 
 Second Pickers milestone. `DateRangePicker` gains `ShowPresets` (StyledProperty<bool>, opt-in), a mutable

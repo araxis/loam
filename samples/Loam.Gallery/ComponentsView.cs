@@ -833,6 +833,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Pickers", "TimePicker", "Time input with hour and minute columns.",
             Sample("Variants", BuildTimePickerVariants),
             Sample("Selected & custom format", BuildTimePickerSelected),
+            Sample("Opens at selected time", BuildTimePickerScrollToSelection),
             Sample("Clearable", BuildTimePickerClearable),
             Sample("Floating label", BuildTimePickerConstrained),
             Sample("States", BuildTimePickerStates)),
@@ -7996,6 +7997,37 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Quarter-hour choices",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerScrollToSelection()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Late evening",
+                    Time = new TimeSpan(22, 55, 0),
+                    TimeFormat = "HH:mm",
+                    HelperText = "Open it — both columns scroll to the selected value",
+                },
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Quarter-hour steps",
+                    Time = new TimeSpan(18, 45, 0),
+                    TimeFormat = "HH:mm",
+                    MinuteStep = 15,
+                    HelperText = "Columns center on 18 and 45 when opened",
                 },
             },
         };

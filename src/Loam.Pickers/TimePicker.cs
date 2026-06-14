@@ -99,6 +99,8 @@ public class TimePicker : TemplatedControl
     private bool _flyoutOpen;
     private Text? _popupHourDisplay;
     private Text? _popupMinuteDisplay;
+    private ScrollViewer? _hourScroll;
+    private ScrollViewer? _minuteScroll;
 
     /// <summary>Raised when the picker commits a time through the generated OK action.</summary>
     public event Action<TimeSpan?>? TimeSelected;
@@ -344,6 +346,8 @@ public class TimePicker : TemplatedControl
         _flyout?.Hide();
         _popupHourDisplay = null;
         _popupMinuteDisplay = null;
+        _hourScroll = null;
+        _minuteScroll = null;
 
         var current = Time ?? TimeSpan.Zero;
         var step = Math.Clamp(MinuteStep, 1, 30);
@@ -375,7 +379,7 @@ public class TimePicker : TemplatedControl
             }
         }
 
-        var hours = BuildColumn("Hour", _hourRows, Enumerable.Range(0, 24), pendingHour, h => SetPending(h, null));
+        var hours = BuildColumn("Hour", _hourRows, Enumerable.Range(0, 24), pendingHour, h => SetPending(h, null), s => _hourScroll = s);
 
         var minuteValues = new List<int>();
         for (var m = 0; m < 60; m += step)
@@ -383,7 +387,7 @@ public class TimePicker : TemplatedControl
             minuteValues.Add(m);
         }
 
-        var minutes = BuildColumn("Minute", _minuteRows, minuteValues, pendingMinute, m => SetPending(null, m));
+        var minutes = BuildColumn("Minute", _minuteRows, minuteValues, pendingMinute, m => SetPending(null, m), s => _minuteScroll = s);
 
         var cancel = new Button
         {
@@ -462,11 +466,65 @@ public class TimePicker : TemplatedControl
             _flyoutOpen = false;
             _popupHourDisplay = null;
             _popupMinuteDisplay = null;
+            _hourScroll = null;
+            _minuteScroll = null;
             ApplyBoxChrome();
         };
         _flyoutOpen = true;
         _flyout.ShowAt(_box ?? (Control)this);
         ApplyBoxChrome();
+
+        // Bring the selected hour/minute into view once the flyout columns have laid out.
+        ScheduleScrollToSelection(_hourScroll, _hourRows, pendingHour);
+        ScheduleScrollToSelection(_minuteScroll, _minuteRows, pendingMinute);
+    }
+
+    private static void ScheduleScrollToSelection(ScrollViewer? scroll, List<TimePickerRow> rows, int value)
+    {
+        if (scroll is null)
+        {
+            return;
+        }
+
+        var target = rows.Find(r => r.Value == value)?.Row;
+        if (target is null)
+        {
+            return;
+        }
+
+        void Center()
+        {
+            var viewport = scroll.Viewport.Height;
+            var extent = scroll.Extent.Height;
+            if (viewport <= 0 || extent <= 0 || target.Bounds.Height <= 0)
+            {
+                return; // not laid out yet
+            }
+
+            var rowCenter = target.Bounds.Y + (target.Bounds.Height / 2);
+            var max = Math.Max(0, extent - viewport);
+            var offsetY = Math.Clamp(rowCenter - (viewport / 2), 0, max);
+            scroll.Offset = new Vector(scroll.Offset.X, offsetY);
+        }
+
+        if (scroll.Viewport.Height > 0 && target.Bounds.Height > 0)
+        {
+            Center(); // already laid out (e.g., reopen) — center immediately
+            return;
+        }
+
+        void OnViewport(object? sender, EffectiveViewportChangedEventArgs e)
+        {
+            if (scroll.Viewport.Height <= 0 || target.Bounds.Height <= 0)
+            {
+                return; // wait for a valid layout pass
+            }
+
+            scroll.EffectiveViewportChanged -= OnViewport;
+            Center();
+        }
+
+        scroll.EffectiveViewportChanged += OnViewport;
     }
 
     private StackPanel BuildTimePart(string labelText, int value, Action<Text> capture)
@@ -508,7 +566,7 @@ public class TimePicker : TemplatedControl
         };
     }
 
-    private StackPanel BuildColumn(string heading, List<TimePickerRow> rows, IEnumerable<int> values, int selected, Action<int> onPick)
+    private StackPanel BuildColumn(string heading, List<TimePickerRow> rows, IEnumerable<int> values, int selected, Action<int> onPick, Action<ScrollViewer> captureScroll)
     {
         rows.Clear();
         var list = new StackPanel { Spacing = 4 };
@@ -553,7 +611,11 @@ public class TimePicker : TemplatedControl
             };
             row.PointerEntered += (_, _) => ApplyTimeRowState(item, "Hover");
             row.PointerExited += (_, _) => ApplyTimeRowState(item, row.IsFocused ? "Focus" : null);
-            row.GotFocus += (_, _) => ApplyTimeRowState(item, "Focus");
+            row.GotFocus += (_, _) =>
+            {
+                ApplyTimeRowState(item, "Focus");
+                row.BringIntoView(); // keep the active row visible during keyboard navigation
+            };
             row.LostFocus += (_, _) => ApplyTimeRowState(item, null);
             rows.Add(item);
             list.Children.Add(row);
@@ -561,19 +623,23 @@ public class TimePicker : TemplatedControl
 
         Highlight(rows, selected);
 
+        var scroll = new ScrollViewer
+        {
+            Height = 176,
+            Content = list,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            // Hidden (not Disabled) so the column is scrollable — Disabled pins content to the viewport.
+            VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
+        };
+        captureScroll(scroll);
+
         return new StackPanel
         {
             Spacing = 4,
             Children =
             {
                 new Text { Text = heading, Typo = Typo.LabelMedium, Color = LoamColor.Default, Opacity = 0.72, HorizontalAlignment = HorizontalAlignment.Center },
-                new ScrollViewer
-                {
-                    Height = 176,
-                    Content = list,
-                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                    VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                },
+                scroll,
             },
         };
     }
