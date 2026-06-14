@@ -6,6 +6,14 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.18.0
+
+**`Loam.Pickers` ColorPicker validation.** `ColorPicker` gains a `Validation` delegate (`Func<Color, string?>`)
+and a public `Validate()`, completing validation across all four field pickers. It runs on every value change
+(palette select, editable hex commit, programmatic) and drives `Error`/`ErrorText`, self-gates to preserve a
+manually-set error when unset, and lets an editable parse error take precedence. There is no `Required` because
+`Value` is non-null. Additive and off by default.
+
 ## 3.17.0
 
 **`Loam.Pickers` field-picker validation hooks.** `DatePicker`, `TimePicker`, and `DateRangePicker` gain

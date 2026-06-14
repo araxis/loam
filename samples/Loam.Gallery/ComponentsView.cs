@@ -855,6 +855,7 @@ public sealed class ComponentsView : UserControl
             Sample("Variants", BuildColorPickerVariants),
             Sample("Selected & custom format", BuildColorPickerValues),
             Sample("Editable hex entry", BuildColorPickerEditable),
+            Sample("Validation", BuildColorPickerValidation),
             Sample("States", BuildColorPickerStates)),
         PageWithSamples("Pickers", "MonthCalendar", "Standalone month grid used by date pickers.",
             Sample("Selected", BuildMonthCalendarSelected),
@@ -7504,6 +7505,28 @@ public sealed class ComponentsView : UserControl
                     Value = Color.FromArgb(0x80, 0x10, 0x20, 0x30),
                     ShowAlpha = true,
                     HelperText = "Shows #AARRGGBB",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildColorPickerValidation()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.ColorPicker
+                {
+                    Label = "No near-black",
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Editable = true,
+                    Value = Color.Parse("#2196F3"),
+                    Validation = c => c.R + c.G + c.B < 60 ? "Too dark — pick a lighter color" : null,
+                    HelperText = "Rejects colors that are nearly black",
                 },
             },
         };

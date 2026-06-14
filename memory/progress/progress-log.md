@@ -7,6 +7,28 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.18 — ColorPicker validation (validation across all 4 field pickers)
+
+Tenth Pickers milestone. `ColorPicker` gains `Validation` (`Func<AvaColor,string?>`) + public `Validate()`,
+mirroring the 3.17 pattern but WITHOUT `Required` (Value is non-null). Self-gating (Validation null → return
+ErrorText, no touch). Wired: `OnPropertyChanged` calls Validate on ValueProperty/ValidationProperty change;
+editable `CommitText` and the palette `SelectColor` call Validate explicitly (same-value coverage). Editable
+hex parse error still precedes (CommitText returns before setting Value on invalid). Completes validation
+across all four field pickers (Date/Time/Range have Required+Validation; Color has Validation).
+
+**Verified:** build 0/0 (solution); full suite **572** (+5). Tests: Validation sets/clears on value change;
+self-gating preserves manual error; editable commit runs business validation; editable parse error precedes
+validation; palette select (black swatch via keyboard Enter) runs validation. Gallery: "Validation" ColorPicker
+sample (rejects near-black). Docs: ColorPicker Validation/Validate() rows + intro note updated; changelog 3.18.0.
+Review: focused single-agent adversarial pass (close mirror of reviewed-clean 3.17) — confirmed no re-entrancy/
+precedence/self-gating/ordering bugs; its one flagged gap (palette-select validation untested) was closed with
+a keyboard-driven test.
+
+**Next:** HSV spectrum editor for ColorPicker (visual plane); CalendarView state machine. Loose end:
+Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.17 — Field-picker validation hooks (Required + Validation)
 
 Ninth Pickers milestone. `DatePicker`, `TimePicker`, `DateRangePicker` each gain `Required` (bool) +
