@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.4.0 (in progress)
+
+**`Loam.Charts` analytical depth.** First sub-slice — **axes**:
+
+- `BarChart`/`LineChart` share a new `CartesianChartBase` with an opt-in `ShowAxes` that draws a
+  nice-number numeric Y-axis (ticks + labels) and a category X-axis (from `Labels`), with `Min`/`Max`,
+  `YAxisTickCount`, and `YAxisFormat` controls. Off by default, so existing charts are unchanged.
+- New pure `Charts.NiceScale` helper (1/2/5×10ⁿ rounding). Bar/line scaling unified over a value-axis
+  domain (the signed-value helpers generalized), so axes, signed data, and explicit ranges share one path.
+
 ## 3.3.0
 
 **`Loam.Charts` interactivity** — charts become pointer-aware (additive; default-on tooltips):

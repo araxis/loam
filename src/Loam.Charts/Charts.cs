@@ -140,6 +140,70 @@ public static class Charts
         }).ToList();
     }
 
+    /// <summary>Maps values to points inside an explicit plot rectangle over a signed domain.</summary>
+    internal static IReadOnlyList<Point> ScaledLinePoints(IReadOnlyList<double> values, Rect plot, double min, double max)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count == 0 || plot.Width <= 0 || plot.Height <= 0)
+        {
+            return Array.Empty<Point>();
+        }
+
+        var span = max - min;
+        if (span <= 0)
+        {
+            return Array.Empty<Point>();
+        }
+
+        return values.Select((value, index) =>
+        {
+            var x = values.Count == 1
+                ? plot.Left + plot.Width / 2
+                : plot.Left + index / (double)(values.Count - 1) * plot.Width;
+            var y = plot.Top + (max - value) / span * plot.Height;
+            return new Point(x, y);
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Produces a "nice" axis scale (rounded min, max, and step) covering <paramref name="dataMin"/>..
+    /// <paramref name="dataMax"/> with roughly <paramref name="targetTicks"/> intervals, using the
+    /// classic 1/2/5×10ⁿ rounding so tick labels read cleanly.
+    /// </summary>
+    public static (double Min, double Max, double Step) NiceScale(double dataMin, double dataMax, int targetTicks)
+    {
+        var ticks = Math.Max(1, targetTicks);
+        if (dataMax <= dataMin)
+        {
+            dataMax = dataMin + 1;
+        }
+
+        var range = NiceNum(dataMax - dataMin, round: false);
+        var step = NiceNum(range / ticks, round: true);
+        var min = Math.Floor(dataMin / step) * step;
+        var max = Math.Ceiling(dataMax / step) * step;
+        return (min, max, step);
+    }
+
+    /// <summary>Convenience overload producing a nice scale from zero to <paramref name="dataMax"/>.</summary>
+    public static (double Min, double Max, double Step) NiceScale(double dataMax, int targetTicks) =>
+        NiceScale(0, dataMax, targetTicks);
+
+    private static double NiceNum(double value, bool round)
+    {
+        if (value <= 0)
+        {
+            return 1;
+        }
+
+        var exponent = Math.Floor(Math.Log10(value));
+        var fraction = value / Math.Pow(10, exponent);
+        var niceFraction = round
+            ? fraction < 1.5 ? 1 : fraction < 3 ? 2 : fraction < 7 ? 5 : 10
+            : fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+        return niceFraction * Math.Pow(10, exponent);
+    }
+
     internal static IImmutableBrush ColorAt(IReadOnlyList<Color> colors, int index)
     {
         var source = colors.Count > 0 ? colors : Palette;
@@ -920,8 +984,147 @@ public sealed class PieChart : ChartBase
     }
 }
 
-/// <summary>A vertical bar chart, mirroring the reference API's <c>Chart</c> Bar. Bars are scaled to the largest value.</summary>
-public sealed class BarChart : ChartBase
+/// <summary>Shared base for Cartesian charts (bar, line): value-axis domain, optional axes, and gutters.</summary>
+public abstract class CartesianChartBase : ChartBase
+{
+    private bool _showAxes;
+    private double? _min;
+    private double? _max;
+    private int _yAxisTickCount = 4;
+    private Func<double, string>? _yAxisFormat;
+
+    /// <summary>When true, draws a numeric Y-axis and category X-axis (nice-number scaled) in reserved gutters.</summary>
+    public bool ShowAxes
+    {
+        get => _showAxes;
+        set { _showAxes = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Explicit value-axis minimum; when null, derived from the data (and zero).</summary>
+    public double? Min
+    {
+        get => _min;
+        set { _min = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Explicit value-axis maximum; when null, derived from the data.</summary>
+    public double? Max
+    {
+        get => _max;
+        set { _max = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Approximate number of Y-axis tick intervals used for nice-number scaling.</summary>
+    public int YAxisTickCount
+    {
+        get => _yAxisTickCount;
+        set { _yAxisTickCount = Math.Max(1, value); InvalidateVisual(); }
+    }
+
+    /// <summary>Formats Y-axis tick labels; when null, a compact numeric format is used.</summary>
+    public Func<double, string>? YAxisFormat
+    {
+        get => _yAxisFormat;
+        set { _yAxisFormat = value; InvalidateVisual(); }
+    }
+
+    /// <summary>True when per-point <see cref="ChartBase.Labels"/> are available for the X axis.</summary>
+    protected bool HasCategoryLabels => Labels is { Count: > 0 };
+
+    /// <summary>Resolves the value-axis domain (min, max, step). Applies Min/Max overrides and nice-number scaling when axes are shown.</summary>
+    protected (double Min, double Max, double Step) ResolveDomain(double dataMin, double dataMax)
+    {
+        var lo = Min ?? dataMin;
+        var hi = Max ?? dataMax;
+        if (hi <= lo)
+        {
+            hi = lo + 1;
+        }
+
+        return ShowAxes ? Charts.NiceScale(lo, hi, YAxisTickCount) : (lo, hi, hi - lo);
+    }
+
+    /// <summary>Formats a Y-axis value using <see cref="YAxisFormat"/> or a compact default.</summary>
+    protected string FormatAxisValue(double value) =>
+        YAxisFormat?.Invoke(value) ?? value.ToString("0.##", CultureInfo.CurrentCulture);
+
+    /// <summary>The left gutter width needed for Y-axis labels (0 when axes are hidden).</summary>
+    protected double MeasureYGutter(double min, double max, double step)
+    {
+        if (!ShowAxes || step <= 0)
+        {
+            return 0;
+        }
+
+        var widest = 0d;
+        for (var value = min; value <= max + step / 2; value += step)
+        {
+            widest = Math.Max(widest, DataLabelText(FormatAxisValue(value)).Width);
+        }
+
+        return widest + 6;
+    }
+
+    /// <summary>The bottom gutter height needed for X-axis category labels (0 when hidden or unlabeled).</summary>
+    protected double MeasureXGutter() =>
+        ShowAxes && HasCategoryLabels ? DataLabelText("0").Height + 4 : 0;
+
+    /// <summary>Draws Y-axis gridlines and tick labels in the left gutter (no-op when axes are hidden).</summary>
+    protected void DrawYAxis(DrawingContext context, Rect plot, double min, double max, double step)
+    {
+        if (!ShowAxes || step <= 0)
+        {
+            return;
+        }
+
+        var span = max - min;
+        if (span <= 0)
+        {
+            return;
+        }
+
+        var pen = new Pen(Visuals.Grid, 1);
+        for (var value = min; value <= max + step / 2; value += step)
+        {
+            var y = plot.Bottom - (value - min) / span * plot.Height;
+            context.DrawLine(pen, new Point(plot.Left, y), new Point(plot.Right, y));
+            var text = DataLabelText(FormatAxisValue(value));
+            context.DrawText(text, new Point(Math.Max(0, plot.Left - text.Width - 4), y - text.Height / 2));
+        }
+    }
+
+    /// <summary>Draws X-axis category labels (from <see cref="ChartBase.Labels"/>) beneath the given category centers, with thinning.</summary>
+    protected void DrawXAxisLabels(DrawingContext context, Rect plot, double bottomGutter, IReadOnlyList<double> centers)
+    {
+        if (!ShowAxes || bottomGutter <= 0)
+        {
+            return;
+        }
+
+        var lastRight = double.NegativeInfinity;
+        for (var i = 0; i < centers.Count && i < ResolvedPoints.Count; i++)
+        {
+            var label = ResolvedPoints[i].Label;
+            if (string.IsNullOrEmpty(label))
+            {
+                continue;
+            }
+
+            var text = DataLabelText(label);
+            var lx = Math.Clamp(centers[i] - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
+            if (lx < lastRight + 4)
+            {
+                continue;
+            }
+
+            context.DrawText(text, new Point(lx, plot.Bottom + 3));
+            lastRight = lx + text.Width;
+        }
+    }
+}
+
+/// <summary>A vertical bar chart. Bars scale to the value-axis domain; set <see cref="CartesianChartBase.ShowAxes"/> for labeled axes.</summary>
+public sealed class BarChart : CartesianChartBase
 {
     private bool _allowNegative;
     private (Rect Rect, int Index)[] _barRects = Array.Empty<(Rect, int)>();
@@ -968,74 +1171,68 @@ public sealed class BarChart : ChartBase
             return;
         }
 
-        const double gap = 8;
-        const double pad = 8;
-        var plot = new Rect(pad, pad, Math.Max(0, Bounds.Width - pad * 2), Math.Max(0, Bounds.Height - pad * 2));
-        DrawGrid(context, plot);
-        var slot = plot.Width / Values.Count;
-        var barWidth = Math.Max(1, slot - gap);
-
+        double dataMin;
+        double dataMax;
         if (signed)
         {
-            var (min, max) = Charts.SignedDomain(Values);
-            var layout = Charts.SignedBarLayout(Values, min, max, plot.Height);
+            (dataMin, dataMax) = Charts.SignedDomain(Values);
+        }
+        else
+        {
+            dataMin = 0;
+            dataMax = Values.DefaultIfEmpty(0).Max();
+        }
+
+        var (min, max, step) = ResolveDomain(dataMin, dataMax);
+
+        const double gap = 8;
+        const double pad = 8;
+        var leftGutter = MeasureYGutter(min, max, step);
+        var bottomGutter = MeasureXGutter();
+        var plot = new Rect(
+            pad + leftGutter,
+            pad,
+            Math.Max(0, Bounds.Width - pad * 2 - leftGutter),
+            Math.Max(0, Bounds.Height - pad * 2 - bottomGutter));
+
+        if (ShowAxes)
+        {
+            DrawYAxis(context, plot, min, max, step);
+        }
+        else
+        {
+            DrawGrid(context, plot);
+        }
+
+        var slot = Values.Count > 0 ? plot.Width / Values.Count : plot.Width;
+        var barWidth = Math.Max(1, slot - gap);
+        var layout = Charts.SignedBarLayout(Values, min, max, plot.Height);
+
+        if (min < 0)
+        {
             var zeroY = plot.Top + Charts.ZeroBaselineOffset(min, max, plot.Height);
             context.DrawLine(new Pen(Visuals.Outline, 1), new Point(plot.Left, zeroY), new Point(plot.Right, zeroY));
-
-            var signedRects = new List<(Rect, int)>();
-            for (var i = 0; i < Values.Count; i++)
-            {
-                var (y, height) = layout[i];
-                if (height <= 0)
-                {
-                    continue;
-                }
-
-                var x = plot.Left + i * slot + (slot - barWidth) / 2;
-                var rect = new Rect(x, plot.Top + y, barWidth, height);
-                var pen = i == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
-                context.DrawRectangle(SeriesBrush(i), pen, rect, 4, 4);
-                signedRects.Add((rect, i));
-            }
-
-            _barRects = signedRects.ToArray();
-
-            if (ShowDataLabels)
-            {
-                var lastRight = double.NegativeInfinity;
-                for (var i = 0; i < Values.Count && i < ResolvedPoints.Count; i++)
-                {
-                    var text = DataLabelText(ResolveDataLabel(ResolvedPoints[i]));
-                    var lx = Math.Clamp(plot.Left + i * slot + slot / 2 - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
-                    if (lx < lastRight + 4)
-                    {
-                        continue;
-                    }
-
-                    var (y, height) = layout[i];
-                    var ly = Values[i] >= 0 ? plot.Top + y - text.Height - 2 : plot.Top + y + height + 2;
-                    ly = Math.Clamp(ly, plot.Top, plot.Bottom - text.Height);
-                    context.DrawText(text, new Point(lx, ly));
-                    lastRight = lx + text.Width;
-                }
-            }
-
-            DrawTooltip(context);
-            return;
         }
 
-        var heights = Charts.BarHeights(Values, plot.Height);
-        var barRects = new List<(Rect, int)>();
+        var centers = new double[Values.Count];
+        var rects = new List<(Rect, int)>();
         for (var i = 0; i < Values.Count; i++)
         {
+            centers[i] = plot.Left + i * slot + slot / 2;
+            var (y, height) = layout[i];
+            if (height <= 0)
+            {
+                continue;
+            }
+
             var x = plot.Left + i * slot + (slot - barWidth) / 2;
-            var rect = new Rect(x, plot.Bottom - heights[i], barWidth, heights[i]);
+            var rect = new Rect(x, plot.Top + y, barWidth, height);
             var pen = i == HoveredIndex ? new Pen(Visuals.Surface, 2) : null;
             context.DrawRectangle(SeriesBrush(i), pen, rect, 4, 4);
-            barRects.Add((rect, i));
+            rects.Add((rect, i));
         }
 
-        _barRects = barRects.ToArray();
+        _barRects = rects.ToArray();
 
         if (ShowDataLabels)
         {
@@ -1043,24 +1240,27 @@ public sealed class BarChart : ChartBase
             for (var i = 0; i < Values.Count && i < ResolvedPoints.Count; i++)
             {
                 var text = DataLabelText(ResolveDataLabel(ResolvedPoints[i]));
-                var lx = Math.Clamp(plot.Left + i * slot + slot / 2 - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
+                var lx = Math.Clamp(centers[i] - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
                 if (lx < lastRight + 4)
                 {
                     continue;
                 }
 
-                var ly = Math.Max(plot.Top, plot.Bottom - heights[i] - text.Height - 2);
+                var (y, height) = layout[i];
+                var ly = Values[i] >= 0 ? plot.Top + y - text.Height - 2 : plot.Top + y + height + 2;
+                ly = Math.Clamp(ly, plot.Top, plot.Bottom - text.Height);
                 context.DrawText(text, new Point(lx, ly));
                 lastRight = lx + text.Width;
             }
         }
 
+        DrawXAxisLabels(context, plot, bottomGutter, centers);
         DrawTooltip(context);
     }
 }
 
-/// <summary>A line chart, mirroring the reference API's <c>Chart</c> Line. Plots values left-to-right with dots; set <see cref="Area"/> to fill beneath.</summary>
-public sealed class LineChart : ChartBase
+/// <summary>A line chart. Plots values left-to-right with dots; set <see cref="Area"/> to fill, or <see cref="CartesianChartBase.ShowAxes"/> for labeled axes.</summary>
+public sealed class LineChart : CartesianChartBase
 {
     private bool _area;
     private bool _allowNegative;
@@ -1121,26 +1321,39 @@ public sealed class LineChart : ChartBase
             return;
         }
 
-        const double pad = 4;
-        var plot = new Rect(0, pad, Bounds.Width, Math.Max(0, Bounds.Height - pad * 2));
-        DrawGrid(context, plot);
-
-        IReadOnlyList<Point> points;
-        double baseY;
-        double? zeroY = null;
+        double dataMin;
+        double dataMax;
         if (signed)
         {
-            var (min, max) = Charts.SignedDomain(Values);
-            points = Charts.ScaledLinePoints(Values, Bounds.Width, Bounds.Height, min, max, pad);
-            zeroY = pad + Charts.ZeroBaselineOffset(min, max, plot.Height);
-            baseY = zeroY.Value;
+            (dataMin, dataMax) = Charts.SignedDomain(Values);
         }
         else
         {
-            points = Charts.LinePoints(Values, Bounds.Width, Bounds.Height, pad);
-            baseY = Bounds.Height - pad;
+            dataMin = 0;
+            dataMax = Values.DefaultIfEmpty(0).Max();
         }
 
+        var (min, max, step) = ResolveDomain(dataMin, dataMax);
+
+        const double pad = 4;
+        var leftGutter = MeasureYGutter(min, max, step);
+        var bottomGutter = MeasureXGutter();
+        var plot = new Rect(
+            leftGutter,
+            pad,
+            Math.Max(0, Bounds.Width - leftGutter),
+            Math.Max(0, Bounds.Height - pad * 2 - bottomGutter));
+
+        if (ShowAxes)
+        {
+            DrawYAxis(context, plot, min, max, step);
+        }
+        else
+        {
+            DrawGrid(context, plot);
+        }
+
+        var points = Charts.ScaledLinePoints(Values, plot, min, max);
         if (points.Count == 0)
         {
             DrawNoData(context);
@@ -1149,28 +1362,29 @@ public sealed class LineChart : ChartBase
 
         _pointPositions = points.ToArray();
         var color = SeriesBrush(0);
+        var zeroY = plot.Top + Charts.ZeroBaselineOffset(min, max, plot.Height);
 
         if (Area && points.Count > 1)
         {
             var area = new StreamGeometry();
             using (var ctx = area.Open())
             {
-                ctx.BeginFigure(new Point(points[0].X, baseY), isFilled: true);
+                ctx.BeginFigure(new Point(points[0].X, zeroY), isFilled: true);
                 foreach (var p in points)
                 {
                     ctx.LineTo(p);
                 }
 
-                ctx.LineTo(new Point(points[^1].X, baseY));
+                ctx.LineTo(new Point(points[^1].X, zeroY));
                 ctx.EndFigure(true);
             }
 
             context.DrawGeometry(AreaBrush(0), null, area);
         }
 
-        if (zeroY is { } baseline)
+        if (min < 0)
         {
-            context.DrawLine(new Pen(Visuals.Outline, 1), new Point(0, baseline), new Point(Bounds.Width, baseline));
+            context.DrawLine(new Pen(Visuals.Outline, 1), new Point(plot.Left, zeroY), new Point(plot.Right, zeroY));
         }
 
         var pen = new Pen(color, 2) { LineJoin = PenLineJoin.Round };
@@ -1214,6 +1428,7 @@ public sealed class LineChart : ChartBase
             }
         }
 
+        DrawXAxisLabels(context, plot, bottomGutter, _pointPositions.Select(p => p.X).ToArray());
         DrawTooltip(context);
     }
 }

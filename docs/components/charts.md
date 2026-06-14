@@ -47,6 +47,31 @@ All charts hit-test the pointer against their datapoints (slice / bar / nearest 
 
 `ChartPointEventArgs` carries the `Index` and the `ChartPoint? Point` (null when none). The hovered element is lightly emphasized while under the pointer.
 
+### Axes (bar & line)
+
+`BarChart` and `LineChart` share a `CartesianChartBase` that can draw a numeric Y-axis and a category
+X-axis. Axes are **off by default** (existing charts are unchanged); set `ShowAxes = true` to enable them.
+
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `ShowAxes` | `bool` | `false` | Draws a nice-number Y-axis (ticks + labels in a left gutter) and category X-axis (from `Labels`, in a bottom gutter); bars/lines scale to the resulting domain. |
+| `Min` / `Max` | `double?` | `null` | Explicit value-axis bounds; when null, derived from the data (and zero). Useful for comparable cross-chart scaling. |
+| `YAxisTickCount` | `int` | `4` | Approximate number of Y-axis tick intervals (input to nice-number rounding). |
+| `YAxisFormat` | `Func<double, string>?` | `null` | Formats Y-axis tick labels (e.g. `v => $"${v:N0}k"`); compact numeric default otherwise. |
+
+`Charts.NiceScale(min, max, targetTicks)` (and the zero-based `NiceScale(max, targetTicks)`) is the pure
+helper behind the scaling — it returns a rounded `(Min, Max, Step)` using 1/2/5×10ⁿ steps.
+
+```csharp
+new BarChart
+{
+    Values = new[] { 30d, 45d, 28d, 60d, 42d },
+    Labels = new[] { "Q1", "Q2", "Q3", "Q4", "Q5" },
+    ShowAxes = true,
+    YAxisFormat = v => $"${v:N0}k",
+};
+```
+
 ```csharp
 var chart = new BarChart { Values = new[] { 12d, 19d, 8d }, Labels = new[] { "Mon", "Tue", "Wed" } };
 chart.HoverChanged += (_, e) => status.Text = e.Point is { } p ? $"{p.Label}: {p.Value:N0}" : "";

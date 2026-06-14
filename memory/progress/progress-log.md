@@ -7,6 +7,34 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.4 (sub-slice 1) — Charts axes + nice-number scaling
+
+First of four 3.4 sub-slices (axes → ItemsSource → multi-series → bound legend).
+
+**Done**
+- `Charts.NiceScale(min,max,ticks)` + zero-based overload (pure, 1/2/5×10ⁿ rounding via NiceNum); new
+  Rect-based `Charts.ScaledLinePoints(values, Rect, min, max)` overload.
+- New `CartesianChartBase : ChartBase` (shared by Bar/Line): `ShowAxes` (default false), `Min`/`Max`,
+  `YAxisTickCount` (4), `YAxisFormat`; `ResolveDomain` (applies overrides + NiceScale), `MeasureYGutter`/
+  `MeasureXGutter`, `DrawYAxis` (ticks+labels+gridlines), `DrawXAxisLabels` (category labels, thinned).
+- **Unified Bar/Line rendering** over a value-axis domain: both now scale via `SignedBarLayout`/
+  `ScaledLinePoints` over `[min,max]` (the signed helpers generalize — `(0,max)` reproduces the old
+  BarHeights/LinePoints output exactly), reserve left/bottom gutters when `ShowAxes`, draw axes vs the
+  4-line grid. Zero baseline drawn only when `min < 0`. BarChart's two branches collapsed into one.
+- Gallery: Bar/Line "Axes" samples. Docs: charts.md axes table + example, changelog 3.4.0.
+
+**Decisions**
+- Axes default OFF to stay additive (existing samples/tests unchanged); the unification is behavior-
+  preserving for the non-axis path (verified: full suite unchanged at 468 before new tests).
+
+**Verified:** Release build 0/0; full suite **471 passing** (468 + 3: NiceScale rounding, Rect line-point
+mapping, axes render-without-throw). Visually confirmed offscreen: bar with $0k–$80k Y-axis + Q1–Q5
+X-axis; line with 0–80 Y-axis + Jan–Jun X-axis, both correctly scaled.
+
+**Next:** 3.4 sub-slice 2 — `ItemsSource` binding (value/label/color selectors + INotifyCollectionChanged).
+
+---
+
 ## 2026-06-14 — 3.3 — Charts interactivity: hit-testing + hover tooltips
 
 **Done**
