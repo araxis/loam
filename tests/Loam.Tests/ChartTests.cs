@@ -341,6 +341,29 @@ public class ChartTests
         }
     }
 
+    [AvaloniaFact]
+    public void Data_labels_render_without_throwing()
+    {
+        var labels = new[] { "A", "B", "C" };
+        var bars = new BarChart { Width = 300, Height = 160, Values = [5d, 8d, 3d], Labels = labels, ShowDataLabels = true };
+        var signed = new BarChart { Width = 300, Height = 160, Values = [6d, -4d, 9d], AllowNegative = true, ShowDataLabels = true };
+        var pie = new PieChart { Width = 200, Height = 200, Donut = true, Values = [40d, 35d, 25d], ShowDataLabels = true, DataLabelFormat = p => $"{p.Percent:P0}" };
+        var line = new LineChart { Width = 300, Height = 160, Values = [2d, 9d, 4d], ShowDataLabels = true };
+
+        new Window
+        {
+            Width = 800,
+            Height = 760,
+            Content = new StackPanel { Children = { bars, signed, pie, line } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        bars.ShowDataLabels.ShouldBeTrue();
+        signed.HasSignedData.ShouldBeTrue();
+        pie.Bounds.Width.ShouldBeGreaterThan(0);
+        line.Bounds.Height.ShouldBeGreaterThan(0);
+    }
+
     private static Window Show(Control content, ThemeVariant theme)
     {
         Avalonia.Application.Current!.RequestedThemeVariant = theme;

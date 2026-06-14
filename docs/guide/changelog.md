@@ -20,6 +20,9 @@ First slice of the **`Loam.Charts` enrichment** roadmap — all additive, no bre
   negatives below a zero baseline instead of silently clamping them to zero; new pure
   `Charts.SignedDomain`/`ZeroBaselineOffset`/`SignedBarLayout` helpers back it. Default behavior is
   unchanged.
+- **On-chart data labels.** Opt-in `ShowDataLabels` (+ optional `DataLabelFormat`) annotates each
+  datapoint — value above bars/line points, percentage at pie-slice centroids (with a contrast-aware
+  color) — with responsive thinning that drops colliding labels instead of overlapping them.
 
 ## 3.1.0
 

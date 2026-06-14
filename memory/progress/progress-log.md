@@ -7,6 +7,28 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.2 — Charts enrichment: on-chart data labels (completes 3.2)
+
+**Done**
+- `ChartBase.ShowDataLabels` (bool) + `DataLabelFormat` (Func<ChartPoint,string>?). Shared helpers:
+  `ResolveDataLabel`, `DefaultDataLabel` (virtual; value via `0.##`), `DataLabelText` (tokenized
+  FormattedText), `ContrastBrush` (luminance-based near-black/white for on-fill text).
+- PieChart: overrides `DefaultDataLabel` → percentage; draws labels at slice centroids (skips slices
+  < 16°), contrast-colored on the slice fill.
+- BarChart: value above positive bars / below negative bars (signed branch too); LineChart: value above
+  each point. Both thin left-to-right (skip when a label would overlap the previous) and clamp x into the
+  chart bounds so edge labels aren't clipped.
+- Gallery: +3 samples (PieChart "Slice percentages", Bar/Line "Data labels"). Docs: charts.md shared
+  table + example, changelog. 1 new test (render-without-throw across all three + signed).
+
+**Verified:** Release build 0/0; full suite **466 passing**. Visually confirmed via the offscreen Skia
+harness: bar values above bars, donut slice % at centroids (white-on-fill), line values above points
+with the first/last no longer clipping after the x-clamp.
+
+**Next:** 3.3 — chart hit-testing + hover tooltips (the snapshot + this label infra feed it).
+
+---
+
 ## 2026-06-14 — 3.2 — Charts enrichment, first slice (snapshot + donut center text + signed values)
 
 First slice of the value/demand-first enrichment roadmap ([satellite-enrichment-roadmap.md](../plans/satellite-enrichment-roadmap.md)).

@@ -194,8 +194,9 @@ dashboard-relevant picker slice (date-range presets + visible Clear) is pulled u
 
 ## Recommended first slice — 3.2 (Charts foundations + quick wins)
 
-> **Status (2026-06-14):** the snapshot + donut center text + signed-value items below are **implemented**
-> on the `work/charts-3.2` branch (full suite 465 green). Remaining 3.2 item: on-chart data labels.
+> **Status (2026-06-14):** all four 3.2 items — snapshot, donut center text, signed values, **and
+> on-chart data labels** — are **implemented and visually verified** on the `work/charts-3.2` branch
+> (full suite 466 green). Milestone 3.2 is feature-complete.
 
 Implement in this order, all additive and breaking nothing:
 

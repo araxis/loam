@@ -179,6 +179,8 @@ public abstract class ChartBase : Control
     private IReadOnlyList<Color>? _colors;
     private IReadOnlyList<string>? _labels;
     private IReadOnlyList<ChartPoint> _points = Array.Empty<ChartPoint>();
+    private bool _showDataLabels;
+    private Func<ChartPoint, string>? _dataLabelFormat;
     private ChartVisuals _visuals = ChartVisuals.Fallback;
 
     /// <summary>The data values.</summary>
@@ -217,6 +219,20 @@ public abstract class ChartBase : Control
             UpdateAutomation();
             InvalidateVisual();
         }
+    }
+
+    /// <summary>When true, draws per-point value annotations on the chart (with responsive thinning to avoid overlap).</summary>
+    public bool ShowDataLabels
+    {
+        get => _showDataLabels;
+        set { _showDataLabels = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Formats each data label from its <see cref="ChartPoint"/>; when null, a per-chart default is used.</summary>
+    public Func<ChartPoint, string>? DataLabelFormat
+    {
+        get => _dataLabelFormat;
+        set { _dataLabelFormat = value; InvalidateVisual(); }
     }
 
     internal ChartVisuals Visuals => _visuals;
@@ -306,6 +322,33 @@ public abstract class ChartBase : Control
             var y = plot.Top + plot.Height * i / lines;
             context.DrawLine(pen, new Point(plot.Left, y), new Point(plot.Right, y));
         }
+    }
+
+    /// <summary>Resolves the display text for a datapoint label using <see cref="DataLabelFormat"/> or the chart default.</summary>
+    protected string ResolveDataLabel(ChartPoint point) =>
+        DataLabelFormat?.Invoke(point) ?? DefaultDataLabel(point);
+
+    /// <summary>The default per-point label text when no <see cref="DataLabelFormat"/> is supplied.</summary>
+    protected virtual string DefaultDataLabel(ChartPoint point) =>
+        point.Value.ToString("0.##", CultureInfo.CurrentCulture);
+
+    /// <summary>Builds a tokenized data-label <see cref="FormattedText"/> (uses the chart text brush unless one is supplied).</summary>
+    protected FormattedText DataLabelText(string text, IImmutableBrush? brush = null) =>
+        new(
+            text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface(FontFamily.Default, FontStyle.Normal, FontWeight.Medium),
+            LabelFontSize,
+            brush ?? _visuals.Text);
+
+    /// <summary>Picks a readable on-fill text brush (near-black or white) for a given background fill color.</summary>
+    protected static IImmutableBrush ContrastBrush(Color background)
+    {
+        var luminance = (0.299 * background.R + 0.587 * background.G + 0.114 * background.B) / 255.0;
+        return luminance > 0.6
+            ? new ImmutableSolidColorBrush(Color.FromRgb(0x1C, 0x1B, 0x1F))
+            : new ImmutableSolidColorBrush(global::Avalonia.Media.Colors.White);
     }
 
     private void SubscribeVisualTokens()
@@ -567,6 +610,34 @@ public sealed class PieChart : ChartBase
             context.DrawEllipse(Visuals.Surface, null, center, holeRadius, holeRadius);
             DrawCenterText(context, center, holeRadius);
         }
+
+        if (ShowDataLabels)
+        {
+            DrawSliceLabels(context, center, radius, sweeps);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override string DefaultDataLabel(ChartPoint point) =>
+        point.Percent.ToString("P0", CultureInfo.CurrentCulture);
+
+    private void DrawSliceLabels(DrawingContext context, Point center, double radius, IReadOnlyList<double> sweeps)
+    {
+        var labelRadius = Donut ? radius * (1 + HoleRatio) / 2 : radius * 0.62;
+        var angle = -90d;
+        for (var i = 0; i < sweeps.Count; i++)
+        {
+            var sweep = sweeps[i];
+            if (sweep >= 16 && i < ResolvedPoints.Count)
+            {
+                var pos = PointOnCircle(center, labelRadius, angle + sweep / 2);
+                var point = ResolvedPoints[i];
+                var text = DataLabelText(ResolveDataLabel(point), ContrastBrush(point.Color));
+                context.DrawText(text, new Point(pos.X - text.Width / 2, pos.Y - text.Height / 2));
+            }
+
+            angle += sweep;
+        }
     }
 
     private void DrawCenterText(DrawingContext context, Point center, double holeRadius)
@@ -707,6 +778,26 @@ public sealed class BarChart : ChartBase
                 context.DrawRectangle(SeriesBrush(i), null, new Rect(x, plot.Top + y, barWidth, height), 4, 4);
             }
 
+            if (ShowDataLabels)
+            {
+                var lastRight = double.NegativeInfinity;
+                for (var i = 0; i < Values.Count && i < ResolvedPoints.Count; i++)
+                {
+                    var text = DataLabelText(ResolveDataLabel(ResolvedPoints[i]));
+                    var lx = Math.Clamp(plot.Left + i * slot + slot / 2 - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
+                    if (lx < lastRight + 4)
+                    {
+                        continue;
+                    }
+
+                    var (y, height) = layout[i];
+                    var ly = Values[i] >= 0 ? plot.Top + y - text.Height - 2 : plot.Top + y + height + 2;
+                    ly = Math.Clamp(ly, plot.Top, plot.Bottom - text.Height);
+                    context.DrawText(text, new Point(lx, ly));
+                    lastRight = lx + text.Width;
+                }
+            }
+
             return;
         }
 
@@ -716,6 +807,24 @@ public sealed class BarChart : ChartBase
             var x = plot.Left + i * slot + (slot - barWidth) / 2;
             var rect = new Rect(x, plot.Bottom - heights[i], barWidth, heights[i]);
             context.DrawRectangle(SeriesBrush(i), null, rect, 4, 4);
+        }
+
+        if (ShowDataLabels)
+        {
+            var lastRight = double.NegativeInfinity;
+            for (var i = 0; i < Values.Count && i < ResolvedPoints.Count; i++)
+            {
+                var text = DataLabelText(ResolveDataLabel(ResolvedPoints[i]));
+                var lx = Math.Clamp(plot.Left + i * slot + slot / 2 - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
+                if (lx < lastRight + 4)
+                {
+                    continue;
+                }
+
+                var ly = Math.Max(plot.Top, plot.Bottom - heights[i] - text.Height - 2);
+                context.DrawText(text, new Point(lx, ly));
+                lastRight = lx + text.Width;
+            }
         }
     }
 }
@@ -821,6 +930,29 @@ public sealed class LineChart : ChartBase
         foreach (var p in points)
         {
             context.DrawEllipse(color, null, p, 3, 3);
+        }
+
+        if (ShowDataLabels)
+        {
+            var lastRight = double.NegativeInfinity;
+            for (var i = 0; i < points.Count && i < ResolvedPoints.Count; i++)
+            {
+                var text = DataLabelText(ResolveDataLabel(ResolvedPoints[i]));
+                var lx = Math.Clamp(points[i].X - text.Width / 2, 0, Math.Max(0, Bounds.Width - text.Width));
+                if (lx < lastRight + 4)
+                {
+                    continue;
+                }
+
+                var ly = points[i].Y - text.Height - 6;
+                if (ly < 0)
+                {
+                    ly = points[i].Y + 6;
+                }
+
+                context.DrawText(text, new Point(lx, ly));
+                lastRight = lx + text.Width;
+            }
         }
     }
 }

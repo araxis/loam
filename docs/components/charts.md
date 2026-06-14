@@ -20,8 +20,18 @@ All chart controls share two members on their `ChartBase`:
 |---|---|---|---|
 | `Labels` | `IReadOnlyList<string>?` | `null` | Optional per-point labels aligned by index to `Values`. When set, they enrich the chart's accessibility help text (e.g. `"3 values: Web, Direct, Mobile"`). |
 | `ResolvedPoints` | `IReadOnlyList<ChartPoint>` | — | The current per-point snapshot, rebuilt whenever `Values`, `Colors`, or `Labels` change. |
+| `ShowDataLabels` | `bool` | `false` | When `true`, draws per-point value annotations on the chart, with responsive thinning that drops colliding labels rather than overlapping them. |
+| `DataLabelFormat` | `Func<ChartPoint, string>?` | `null` | Formats each data label from its `ChartPoint`. When `null`, a per-chart default is used (value for bars/lines, percentage for pie slices). |
 
-`ChartPoint` is a `readonly record struct (int Index, double Value, double Percent, string? Label, Color Color)`, where `Percent` is the value's share of the positive total (0 for non-positive values). It is the single projection shared by rendering, accessibility, and (in later releases) tooltips and legends, so visible and spoken output never drift.
+`ChartPoint` is a `readonly record struct (int Index, double Value, double Percent, string? Label, Color Color)`, where `Percent` is the value's share of the positive total (0 for non-positive values). It is the single projection shared by rendering, accessibility, data labels, and (in later releases) tooltips and legends, so visible and spoken output never drift.
+
+```csharp
+// Bars/lines label with the value; pie slices label with the percentage by default.
+new BarChart { Values = new[] { 12d, 19d, 8d }, ShowDataLabels = true };
+
+// Override the format from the ChartPoint.
+new PieChart { Donut = true, Values = data, ShowDataLabels = true, DataLabelFormat = p => $"{p.Percent:P0}" };
+```
 
 ---
 

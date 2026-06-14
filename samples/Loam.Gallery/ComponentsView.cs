@@ -985,15 +985,18 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Charts", "PieChart", "Pie and donut chart rendering.",
             Sample("Themed pie", BuildPieChartThemedPie),
             Sample("Explicit donut", BuildPieChartExplicitDonut),
-            Sample("Donut with center total", BuildPieChartCenterTotal)),
+            Sample("Donut with center total", BuildPieChartCenterTotal),
+            Sample("Slice percentages", BuildPieChartDataLabels)),
         PageWithSamples("Charts", "BarChart", "Bar chart rendering from numeric values.",
             Sample("Themed bars", BuildBarChartThemedBars),
             Sample("Signed values", BuildBarChartSigned),
+            Sample("Data labels", BuildBarChartDataLabels),
             Sample("No data", BuildBarChartNoData)),
         PageWithSamples("Charts", "LineChart", "Line and area chart rendering.",
             Sample("Line", BuildLineChartLine),
             Sample("Area", BuildLineChartArea),
-            Sample("Signed values", BuildLineChartSigned)),
+            Sample("Signed values", BuildLineChartSigned),
+            Sample("Data labels", BuildLineChartDataLabels)),
     ];
 
     private NavMenu BuildSideMenu()
@@ -8294,6 +8297,70 @@ public sealed class ComponentsView : UserControl
                         Area = true,
                         Values = variance,
                     },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildPieChartDataLabels()
+    {
+        var split = new[] { 45d, 30d, 25d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "ShowDataLabels writes each slice's share at its centroid.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new PieChart { Width = 200, Height = 200, Donut = true, Values = split, ShowDataLabels = true },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBarChartDataLabels()
+    {
+        var revenue = new[] { 12d, 19d, 8d, 22d, 17d };
+        var labels = new[] { "Q1", "Q2", "Q3", "Q4", "Q5" };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Values are drawn above each bar; colliding labels are thinned out.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BarChart { Width = 320, Height = 180, Values = revenue, Labels = labels, ShowDataLabels = true },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildLineChartDataLabels()
+    {
+        var revenue = new[] { 12d, 19d, 8d, 22d, 17d, 25d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Point values are drawn above the line, with overlap thinning.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new LineChart { Width = 320, Height = 180, Values = revenue, ShowDataLabels = true },
                 },
             },
         };
