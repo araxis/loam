@@ -55,17 +55,39 @@ var current = field.Text;          // get
 
 ## Name clashes with Avalonia
 
-A few Loam types share a name with `Avalonia.Controls` (`Button`, `Grid`, `CheckBox`, `Slider`,
+A few Loam types share a name with `Avalonia.Controls` (`Button`, `CheckBox`, `Slider`,
 `TabItem`, `Menu`, `TreeView`, `TreeViewItem`, `Carousel`, `DatePicker`, `TimePicker`). When a file
 imports **both** `Avalonia.Controls` and `Loam.Controls`, qualify the Loam one:
 
 ```csharp
 var button = new Loam.Controls.Button { Content = "Go" };
-var grid   = new Loam.Controls.Grid();        // Loam's responsive 12-column grid
 ```
+
+> The responsive grid was renamed `Grid` → `ResponsiveGrid` (and `Item` → `Col`) in v3 precisely to
+> remove this clash, so it needs no qualification. See the [migration guide](../migration/v2-to-v3).
 
 Inside the Loam library itself the local type always wins, so this only matters in your app code that
 imports both namespaces.
+
+### Avoid per-file aliases with one global-usings file
+
+Rather than adding `using LoamButton = …` to every file, drop a single **`GlobalUsings.cs`** in your
+project. A `global using` **alias** makes the bare name resolve to the Loam type across the whole
+project, with no per-file aliasing and no ambiguity:
+
+```csharp
+// GlobalUsings.cs — alias only the restyled types you actually use.
+global using Button = Loam.Controls.Button;
+global using Text = Loam.Controls.Text;
+global using Card = Loam.Controls.Card;
+global using Menu = Loam.Controls.Menu;
+global using CheckBox = Loam.Controls.CheckBox;
+global using Slider = Loam.Controls.Slider;
+```
+
+Now `new Button { … }` means Loam's button everywhere. The trade-off: in the rare file that needs the
+Avalonia control, qualify it (`new Avalonia.Controls.Button()`). Alias only what you use both ways —
+net-new Loam concepts (e.g. `ResponsiveGrid`, `Col`, `Paper`, `Chip`) never clash and need nothing.
 
 ## Binding to theme tokens
 

@@ -112,6 +112,31 @@ public sealed class LoamTheme : Styles
             PaletteDark = _data.PaletteDark with { Primary = color.Lighten(0.35), PrimaryContrastText = color.Darken(0.65).ContrastText() },
         });
 
+    /// <summary>
+    /// Regenerates both palettes from a single seed color at runtime (Material You), keeping the
+    /// current typography/shape/spacing/etc. The headline customizable entry point: one seed produces
+    /// a complete, accessible light + dark scheme. See ADR-0012.
+    /// </summary>
+    public void SetSeed(Color seed, LoamContrast contrast = LoamContrast.Standard)
+    {
+        var light = LoamColorScheme.FromSeed(seed, dark: false, contrast);
+        var dark = LoamColorScheme.FromSeed(seed, dark: true, contrast);
+        SetData(_data with
+        {
+            ColorSchemeLight = light,
+            ColorSchemeDark = dark,
+            PaletteLight = light.ToPalette(),
+            PaletteDark = dark.ToPalette(),
+        });
+    }
+
+    /// <summary>
+    /// Switches component density at runtime (e.g. <see cref="LoamDensity.Compact"/> for an
+    /// information-dense "compact app", or <see cref="LoamDensity.Default"/> for comfortable),
+    /// keeping colors/typography/etc. One-call compact mode.
+    /// </summary>
+    public void SetDensity(LoamDensity density) => SetData(_data with { Density = density });
+
     private void BuildTokens()
     {
         // Color roles → per-variant dictionaries. Assigning fresh dictionaries guarantees a resource
@@ -180,6 +205,8 @@ public sealed class LoamTheme : Styles
             dict[$"Loam.Palette.{name}.Selected"] = new ImmutableSolidColorBrush(baseColor.WithAlpha(stateLayer.SelectedOpacity));
             dict[$"Loam.Palette.{name}.Darken"] = new ImmutableSolidColorBrush(baseColor.Darken(0.075));
         }
+
+        FluentBridge.Apply(dict, scheme, stateLayer);
 
         return dict;
     }

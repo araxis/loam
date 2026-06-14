@@ -8,6 +8,11 @@ Controls for presenting structured information: lists, tables, grids, trees, tab
 
 > **Name collision note.** `TreeView`, `TreeViewItem`, and `Carousel` exist in both Loam and `Avalonia.Controls`. Qualify Loam types explicitly — `Loam.Controls.TreeView`, `Loam.Controls.TreeViewItem`, `Loam.Controls.Carousel` — when both namespaces are in scope.
 
+> **Choosing a table.** Reach for **`DataGrid<T>`** by default — it's the recommended table for any
+> data-shaped content (sorting, paging, filtering, selection, editing). Use **`SimpleTable`** only for a
+> handful of static, non-interactive rows you'd otherwise hand-build with a `Grid`. See
+> [ADR-0013](https://github.com/araxis/loam/blob/main/memory/decisions/0013-table-strategy.md).
+
 ---
 
 ## List / ListItem / ListSubheader
@@ -107,6 +112,13 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Hover` | `bool` | `true` | Row hover highlight. Mirrors the reference API's `Hover`. |
 | `Dense` | `bool` | `false` | Compact cell padding. Mirrors the reference API's `Dense`. |
 | `Elevation` | `int` | `1` | Host paper elevation. Mirrors the reference API's `Elevation`. |
+| `GroupBy` | `Func<T, object?>?` | `null` | Groups rows by key with a group-header row (key + count) above each group, in first-appearance order (follows the current sort). Applies within the rendered page. |
+| `CollapsibleGroups` | `bool` | `true` | When grouped, lets the user click (or keyboard-activate) a group header to collapse/expand its rows. Collapsed state is keyed by group key and survives re-renders. |
+| `GroupAggregate` | `Func<IReadOnlyList<T>, string>?` | `null` | Optional text appended to each group header, computed from the group's items (e.g. a sum or average). |
+| `EmptyText` | `string` | `"No data"` | Text shown below the header when there are no rows to display after filtering. |
+| `EmptyContent` | `Control?` | `null` | Custom empty-state content; overrides `EmptyText` when set. |
+| `FrozenColumns` | `int` | `0` | Number of leading columns to pin while the rest scroll horizontally. Ignored while grouped, or if not less than the column count. Frozen layouts size every column by pixel width. |
+| `RowHeight` | `double` | `0` | Fixed body-row height in px (`0` = auto). Guarantees row alignment across the frozen/scrollable panes for custom-height cells. |
 | `SelectionChanged` | `event Action<T?>?` | — | Raised when a row is clicked and `SelectedItem` changes. |
 
 ### DataGridColumn&lt;T&gt; properties
@@ -118,6 +130,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Format` | `string?` | `null` | Optional .NET format string applied to the cell value (e.g. `"N2"`). |
 | `Sortable` | `bool` | `true` | Whether clicking the header sorts by this column. |
 | `Align` | `HorizontalAlignment` | `Left` | Cell content alignment. |
+| `Width` | `double?` | `null` | Fixed pixel width; `null` sizes with star (shares remaining space). In a frozen-column layout, columns without a width get a default pixel width. |
 | `CellTemplate` | `Func<T, Control>?` | `null` | Custom cell content. |
 | `Editable` | `bool` | `false` | Renders a text editor for this column when `SetText` is provided. |
 | `SetText` | `Action<T, string?>?` | `null` | Applies edited text back to the row. |
@@ -129,6 +142,7 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Sort<T>` | `(IReadOnlyList<T> items, DataGridColumn<T>? column, bool descending) → IReadOnlyList<T>` | Sorts `items` by `column.Value`; returns original order when `column` is `null`. |
 | `PageCount` | `(int count, int pageSize) → int` | Total page count for `count` rows at `pageSize` (`0` = 1 page). |
 | `Filter<T>` | `(IReadOnlyList<T> items, string? text, Func<T, string, bool> predicate) → IReadOnlyList<T>` | Returns matching rows when `text` has content; otherwise returns the original rows. |
+| `Group<T>` | `(IReadOnlyList<T> items, Func<T, object?> selector) → IReadOnlyList<DataGridGroup<T>>` | Groups rows by key in first-appearance order; a `null` key forms its own group. |
 
 ```csharp
 class Employee

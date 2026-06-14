@@ -52,7 +52,7 @@ public sealed class CodeSampleView : UserControl
         "Alert", "AppBar", "Autocomplete", "Avatar", "AvatarGroup", "Badge", "BarChart", "Border", "BreadcrumbItem", "Breadcrumbs", "ButtonGroup", "Card",
         "CardContent", "CardHeader", "CarouselItem", "Chip", "ChipSet", "Collapse",
         "CheckBox", "Container", "DataGrid", "DatePicker", "DateRangePicker", "DateTime", "DialogService", "DockPanel", "Drawer", "DrawerMode", "ExpansionPanel", "ExpansionPanels", "Fab",
-        "Field", "FieldEditor", "FileUpload", "Form", "Grid", "Hidden", "IconButton", "Item", "Layout", "LineChart",
+        "Col", "Field", "FieldEditor", "FileUpload", "Form", "Grid", "Hidden", "IconButton", "Item", "Layout", "LineChart", "ResponsiveGrid",
         "Link", "ListItem", "ListSubheader", "LoamButton", "LoamColor", "LoamSize", "MainContent", "MaskedTextField", "Menu", "MenuItem", "MonthCalendar", "NavGroup",
         "NavLink", "NavMenu", "NumericField", "Pagination", "Paper", "PieChart", "Popover", "ProgressCircular",
         "ProgressLinear", "Radio", "Rating", "Ripple", "Select", "SelectItem", "Skeleton", "Slider", "StackPanel",

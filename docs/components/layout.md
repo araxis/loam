@@ -4,15 +4,20 @@ title: Surfaces & layout
 
 # Surfaces & layout
 
-This page documents Loam's surface and layout controls. Surface controls (`Paper`, `Card` family) host content on token-driven backgrounds. Layout controls (`Container`, `Grid`, `Stack`, `Spacer`, `Hidden`, `ScrollToTop`) handle spacing, responsive columns, and visibility. Shell controls (`Layout`, `AppBar`, `Drawer`, `MainContent`) compose the application frame.
+This page documents Loam's surface and layout controls. Surface controls (`Paper`, `Card` family) host content on token-driven backgrounds. Layout controls (`Container`, `ResponsiveGrid`, `Stack`, `Spacer`, `Hidden`, `ScrollToTop`) handle spacing, responsive columns, and visibility. Shell controls (`Layout`, `AppBar`, `Drawer`, `MainContent`) compose the application frame.
 
-All controls live in `Loam.Controls`. Enums such as `Breakpoint`, `LoamColor`, and `HiddenMode` live in the `Loam` namespace. Because `Loam.Controls.Grid` shares a name with `Avalonia.Controls.Grid`, always qualify it with its full name in files that also reference Avalonia layout.
+All controls live in `Loam.Controls`. Enums such as `Breakpoint`, `LoamColor`, and `HiddenMode` live in the `Loam` namespace. The responsive grid is named `ResponsiveGrid` (renamed from `Grid` in v3) so it no longer collides with `Avalonia.Controls.Grid` — no alias needed. The old `Grid`/`Item` names remain as deprecated aliases; see the [v2 → v3 migration guide](../migration/v2-to-v3).
 
 ---
 
 ## Paper
 
 Equivalent of the reference API's `Paper`. A `ContentControl` that renders on a token-driven surface background with an elevation shadow. Optionally removes corner rounding (`Square`) or replaces the shadow with a 1 px outline (`Outlined`).
+
+> **Generated anatomy vs custom content.** `Paper` (and `Card`, `Drawer`) can either build a generated
+> layout from typed properties (`Title`, `Subtitle`, `Body`, …) **or** host your own `Content`. The
+> precedence is explicit: **custom `Content` always wins.** If you set both on one instance the
+> generated properties are ignored, and a Debug build logs a warning. Pick one mode per instance.
 
 ### Properties
 
@@ -153,11 +158,11 @@ var container = new Container
 
 ---
 
-## Grid
+## ResponsiveGrid
 
-Equivalent of the reference API's `Grid`. A `Panel` that arranges `Item` children (or arbitrary controls, treated as full-width) in a responsive 12-column grid. Column spans are resolved from the grid's own available width (container-query style), not the window width.
+A `Panel` that arranges `Col` children (or arbitrary controls, treated as full-width) in a responsive 12-column grid. Column spans are resolved from the grid's own available width (container-query style), not the window width.
 
-> **Note:** Qualify as `Loam.Controls.Grid` when the file also uses `Avalonia.Controls.Grid`.
+> **Renamed in v3.** This control was called `Grid` in v2. It now has a distinct name so it no longer shadows `Avalonia.Controls.Grid` — use Avalonia's `Grid` for fixed 2D placement and `ResponsiveGrid` for breakpoint reflow. The old `Grid` name remains as a deprecated alias (diagnostic `LOAM0001`); see the [migration guide](../migration/v2-to-v3).
 
 ### Properties
 
@@ -165,9 +170,9 @@ Equivalent of the reference API's `Grid`. A `Panel` that arranges `Item` childre
 |---|---|---|---|
 | `Spacing` | `double` | `8` | Gutter in pixels between columns and rows. |
 
-### Item
+### Col
 
-Equivalent of the reference API's `Item`. A `Decorator` child of `Grid` that declares how many of the 12 columns it occupies at each breakpoint. Span resolution cascades down to the nearest smaller breakpoint that has a value set; defaults to `12` (full row) when nothing is set.
+A `Decorator` child of `ResponsiveGrid` that declares how many of the 12 columns it occupies at each breakpoint. Span resolution cascades down to the nearest smaller breakpoint that has a value set; defaults to `12` (full row) when nothing is set. (Renamed from `Item` in v3; the old name remains as a deprecated alias, diagnostic `LOAM0002`.)
 
 | Property | Type | Default | Description |
 |---|---|---|---|
@@ -185,17 +190,16 @@ A value of `0` means "not set" — span cascades to the next smaller breakpoint 
 ```csharp
 using Loam.Controls;
 
-// Qualify to avoid ambiguity with Avalonia.Controls.Grid
-var grid = new Loam.Controls.Grid
+var grid = new ResponsiveGrid
 {
     Spacing = 16,
     Children =
     {
-        new Item { Xs = 12, Md = 6, Child = new TextBlock { Text = "Left half on md+" } },
-        new Item { Xs = 12, Md = 6, Child = new TextBlock { Text = "Right half on md+" } },
-        new Item { Xs = 12, Md = 4, Child = new TextBlock { Text = "Third A" } },
-        new Item { Xs = 12, Md = 4, Child = new TextBlock { Text = "Third B" } },
-        new Item { Xs = 12, Md = 4, Child = new TextBlock { Text = "Third C" } },
+        new Col { Xs = 12, Md = 6, Child = new TextBlock { Text = "Left half on md+" } },
+        new Col { Xs = 12, Md = 6, Child = new TextBlock { Text = "Right half on md+" } },
+        new Col { Xs = 12, Md = 4, Child = new TextBlock { Text = "Third A" } },
+        new Col { Xs = 12, Md = 4, Child = new TextBlock { Text = "Third B" } },
+        new Col { Xs = 12, Md = 4, Child = new TextBlock { Text = "Third C" } },
     },
 };
 ```
@@ -205,6 +209,8 @@ var grid = new Loam.Controls.Grid
 ## Stack
 
 Equivalent of the reference API's `Stack`. Extends `StackPanel` with a `Row` toggle and a sensible default `Spacing` of `8 px`. Vertical by default; set `Row = true` for horizontal layout.
+
+> **Deprecated in v3 (`LOAM0003`).** `Stack` is a thin wrapper over `Avalonia.Controls.StackPanel` and will be removed in a future release. Use `StackPanel` directly: set `Orientation = Orientation.Horizontal` for the old `Row = true`, and set `Spacing` (Loam's `Stack` defaulted it to `8`). See the [migration guide](../migration/v2-to-v3).
 
 ### Properties
 
@@ -335,7 +341,8 @@ using Avalonia.Controls;
 using Loam.Controls;
 
 ScrollViewer scroll;
-var page = new Grid
+// Avalonia's Grid is the right tool for fixed 2D placement (rows/columns).
+var page = new Avalonia.Controls.Grid
 {
     RowDefinitions = new RowDefinitions("*,Auto"),
     Children =
@@ -343,13 +350,13 @@ var page = new Grid
         (scroll = new ScrollViewer
         {
             Content = new ItemsControl { /* long list */ },
-            [Grid.RowProperty] = 0,
+            [Avalonia.Controls.Grid.RowProperty] = 0,
         }),
         new ScrollToTop
         {
             Target = scroll,
             VisibleOffset = 400,
-            [Grid.RowProperty] = 0,         // overlay inside the same cell
+            [Avalonia.Controls.Grid.RowProperty] = 0,         // overlay inside the same cell
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Bottom,
             Margin = new Thickness(0, 0, 16, 16),
@@ -385,6 +392,24 @@ Equivalent of the reference API's `AppBar`. A full-width, elevated, colored tool
 | `Color` | `LoamColor` | `LoamColor.Default` | App-bar background color. `Default` uses the theme's `AppbarBackground` palette token. |
 | `Elevation` | `int` | `4` | Shadow depth. |
 | `Dense` | `bool` | `false` | Reduces the bar height to 48 px. |
+| `Title` / `Subtitle` | `string?` | `null` | Built-in title text shown in the default toolbar. |
+| `NavigationIcon` | `string?` | `null` | Leading icon path data (raises `NavigationClick` / runs `NavigationAction`). |
+| `Actions` | `IList<AppBarAction>` | empty | Trailing **icon-only** actions, each rendered as an `IconButton`. |
+| `CustomActions` | `IList<Control>` | empty | Trailing slot for **arbitrary live controls** (toggles, search fields, stateful actions). Rendered before `Actions`. |
+
+> Use `Actions` for simple icon buttons and `CustomActions` for anything else (a search `TextField`, a
+> `ToggleIconButton` you flip, a menu). For a fully custom bar, set `Content` instead — it replaces the
+> generated toolbar entirely.
+
+```csharp
+var bar = new AppBar
+{
+    Title = "Inbox",
+    NavigationIcon = Icons.Material.Filled.Menu,
+    CustomActions = { searchField, new ToggleIconButton { Icon = Icons.Material.Filled.DarkMode } },
+    Actions = { new AppBarAction { Icon = Icons.Material.Filled.MoreVert, Label = "More" } },
+};
+```
 
 ---
 

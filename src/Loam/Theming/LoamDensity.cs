@@ -77,6 +77,38 @@ public sealed record LoamDensity
     /// <summary>Compact data cell padding.</summary>
     public Thickness DataCellPaddingDense { get; init; } = new(8, 6);
 
-    /// <summary>The Loam defaults.</summary>
+    /// <summary>The Loam defaults (comfortable).</summary>
     public static LoamDensity Default { get; } = new();
+
+    /// <summary>
+    /// Compact density preset — reduced hit targets, button heights/padding, and tabular padding for
+    /// information-dense apps. Apply with <see cref="LoamTheme.SetDensity"/>.
+    /// </summary>
+    public static LoamDensity Compact { get; } = new()
+    {
+        InteractiveExtraSmall = 28,
+        InteractiveSmall = 32,
+        InteractiveMedium = 40,
+        InteractiveLarge = 48,
+        InteractiveExtraLarge = 56,
+        ButtonContainerHeightExtraSmall = 28,
+        ButtonContainerHeightSmall = 32,
+        ButtonContainerHeightMedium = 38,
+        ButtonContainerHeightLarge = 46,
+        ButtonContainerHeightExtraLarge = 54,
+        ButtonPaddingExtraSmall = new Thickness(10, 0),
+        ButtonPaddingSmall = new Thickness(10, 0),
+        ButtonPaddingMedium = new Thickness(12, 0),
+        ButtonPaddingLarge = new Thickness(16, 0),
+        ButtonPaddingExtraLarge = new Thickness(20, 0),
+        IconButtonPaddingExtraSmall = new Thickness(2),
+        IconButtonPaddingSmall = new Thickness(6),
+        IconButtonPaddingMedium = new Thickness(8),
+        IconButtonPaddingLarge = new Thickness(8),
+        IconButtonPaddingExtraLarge = new Thickness(8),
+        DataHeaderPadding = new Thickness(12, 8),
+        DataHeaderPaddingDense = new Thickness(6, 4),
+        DataCellPadding = new Thickness(12, 6),
+        DataCellPaddingDense = new Thickness(6, 4),
+    };
 }

@@ -189,8 +189,24 @@ public class Stepper : TemplatedControl
                 _header.Children.Add(connector);
             }
 
-            var number = new Text { Text = (i + 1).ToString(), Typo = Typo.Caption, Color = LoamColor.Inherit };
-            var check = new Icon { Data = Icons.Material.Filled.Check, Size = LoamSize.Small, Color = LoamColor.Inherit, IsVisible = false };
+            var number = new Text
+            {
+                Text = (i + 1).ToString(),
+                Typo = Typo.Caption,
+                Color = LoamColor.Inherit,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+            };
+            var check = new Icon
+            {
+                Data = Icons.Material.Filled.Check,
+                Size = LoamSize.Small,
+                Color = LoamColor.Inherit,
+                IsVisible = false,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
             var circle = new Border
             {
                 Width = 28,

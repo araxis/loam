@@ -250,4 +250,110 @@ public sealed record LoamColorScheme
         InverseOnSurface = palette.DarkContrastText,
         InversePrimary = palette.Primary.Lighten(0.35),
     };
+
+    /// <summary>
+    /// Builds a complete light or dark scheme from a single seed color (Material You). Derives
+    /// tonal palettes (primary/secondary/tertiary/neutral/neutral-variant/error) from the seed and
+    /// maps each role to the standard Material 3 tone for the variant. See ADR-0012.
+    /// </summary>
+    public static LoamColorScheme FromSeed(Color seed, bool dark) => FromSeed(seed, dark, LoamContrast.Standard);
+
+    /// <summary>
+    /// Builds a light or dark scheme from a seed at the given contrast level. At
+    /// <see cref="LoamContrast.Standard"/> this is the Material 3 tone mapping; higher levels push role
+    /// tones toward the extremes for stronger separation (see ADR-0012).
+    /// </summary>
+    public static LoamColorScheme FromSeed(Color seed, bool dark, LoamContrast contrast)
+    {
+        var (_, chroma, hue) = LoamLab.ToLch(seed);
+
+        var primary = LoamTonalPalette.FromHueChroma(hue, Math.Max(chroma, 48));
+        var secondary = LoamTonalPalette.FromHueChroma(hue, 24);
+        var tertiary = LoamTonalPalette.FromHueChroma(hue + 60, 36);
+        var neutral = LoamTonalPalette.FromHueChroma(hue, 6);
+        var neutralVariant = LoamTonalPalette.FromHueChroma(hue, 12);
+        var error = LoamTonalPalette.FromColor(Color.Parse("#B3261E"));
+
+        // Standard / Medium / High tone for the current contrast level.
+        double Pick(double standard, double medium, double high) => contrast switch
+        {
+            LoamContrast.High => high,
+            LoamContrast.Medium => medium,
+            _ => standard,
+        };
+
+        // Contrast-sensitive tones (the Standard column equals the Material 3 mapping exactly).
+        var accent = dark ? Pick(80, 90, 95) : Pick(40, 30, 25);
+        var onAccent = dark ? Pick(20, 10, 0) : 100;
+        var container = dark ? Pick(30, 25, 20) : Pick(90, 92, 95);
+        var onContainer = dark ? Pick(90, 95, 100) : Pick(10, 5, 0);
+        var surface = dark ? Pick(6, 4, 0) : Pick(98, 99, 100);
+        var onSurface = dark ? Pick(90, 95, 100) : Pick(10, 5, 0);
+        var onSurfaceVariant = dark ? Pick(80, 90, 100) : Pick(30, 20, 10);
+        var outline = dark ? Pick(60, 70, 80) : Pick(50, 40, 30);
+        var outlineVariant = dark ? Pick(30, 40, 50) : Pick(80, 70, 60);
+        var background = dark ? Pick(6, 4, 0) : Pick(98, 99, 100);
+        var onBackground = dark ? Pick(90, 95, 100) : Pick(10, 5, 0);
+
+        return new LoamColorScheme
+        {
+            Primary = primary.Tone(accent),
+            OnPrimary = primary.Tone(onAccent),
+            PrimaryContainer = primary.Tone(container),
+            OnPrimaryContainer = primary.Tone(onContainer),
+
+            Secondary = secondary.Tone(accent),
+            OnSecondary = secondary.Tone(onAccent),
+            SecondaryContainer = secondary.Tone(container),
+            OnSecondaryContainer = secondary.Tone(onContainer),
+
+            Tertiary = tertiary.Tone(accent),
+            OnTertiary = tertiary.Tone(onAccent),
+            TertiaryContainer = tertiary.Tone(container),
+            OnTertiaryContainer = tertiary.Tone(onContainer),
+
+            Error = error.Tone(accent),
+            OnError = error.Tone(onAccent),
+            ErrorContainer = error.Tone(container),
+            OnErrorContainer = error.Tone(onContainer),
+
+            Background = neutral.Tone(background),
+            OnBackground = neutral.Tone(onBackground),
+            Surface = neutral.Tone(surface),
+            OnSurface = neutral.Tone(onSurface),
+            SurfaceDim = neutral.Tone(dark ? 6 : 87),
+            SurfaceBright = neutral.Tone(dark ? 24 : 98),
+            SurfaceContainerLowest = neutral.Tone(dark ? 4 : 100),
+            SurfaceContainerLow = neutral.Tone(dark ? 10 : 96),
+            SurfaceContainer = neutral.Tone(dark ? 12 : 94),
+            SurfaceContainerHigh = neutral.Tone(dark ? 17 : 92),
+            SurfaceContainerHighest = neutral.Tone(dark ? 22 : 90),
+            SurfaceVariant = neutralVariant.Tone(dark ? 30 : 90),
+            OnSurfaceVariant = neutralVariant.Tone(onSurfaceVariant),
+
+            Outline = neutralVariant.Tone(outline),
+            OutlineVariant = neutralVariant.Tone(outlineVariant),
+            Shadow = neutral.Tone(0),
+            Scrim = neutral.Tone(0),
+
+            InverseSurface = neutral.Tone(dark ? 90 : 20),
+            InverseOnSurface = neutral.Tone(dark ? 20 : 95),
+            InversePrimary = primary.Tone(dark ? 40 : 80),
+
+            PrimaryFixed = primary.Tone(90),
+            PrimaryFixedDim = primary.Tone(80),
+            OnPrimaryFixed = primary.Tone(10),
+            OnPrimaryFixedVariant = primary.Tone(30),
+
+            SecondaryFixed = secondary.Tone(90),
+            SecondaryFixedDim = secondary.Tone(80),
+            OnSecondaryFixed = secondary.Tone(10),
+            OnSecondaryFixedVariant = secondary.Tone(30),
+
+            TertiaryFixed = tertiary.Tone(90),
+            TertiaryFixedDim = tertiary.Tone(80),
+            OnTertiaryFixed = tertiary.Tone(10),
+            OnTertiaryFixedVariant = tertiary.Tone(30),
+        };
+    }
 }

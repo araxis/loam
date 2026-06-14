@@ -76,6 +76,185 @@ public class DataDisplayTests
         texts.ShouldContain("30");
     }
 
+    [Fact]
+    public void DataGrids_group_preserves_first_appearance_order()
+    {
+        var people = new List<Person> { new("Bob", 30), new("Ann", 30), new("Cy", 40), new("Dee", 30) };
+
+        var groups = DataGrids.Group(people, p => (object?)p.Age);
+
+        groups.Select(g => (int)g.Key!).ShouldBe([30, 40]);
+        groups[0].Items.Select(p => p.Name).ShouldBe(["Bob", "Ann", "Dee"]);
+        groups[1].Items.Single().Name.ShouldBe("Cy");
+    }
+
+    [Fact]
+    public void DataGrids_group_handles_null_keys()
+    {
+        var values = new[] { "apple", "", "banana", "" };
+
+        var groups = DataGrids.Group(values, s => s.Length == 0 ? null : (object?)s[0]);
+
+        groups.Select(g => g.Key?.ToString()).ShouldBe(["a", null, "b"]);
+        groups.Single(g => g.Key is null).Items.Count.ShouldBe(2);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_renders_group_headers_when_grouped()
+    {
+        var grid = new DataGrid<Person> { GroupBy = p => p.Age < 35 ? "Junior" : "Senior" };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        grid.Items = new List<Person> { new("Ann", 30), new("Bob", 40), new("Cy", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("Junior (2)");
+        texts.ShouldContain("Senior (1)");
+        texts.ShouldContain("Ann");
+        texts.ShouldContain("Bob");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_group_header_collapses_and_expands_rows()
+    {
+        var grid = new DataGrid<Person> { GroupBy = p => p.Age < 35 ? "Junior" : "Senior" };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Ann", 30), new("Cy", 25), new("Bob", 40) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Ann").ShouldBeTrue();
+
+        Border JuniorHeader() => grid.GetVisualDescendants().OfType<Border>()
+            .First(b => AutomationProperties.GetName(b)?.Contains("group Junior", StringComparison.Ordinal) == true);
+
+        JuniorHeader().RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        // Junior rows hidden; the header (with full count) and the Senior group stay.
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Ann").ShouldBeFalse();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Cy").ShouldBeFalse();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Junior (2)").ShouldBeTrue();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Bob").ShouldBeTrue();
+
+        JuniorHeader().RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Ann").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_shows_empty_state_when_no_rows()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person>();
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "No data").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_empty_state_uses_custom_text_when_filter_excludes_all()
+    {
+        var grid = new DataGrid<Person>
+        {
+            EmptyText = "No matches",
+            FilterText = "zzz",
+            Filter = (person, text) => person.Name.Contains(text, StringComparison.OrdinalIgnoreCase),
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Alice", 25) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("No matches");
+        texts.ShouldNotContain("Alice");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_frozen_columns_render_two_panes()
+    {
+        var grid = new DataGrid<Person> { FrozenColumns = 1 };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name) { Width = 120 });
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age) { Width = 200 });
+        grid.Items = new List<Person> { new("Alice", 25), new("Bob", 30) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        // A horizontal scroller wraps the scrollable (non-frozen) pane.
+        grid.GetVisualDescendants().OfType<ScrollViewer>().Any().ShouldBeTrue();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("Name");
+        texts.ShouldContain("Age");
+        texts.ShouldContain("Alice");
+        texts.ShouldContain("30");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_frozen_row_activation_selects_the_item()
+    {
+        Person? selected = null;
+        var grid = new DataGrid<Person> { FrozenColumns = 1 };
+        grid.SelectionChanged += p => selected = p;
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name) { Width = 120 });
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age) { Width = 200 });
+        grid.Items = new List<Person> { new("Alice", 25), new("Bob", 30) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var rowBackground = grid.GetVisualDescendants().OfType<Border>()
+            .First(b => AutomationProperties.GetName(b) == "Row 2: Bob");
+        rowBackground.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        selected.ShouldNotBeNull();
+        selected!.Name.ShouldBe("Bob");
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_ignores_frozen_columns_while_grouped()
+    {
+        var grid = new DataGrid<Person>
+        {
+            FrozenColumns = 1,
+            GroupBy = p => p.Age < 35 ? "Junior" : "Senior",
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name) { Width = 120 });
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age) { Width = 120 });
+        grid.Items = new List<Person> { new("Ann", 30), new("Bob", 40) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        // Grouped path falls back to the single grid (no horizontal scroller).
+        grid.GetVisualDescendants().OfType<ScrollViewer>().Any().ShouldBeFalse();
+        grid.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Junior (1)").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_group_aggregate_appears_in_header()
+    {
+        var grid = new DataGrid<Person>
+        {
+            GroupBy = p => p.Age < 35 ? "Junior" : "Senior",
+            GroupAggregate = items => $"avg {items.Average(p => p.Age):F0}",
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Ann", 30), new("Cy", 20), new("Bob", 40) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = grid.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+        texts.ShouldContain("Junior (2)");
+        texts.ShouldContain("avg 25");
+        texts.ShouldContain("avg 40");
+    }
+
     [AvaloniaFact]
     public void DataGrid_filter_text_limits_rendered_rows()
     {
@@ -452,6 +631,28 @@ public class DataDisplayTests
         stepper.Next();
         done.ShouldBeTrue();
         stepper.Steps[0].Completed.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Stepper_indicator_number_is_centered_in_circle()
+    {
+        var stepper = new Stepper();
+        stepper.Steps.Add(new Step("One", new TextBlock()));
+        stepper.Steps.Add(new Step("Two", new TextBlock()));
+        Show(stepper);
+        stepper.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var circle = stepper.GetVisualDescendants().OfType<Border>()
+            .First(border => border.Width == 28 && border.Height == 28);
+        var number = circle.GetVisualDescendants().OfType<Text>().First(text => text.IsVisible);
+        number.Bounds.Width.ShouldBeGreaterThan(0);
+
+        // The number's box must sit centered in the 28x28 circle (it was top-left before the fix).
+        var centerX = number.Bounds.X + (number.Bounds.Width / 2);
+        var centerY = number.Bounds.Y + (number.Bounds.Height / 2);
+        centerX.ShouldBeInRange(11, 17);
+        centerY.ShouldBeInRange(11, 17);
     }
 
     [AvaloniaFact]

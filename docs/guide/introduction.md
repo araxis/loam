@@ -29,16 +29,19 @@ similar knobs.
 
 ## Status
 
-Loam is in its **v2.0 rebaseline**: every component in the current catalog is built, themed,
-registered, tested, and demonstrated in the gallery. Remaining future enhancements, such as deeper
-DataGrid grouping/editing, picker clock-face/HSV editing, and stacked/time-series charts, are tracked
-separately from the release baseline.
+Loam is shipping **v3 ("vNext") as previews**: end-to-end theme consistency, Material You scheme
+generation, naming/ergonomics fixes, new shell controls (`NavigationRail`, `BottomNavigation`,
+`CommandPalette`), and a matured `DataGrid<T>` (grouping, frozen columns, aggregates) have all landed.
+The released baseline is **v2.0**. See the **[changelog](./changelog)** for what each phase delivered and
+the **[migration guide](/migration/v2-to-v3)** for breaking changes.
 
 The library targets **Avalonia 12** on **.NET 8**, with **xUnit + Avalonia.Headless** behavior tests.
 
 ## How the docs are organized
 
+- **[Why Loam vs plain Avalonia](./why-loam)** — when to reach for Loam, and when not to.
 - **[Getting Started](./getting-started)** — install, register the theme, build your first screen.
 - **[Theming](./theming)** — palettes, light/dark, runtime recoloring.
 - **[Authoring UI in C#](./csharp-ui)** — the code-only patterns Loam uses and that you'll use too.
 - **[Components](/components/overview)** — every control, grouped, with properties and C# examples.
+- **[Changelog](./changelog)** — notable changes per release.

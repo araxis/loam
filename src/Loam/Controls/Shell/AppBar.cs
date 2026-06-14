@@ -53,10 +53,21 @@ public class AppBar : ContentControl
     private IDisposable? _foregroundBinding;
     private IDisposable? _shadowBinding;
 
+    // Stable trailing action strip, cleared and repopulated on each rebuild so the live controls in
+    // CustomActions can be re-hosted without reparenting errors (mirrors MainContent's header row).
+    private readonly StackPanel _actionStrip = new()
+    {
+        Orientation = Orientation.Horizontal,
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Center,
+        Spacing = 4,
+    };
+
     /// <summary>Creates the app bar.</summary>
     public AppBar()
     {
         Actions.CollectionChanged += (_, _) => UpdateContent();
+        CustomActions.CollectionChanged += (_, _) => UpdateContent();
         InteractionAssist.SetAutomationName(this, "App bar");
     }
 
@@ -125,6 +136,13 @@ public class AppBar : ContentControl
 
     /// <summary>Built-in trailing icon actions.</summary>
     public AvaloniaList<AppBarAction> Actions { get; } = [];
+
+    /// <summary>
+    /// Trailing slot for arbitrary controls (toggles, search fields, stateful actions). Rendered in
+    /// the action area before the icon-only <see cref="Actions"/>. Unlike the immutable
+    /// <see cref="AppBarAction"/>, these are live controls you keep a reference to and mutate directly.
+    /// </summary>
+    public AvaloniaList<Control> CustomActions { get; } = [];
 
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(AppBar);
@@ -253,21 +271,23 @@ public class AppBar : ContentControl
         global::Avalonia.Controls.Grid.SetColumn(titleContent, 1);
         toolbar.Children.Add(titleContent);
 
-        if (Actions.Count > 0)
+        // Detach + clear the stable strip so live CustomActions controls can be re-hosted safely.
+        (_actionStrip.Parent as Panel)?.Children.Remove(_actionStrip);
+        _actionStrip.Children.Clear();
+        if (CustomActions.Count > 0 || Actions.Count > 0)
         {
-            var actionStrip = new StackPanel
+            foreach (var custom in CustomActions)
             {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            foreach (var action in Actions)
-            {
-                actionStrip.Children.Add(CreateActionButton(action));
+                _actionStrip.Children.Add(custom);
             }
 
-            global::Avalonia.Controls.Grid.SetColumn(actionStrip, 2);
-            toolbar.Children.Add(actionStrip);
+            foreach (var action in Actions)
+            {
+                _actionStrip.Children.Add(CreateActionButton(action));
+            }
+
+            global::Avalonia.Controls.Grid.SetColumn(_actionStrip, 2);
+            toolbar.Children.Add(_actionStrip);
         }
 
         return toolbar;

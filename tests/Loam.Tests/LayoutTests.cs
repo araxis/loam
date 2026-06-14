@@ -22,9 +22,9 @@ public class LayoutTests
     [AvaloniaFact]
     public void Grid_places_two_half_items_on_one_row_at_md()
     {
-        var a = new Item { Md = 6, Child = new Border { Height = 20 } };
-        var b = new Item { Md = 6, Child = new Border { Height = 20 } };
-        var grid = new Loam.Controls.Grid { Width = 1000, Children = { a, b } };
+        var a = new Col { Md = 6, Child = new Border { Height = 20 } };
+        var b = new Col { Md = 6, Child = new Border { Height = 20 } };
+        var grid = new ResponsiveGrid { Width = 1000, Children = { a, b } };
         Show(grid);
 
         // colUnit = 1000/12; itemWidth = 6*colUnit - 8 = 492; b.X = 6*colUnit = 500.
@@ -38,9 +38,9 @@ public class LayoutTests
     [AvaloniaFact]
     public void Grid_stacks_items_full_width_at_xs()
     {
-        var a = new Item { Xs = 12, Md = 6, Child = new Border { Height = 20 } };
-        var b = new Item { Xs = 12, Md = 6, Child = new Border { Height = 20 } };
-        var grid = new Loam.Controls.Grid { Width = 400, Children = { a, b } };
+        var a = new Col { Xs = 12, Md = 6, Child = new Border { Height = 20 } };
+        var b = new Col { Xs = 12, Md = 6, Child = new Border { Height = 20 } };
+        var grid = new ResponsiveGrid { Width = 400, Children = { a, b } };
         Show(grid);
 
         a.Bounds.Width.ShouldBe(392d, 1d); // 12/12*400 - 8
@@ -60,29 +60,31 @@ public class LayoutTests
     }
 
     [Fact]
-    public void Stack_row_toggles_orientation_and_defaults()
+    public void Deprecated_stack_alias_still_toggles_orientation_and_defaults()
     {
+#pragma warning disable LOAM0003 // Back-compat: the deprecated Stack wrapper over StackPanel.
         new Stack().Orientation.ShouldBe(Orientation.Vertical);
         new Stack().Spacing.ShouldBe(8d);
         new Stack { Row = true }.Orientation.ShouldBe(Orientation.Horizontal);
+        AutomationProperties.GetName(new Stack()).ShouldBe("Stack");
+#pragma warning restore LOAM0003
     }
 
     [Fact]
-    public void Item_resolves_spans_with_fallback_and_clamping()
+    public void Col_resolves_spans_with_fallback_and_clamping()
     {
-        new Item { Xs = 6 }.ResolveSpan(Breakpoint.Md).ShouldBe(6);
-        new Item { Md = 16 }.ResolveSpan(Breakpoint.Md).ShouldBe(12);
-        new Item { Md = -1 }.ResolveSpan(Breakpoint.Md).ShouldBe(12);
-        new Item { Sm = 4, Lg = 2 }.ResolveSpan(Breakpoint.Xl).ShouldBe(2);
+        new Col { Xs = 6 }.ResolveSpan(Breakpoint.Md).ShouldBe(6);
+        new Col { Md = 16 }.ResolveSpan(Breakpoint.Md).ShouldBe(12);
+        new Col { Md = -1 }.ResolveSpan(Breakpoint.Md).ShouldBe(12);
+        new Col { Sm = 4, Lg = 2 }.ResolveSpan(Breakpoint.Xl).ShouldBe(2);
     }
 
     [Fact]
     public void Layout_primitives_expose_default_automation_names()
     {
         AutomationProperties.GetName(new Container()).ShouldBe("Container");
-        AutomationProperties.GetName(new Loam.Controls.Grid()).ShouldBe("Grid layout");
-        AutomationProperties.GetName(new Item()).ShouldBe("Grid item");
-        AutomationProperties.GetName(new Stack()).ShouldBe("Stack");
+        AutomationProperties.GetName(new ResponsiveGrid()).ShouldBe("Grid layout");
+        AutomationProperties.GetName(new Col()).ShouldBe("Grid item");
         AutomationProperties.GetName(new Spacer()).ShouldBe("Spacer");
         AutomationProperties.GetName(new Hidden()).ShouldBe("Hidden");
 
@@ -253,5 +255,33 @@ public class LayoutTests
 
         scroll.Offset.Y.ShouldBe(0);
         scrollToTop.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Deprecated_grid_and_item_aliases_still_behave_like_responsive_grid_and_col()
+    {
+        // The whole body intentionally exercises the deprecated v2 names, which now forward to the
+        // v3 ResponsiveGrid/Col types. LOAM0001/LOAM0002 are the rename diagnostics on those aliases.
+#pragma warning disable LOAM0001, LOAM0002
+        var a = new Item { Md = 6, Child = new Border { Height = 20 } };
+        var b = new Item { Md = 6, Child = new Border { Height = 20 } };
+        var grid = new Loam.Controls.Grid { Width = 1000, Children = { a, b } };
+
+        // Aliases are the v2 spelling of the v3 Col / ResponsiveGrid types.
+        a.ShouldBeAssignableTo<Col>();
+        grid.ShouldBeAssignableTo<ResponsiveGrid>();
+
+        a.ResolveSpan(Breakpoint.Md).ShouldBe(6);
+
+        Show(grid);
+
+        // Same layout math as the ResponsiveGrid test above.
+        a.Bounds.Width.ShouldBe(492d, 1d);
+        b.Bounds.X.ShouldBe(500d, 1d);
+
+        // Automation names carry over from the v2 names unchanged.
+        AutomationProperties.GetName(grid).ShouldBe("Grid layout");
+        AutomationProperties.GetName(a).ShouldBe("Grid item");
+#pragma warning restore LOAM0001, LOAM0002
     }
 }

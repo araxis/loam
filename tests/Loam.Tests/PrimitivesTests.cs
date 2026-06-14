@@ -97,6 +97,37 @@ public class PrimitivesTests
     }
 
     [AvaloniaFact]
+    public void Paper_custom_content_wins_when_set_after_generated_props()
+    {
+        var paper = new Paper { Title = "Generated" };
+        Show(paper);
+        paper.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Generated").ShouldBeTrue();
+
+        var custom = new TextBlock { Text = "custom" };
+        paper.Content = custom;
+        Dispatcher.UIThread.RunJobs();
+
+        // Custom Content takes precedence; the generated anatomy is dropped.
+        paper.Content.ShouldBeSameAs(custom);
+        paper.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Generated").ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Paper_generated_props_are_ignored_when_custom_content_is_present()
+    {
+        var custom = new TextBlock { Text = "custom" };
+        var paper = new Paper { Content = custom };
+        Show(paper);
+
+        paper.Title = "Generated";
+        Dispatcher.UIThread.RunJobs();
+
+        // Custom Content still wins; setting generated props does not replace it.
+        paper.Content.ShouldBeSameAs(custom);
+        paper.GetVisualDescendants().OfType<Text>().Any(t => t.Text == "Generated").ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void Card_generated_anatomy_exposes_body_text_and_action_events()
     {
         var primaryClicked = false;

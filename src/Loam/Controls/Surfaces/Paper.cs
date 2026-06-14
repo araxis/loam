@@ -155,6 +155,7 @@ public class Paper : ContentControl
         {
             _usingGeneratedContent = false;
             _hasCustomContent = Content is not null;
+            DualContent.WarnIfConflicting(_hasCustomContent, HasGeneratedContent, GetType().Name);
             return;
         }
 
@@ -213,6 +214,8 @@ public class Paper : ContentControl
         {
             return;
         }
+
+        DualContent.WarnIfConflicting(_hasCustomContent, hasGeneratedContent: true, GetType().Name);
 
         if (_hasCustomContent && !_usingGeneratedContent)
         {

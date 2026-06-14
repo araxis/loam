@@ -58,6 +58,24 @@ public sealed record LoamThemeData
     /// <summary>The Loam defaults.</summary>
     public static LoamThemeData Default { get; } = new();
 
+    /// <summary>
+    /// Builds a theme from a single seed color (Material You): generates light + dark
+    /// <see cref="LoamColorScheme"/>s and matching compatibility palettes, keeping the default
+    /// typography/shape/spacing/etc. See ADR-0012.
+    /// </summary>
+    public static LoamThemeData FromSeed(Avalonia.Media.Color seed, LoamContrast contrast = LoamContrast.Standard)
+    {
+        var light = LoamColorScheme.FromSeed(seed, dark: false, contrast);
+        var dark = LoamColorScheme.FromSeed(seed, dark: true, contrast);
+        return Default with
+        {
+            ColorSchemeLight = light,
+            ColorSchemeDark = dark,
+            PaletteLight = light.ToPalette(),
+            PaletteDark = dark.ToPalette(),
+        };
+    }
+
     /// <summary>Legacy visual preset retained for migration.</summary>
     public static LoamThemeData Legacy { get; } = new()
     {

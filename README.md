@@ -7,11 +7,14 @@
 Loam gives Avalonia apps a complete themed control set with a familiar, compact API, runtime
 theming, and no XAML.
 
-> **Status:** ✅ **v2.0 design-system rebaseline.** The default visual system now uses role-based
-> light/dark color schemes, expanded foundation tokens, tokenized state feedback, and updated gallery
-> design-system coverage. Full solution builds clean with **376 headless/unit tests passing**.
-> See the **[Development Plan](DEVELOPMENT_PLAN.md)** and the project **[memory](memory/README.md)**
-> (decisions, progress log, learnings, and the per-component status tracker).
+> **Status:** 🚧 **v3 (vNext) in development** on branch `work/vnext` (`3.0.0-preview.2`). The released
+> baseline is **v2.0** (role-based light/dark color schemes, expanded foundation tokens, tokenized
+> state feedback). v3 adds end-to-end theme consistency, Material You, ergonomics fixes, and new shell
+> controls — the full solution builds clean with **414 headless/unit tests passing**.
+> See the **[v3 plan](PLAN.md)** and **[review](REVIEW.md)**, the
+> **[v2 → v3 migration guide](docs/migration/v2-to-v3.md)**, the **[Development Plan](DEVELOPMENT_PLAN.md)**,
+> and the project **[memory](memory/README.md)** (decisions, progress log, learnings, and the
+> per-component status tracker).
 
 ## 📖 Documentation
 
@@ -126,18 +129,18 @@ automatically. Per-control overrides use the same Loam knobs: `Variant`, `Color`
 | Area | Controls |
 | --- | --- |
 | **Primitives** | `Text`, `Icon`, `Button`, `IconButton`, `ToggleIconButton`, `ButtonGroup`, `Fab`, `Paper`, `Card` (+`CardHeader`/`CardMedia`/`CardContent`/`CardActions`), `Divider`, `Chip`/`ChipSet`, `Badge`, `Avatar`/`AvatarGroup` |
-| **Layout & shell** | `Container`, `Grid`/`Item`, `Stack`, `Spacer`, `Hidden`, `ScrollToTop`, `Layout`, `AppBar`, `Drawer`, `MainContent` |
+| **Layout & shell** | `Container`, `ResponsiveGrid`/`Col`, `Spacer`, `Hidden`, `ScrollToTop`, `Layout`, `AppBar`, `Drawer`, `MainContent` |
 | **Inputs** | `Field`, `TextField`, `NumericField`, `MaskedTextField` (+`Mask`), `Select`, `Autocomplete`, `CheckBox`, `Switch`, `Radio`/`RadioGroup`, `Slider`, `Rating`, `ToggleGroup`, `FileUpload`, `Form` |
 | **Pickers** | `DatePicker`, `TimePicker`, `ColorPicker`, `DateRangePicker` (+ self-contained `MonthCalendar`) |
-| **Overlays & feedback** | `DialogService`/`MessageBoxAsync`, `SnackbarService`, `Overlay`, `Popover`, `Tooltip`, `Menu`, `Alert`, `ProgressLinear`, `ProgressCircular`, `Skeleton`, `Collapse` |
+| **Overlays & feedback** | `DialogService`/`MessageBoxAsync`, `SnackbarService`, `CommandPalette`, `Overlay`, `Popover`, `Tooltip`, `Menu`, `Alert`, `ProgressLinear`, `ProgressCircular`, `Skeleton`, `Collapse` |
 | **Data display** | `List`/`ListItem`/`ListSubheader`, `SimpleTable`, `DataGrid<T>`, `TreeView`, `Tabs`, `ExpansionPanels`, `Timeline`, `Carousel`, `Pagination`, `Stepper` |
-| **Navigation** | `Link`, `Breadcrumbs`, `NavMenu`/`NavLink`/`NavGroup` |
+| **Navigation** | `Link`, `Breadcrumbs`, `NavMenu`/`NavLink`/`NavGroup`, `NavigationRail`, `BottomNavigation` |
 | **Charts** | `PieChart`, `BarChart`, `LineChart` (+ donut mode) |
 | **Effects** | `Ripple` |
 
 See **[`memory/component-inventory.md`](memory/component-inventory.md)** for the full component catalog
-and the live status of each control, including documented future enhancements such as deeper
-DataGrid grouping/editing, picker clock-face/HSV editing, and stacked/time-series charts.
+and the live status of each control, including documented future enhancements such as richer
+DataGrid inline-edit, picker clock-face/HSV editing, and stacked/time-series charts.
 
 ## Run the gallery
 

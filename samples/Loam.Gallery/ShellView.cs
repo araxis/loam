@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Loam;
 using Loam.Controls;
-using LoamGrid = Loam.Controls.Grid;
+using LoamGrid = Loam.Controls.ResponsiveGrid;
 
 namespace Loam.Gallery;
 
@@ -52,7 +52,7 @@ public sealed class ShellView : UserControl
         var grid = new LoamGrid { Spacing = 16 };
         for (var i = 1; i <= 4; i++)
         {
-            grid.Children.Add(new Item
+            grid.Children.Add(new Col
             {
                 Xs = 12,
                 Sm = 6,

@@ -35,6 +35,13 @@ public sealed class DataGridColumn<T>
     /// <summary>Horizontal alignment of the cell content. Mirrors the reference API's <c>CellStyle</c> alignment.</summary>
     public HorizontalAlignment Align { get; init; } = HorizontalAlignment.Left;
 
+    /// <summary>
+    /// Optional fixed pixel width. When <c>null</c> the column sizes with star (shares the remaining
+    /// space). In a frozen-column layout, columns without an explicit width fall back to a default
+    /// pixel width so horizontal scrolling works.
+    /// </summary>
+    public double? Width { get; init; }
+
     /// <summary>Optional custom cell content factory.</summary>
     public Func<T, Control>? CellTemplate { get; init; }
 

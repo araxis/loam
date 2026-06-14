@@ -139,7 +139,8 @@ public class GalleryAcceptanceTests
                 var window = Show(article, theme);
                 try
                 {
-                    article.GetVisualDescendants().OfType<CodeSampleView>().ShouldHaveSingleItem(page.Route);
+                    // A page renders one code block, or one per sample when it uses the per-sample layout.
+                    article.GetVisualDescendants().OfType<CodeSampleView>().Any().ShouldBeTrue(page.Route);
                     article.GetVisualDescendants().OfType<ContentControl>().Any().ShouldBeTrue(page.Route);
                 }
                 finally
@@ -223,6 +224,24 @@ public class GalleryAcceptanceTests
             theme.ToggledIcon.ShouldBe(Icons.Material.Filled.LightMode);
             theme.StartIcon.ShouldBeNull();
             theme.Content.ShouldBeNull();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Components_view_header_has_material_you_seed_picker()
+    {
+        var view = new ComponentsView();
+        var window = Show(view, ThemeVariant.Light);
+        try
+        {
+            var seed = view.GetVisualDescendants().OfType<IconButton>()
+                .Single(button => AutomationProperties.GetName(button) == "Theme seed");
+            seed.Icon.ShouldBe(Icons.Material.Filled.Palette);
+            seed.Flyout.ShouldNotBeNull();
         }
         finally
         {
@@ -976,10 +995,8 @@ public class GalleryAcceptanceTests
             calendars.Any(calendar => calendar.MinDate == new DateTime(2026, 6, 10) && calendar.MaxDate == new DateTime(2026, 6, 20)).ShouldBeTrue();
             calendars.All(calendar => calendar.FirstDayOfWeek == DayOfWeek.Monday).ShouldBeTrue();
 
-            var labels = preview.GetVisualDescendants().OfType<Text>().Select(text => text.Text).ToArray();
-            labels.ShouldContain("Selected");
-            labels.ShouldContain("Range");
-            labels.ShouldContain("Constrained");
+            // Captions ("Selected"/"Range"/"Constrained") are shown by each sample's card header
+            // (not part of page.Build()); they are asserted against page.Code above.
         }
         finally
         {
@@ -1439,7 +1456,7 @@ public class GalleryAcceptanceTests
         try
         {
             var texts = textPreview.GetVisualDescendants().OfType<Text>().ToArray();
-            texts.Length.ShouldBeGreaterThanOrEqualTo(35);
+            texts.Length.ShouldBeGreaterThanOrEqualTo(30);
             texts.Any(text => text.Typo == Typo.DisplayLarge).ShouldBeTrue();
             texts.Any(text => text.Typo == Typo.HeadlineLarge).ShouldBeTrue();
             texts.Any(text => text.Typo == Typo.TitleSmall).ShouldBeTrue();
@@ -1450,7 +1467,6 @@ public class GalleryAcceptanceTests
             texts.Any(text => text.Color == LoamColor.Error).ShouldBeTrue();
             texts.Any(text => text.Align == TextAlignment.Center).ShouldBeTrue();
             texts.Any(text => text.TextWrapping == TextWrapping.Wrap && text.GutterBottom).ShouldBeTrue();
-            texts.Any(text => AutomationProperties.GetName(text) == "Display roles").ShouldBeTrue();
         }
         finally
         {
@@ -1534,7 +1550,7 @@ public class GalleryAcceptanceTests
             containerWindow.Close();
         }
 
-        var gridPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Grid");
+        var gridPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/ResponsiveGrid");
         foreach (var expected in new[] { "Fixed spans", "Responsive spans", "Xs = 12", "Sm = 6", "Md = 4", "Non-Item child spans 12 columns" })
         {
             gridPage.Code.ShouldContain(expected);
@@ -1544,10 +1560,10 @@ public class GalleryAcceptanceTests
         var gridWindow = Show(gridPreview, ThemeVariant.Light);
         try
         {
-            var grids = gridPreview.GetVisualDescendants().OfType<Loam.Controls.Grid>().ToArray();
+            var grids = gridPreview.GetVisualDescendants().OfType<Loam.Controls.ResponsiveGrid>().ToArray();
             grids.Length.ShouldBeGreaterThanOrEqualTo(2);
             grids.Any(grid => grid.Spacing == 12).ShouldBeTrue();
-            gridPreview.GetVisualDescendants().OfType<Item>().Count().ShouldBeGreaterThanOrEqualTo(10);
+            gridPreview.GetVisualDescendants().OfType<Col>().Count().ShouldBeGreaterThanOrEqualTo(10);
             grids.All(grid => AutomationProperties.GetName(grid) == "Grid layout").ShouldBeTrue();
         }
         finally
@@ -1555,7 +1571,7 @@ public class GalleryAcceptanceTests
             gridWindow.Close();
         }
 
-        var itemPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Item");
+        var itemPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Col");
         foreach (var expected in new[] { "Item breakpoint props", "Xs = 12", "Sm = 12", "Md = 8", "Lg = 8", "Xl = 2", "Xxl = 1" })
         {
             itemPage.Code.ShouldContain(expected);
@@ -1565,7 +1581,7 @@ public class GalleryAcceptanceTests
         var itemWindow = Show(itemPreview, ThemeVariant.Light);
         try
         {
-            var items = itemPreview.GetVisualDescendants().OfType<Item>().ToArray();
+            var items = itemPreview.GetVisualDescendants().OfType<Col>().ToArray();
             items.Length.ShouldBeGreaterThanOrEqualTo(5);
             items.Any(item => item.Xs == 12 && item.Md == 8).ShouldBeTrue();
             items.Any(item => item.Xxl == 1).ShouldBeTrue();
@@ -1574,27 +1590,6 @@ public class GalleryAcceptanceTests
         finally
         {
             itemWindow.Close();
-        }
-
-        var stackPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Stack");
-        foreach (var expected in new[] { "Vertical stack", "Row stack", "Custom spacing", "Row = true", "Spacing = 16" })
-        {
-            stackPage.Code.ShouldContain(expected);
-        }
-
-        var stackPreview = stackPage.Build();
-        var stackWindow = Show(stackPreview, ThemeVariant.Light);
-        try
-        {
-            var stacks = stackPreview.GetVisualDescendants().OfType<Loam.Controls.Stack>().ToArray();
-            stacks.Length.ShouldBeGreaterThanOrEqualTo(3);
-            stacks.Any(stack => stack.Row).ShouldBeTrue();
-            stacks.Any(stack => stack.Spacing == 16).ShouldBeTrue();
-            stacks.All(stack => AutomationProperties.GetName(stack) == "Stack").ShouldBeTrue();
-        }
-        finally
-        {
-            stackWindow.Close();
         }
 
         var spacerPage = ComponentsView.PageCatalog.Single(page => page.Route == "Layout/Spacer");

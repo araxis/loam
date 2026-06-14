@@ -41,11 +41,41 @@ picking the project up cold. Read this file first.
 - [ADR-0005 — Theming engine: LoamTheme](decisions/0005-theming-engine-loamtheme.md)
 - [ADR-0006 — Icon system](decisions/0006-icon-system.md)
 - [ADR-0007 — API naming & reference mapping convention](decisions/0007-api-naming-mapping.md)
+- [ADR-0008 — v3 naming & Avalonia collision strategy](decisions/0008-v3-naming-collision-strategy.md)
+- [ADR-0009 — v3 package split (lean core + satellites)](decisions/0009-v3-package-split.md)
+- [ADR-0010 — v3 versioning & deprecation policy](decisions/0010-v3-versioning-deprecation-policy.md)
+- [ADR-0011 — Bridging base Fluent chrome to Loam tokens (Phase 1)](decisions/0011-fluent-base-chrome-bridge.md)
+- [ADR-0012 — Material You seed → scheme generation (Phase 2)](decisions/0012-material-you-seed-scheme.md)
+- [ADR-0013 — Table strategy: one recommended path (Phase 4)](decisions/0013-table-strategy.md)
 
 ## Current status (update me)
 
-- **Phase:** v2.0 design-system rebaseline. Default visuals now use role-based schemes and expanded
-  foundation tokens while preserving the familiar component API.
-- **Latest:** all major component families have been rechecked for the v2.0 baseline; data display
-  and charts now include tokenized visuals, gallery acceptance examples, and focused headless tests.
-- **Last updated:** 2026-06-05
+- **Phase:** **v3 (vNext) — Phases 0–3 done; Phase 4 additive done (package split deferred)** (branch
+  `work/vnext`, version `3.0.0-preview.1`). The v3 roadmap and its driving review live at the repo root
+  in [`PLAN.md`](../PLAN.md) and [`REVIEW.md`](../REVIEW.md). Migration guide:
+  [`docs/migration/v2-to-v3.md`](../docs/migration/v2-to-v3.md).
+- **Latest:** **Phase 2 (theming power) complete.** Material You seed→scheme generator (ADR-0012;
+  CIELAB tonal palettes, accessible by construction), a live gallery seed picker, a one-call density
+  switch (`LoamDensity.Compact` + `SetDensity`), and a high-contrast variant (`LoamContrast`). Runtime
+  theming API: `SetSeed`/`SetPrimary`/`SetPalette`/`SetDensity`/`SetData`. Builds clean; **401 tests
+  pass**; demo visually confirmed light + dark.
+- **Phase 3 core done:** `AppBar.CustomActions`, generated-vs-custom content precedence (+ debug-only
+  `DualContent` warning), and a global-usings collision aid (docs). Optional remainder: a Roslyn
+  rename/collision analyzer.
+- **Phase 4 so far:** deprecated `Stack`→`StackPanel` (`LOAM0003`); table strategy decided
+  (ADR-0013: `DataGrid<T>` recommended); added `NavigationRail`, `BottomNavigation`, `CommandPalette`
+  (M3). **414 tests.**
+- **Phase 6 release prep:** migration guide synced; added a "Why Loam vs plain Avalonia" page + a v3
+  changelog (docs); refreshed README catalog; bumped `3.0.0-preview.1` → **`preview.2`** and verified
+  `dotnet pack` produces a clean nupkg. Visual-regression pixel snapshots deferred (flaky cross-machine;
+  render-smoke already covered by gallery acceptance tests).
+- **Phase 5 data maturity — done:** `DataGrid<T>` gained grouping (`GroupBy` + pure `DataGrids.Group`),
+  collapsible groups, empty state (`EmptyText`/`EmptyContent`), a column-width API
+  (`DataGridColumn<T>.Width`), **frozen columns** (`FrozenColumns` two-pane layout with synced
+  hover/selection + `RowHeight`), and **group aggregates** (`GroupAggregate`). On top of the
+  pre-existing sort/filter/page/virtualize/inline-edit/selection. **424 tests.**
+- **Next (maintainer-directed):** the **package split** is deferred (ADR-0009; needs satellite
+  theme-registration design). Open options: Phase 6 release prep (visual-regression snapshots,
+  positioning docs) toward `3.0.0`; richer DataGrid inline-edit (validation/commit). (Optional:
+  CAM16/HCT upgrade; wire/remove orphaned `DesignSystemView`/`LayoutView`.)
+- **Last updated:** 2026-06-07

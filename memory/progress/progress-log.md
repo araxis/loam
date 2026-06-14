@@ -7,6 +7,709 @@ Next.
 
 ---
 
+## 2026-06-13 — v3 — Gallery per-sample layout rolled out to all groups
+
+**Done:** finished the per-sample gallery layout across every component group, so each multi-variant
+page now renders **each sample as its own preview card immediately followed by its own C# snippet**
+(via `PageWithSamples` + `Sample(caption, BuildXxxVariant)` + per-sample builder methods). Genuinely
+single-cohesive-demo pages stay as `Page(...)` (one preview + one code block) — correct, since they
+have no separate captioned variants.
+
+Converted (≈35 pages): Display (all 8), DataGrid, Inputs (RadioGroup/Slider/ToggleGroup),
+Feedback (ProgressCircular/ProgressLinear/Skeleton/Popover/Tooltip), Data (SimpleTable/Tabs/
+ExpansionPanels/Collapse/Timeline/Carousel/Stepper/Pagination), Navigation (Breadcrumbs/NavMenu),
+Layout (Container/ResponsiveGrid/Spacer), Charts (PieChart/BarChart/LineChart), plus Button/IconButton.
+Left as single-demo `Page(...)`: pickers, text inputs, Shell, Surfaces, TreeView, NavLink/NavGroup/rails,
+Col/Hidden/ScrollToTop, etc. (no multi-captioned variants).
+
+**How:** executed as a multi-agent **workflow** (one agent per group, sequential because all builders
+live in one 7000-line file; per-group self-commit for durability). The first attempt died on a session
+suspension and a later one half-converted Data (registrations referencing methods it never created — was
+discarded); the hardened rerun (create methods **before** swapping each registration) finished cleanly.
+
+**Verified:** `dotnet build Loam.slnx -c Release` 0/0; full suite **424 passed**; live spot-check of the
+Inputs/Slider page confirms per-sample preview+code interleaving. Commits `1945d54`/`5be0a18`/`6c2fe14`/
+`8168c8d`/`3186c57`/`4e3a9f9`/`54021a0` on `work/vnext`.
+
+**Next:** optional — convert the remaining caption-less multi-variant pages (e.g. AppBar's 3 variants,
+Buttons' ToggleIconButton/ButtonGroup/Fab) if per-sample splitting is wanted there too.
+
+---
+
+## 2026-06-07 — v3 — Gallery per-sample layout (infra + DataGrid flagship)
+
+**Maintainer ask:** wider previews; **each sample interleaved with its own C# snippet** (sample → its
+code → next sample) instead of all previews then one big code dump; do it for all pages.
+
+**Architecture before:** each `GalleryPage` had one `BuilderMethod`; `page.Code` was that whole
+method's source (regex-extracted from `ComponentsView.cs` at runtime); `BuildArticle` = header + one
+Preview card + one `CodeSampleView`.
+
+**Done (infrastructure, applied to DataGrid as the verified flagship)**
+- New `GallerySample(Caption, Build, Code)` + `GalleryPage.Samples` (init, default empty). Helpers
+  `Sample(caption, build)` (captures `build.Method.Name` → per-sample code via `GallerySourceCode`)
+  and `PageWithSamples(group, title, desc, params samples)` (page `Code` = join of sample codes so the
+  metadata asserts still hold; `Build` = all samples stacked for the expected-components test;
+  `BuilderMethod` = first sample's method).
+- `BuildArticle` now interleaves: when `Samples` is non-empty it renders, per sample, a Preview `Paper`
+  (caption header + control) **followed by that sample's `CodeSampleView`**. Single-builder pages keep
+  the old one-preview-one-code path (back-compat) so the rollout is incremental.
+- Converted the **DataGrid** page: split the monolithic `BuildDataGrid` into `SampleDesserts()`,
+  `AddDessertColumns()`, and six per-sample methods (`BuildDataGridPaged/Grouped/Frozen/Editable/
+  Virtualized/Empty`), each its own snippet; widened grids (520→720, frozen 460→560).
+- Relaxed the gallery test that asserted exactly one `CodeSampleView` per article → now ≥1 (we
+  intentionally render one per sample).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0; full suite **424** green. Ran the desktop gallery: the
+  DataGrid page now shows each sample's preview card immediately followed by its own highlighted C#
+  snippet, then the next sample — exactly the requested structure.
+
+**Next:** roll the `PageWithSamples` pattern out to the remaining pages (large mechanical pass — split
+each multi-variant builder into per-sample methods). Infra + flagship are in; the rest is repetition.
+
+---
+
+## 2026-06-07 — v3 — Gallery DataGrid page: visual cleanup (ran the app to verify)
+
+**Maintainer feedback:** "the ui of grid sample is awful." Ran the desktop gallery and screenshotted
+the DataGrid page to see it. Real problems found: (1) the shared `Labeled` helper is a fixed **96px**
+side caption, so the new long captions truncated ("Grouped + aggr", "Frozen column") and floated
+mid-height beside tall grids; (2) the Paged sample used **editable** cells whose `TextBox` forced tall
+rows, misaligning the name vs the centered number columns.
+
+**Done**
+- Reworked `BuildDataGrid` to a clean **stacked** layout: a local `Section(title, control)` puts a
+  primary-colored heading **above** each grid (full captions, no truncation), replacing the side
+  `Labeled` for this page. Samples: Sortable·filtered·paged · Grouped+aggregate · Frozen first column ·
+  Editable cells · Virtualized · Empty. Paged is now non-editable (tight, aligned); inline-edit moved
+  to its own "Editable cells" sample.
+- **Product fix:** editable `DataGrid` cells now align with text cells — the cell `TextBox` gets
+  `MinHeight = 0` + `VerticalContentAlignment = Center` so it no longer inflates row height.
+- Re-ran the app: headings sit above each grid, rows align, frozen column pins with a working
+  horizontal scrollbar, editable rows match the others. Eyesore resolved.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0. Full suite **424** green. Visually confirmed in the
+  running desktop gallery.
+
+---
+
+## 2026-06-07 — v3 Phase 5/6 — Gallery: demo the new DataGrid features
+
+**Gap found (by maintainer):** the Phase 5 `DataGrid<T>` features had tests + docs but no **gallery**
+demo (only the new nav controls got gallery pages). Fixed.
+
+**Done**
+- Extended `BuildDataGrid` in `Loam.Gallery`: added **Grouped + aggregate** (`GroupBy` Indulgent/Light
+  with `GroupAggregate` avg-calories), **Frozen columns** (`FrozenColumns = 1` with explicit column
+  `Width`s + two derived columns so the scrollable pane actually scrolls), and **Empty** (custom
+  `EmptyText` with a filter that excludes all) — alongside the existing Paged + Virtual samples. This
+  also makes the page's long-declared `Empty` acceptance criterion truthful.
+- Audited the rest: Material You / high-contrast / `SetDensity` are already demoed via the header
+  `BuildSeedPicker`; the new nav controls had pages. The one other untouched Phase 3 item —
+  **`AppBar.CustomActions`** — had no gallery demo either, so added a third AppBar sample showing
+  arbitrary controls (a filled button + icon button) in that slot.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0. GalleryAcceptanceTests (37) green; full suite **424** green.
+
+---
+
+## 2026-06-07 — v3 Phase 6 — Release prep (docs, positioning, version)
+
+**Done**
+- New docs: **`guide/why-loam.md`** ("Why Loam vs plain Avalonia" — side-by-side code, comparison table,
+  honest "use plain Avalonia when…") and **`guide/changelog.md`** (v3 preview release notes by phase).
+  Wired both into the Guide sidebar; refreshed the stale `guide/introduction.md` Status section
+  (v2 → v3 preview) and links.
+- Refreshed the **README** component catalog (`Grid`/`Item`/`Stack` → `ResponsiveGrid`/`Col`; added
+  `NavigationRail`/`BottomNavigation`/`CommandPalette`; "deeper DataGrid grouping" → "richer inline-edit").
+- **Version bump** `3.0.0-preview.1` → `3.0.0-preview.2`; added `PackageReleaseNotes` + a `material`
+  tag; updated version refs in README + migration guide.
+- **Release-readiness check:** `dotnet pack -c Release` produced `Loam.3.0.0-preview.2.nupkg` cleanly
+  (README + icon + license metadata all present); docs build passed.
+
+**Decision (visual-regression):** deferring pixel-snapshot tests — cross-machine font rendering makes
+them flaky, which conflicts with the zero-flake gate. The existing `GalleryAcceptanceTests` already
+render every page headlessly (a stable render-smoke guard); pixel snapshots, if added later, should be
+an opt-in CI job, not part of the default suite.
+
+**Verified**
+- `npm run docs:build` passed; `dotnet pack -c Release` succeeded. Suite unchanged at **424**.
+
+**Next:** the final `3.0.0` cut (drop the preview suffix) when ready; the deferred package split
+(ADR-0009); optional richer inline-edit / CAM16-HCT.
+
+---
+
+## 2026-06-07 — v3 Phase 5 — DataGrid frozen columns + group aggregates
+
+**Done**
+- **Column-width API:** `DataGridColumn<T>.Width` (pixel; `null` = star). Single-grid mode now honors
+  mixed fixed/star columns.
+- **Frozen columns:** `DataGrid<T>.FrozenColumns` pins the leading N columns in a left `Grid` while the
+  rest render in a right `Grid` inside a horizontal `ScrollViewer` (two-pane `BuildFrozenGrid`). Row
+  hover/selection are **synced across panes** via a shared `RowVisual` (refactored the old per-border
+  closure state into `RowVisual` + `AddRowBackgroundTo` + `ApplyRowBackgrounds`). `RowHeight` (px, 0=auto)
+  guarantees cross-pane row alignment for custom-height cells. Frozen layouts size all columns by pixel
+  width (default 140 when unset). Frozen is **ignored while grouped** (falls back to single grid) to
+  avoid the group-header-spanning-panes problem — documented limitation.
+- **Group aggregates:** `GroupAggregate` (`Func<IReadOnlyList<T>, string>?`) appends computed text
+  (sum/avg/etc.) to each group header.
+- Added `DataDisplayTests`: two-pane render + horizontal scroller, frozen row activation selects,
+  frozen-ignored-while-grouped, group-aggregate text. Docs (`data-display.md`) + tracker updated.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors (fixed CA1859 by typing
+  the builders as `Grid`).
+- Full suite — **424 passed**, 0 failed.
+
+**This completes the named Phase 5 data-maturity items** (grouping, collapsible groups, empty state,
+frozen columns, group aggregates). **Next:** Phase 6 release prep (visual-regression snapshots,
+positioning docs, `3.0.0`), or richer inline-edit. Package split still deferred (ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 5 — DataGrid empty state
+
+**Done**
+- `DataGrid<T>` now renders a proper empty state (below the header) when there are no rows to display
+  after filtering: `EmptyText` (default "No data") or a custom `EmptyContent` control, spanning all
+  columns. Detected via "no data/group rows rendered" so collapsed-but-present groups don't trigger it;
+  custom `EmptyContent` is detached from its prior parent on rebuild (reparenting-safe).
+- Added two `DataDisplayTests` (empty `Items` shows "No data"; filter excluding all shows custom text).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **420 passed**, 0 failed.
+
+**Next:** frozen columns is the remaining named Phase 5 item but needs a column-width API + a
+synced-horizontal-scroll two-pane layout (row-height alignment) — a larger change; deferred with that
+rationale. Otherwise Phase 6 release prep. Package split still deferred (ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 5 — Collapsible DataGrid groups
+
+**Done**
+- Group headers in `DataGrid<T>` are now collapsible: a chevron (ExpandLess/ExpandMore) + clickable,
+  keyboard-activatable header toggles showing/hiding that group's rows. Collapsed state is tracked by
+  group key (`HashSet<object>` with a null-key sentinel) and **survives re-renders** (sort/filter/page);
+  the header keeps the full group count when collapsed. New `CollapsibleGroups` opt-out (default on);
+  `GroupBy` changes clear collapsed state.
+- Added a `DataDisplayTests` case (collapse hides rows + keeps header/other groups; re-expand restores).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **418 passed**, 0 failed.
+
+**Next:** optional Phase 5 (frozen columns) or Phase 6 release prep (visual-regression snapshots,
+positioning docs, `3.0.0`). Package split still deferred (ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 5 — DataGrid grouping
+
+**Done**
+- Added grouping to the self-rendering generic `DataGrid<T>`: a `GroupBy` selector renders a
+  group-header row (`key (count)`, surface-container-high, on its own full-width row) above each
+  group's data rows, integrated with the existing filter→sort→page→render pipeline (groups apply within
+  the rendered page, in first-appearance order so they follow the current sort).
+- Added the pure, testable `DataGrids.Group<T>(items, selector)` + `DataGridGroup<T>` record
+  (first-appearance order; `null` keys form their own group). Refactored `BuildGrid`'s row loop into a
+  shared `AddDataRow` local fn used by both grouped and ungrouped paths; added `BuildGroupHeader`.
+- Added `DataDisplayTests` (pure group order + null keys; end-to-end group headers render) and
+  documented `GroupBy`/`Group` in `docs/components/data-display.md` + the tracker.
+- Scope note: grouping is per-page; cross-page group continuity, collapsible groups, frozen columns,
+  and richer inline-edit remain future expansion.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **417 passed**, 0 failed.
+
+**Next:** more Phase 5 (collapsible groups / frozen columns) or Phase 6 release prep
+(visual-regression snapshots, positioning docs, `3.0.0`). Package split still deferred (ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 6 — Migration-guide accuracy pass (deferring package split)
+
+**Decision:** per maintainer direction, defer the Phase 4 **package split** (`Loam.Charts`/
+`Loam.Pickers`/`Loam.Data`) — it's the biggest, riskiest v3 change and has a theme-registration
+coupling to design first. Keep the single assembly for now and consolidate (Phase 6).
+
+**Done**
+- Brought `docs/migration/v2-to-v3.md` in sync with reality (it's a living record): phase tags in
+  "What v3 is about" now read Phases 1–3 ✅ done, Phase 4 in progress (split deferred). Replaced the
+  stale "Coming in later phases" list with an accurate **Delivered in this preview** summary
+  (theme bridge, Material You + high-contrast + density, AppBar slot/content-precedence/global-usings,
+  NavigationRail/BottomNavigation/CommandPalette) plus a trimmed **Coming** list (package split,
+  DataGrid maturity, release).
+- Refreshed the README status/test count (377 → **414**) and v3 framing.
+
+**Verified**
+- `npm run docs:build` passed. Docs-only change; suite unchanged at 414.
+
+**Next:** Phase 5 — DataGrid maturity (grouping is the main remaining gap; sort/filter/page/virtualize/
+edit already exist), or continue Phase 6 (visual-regression snapshots, positioning docs) before the
+`3.0.0` release. Package split remains deferred (ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 4 — CommandPalette (additive)
+
+**Done**
+- Added `CommandPalette` + `CommandPaletteItem`: a searchable command list (search `TextField` over
+  live-filtered `ListItem` rows on an elevated `Paper`) with keyboard nav (Down/Up move, Enter runs,
+  Escape closes), two-way `FilterText`/`IsOpen`, `Invoked`/`Closed` events, and a **pure testable**
+  `Filter(commands, query)` (case-insensitive title/keyword match).
+- Added a gallery page (`Feedback/CommandPalette`) + icon, `CommandPaletteTests` (pure filter, live
+  filter + selection reset, keyboard invoke + close), docs, and the tracker row.
+- Scope note: hosting the palette on the window overlay layer (a `DialogService`-style
+  `CommandPalette.For(...)`) is a deferred follow-up; the control works inline / in an `Overlay`/dialog.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **414 passed**, 0 failed.
+
+**This completes Phase 4's additive controls** (`NavigationRail`, `BottomNavigation`, `CommandPalette`).
+**Next:** the Phase 4 package split — extract `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites
+(ADR-0009), the last and biggest Phase 4 item.
+
+---
+
+## 2026-06-07 — v3 Phase 4 — BottomNavigation (additive shell control)
+
+**Done**
+- Added Material 3 `BottomNavigation` + `BottomNavigationItem`. `BottomNavigation` (`: Decorator` +
+  `UniformGrid` Rows=1 for equal-width cells, surface-container background, two-way `SelectedIndex`,
+  `SelectedItem`, `SelectionChanged`). `BottomNavigationItem : NavigationRailItem` — reuses the
+  icon-over-label active-indicator-pill anatomy and activation (zero duplication).
+- Made `NavigationRailItem` fully tappable (transparent stretch hit-target wrapper around the centered
+  content) — benefits wide bottom-nav cells and the rail alike.
+- Added a gallery page (`Navigation/BottomNavigation`) + icon, `BottomNavigationTests`, docs, and the
+  tracker row.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **411 passed**, 0 failed.
+
+**Next:** Phase 4 remaining — `CommandPalette` (searchable command overlay), then the package split
+(`Loam.Charts`/`Loam.Pickers`/`Loam.Data`, ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 4 — NavigationRail (additive shell control)
+
+**Done**
+- Added Material 3 `NavigationRail` + `NavigationRailItem` (new Loam controls). Self-composed
+  (`: Decorator`, no ControlTheme boilerplate): item = centered icon in a secondary-container
+  active-indicator pill above a label, with hover/focus state layers and click + keyboard (Enter/Space)
+  activation; rail = `Items` + optional `Header` + two-way `SelectedIndex` + `SelectedItem` +
+  `SelectionChanged`, single-selection management.
+- Token-bound (Surface rail bg; SecondaryContainer/OnSecondaryContainer/OnSurface/OnSurfaceVariant
+  roles), so it re-themes with Material You / variant swaps. Icons tinted via `Icon.Foreground`
+  (`Color = Inherit`).
+- Added a gallery page (`Navigation/NavigationRail`) + icon, and `NavigationRailTests` (default
+  selection, `SelectedIndex` updates, keyboard activation, active-indicator color). Documented in
+  `docs/components/navigation.md` and the component tracker.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **409 passed**, 0 failed.
+
+**Next:** Phase 4 remaining — `BottomNavigation`, `CommandPalette` (additive), then the package split
+(`Loam.Charts`/`Loam.Pickers`/`Loam.Data`, ADR-0009).
+
+---
+
+## 2026-06-07 — v3 Phase 4 — Deprecate Stack + table strategy
+
+**Done**
+- Marked `Stack` `[Obsolete]` (`LOAM0003`) → use `Avalonia.Controls.StackPanel`. Migrated every gallery
+  + test usage to `StackPanel` (`Row = true` → `Orientation = Orientation.Horizontal`; default
+  `Spacing = 8` set explicitly). Removed the gallery's dedicated Stack page (StackPanel is framework
+  standard) and its acceptance test; kept a scoped back-compat unit test
+  (`#pragma warning disable LOAM0003`) for the shim.
+- Self-references inside the obsolete `Stack` (its own `Register`/`nameof`) don't warn — obsolete
+  usage within an obsolete type is exempt, so the library stays warning-clean under
+  `TreatWarningsAsErrors`.
+- **Table strategy (ADR-0013):** `DataGrid<T>` is the recommended table; `SimpleTable` is kept as the
+  minimal static option (not deprecated, positioned secondary). Added "Choosing a table" guidance to
+  `docs/components/data-display.md`; updated the migration guide rename map and the component tracker.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **405 passed**, 0 failed.
+
+**Next:** Phase 4 remaining — additive shell controls (`NavigationRail`, `BottomNavigation`,
+`CommandPalette`), then the package split into `Loam.Charts`/`Loam.Pickers`/`Loam.Data` (ADR-0009,
+the big restructure).
+
+---
+
+## 2026-06-07 — v3 Phase 3 — Collision tooling: global-usings snippet (Phase 3 core complete)
+
+**Done**
+- Added a documented one-file **`GlobalUsings.cs`** recipe to `docs/guide/csharp-ui.md`: a single
+  `global using Button = Loam.Controls.Button;` (etc.) makes the bare restyle names resolve to Loam
+  project-wide, removing the per-file `using LoamX = …` friction REVIEW flagged. Documented the
+  trade-off (qualify Avalonia's control in the rare file that needs it) and that net-new concepts
+  (`ResponsiveGrid`/`Col`/`Paper`/`Chip`) never clash.
+- This satisfies the PLAN's "GlobalUsings snippet" collision aid. A full Roslyn rename/collision
+  analyzer remains an optional, heavier future item (ADR-0008).
+
+**Verified**
+- Docs-only change; `npm run docs:build` passed. (No code/test impact; suite stays at 405.)
+
+**Phase 3 core is complete:** `AppBar` custom-actions slot, explicit generated-vs-custom content
+precedence (+ debug warning), and the global-usings collision aid. Remaining Phase 3 is the optional
+analyzer.
+
+**Next:** Phase 4 — component churn & packaging: drop thin wrappers (`Stack` → `StackPanel`),
+consolidate the table story (`SimpleTable` vs `DataGrid<T>`), and extract `Loam.Charts`/`Loam.Pickers`/
+`Loam.Data` satellites (ADR-0009); plus add `NavigationRail`/`BottomNavigation`/`CommandPalette`.
+
+---
+
+## 2026-06-07 — v3 Phase 3 — Generated-vs-custom content precedence
+
+**Done**
+- Made the dual-mode content rule explicit: **custom `Content` always wins** over the generated
+  anatomy (`Title`/`Subtitle`/`Body`/…) on `Paper`, `Card`, and `Drawer`. Documented it on the shared
+  `Internal.DualContent` helper, in the control docs, and in `docs/components/layout.md`.
+- Added a **debug-only** diagnostic (`DualContent.WarnIfConflicting`, `[Conditional("DEBUG")]`) that
+  logs when both custom `Content` and generated props are set on one instance — compiled out entirely
+  in Release (call + arg evaluation elided), so zero cost and no Release warnings. Wired at both
+  conflict points (Content set with generated props present; generated prop set with custom Content
+  present) in Paper/Card/Drawer.
+- Added `PrimitivesTests` covering the precedence contract in both orderings (custom set after generated
+  wins; generated set after custom is ignored).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **405 passed**, 0 failed. (Warning itself is debug-only, so tested via the behavioral
+  precedence contract, not the log output — tests run in Release.)
+
+**Next:** Phase 3 remaining — collision tooling: a `GlobalUsings` snippet / analyzer so consumers
+don't hand-alias the restyle names (`Button`/`Text`/`Card`/`Menu`/…) per file. (`Form`'s Child-based
+dual mode could get the same warning later.)
+
+---
+
+## 2026-06-07 — v3 Phase 3 — AppBar custom-actions slot
+
+**Done**
+- Added `AppBar.CustomActions` (`AvaloniaList<Control>`) — a trailing slot for arbitrary live controls
+  (toggles, search fields, stateful actions), rendered before the icon-only `Actions`. Solves the
+  REVIEW finding that `AppBar.Actions` only accepted immutable `AppBarAction`.
+- Re-host safety: the trailing strip is now a stable instance panel, detached from its previous parent
+  and cleared on each rebuild, so live `CustomActions` controls re-host without reparenting errors
+  (mirrors `MainContent`'s header-row approach). `MainContent.Actions` was already `Control`-typed.
+- Documented `Actions` vs `CustomActions` vs `Content` in `docs/components/layout.md`.
+- Added `ShellTests`: custom + icon actions render together; live controls survive repeated rebuilds.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **403 passed**, 0 failed.
+
+**Next:** Phase 3 remaining — generated-vs-custom content precedence (explicit slots + debug warning
+when both `Content` and generated props are set on `Paper`/`Card`/`Drawer`); collision tooling
+(GlobalUsings snippet / analyzer for the restyle names).
+
+---
+
+## 2026-06-07 — v3 Phase 2 — High-contrast variant (Phase 2 complete)
+
+**Done**
+- Added a `LoamContrast` { Standard, Medium, High } level threaded through
+  `LoamColorScheme.FromSeed(seed, dark, contrast)`, `LoamThemeData.FromSeed(seed, contrast)`, and
+  `LoamTheme.SetSeed(seed, contrast)`. Standard reproduces the Material 3 tones exactly (existing tests
+  unchanged); higher levels push role tones toward the extremes (accents, on-roles, surfaces, outlines)
+  for stronger separation.
+- Gallery: added a **High contrast** `Switch` to the theme playground; the playground now tracks the
+  current seed + contrast via closures so seed swatches and the contrast toggle compose
+  (`SetSeed(seed, contrast)`). `SeedSwatch` takes a callback.
+- Documented high contrast in `docs/guide/theming.md`.
+- Added `MaterialYouTests`: Standard overload equals the 2-arg default; High increases separation over
+  Standard; High meets WCAG AAA (≥ 7:1) on the main text pairs across 6 seeds × light/dark.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **401 passed**, 0 failed.
+
+**Phase 2 is complete:** Material You seed→scheme generator, gallery seed picker, one-call density
+switch, and a high-contrast variant. `LoamTheme` now exposes `SetSeed`/`SetPrimary`/`SetPalette`/
+`SetDensity`/`SetData`.
+
+**Next:** Phase 3 — naming & ergonomics refactor: `AppBar` custom-actions slot (accept arbitrary
+`Control`s, not just immutable `AppBarAction`), generated-vs-custom content precedence (explicit slots
++ debug warning), and collision tooling (a `GlobalUsings` snippet / analyzer for the restyle names).
+
+---
+
+## 2026-06-07 — v3 Phase 2 — One-call density switch (compact mode)
+
+**Done**
+- Added `LoamDensity.Compact` preset (reduced interactive targets, button heights/padding, icon-button
+  and tabular padding) and a runtime `LoamTheme.SetDensity(LoamDensity)` entry point (keeps
+  colors/typography). Density tokens already flow through `ProjectSharedTokens`, so the switch updates
+  `Loam.Density.*` at runtime.
+- Gallery: turned the header seed flyout into a small "Theme playground" — seed swatches + a
+  **Compact density** `Switch` (calls `SetDensity`) + Reset (restores `LoamThemeData.Default` and
+  unchecks compact).
+- Documented `SetDensity` in `docs/guide/theming.md` runtime-setters table.
+- Added `ThemingTests`: Compact metrics < Default; `SetDensity` updates density tokens at runtime.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **398 passed**, 0 failed.
+
+**Next:** Phase 2 remaining — high-contrast theme variant. (Then Phase 3: naming/ergonomics refactor —
+`AppBar` custom-actions slot, generated-vs-custom content precedence, collision tooling.)
+
+---
+
+## 2026-06-07 — v3 Phase 2 — Gallery Material You seed playground
+
+**Done**
+- Added a live **seed picker** to the gallery header (palette `IconButton` → `Flyout` of seed swatches
+  + Reset). Clicking a swatch calls `LoamTheme.SetSeed` on the app's theme instance, recoloring the
+  whole gallery at runtime (base controls follow via the Phase-1 Fluent bridge); Reset restores
+  `LoamThemeData.Default`. Found via `Application.Current.Styles.OfType<LoamTheme>()`.
+- Noted: `DesignSystemView` (its old `SetPrimary` swatches) is orphaned — `MainWindow` only shows
+  `ComponentsView`, so the playground was added to the real shell header.
+- Documented `SetSeed`/Material You in `docs/guide/theming.md` (runtime setters table + a section,
+  incl. the accessibility-by-construction note and the gallery seed picker).
+- Added a gallery acceptance test for the seed picker (present in the header, palette icon, has a
+  flyout). Kept the existing header test green (seed is a plain `IconButton`; the "Toggle theme"
+  `ToggleIconButton` stays uniquely identifiable).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors (CA1859 fixed:
+  `BuildSeedFlyout` returns the concrete `StackPanel`).
+- Full suite — **396 passed**, 0 failed.
+- `npm run docs:build` — passed.
+
+**Next:** Phase 2 remaining — high-contrast theme variant, one-call compact/density switch. (Optional:
+wire `DesignSystemView` into the shell or remove it; CAM16/HCT upgrade for exact M3 fidelity.)
+
+---
+
+## 2026-06-07 — v3 Phase 2 — Material You seed→scheme generator (first slice)
+
+**Done**
+- Implemented one-seed → complete light + dark `LoamColorScheme` generation (the headline
+  "customizable" feature). New `LoamLab` (sRGB↔Lab↔LCh, tone = CIE L\*, gamut-clamped chroma),
+  `LoamTonalPalette` (hue + chroma, sampled by tone), `LoamColorScheme.FromSeed(seed, dark)` mapping
+  every role to standard M3 tones.
+- Runtime API: `LoamTheme.SetSeed(color)` and `LoamThemeData.FromSeed(color)` — regenerate both
+  schemes + compatibility palettes, keeping typography/shape/etc. The Phase-1 Fluent accent bridge
+  follows the new seed automatically.
+- Added **ADR-0012** (CIELAB tonal palettes as a tractable, accessible approximation of CAM16/HCT;
+  full HCT deferred as an optional upgrade).
+- Added `MaterialYouTests`: accessibility across 6 seeds × light/dark × 11 text pairs, tone ordering,
+  gamut clamping at extremes, `FromSeed`/`SetSeed` runtime updates.
+
+**Verified**
+- Key insight (and why generated schemes are accessible by construction): WCAG luminance == XYZ Y, and
+  L\* is a function of Y alone, so tone-gap contrast is deterministic and matches M3 — independent of
+  the seed's hue/chroma. 132 contrast assertions pass WCAG AA (≥ 4.5).
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **395 passed**, 0 failed.
+
+**Next:** Phase 2 remaining — gallery theme playground (live seed picker), high-contrast variant, a
+one-call compact/density switch. Optional: CAM16/HCT upgrade for exact Material You fidelity.
+
+---
+
+## 2026-06-07 — v3 Phase 1 — Expander bridge + consolidate FluentBridge + ADR-0011
+
+**Done**
+- Themed the base Avalonia `Expander`: header on the tonal container ramp (rest/hover/press),
+  `OnSurface` header text, outline-variant edges, `Surface` content, neutral chevron. Size/padding/
+  alignment keys left to Fluent.
+- **Refactor:** extracted the five inline `BridgeFluent*` methods out of `LoamTheme` into a dedicated
+  `Loam.Theming.FluentBridge` static helper (now six bridges + accent shade math), invoked once per
+  variant via `FluentBridge.Apply(dict, scheme, stateLayer)`. `LoamTheme` is back to token projection
+  + control-theme registration.
+- Added **ADR-0011** documenting the bridge approach (override brush keys not colors; colors only,
+  leave geometry to Fluent; source-verified + version-coupled; retired when FluentTheme is dropped).
+- Added Expander `FluentBridgeTests` (projection + end-to-end) and renamed the test helper to
+  `BrushColor` (now general across all bridges).
+- **Visual:** user confirmed the demo app looks good in both light and dark themes — closes the
+  Phase 1 visual-verification gap for accent/scrollbar/tooltip/menu/window/selection/expander.
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/Expander.xaml` for the exact brush keys.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **390 passed**, 0 failed.
+
+**Next:** Avalonia `DataGrid` is the last Phase 1 item, but the core package doesn't reference
+`Avalonia.Controls.DataGrid` (its theme ships separately) — defer to the `Loam.Data` satellite
+(ADR-0009) or document a consumer opt-in. Then Phase 2 (Material You seed→scheme generator).
+
+---
+
+## 2026-06-07 — v3 Phase 1 — Theme consistency: Window background + text selection
+
+**Done**
+- Added `LoamTheme.BridgeFluentWindowAndText`: the bare Window region background now reads as the
+  Material app background (`SystemRegionBrush` → scheme `Background`), and base text selection uses
+  Loam primary instead of Fluent blue (`TextControlSelectionHighlightColor` → primary @ 0.4). The
+  selection fix flows into every base `TextBox`, including those hosted inside Loam `Field`/`TextField`.
+  Per variant, runtime-swappable.
+- Added two `FluentBridgeTests` (per-variant projection + end-to-end selection resolution).
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/Window.xaml` (`SystemRegionBrush`) and `Controls/TextBox.xaml`
+  (`TextControlSelectionHighlightColor`, `CaretBrush` = `TextControlForeground`).
+- Left caret/text foreground to Fluent for now (caret follows `TextControlForeground`; overriding it
+  would broadly change base text color — a separate decision).
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **388 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `Expander`, Avalonia `DataGrid`. Then consider extracting the five
+`BridgeFluent*` methods into a dedicated `FluentBridge` helper + an ADR, and a visual gallery pass
+(light/dark) to confirm the look (selection opacity 0.4 and scrollbar thumb opacities are tunable).
+
+---
+
+## 2026-06-07 — v3 Phase 1 — Theme consistency: ContextMenu / MenuFlyout bridge
+
+**Done**
+- Added `LoamTheme.BridgeFluentMenu`: base Avalonia context menus, menu flyouts, and plain flyouts now
+  read as Material — `SurfaceContainer` surface (no border), `OnSurface` item text, OnSurface state
+  layers on hover/press (using the theme's state-layer opacities), muted `OnSurfaceVariant` shortcut
+  text and submenu chevrons, with disabled states at the disabled opacity. Per variant,
+  runtime-swappable.
+- Overrides the Fluent menu brush keys: `MenuFlyoutPresenterBackground/BorderBrush`,
+  `FlyoutPresenterBackground`, `MenuFlyoutItem{Background,Foreground}*`,
+  `MenuFlyoutItemKeyboardAcceleratorTextForeground*`, `MenuFlyoutSubItemChevron*`. Size/margin/corner
+  keys left to Fluent.
+- Added two `FluentBridgeTests` (per-variant projection + end-to-end menu-surface resolution).
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/{MenuItem,ContextMenu,MenuFlyoutPresenter,FlyoutPresenter}.xaml`
+  for exact keys; confirmed chevrons are `Fill` brushes and accelerators are `Foreground` brushes.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **386 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `Window` background, text selection/caret, `Expander`, Avalonia `DataGrid`.
+Visual gallery pass (light/dark) still pending.
+
+---
+
+## 2026-06-07 — v3 Phase 1 — Theme consistency: ToolTip bridge
+
+**Done**
+- Added `LoamTheme.BridgeFluentToolTip`: base Avalonia tooltips now use the Material inverse-surface
+  container with inverse-on-surface text and no border. Overrides `ToolTipBackground`,
+  `ToolTipForeground`, `ToolTipBorderBrush` (per variant, runtime-swappable); geometry/size/corner keys
+  left to Fluent.
+- Added two `FluentBridgeTests` (projection per variant + end-to-end background resolution).
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/ToolTip.xaml` for the exact brush keys.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **384 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `ContextMenu`/`MenuFlyout`, `Window` background, text selection/caret,
+`Expander`, Avalonia `DataGrid`. Visual gallery pass (light/dark) still pending.
+
+---
+
+## 2026-06-07 — v3 Phase 1 — Theme consistency: ScrollBar bridge
+
+**Done**
+- Added `LoamTheme.BridgeFluentScrollBar` so base Avalonia ScrollBars read as Material: a subtle
+  on-surface thumb (rest/hover/pressed/disabled) on a transparent track, with neutral line-button
+  chrome. Per variant, runtime-swappable. Scrollbars are intentionally neutral, not accent-colored.
+- Overrides the Fluent ScrollBar brush keys (`ScrollBarPanningThumbBackground`,
+  `ScrollBarThumbFill{PointerOver,Pressed,Disabled}`, `ScrollBarTrackFill/Stroke`,
+  `ScrollBarBackground/Border/Foreground`, and the `ScrollBarButton*` set). Geometry/size keys left to
+  Fluent. The template resolves these via DynamicResource from the control's scope, so LoamTheme wins.
+- Added two `FluentBridgeTests`: per-variant projection of the neutral thumb/track tokens, and
+  end-to-end resolution of `ScrollBarPanningThumbBackground` through a live control.
+
+**Verified**
+- Source-checked Avalonia 12.0.4 `Controls/ScrollBar.xaml` (`gh api` at tag `12.0.4`) for the exact
+  brush keys, thumb rest/hover/pressed states, and line-button chrome.
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **382 passed**, 0 failed.
+
+**Next:** continue Phase 1 — `ToolTip`, then `ContextMenu`/`MenuFlyout`, `Window` background, text
+selection/caret, `Expander`, Avalonia `DataGrid`. Visual gallery pass (light/dark) still pending; the
+thumb opacities (0.45/0.70/0.72) are reasonable defaults to confirm visually.
+
+---
+
+## 2026-06-07 — v3 Phase 1 — Theme consistency: Fluent accent bridge (first slice)
+
+**Done**
+- Added `LoamTheme.BridgeFluentAccent` so base Fluent controls with no Loam ControlTheme adopt Loam's
+  primary instead of Fluent blue. Runs per variant inside `BuildVariantDictionary`, so it is
+  runtime-swappable (`SetPrimary`/`SetPalette`/`SetData`) and light/dark correct.
+- Overrides the `SystemAccentColor*` Color keys (base + six HSL-derived shades, mirroring Avalonia
+  12.0.4's `SystemAccentColors` shade math) AND the `SystemControl*AccentBrush` brush keys — the
+  brushes are the part that actually retints stray controls (see finding below).
+- Added `FluentBridgeTests`: per-variant projection, runtime `SetPrimary` update, and an end-to-end
+  test through the live `TestApp` (FluentTheme under LoamTheme) proving a stray
+  `SystemControlHighlightAccentBrush` resolves to Loam primary.
+
+**Verified**
+- Source-checked Avalonia 12.0.4 (`gh api` at tag `12.0.4`): `Accents/SystemAccentColors.cs`,
+  `Accents/BaseResources.xaml` — exact keys, shade formula, and per-key opacities.
+- Discovered (and recorded in `findings/2026-06-07-fluent-accent-bridge.md`) that overriding only the
+  `SystemAccentColor` color does NOT cascade — Fluent's accent brushes resolve it in FluentTheme's own
+  scope; the brush keys must be overridden. Caught by the end-to-end test failing first (`#0078d7`),
+  then passing after the brush override (`#6750a4`).
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — 0 warnings, 0 errors.
+- Full suite — **380 passed**, 0 failed (added 3 bridge tests).
+
+**Next:** continue Phase 1 — theme the residual base primitives via Loam ControlThemes / resource
+bridges: `ScrollBar` (most visible), `ToolTip`, `ContextMenu`/`MenuFlyout`, `Window` background,
+text selection/caret, `Expander`, Avalonia `DataGrid`. Then a visual pass of the gallery in light/dark
+(not yet run — headless only). Consider an ADR for the base-chrome bridging approach as it grows.
+
+---
+
+## 2026-06-07 — v3 Phase 0 — Decide & scaffold (kickoff)
+
+**Done**
+- Started v3 ("vNext") on branch `work/vnext`; bumped `Loam.csproj` `<Version>` to `3.0.0-preview.1`.
+- Locked three ADRs: ADR-0008 (naming & Avalonia collision strategy + rename map), ADR-0009 (package
+  split: lean core + `Loam.Charts`/`Loam.Pickers`/`Loam.Data` satellites, deferred to Phase 4),
+  ADR-0010 (v3 versioning & deprecation policy / breaking-change budget).
+- Renamed the responsive layout: new canonical `ResponsiveGrid` (was `Grid`) and `Col` (was `Item`),
+  behaviour-identical (carried automation names "Grid layout"/"Grid item" verbatim).
+- Kept `Grid`/`Item` as `[Obsolete]` subclasses with stable diagnostic ids `LOAM0001`/`LOAM0002` and a
+  migration URL (warning, not error).
+- Migrated internal + sample + test call sites off the deprecated names (`ColorPicker`, `LayoutView`,
+  `ShellView`, `ComponentsView`, `CodeSampleView`, `LayoutTests`, `GalleryAcceptanceTests`); renamed
+  the gallery's `Layout/Grid`+`Layout/Item` pages to `Layout/ResponsiveGrid`+`Layout/Col`.
+- Added a back-compat `LayoutTests` case proving the deprecated aliases still construct, resolve spans,
+  lay out, and report the same automation names (scoped `#pragma warning disable LOAM0001, LOAM0002`).
+- Scaffolded `docs/migration/v2-to-v3.md` (status, breaking-change policy, canonical rename map,
+  diagnostic-id registry, step-by-step for the done renames, per-phase "coming soon"); wired it into
+  the VitePress nav/sidebar and added a "Project" menu linking `PLAN.md`/`REVIEW.md`.
+- Updated `docs/components/layout.md` (ResponsiveGrid/Col sections + deprecation notes; Avalonia `Grid`
+  qualified in the fixed-2D example), README status, memory README, and the component tracker.
+
+**Verified**
+- `dotnet build Loam.slnx -c Release /nodeReuse:false` — **0 warnings, 0 errors** (custom obsolete
+  diagnostics `LOAM0001`/`LOAM0002` emit correctly under `TreatWarningsAsErrors`).
+- `dotnet test … Loam.Tests.csproj -c Release --no-build --blame-hang --blame-hang-timeout 120s
+  -p:UseSharedCompilation=false /nodeReuse:false` — **377 passed**, 0 failed (was 376 + 1 new
+  back-compat test).
+
+**Next:** Phase 1 — theme consistency: bridge Loam tokens to base Avalonia chrome (ScrollBar,
+ToolTip, ContextMenu/MenuFlyout, Window, text selection/caret, Expander, Avalonia DataGrid) and map
+`SystemAccentColor*` → Loam primary. Also run the docs site build to confirm the new page renders.
+
+---
+
 ## 2026-06-07 — v2.0 — Gallery header and docs refresh
 
 **Done**
