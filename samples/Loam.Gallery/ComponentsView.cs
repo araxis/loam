@@ -844,6 +844,7 @@ public sealed class ComponentsView : UserControl
         PageWithSamples("Pickers", "DateRangePicker", "Two-click date range selection.",
             Sample("Variants", BuildDateRangePickerVariants),
             Sample("Selected & custom format", BuildDateRangePickerSelected),
+            Sample("Editable text entry", BuildDateRangePickerEditable),
             Sample("Clearable", BuildDateRangePickerClearable),
             Sample("Quick-select presets", BuildDateRangePickerPresets),
             Sample("Leading icon", BuildDateRangePickerAdornment),
@@ -7614,6 +7615,40 @@ public sealed class ComponentsView : UserControl
                     CancelText = "Dismiss",
                     OkText = "Apply",
                     HelperText = "Short month/day display",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDateRangePickerEditable()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Type or pick",
+                    Editable = true,
+                    DateFormat = "yyyy-MM-dd",
+                    Start = new DateTime(2026, 6, 1),
+                    End = new DateTime(2026, 6, 14),
+                    HelperText = "Type 'start – end' (or 'a to b'), then Enter",
+                },
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Editable (empty)",
+                    Editable = true,
+                    DateFormat = "yyyy-MM-dd",
+                    Placeholder = "start – end",
+                    InvalidRangeText = "Enter as yyyy-MM-dd – yyyy-MM-dd",
+                    HelperText = "A single date sets just the start",
                 },
             },
         };

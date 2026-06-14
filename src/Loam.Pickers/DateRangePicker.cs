@@ -108,6 +108,17 @@ public class DateRangePicker : TemplatedControl
         new DateRangePreset("This year", static a => (new DateTime(a.Year, 1, 1), new DateTime(a.Year, 12, 31))),
     };
 
+    /// <summary>Identifies the <see cref="Editable"/> property.</summary>
+    public static readonly StyledProperty<bool> EditableProperty =
+        AvaloniaProperty.Register<DateRangePicker, bool>(nameof(Editable));
+
+    /// <summary>Identifies the <see cref="InvalidRangeText"/> property.</summary>
+    public static readonly StyledProperty<string> InvalidRangeTextProperty =
+        AvaloniaProperty.Register<DateRangePicker, string>(nameof(InvalidRangeText), "Invalid range");
+
+    /// <summary>Separators accepted between the start and end of a typed range (the first matches the displayed en-dash).</summary>
+    private static readonly string[] RangeSeparators = { "–", " to ", " - " };
+
     /// <summary>Width (excluding margins) of the preset rail shown beside the calendar.</summary>
     private const double PresetRailWidth = 168;
 
@@ -116,6 +127,9 @@ public class DateRangePicker : TemplatedControl
 
     private Border? _box;
     private IconButton? _clear;
+    private IconButton? _calendarButton;
+    private TextBox? _input;
+    private bool _flyoutOpening;
     private Icon? _adornment;
     private Border? _labelHost;
     private Text? _display;
@@ -168,6 +182,20 @@ public class DateRangePicker : TemplatedControl
     {
         get => GetValue(AdornmentIconProperty);
         set => SetValue(AdornmentIconProperty, value);
+    }
+
+    /// <summary>When true, the user can type a range into the field; the trailing calendar icon opens the flyout.</summary>
+    public bool Editable
+    {
+        get => GetValue(EditableProperty);
+        set => SetValue(EditableProperty, value);
+    }
+
+    /// <summary>Error message shown when typed text cannot be parsed as a range or is out of range (<see cref="Editable"/> mode).</summary>
+    public string InvalidRangeText
+    {
+        get => GetValue(InvalidRangeTextProperty);
+        set => SetValue(InvalidRangeTextProperty, value);
     }
 
     /// <summary>When true, the flyout shows a quick-select rail of <see cref="Presets"/> (or <see cref="DefaultPresets"/> when none are set).</summary>
@@ -315,6 +343,62 @@ public class DateRangePicker : TemplatedControl
         return end is null ? startText : $"{startText} – {end.Value.ToString(format, CultureInfo.CurrentCulture)}";
     }
 
+    /// <summary>
+    /// Parses typed range text. Returns <c>true</c> when the text is empty (yielding both <c>null</c>), is a
+    /// single date parseable via <paramref name="format"/> (start only), or is two dates separated by an
+    /// en-dash, " to ", or " - " (auto-ordered). Each half is parsed by <see cref="DatePicker.TryParseDate"/>;
+    /// returns <c>false</c> for non-empty unparseable text.
+    /// </summary>
+    public static bool TryParseRange(string? text, string format, out DateTime? start, out DateTime? end)
+    {
+        start = null;
+        end = null;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return true;
+        }
+
+        var (left, right, hasSeparator) = SplitRange(text);
+        if (!DatePicker.TryParseDate(left, format, out var parsedStart) || parsedStart is null)
+        {
+            return false;
+        }
+
+        if (!hasSeparator)
+        {
+            start = parsedStart; // a single date is treated as the start with no end
+            return true;
+        }
+
+        if (!DatePicker.TryParseDate(right, format, out var parsedEnd) || parsedEnd is null)
+        {
+            return false;
+        }
+
+        if (parsedEnd < parsedStart)
+        {
+            (parsedStart, parsedEnd) = (parsedEnd, parsedStart); // auto-order
+        }
+
+        start = parsedStart;
+        end = parsedEnd;
+        return true;
+    }
+
+    private static (string Left, string Right, bool HasSeparator) SplitRange(string text)
+    {
+        foreach (var separator in RangeSeparators)
+        {
+            var index = text.IndexOf(separator, StringComparison.Ordinal);
+            if (index >= 0)
+            {
+                return (text[..index].Trim(), text[(index + separator.Length)..].Trim(), true);
+            }
+        }
+
+        return (text.Trim(), string.Empty, false);
+    }
+
     /// <inheritdoc />
     protected override Type StyleKeyOverride => typeof(DateRangePicker);
 
@@ -329,6 +413,8 @@ public class DateRangePicker : TemplatedControl
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        _calendarButton = e.NameScope.Find("PART_CalendarButton") as IconButton;
+        _input = e.NameScope.Find("PART_Input") as TextBox;
         _adornment = e.NameScope.Find("PART_Adornment") as Icon;
         if (_clear is not null)
         {
@@ -337,6 +423,51 @@ public class DateRangePicker : TemplatedControl
             {
                 Clear();
                 RangeSelected?.Invoke(null, null);
+            };
+        }
+
+        if (_calendarButton is not null)
+        {
+            Avalonia.Automation.AutomationProperties.SetName(_calendarButton, "Open calendar");
+            // Pressing the button blurs the input before Click fires; flag it so the resulting commit is
+            // suppressed (the flyout selection sets the value instead of in-progress typed text).
+            _calendarButton.AddHandler(
+                InputElement.PointerPressedEvent,
+                (_, _) => _flyoutOpening = true,
+                Avalonia.Interactivity.RoutingStrategies.Tunnel,
+                handledEventsToo: true);
+            _calendarButton.Click += (_, _) =>
+            {
+                Open();
+                _flyoutOpening = false;
+            };
+        }
+
+        if (_input is not null)
+        {
+            FieldChrome.ResetInnerTextBox(_input);
+            _input.GotFocus += (_, _) =>
+            {
+                FieldChrome.ResetInnerTextBox(_input);
+                ApplyBoxChrome();
+            };
+            _input.LostFocus += (_, _) =>
+            {
+                CommitText();
+                ApplyBoxChrome();
+            };
+            _input.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Enter)
+                {
+                    CommitText();
+                    args.Handled = true;
+                }
+                else if (args.Key is Key.Down && args.KeyModifiers.HasFlag(KeyModifiers.Alt))
+                {
+                    Open();
+                    args.Handled = true;
+                }
             };
         }
 
@@ -351,13 +482,22 @@ public class DateRangePicker : TemplatedControl
                     return;
                 }
 
-                Focus();
-                Open();
+                if (Editable)
+                {
+                    _input?.Focus();
+                }
+                else
+                {
+                    Focus();
+                    Open();
+                }
+
                 args.Handled = true;
             };
         }
 
         UpdateAdornment();
+        UpdateEditMode();
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
@@ -371,6 +511,48 @@ public class DateRangePicker : TemplatedControl
             _clear.IsVisible = Clearable && (Start is not null || End is not null);
         }
     }
+
+    private void UpdateEditMode()
+    {
+        if (_input is not null)
+        {
+            _input.IsVisible = Editable;
+            _input.IsReadOnly = !Editable;
+        }
+    }
+
+    private void CommitText()
+    {
+        // Skip while the flyout is open/opening: the popup steals focus and the flyout selection,
+        // not the in-progress typed text, is what should set the value.
+        if (_input is null || !Editable || _flyoutOpen || _flyoutOpening)
+        {
+            return;
+        }
+
+        if (!TryParseRange(_input.Text, DateFormat, out var start, out var end))
+        {
+            Error = true;
+            ErrorText = InvalidRangeText;
+            return; // keep the user's text so they can correct it
+        }
+
+        if ((start is { } s && IsOutOfRange(s)) || (end is { } en && IsOutOfRange(en)))
+        {
+            Error = true;
+            ErrorText = InvalidRangeText;
+            return;
+        }
+
+        Error = false;
+        Start = start;
+        End = end;
+        UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        RangeSelected?.Invoke(Start, End);
+    }
+
+    private bool IsOutOfRange(DateTime value) =>
+        (MinDate is { } min && value.Date < min.Date) || (MaxDate is { } max && value.Date > max.Date);
 
     private void UpdateAdornment()
     {
@@ -408,6 +590,13 @@ public class DateRangePicker : TemplatedControl
             UpdateLabel();
         }
 
+        if (change.Property == EditableProperty)
+        {
+            UpdateEditMode();
+            UpdateDisplay();
+            ApplyBoxChrome();
+        }
+
         if (change.Property == VariantProperty || change.Property == ColorProperty || change.Property == ErrorProperty ||
             change.Property == IsEnabledProperty)
         {
@@ -425,7 +614,8 @@ public class DateRangePicker : TemplatedControl
             return;
         }
 
-        if (InteractionAssist.IsActivationKey(e.Key))
+        // In editable mode, Space/Enter belong to the text box; the flyout opens via the icon or Alt+Down.
+        if (!Editable && InteractionAssist.IsActivationKey(e.Key))
         {
             Open();
             e.Handled = true;
@@ -522,8 +712,10 @@ public class DateRangePicker : TemplatedControl
         };
         ok.Click += (_, _) =>
         {
+            Error = false; // picking a valid range clears any prior typed-input error
             Start = pendingStart;
             End = pendingEnd;
+            UpdateDisplay();
             RangeSelected?.Invoke(Start, End);
             _flyout?.Hide();
             ApplyBoxChrome();
@@ -639,7 +831,8 @@ public class DateRangePicker : TemplatedControl
         var labelForeground = LabelForegroundKey();
         var helperForeground = Error ? LoamTokens.Error : LoamTokens.TextSecondary;
         var hasLabel = !string.IsNullOrEmpty(Label);
-        var floating = hasLabel && (ShrinkLabel || IsActive() || Start is not null || End is not null);
+        var hasTypedText = Editable && _input is not null && !string.IsNullOrEmpty(_input.Text);
+        var floating = hasLabel && (ShrinkLabel || IsActive() || Start is not null || End is not null || hasTypedText);
         var resting = hasLabel && !floating;
 
         if (_label is not null)
@@ -660,7 +853,13 @@ public class DateRangePicker : TemplatedControl
 
         if (_display is not null)
         {
-            _display.IsVisible = !resting;
+            _display.IsVisible = !resting && !Editable;
+        }
+
+        if (_input is not null)
+        {
+            _input.PlaceholderText = resting ? null : Placeholder;
+            Avalonia.Automation.AutomationProperties.SetName(_input, Label ?? Placeholder ?? "Date range");
         }
 
         var leadingInset = string.IsNullOrEmpty(AdornmentIcon) ? 0 : FieldChrome.LeadingAdornmentInset(this);
@@ -691,6 +890,13 @@ public class DateRangePicker : TemplatedControl
         _displayForeground?.Dispose();
         _displayForeground = _display.Bind(TextBlock.ForegroundProperty,
             this.GetResourceObservable(hasValue ? LoamTokens.TextPrimary : LoamTokens.TextSecondary));
+
+        // Keep the editable text box in sync with the committed value (empty when cleared).
+        if (_input is not null && Editable)
+        {
+            _input.Text = text ?? string.Empty;
+        }
+
         InteractionAssist.SetAutomationName(this, Label, _display.Text, Placeholder);
         UpdateLabel();
     }
@@ -705,11 +911,13 @@ public class DateRangePicker : TemplatedControl
         FieldChrome.Apply(this, _box, Variant, Color, Error, IsActive(), IsEnabled,
             ref _boxBorderBrush, ref _boxBackground);
         _box.IsEnabled = IsEnabled;
-        _box.Cursor = IsEnabled ? new Cursor(StandardCursorType.Hand) : Cursor.Default;
+        _box.Cursor = !IsEnabled ? Cursor.Default
+            : Editable ? new Cursor(StandardCursorType.Ibeam)
+            : new Cursor(StandardCursorType.Hand);
         UpdateLabel();
     }
 
-    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true;
+    private bool IsActive() => _flyoutOpen || IsFocused || _box?.IsFocused == true || _input?.IsFocused == true;
 
     private string LabelForegroundKey()
     {

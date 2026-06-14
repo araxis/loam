@@ -17,7 +17,7 @@ Set `Clearable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to surface a
 
 Set `AdornmentIcon` (a glyph from `Loam.Icons`, e.g. `Icons.Material.Filled.Person`) on the same three field pickers to show a leading icon at the start of the field. The value text, resting label, and floating label all indent to the icon's right so nothing overlaps, across every variant.
 
-Set `Editable` on `DatePicker` or `TimePicker` to let the user type the value directly into the field. The text is parsed and committed on Enter or focus loss — exact format first (`DateFormat`/`TimeFormat`), then a loose current-culture parse — and (for `DatePicker`) validated against `MinDate`/`MaxDate`; unparseable or out-of-range input leaves the value unchanged and shows `InvalidDateText`/`InvalidTimeText` in the error slot. The trailing icon (now a button) and `Alt+Down` still open the flyout, which stays in sync with the typed value.
+Set `Editable` on `DatePicker`, `TimePicker`, or `DateRangePicker` to let the user type the value directly into the field. The text is parsed and committed on Enter or focus loss — exact format first (`DateFormat`/`TimeFormat`), then a loose current-culture parse — and validated against `MinDate`/`MaxDate` (for the date pickers); unparseable or out-of-range input leaves the value unchanged and shows `InvalidDateText`/`InvalidTimeText`/`InvalidRangeText` in the error slot. `DateRangePicker` accepts a `"start – end"` range (also `" to "` or `" - "`, a single date sets only `Start`, and the pair is auto-ordered). The trailing icon (now a button) and `Alt+Down` still open the flyout, which stays in sync with the typed value.
 
 ---
 
@@ -236,6 +236,9 @@ while still allowing programmatic range updates.
 | `ShrinkLabel` | `bool` | `false` | Keeps the label floated even when empty and unfocused. |
 | `Clearable` | `bool` | `false` | Shows an inline trailing × button when a range is set; clicking it clears `Start`/`End`, raises `RangeSelected` with `null, null`, and does not open the flyout. |
 | `AdornmentIcon` | `string?` | `null` | Optional leading glyph shown at the start of the field; the range text and label indent to its right. |
+| `Editable` | `bool` | `false` | Lets the user type a range (`"start – end"`, also `" to "`/`" - "`) into the field; a single date sets only `Start`. Committed on Enter or focus loss; the trailing calendar icon (or Alt+Down) still opens the flyout. |
+| `InvalidRangeText` | `string` | `"Invalid range"` | `ErrorText` shown when typed text cannot be parsed or is out of range (editable mode). |
+| `TryParseRange(text, format, out start, out end)` _(static)_ | `bool` | — | Parses typed range text (empty → both `null`; single date → `start` only; two dates → auto-ordered). Each half uses `DatePicker.TryParseDate`. |
 | `ShowPresets` | `bool` | `false` | Shows a quick-select rail in the flyout listing `Presets` (or `DefaultPresets` when none are set). |
 | `Presets` | `AvaloniaList<DateRangePreset>` | empty | Custom quick-select shortcuts. When empty and `ShowPresets` is `true`, `DefaultPresets` is used. |
 | `DefaultPresets` _(static)_ | `IReadOnlyList<DateRangePreset>` | 7 built-ins | Today, Yesterday, Last 7 days, Last 30 days, This month, Last month, This year. |

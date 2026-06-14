@@ -291,6 +291,249 @@ public class PickerTests
         button.IsFocused.ShouldBeTrue();
     }
 
+    [Fact]
+    public void DateRangePicker_TryParseRange_handles_empty_single_pair_ordering_and_invalid()
+    {
+        DateRangePicker.TryParseRange("  ", "yyyy-MM-dd", out var es, out var ee).ShouldBeTrue();
+        es.ShouldBeNull();
+        ee.ShouldBeNull();
+
+        DateRangePicker.TryParseRange("2026-06-01", "yyyy-MM-dd", out var ss, out var se).ShouldBeTrue();
+        ss.ShouldBe(new DateTime(2026, 6, 1)); // a single date is the start, end stays null
+        se.ShouldBeNull();
+
+        DateRangePicker.TryParseRange("2026-06-01 – 2026-06-14", "yyyy-MM-dd", out var ps, out var pe).ShouldBeTrue();
+        ps.ShouldBe(new DateTime(2026, 6, 1));
+        pe.ShouldBe(new DateTime(2026, 6, 14));
+
+        DateRangePicker.TryParseRange("2026-06-01 to 2026-06-14", "yyyy-MM-dd", out var ts, out var te).ShouldBeTrue();
+        ts.ShouldBe(new DateTime(2026, 6, 1));
+        te.ShouldBe(new DateTime(2026, 6, 14));
+
+        DateRangePicker.TryParseRange("2026-06-01 - 2026-06-14", "yyyy-MM-dd", out var hs, out var he).ShouldBeTrue();
+        hs.ShouldBe(new DateTime(2026, 6, 1)); // space-hyphen-space separator
+        he.ShouldBe(new DateTime(2026, 6, 14));
+
+        // Reversed input is auto-ordered.
+        DateRangePicker.TryParseRange("2026-06-14 – 2026-06-01", "yyyy-MM-dd", out var rs, out var re).ShouldBeTrue();
+        rs.ShouldBe(new DateTime(2026, 6, 1));
+        re.ShouldBe(new DateTime(2026, 6, 14));
+
+        DateRangePicker.TryParseRange("nonsense", "yyyy-MM-dd", out var bs, out var be).ShouldBeFalse();
+        bs.ShouldBeNull();
+        be.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_non_editable_hides_text_input()
+    {
+        var picker = new DateRangePicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        EditableInput(picker).IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_parses_typed_range_on_enter()
+    {
+        DateTime? cs = null, ce = null;
+        var raised = false;
+        var picker = new DateRangePicker { Editable = true, DateFormat = "yyyy-MM-dd" };
+        picker.RangeSelected += (s, e) => { raised = true; cs = s; ce = e; };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.IsVisible.ShouldBeTrue();
+        input.Text = "2026-06-01 – 2026-06-14";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBe(new DateTime(2026, 6, 1));
+        picker.End.ShouldBe(new DateTime(2026, 6, 14));
+        picker.Error.ShouldBeFalse();
+        raised.ShouldBeTrue();
+        cs.ShouldBe(new DateTime(2026, 6, 1));
+        ce.ShouldBe(new DateTime(2026, 6, 14));
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_single_date_sets_start_only()
+    {
+        var picker = new DateRangePicker { Editable = true, DateFormat = "yyyy-MM-dd" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "2026-06-01";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBe(new DateTime(2026, 6, 1));
+        picker.End.ShouldBeNull();
+        picker.Error.ShouldBeFalse();
+        input.Text.ShouldBe("2026-06-01"); // a single date round-trips unchanged (no spurious end)
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_marks_error_on_invalid_text()
+    {
+        var picker = new DateRangePicker { Editable = true, DateFormat = "yyyy-MM-dd", Start = new DateTime(2026, 1, 1), End = new DateTime(2026, 1, 5) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "garbage";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidRangeText);
+        picker.Start.ShouldBe(new DateTime(2026, 1, 1)); // unchanged
+        picker.End.ShouldBe(new DateTime(2026, 1, 5));
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_rejects_out_of_range()
+    {
+        var picker = new DateRangePicker
+        {
+            Editable = true,
+            DateFormat = "yyyy-MM-dd",
+            MinDate = new DateTime(2026, 6, 1),
+            MaxDate = new DateTime(2026, 6, 30),
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "2026-06-10 – 2026-12-25"; // end outside MaxDate
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.Start.ShouldBeNull(); // not committed
+        picker.End.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_empty_clears_and_syncs_from_value()
+    {
+        var picker = new DateRangePicker { Editable = true, DateFormat = "yyyy-MM-dd", Start = new DateTime(2026, 6, 1), End = new DateTime(2026, 6, 14) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text.ShouldBe("2026-06-01 – 2026-06-14"); // committed range flows into the text box
+
+        input.Text = string.Empty;
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBeNull();
+        picker.End.ShouldBeNull();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_reformats_to_ordered_endash()
+    {
+        var picker = new DateRangePicker { Editable = true, DateFormat = "yyyy-MM-dd" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "2026-06-14 to 2026-06-01"; // reversed + " to " separator
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        input.Text.ShouldBe("2026-06-01 – 2026-06-14"); // ordered + canonical en-dash separator
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_calendar_button_opens_and_ok_syncs()
+    {
+        var picker = new DateRangePicker { Editable = true, DateFormat = "yyyy-MM-dd", Start = new DateTime(2026, 6, 1), End = new DateTime(2026, 6, 14) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+        picker.GetVisualDescendants().OfType<IconButton>().First(b => AutomationProperties.GetName(b) == "Open calendar")
+            .RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBe(new DateTime(2026, 6, 1));
+        EditableInput(picker).Text.ShouldBe("2026-06-01 – 2026-06-14");
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_alt_down_opens_flyout()
+    {
+        var picker = new DateRangePicker { Editable = true };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Focus();
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+
+        input.RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Alt));
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_non_editable_activation_still_opens_flyout()
+    {
+        var picker = new DateRangePicker();
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        MaybeOpenedFlyout(picker).ShouldBeNull();
+        picker.RaiseEvent(KeyArgs(Key.Space)); // non-editable activation is unchanged
+        Dispatcher.UIThread.RunJobs();
+        MaybeOpenedFlyout(picker).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_with_presets_commits_typed_range_and_shows_rail()
+    {
+        var picker = new DateRangePicker { Editable = true, ShowPresets = true, DateFormat = "yyyy-MM-dd" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        // Editable input and the preset rail coexist.
+        var input = EditableInput(picker);
+        input.IsVisible.ShouldBeTrue();
+        input.Text = "2026-06-01 – 2026-06-14";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start.ShouldBe(new DateTime(2026, 6, 1)); // typed range committed, not overridden by presets
+        picker.End.ShouldBe(new DateTime(2026, 6, 14));
+
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        PopupButtonLabels(paper).ShouldContain("Last 7 days"); // preset rail still renders
+    }
+
     // Find a time column by its heading ("Hour"/"Minute") rather than child order, so the test does
     // not silently bind to the wrong column if the layout is reordered or another scroller is added.
     private static ScrollViewer TimeColumn(Paper paper, string heading) =>
@@ -1499,19 +1742,11 @@ public class PickerTests
             box.Padding.Left.ShouldBeGreaterThanOrEqualTo(16);
             box.HorizontalAlignment.ShouldBe(Avalonia.Layout.HorizontalAlignment.Stretch);
 
-            if (picker is Loam.Controls.DatePicker or Loam.Controls.TimePicker)
-            {
-                // The calendar/clock affordance is an IconButton (clickable to open the flyout in Editable mode).
-                var button = box.GetVisualDescendants().OfType<IconButton>()
-                    .First(b => AutomationProperties.GetName(b) is "Open calendar" or "Open clock");
-                button.Size.ShouldBe(LoamSize.Small);
-            }
-            else
-            {
-                var icon = box.GetVisualDescendants().OfType<Icon>().First();
-                icon.Size.ShouldBe(LoamSize.Small);
-                icon.Margin.Left.ShouldBe(12);
-            }
+            // All three field pickers expose their calendar/clock affordance as an IconButton
+            // (clickable to open the flyout, required for Editable mode).
+            var button = box.GetVisualDescendants().OfType<IconButton>()
+                .First(b => AutomationProperties.GetName(b) is "Open calendar" or "Open clock");
+            button.Size.ShouldBe(LoamSize.Small);
         }
     }
 

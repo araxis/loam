@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.14.0</Version>
-    <PackageReleaseNotes>Loam 3.14.0: Loam.Pickers TimePicker editable text entry — set Editable to type a time into the field (mirrors DatePicker); committed on Enter/blur, parsed against TimeFormat then loosely (InvalidTimeText on failure). The clock icon becomes a button (Alt+Down also opens) and the flyout stays in sync. Public static TryParseTime exposes the parse rule. Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.15.0</Version>
+    <PackageReleaseNotes>Loam 3.15.0: Loam.Pickers DateRangePicker editable text entry — set Editable to type a "start – end" range (also " to "/" - "; a single date sets only Start); committed on Enter/blur, each half parsed via DatePicker.TryParseDate, auto-ordered, validated against MinDate/MaxDate (InvalidRangeText on failure). Calendar icon becomes a button (Alt+Down also opens), flyout stays in sync. Public static TryParseRange exposes the rule. Completes editable across all three field pickers. Additive, off by default. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

@@ -6,6 +6,17 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.15.0
+
+**`Loam.Pickers` DateRangePicker editable text entry.** Set `Editable` on `DateRangePicker` to type a range
+into the field, completing editable support across all three field pickers. The text is committed on Enter or
+focus loss: a `"start – end"` pair (also `" to "` / `" - "` separators) is parsed by reusing
+`DatePicker.TryParseDate` for each half and auto-ordered, a single date sets only `Start`, and both endpoints
+are validated against `MinDate`/`MaxDate` (`InvalidRangeText` on failure); empty clears both and committed text
+is normalized to the canonical en-dash form. The calendar icon becomes a button (and `Alt+Down` works) so the
+flyout still opens and stays in sync. A public static `DateRangePicker.TryParseRange(text, format, out start,
+out end)` exposes the parse rule. Additive and off by default.
+
 ## 3.14.0
 
 **`Loam.Pickers` TimePicker editable text entry.** Set `Editable` on `TimePicker` to type a time into the
