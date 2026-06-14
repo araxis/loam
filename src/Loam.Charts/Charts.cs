@@ -745,7 +745,26 @@ public abstract class ChartBase : Control
         InvalidateVisual();
     }
 
-    private void RebuildPoints() => _points = BuildPoints();
+    /// <summary>Raised after the per-point snapshot is rebuilt (data/colors/labels changed). Used by a bound legend.</summary>
+    internal event EventHandler? SnapshotChanged;
+
+    private void RebuildPoints()
+    {
+        _points = BuildPoints();
+        SnapshotChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Legend entries (label + color) derived from the current data. Multi-series charts override this.</summary>
+    internal virtual IReadOnlyList<(string Label, Color Color)> GetLegendEntries()
+    {
+        var result = new List<(string Label, Color Color)>(_points.Length);
+        foreach (var point in _points)
+        {
+            result.Add((point.Label ?? string.Empty, point.Color));
+        }
+
+        return result;
+    }
 
     /// <summary>Builds the per-point snapshot from the current data. Overridden by multi-series charts.</summary>
     protected virtual ChartPoint[] BuildPoints()
@@ -1221,6 +1240,23 @@ public abstract class CartesianChartBase : ChartBase
 
     /// <summary>The resolved color for a series (its explicit color, or the theme color for its index).</summary>
     private protected Color SeriesColor(int seriesIndex) => _series![seriesIndex].Color ?? SeriesColorAt(seriesIndex);
+
+    /// <inheritdoc />
+    internal override IReadOnlyList<(string Label, Color Color)> GetLegendEntries()
+    {
+        if (_series is not { Count: > 0 } series)
+        {
+            return base.GetLegendEntries();
+        }
+
+        var result = new List<(string Label, Color Color)>(series.Count);
+        for (var s = 0; s < series.Count; s++)
+        {
+            result.Add((series[s].Name ?? $"Series {s + 1}", series[s].Color ?? SeriesColorAt(s)));
+        }
+
+        return result;
+    }
 
     /// <inheritdoc />
     protected override ChartPoint[] BuildPoints()

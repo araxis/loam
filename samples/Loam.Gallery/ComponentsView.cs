@@ -8259,6 +8259,7 @@ public sealed class ComponentsView : UserControl
         var web = new[] { 30d, 45d, 28d, 60d };
         var mobile = new[] { 18d, 22d, 35d, 30d };
         var series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile") };
+        var chart = new BarChart { Width = 340, Height = 200, Labels = labels, Series = series, ShowAxes = true };
 
         return new Paper
         {
@@ -8270,9 +8271,9 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Series render side-by-side per category; each series keeps one color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
-                    new BarChart { Width = 340, Height = 200, Labels = labels, Series = series, ShowAxes = true },
-                    new ChartLegend { Labels = { "Web", "Mobile" } },
+                    new Text { Text = "Series render side-by-side per category; the legend binds to the chart.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    chart,
+                    new ChartLegend { Source = chart },
                 },
             },
         };
@@ -8285,6 +8286,7 @@ public sealed class ComponentsView : UserControl
         var mobile = new[] { 18d, 22d, 35d, 30d };
         var kiosk = new[] { 10d, 14d, 9d, 20d };
         var series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile"), new ChartSeries(kiosk, "Kiosk") };
+        var chart = new BarChart { Width = 340, Height = 200, Labels = labels, Series = series, StackMode = BarStackMode.Stacked, ShowAxes = true };
 
         return new Paper
         {
@@ -8297,8 +8299,8 @@ public sealed class ComponentsView : UserControl
                 Children =
                 {
                     new Text { Text = "StackMode = Stacked layers series; StackedPercent normalizes each category to 100%.", Typo = Typo.Caption, Color = LoamColor.Secondary },
-                    new BarChart { Width = 340, Height = 200, Labels = labels, Series = series, StackMode = BarStackMode.Stacked, ShowAxes = true },
-                    new ChartLegend { Labels = { "Web", "Mobile", "Kiosk" } },
+                    chart,
+                    new ChartLegend { Source = chart },
                 },
             },
         };
@@ -8310,6 +8312,7 @@ public sealed class ComponentsView : UserControl
         var web = new[] { 30d, 45d, 28d, 60d };
         var mobile = new[] { 18d, 22d, 35d, 30d };
         var series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile") };
+        var chart = new LineChart { Width = 340, Height = 200, Labels = labels, Series = series, ShowAxes = true };
 
         return new Paper
         {
@@ -8321,9 +8324,9 @@ public sealed class ComponentsView : UserControl
                 Spacing = 10,
                 Children =
                 {
-                    new Text { Text = "Each series is its own line and color.", Typo = Typo.Caption, Color = LoamColor.Secondary },
-                    new LineChart { Width = 340, Height = 200, Labels = labels, Series = series, ShowAxes = true },
-                    new ChartLegend { Labels = { "Web", "Mobile" } },
+                    new Text { Text = "Each series is its own line and color; the legend binds to the chart.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    chart,
+                    new ChartLegend { Source = chart },
                 },
             },
         };

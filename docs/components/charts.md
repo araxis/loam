@@ -122,6 +122,15 @@ new BarChart { Labels = quarters, Series = series, StackMode = BarStackMode.Stac
 new LineChart { Labels = quarters, Series = series, ShowAxes = true };                                      // multi-line
 ```
 
+**Bound legend.** Set `ChartLegend.Source` to a chart and the legend derives its rows automatically —
+one per series (name + color) for multi-series charts, otherwise one per category — and refreshes when
+the chart's data changes. No manual `Labels`/`Colors` to keep in sync:
+
+```csharp
+var chart = new BarChart { Labels = quarters, Series = series };
+var legend = new ChartLegend { Source = chart };
+```
+
 ```csharp
 var chart = new BarChart { Values = new[] { 12d, 19d, 8d }, Labels = new[] { "Mon", "Tue", "Wed" } };
 chart.HoverChanged += (_, e) => status.Text = e.Point is { } p ? $"{p.Label}: {p.Value:N0}" : "";

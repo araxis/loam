@@ -609,6 +609,41 @@ public class ChartTests
         window.Close();
     }
 
+    [AvaloniaFact]
+    public void Bound_legend_derives_rows_from_chart_series()
+    {
+        var labels = new[] { "Q1", "Q2" };
+        var web = new[] { 10d, 20d };
+        var mobile = new[] { 5d, 8d };
+        var bar = new BarChart
+        {
+            Labels = labels,
+            Series = new[] { new ChartSeries(web, "Web"), new ChartSeries(mobile, "Mobile") },
+        };
+        var legend = new ChartLegend { Source = bar };
+
+        var window = Show(new StackPanel { Children = { bar, legend } }, ThemeVariant.Light);
+        try
+        {
+            var swatches = legend.GetVisualDescendants().OfType<Border>()
+                .Where(b => b.Width == 12 && b.Height == 12)
+                .ToList();
+
+            swatches.Count.ShouldBe(2); // one row per series
+            ((ISolidColorBrush)swatches[0].Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.Primary);
+            ((ISolidColorBrush)swatches[1].Background!).Color.ShouldBe(LoamColorScheme.DefaultLight.Secondary);
+            AutomationProperties.GetHelpText(legend).ShouldBe("2 items");
+
+            var rowTexts = legend.GetVisualDescendants().OfType<Text>().Select(t => t.Text).ToList();
+            rowTexts.ShouldContain("Web");
+            rowTexts.ShouldContain("Mobile");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
     private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)

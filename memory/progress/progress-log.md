@@ -7,6 +7,18 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.5 (sub-slice 2) — Chart-bound legend
+
+`ChartLegend.Source : ChartBase?` auto-derives rows from the chart — one per series (name + per-series
+color) for multi-series, else one per category — and refreshes on the chart's new internal
+`SnapshotChanged` event (raised in `RebuildPoints`). Backed by `ChartBase.GetLegendEntries()` (internal
+virtual; `CartesianChartBase` overrides for series). Subscription managed across attach/detach; manual
+`Labels`/`Colors` still work when `Source` is null. Gallery multi-series samples now use `Source`.
+Verified: build 0/0, full suite **477 passing** (+1: legend rows/colors/labels derived from series).
+Deferred (documented): interactive series toggle + hover-highlight sync, and time-series X mapping.
+
+---
+
 ## 2026-06-14 — 3.5 (sub-slice 1) — Charts multi-series (grouped/stacked/percent bars, multi-line)
 
 **Done**
