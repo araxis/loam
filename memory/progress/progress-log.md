@@ -7,6 +7,63 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.2 — Charts enrichment: on-chart data labels (completes 3.2)
+
+**Done**
+- `ChartBase.ShowDataLabels` (bool) + `DataLabelFormat` (Func<ChartPoint,string>?). Shared helpers:
+  `ResolveDataLabel`, `DefaultDataLabel` (virtual; value via `0.##`), `DataLabelText` (tokenized
+  FormattedText), `ContrastBrush` (luminance-based near-black/white for on-fill text).
+- PieChart: overrides `DefaultDataLabel` → percentage; draws labels at slice centroids (skips slices
+  < 16°), contrast-colored on the slice fill.
+- BarChart: value above positive bars / below negative bars (signed branch too); LineChart: value above
+  each point. Both thin left-to-right (skip when a label would overlap the previous) and clamp x into the
+  chart bounds so edge labels aren't clipped.
+- Gallery: +3 samples (PieChart "Slice percentages", Bar/Line "Data labels"). Docs: charts.md shared
+  table + example, changelog. 1 new test (render-without-throw across all three + signed).
+
+**Verified:** Release build 0/0; full suite **466 passing**. Visually confirmed via the offscreen Skia
+harness: bar values above bars, donut slice % at centroids (white-on-fill), line values above points
+with the first/last no longer clipping after the x-clamp.
+
+**Next:** 3.3 — chart hit-testing + hover tooltips (the snapshot + this label infra feed it).
+
+---
+
+## 2026-06-14 — 3.2 — Charts enrichment, first slice (snapshot + donut center text + signed values)
+
+First slice of the value/demand-first enrichment roadmap ([satellite-enrichment-roadmap.md](../plans/satellite-enrichment-roadmap.md)).
+All additive in `src/Loam.Charts/Charts.cs`; no breaking changes.
+
+**Done**
+- **Per-point snapshot:** `public readonly record struct ChartPoint(int Index, double Value, double Percent,
+  string? Label, Color Color)`; `ChartBase.Labels` + `protected internal ResolvedPoints`, rebuilt on
+  Values/Colors/Labels/visuals change. `UpdateAutomation` now appends positive-point labels when present
+  (kept the bare "{n} value(s)"/"No data" format when no labels — existing tests rely on it).
+- **Donut center text:** `PieChart.CenterText`/`CenterSubText`/`CenterValue`/`CenterValueFormat` drawn in
+  the hole with `FormattedText` (MaxTextWidth + ellipsis trimming), only when `Donut`.
+- **Signed values:** opt-in `AllowNegative` on `BarChart`/`LineChart` (default false → unchanged clamping).
+  New pure helpers in static `Charts`: `SignedDomain`, `ZeroBaselineOffset` (public), `SignedBarLayout`
+  (public), `ScaledLinePoints` (internal). Bars grow up/down from a drawn zero baseline; signed lines plot
+  around it and Area fills to it.
+- Gallery: +3 samples (PieChart "Donut with center total", Bar/Line "Signed values"). Docs: charts.md
+  property tables + examples, changelog 3.2.0 entry. 7 new xUnit/headless tests in ChartTests.cs.
+
+**Decisions**
+- Kept default clamping behavior (AllowNegative defaults false) so existing all-positive callers and the
+  `Charts_math_clamps_negative_values` test are unaffected — signed math lives in *new* helpers, not in
+  `BarHeights`/`SliceSweeps`/`LinePoints`.
+- Hoisted inline `string[]` label literals to locals to satisfy CA1861 under TreatWarningsAsErrors.
+
+**Verified:** Release build 0/0; full suite **465 passing** (458 + 7). Visually confirmed: signed
+LineChart in the live gallery (PrintWindow capture); donut center text ("1,240 / sessions", centered)
+and signed BarChart (bars up/down from a zero baseline) via an offscreen Skia `RenderTargetBitmap`
+harness. (Live-gallery nav was blocked by Windows foreground-lock contention, so the offscreen render
+was used for the two pages that couldn't be reached interactively.)
+
+**Next:** 3.3 — chart hit-testing + hover tooltips (builds on the snapshot).
+
+---
+
 ## 2026-06-14 — 3.1 cycle — Package split Phase C (versioning, CI, guard test, docs)
 
 **Done**

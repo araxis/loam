@@ -215,6 +215,155 @@ public class ChartTests
         }
     }
 
+    [Fact]
+    public void Charts_signed_domain_and_bar_layout_handle_negatives()
+    {
+        var values = new[] { 10d, -5d, 0d };
+        Charts.SignedDomain(values).ShouldBe((-5d, 10d));
+
+        // span = 15, plotHeight = 150 -> zero baseline sits 100px below the top.
+        Charts.ZeroBaselineOffset(-5, 10, 150).ShouldBe(100d);
+
+        var layout = Charts.SignedBarLayout(values, -5, 10, 150);
+        layout.Count.ShouldBe(3);
+        layout[0].ShouldBe((0d, 100d));    // +10: full bar up from the baseline
+        layout[1].ShouldBe((100d, 50d));   // -5: bar drops below the baseline
+        layout[2].ShouldBe((100d, 0d));    // 0: no bar, sits on the baseline
+    }
+
+    [Fact]
+    public void Charts_signed_domain_with_all_positive_data_keeps_a_zero_floor()
+    {
+        Charts.SignedDomain([3d, 8d, 5d]).ShouldBe((0d, 8d));
+        Charts.ZeroBaselineOffset(0, 8, 120).ShouldBe(120d); // baseline at the bottom
+    }
+
+    [Fact]
+    public void Charts_scaled_line_points_map_a_signed_domain()
+    {
+        var points = Charts.ScaledLinePoints([-10d, 0d, 10d], 100, 100, -10, 10, 0);
+
+        points.Count.ShouldBe(3);
+        points[0].ShouldBe(new Avalonia.Point(0, 100));  // -10 at the bottom
+        points[1].ShouldBe(new Avalonia.Point(50, 50));  // 0 in the middle
+        points[2].ShouldBe(new Avalonia.Point(100, 0));  // +10 at the top
+    }
+
+    [AvaloniaFact]
+    public void Chart_snapshot_projects_value_label_percent_and_color()
+    {
+        var labels = new[] { "Alpha", "Beta", "Gamma" };
+        var pie = new PieChart { Values = [30d, 10d, 0d], Labels = labels };
+        var window = Show(pie, ThemeVariant.Light);
+        try
+        {
+            var points = pie.ResolvedPoints;
+            points.Count.ShouldBe(3);
+
+            points[0].Index.ShouldBe(0);
+            points[0].Value.ShouldBe(30d);
+            points[0].Label.ShouldBe("Alpha");
+            points[0].Percent.ShouldBe(0.75d); // 30 of the 40 positive total
+            points[1].Percent.ShouldBe(0.25d);
+            points[2].Percent.ShouldBe(0d);    // non-positive contributes no share
+
+            points[0].Color.ShouldBe(LoamColorScheme.DefaultLight.Primary);
+            points[1].Color.ShouldBe(LoamColorScheme.DefaultLight.Secondary);
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Chart_help_text_lists_labels_of_positive_points_when_provided()
+    {
+        var labels = new[] { "Web", "Idle", "Mobile" };
+        var bar = new BarChart { Values = [5d, 0d, 3d], Labels = labels };
+        var window = Show(bar, ThemeVariant.Light);
+        try
+        {
+            AutomationProperties.GetHelpText(bar).ShouldBe("2 values: Web, Mobile");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Donut_center_text_and_signed_charts_render_without_throwing()
+    {
+        var donut = new PieChart
+        {
+            Width = 180, Height = 180, Values = [540d, 320d, 380d], Donut = true,
+            CenterText = "1,240", CenterSubText = "total",
+        };
+        var donutValue = new PieChart
+        {
+            Width = 160, Height = 160, Values = [10d, 20d], Donut = true, CenterValueFormat = "C0",
+        };
+        var bar = new BarChart { Width = 300, Height = 160, Values = [12d, -5d, 8d, -3d], AllowNegative = true };
+        var line = new LineChart { Width = 300, Height = 160, Values = [4d, -2d, 6d, -1d], AllowNegative = true, Area = true };
+
+        new Window
+        {
+            Width = 800,
+            Height = 640,
+            Content = new StackPanel { Children = { donut, donutValue, bar, line } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        donut.Bounds.Width.ShouldBeGreaterThan(0);
+        bar.HasSignedData.ShouldBeTrue();
+        line.HasSignedData.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Allow_negative_treats_negative_only_data_as_renderable()
+    {
+        var withFlag = new BarChart { Width = 200, Height = 140, Values = [-4d, -2d], AllowNegative = true };
+        var withoutFlag = new BarChart { Width = 200, Height = 140, Values = [-4d, -2d] };
+        var window = Show(new StackPanel { Children = { withFlag, withoutFlag } }, ThemeVariant.Light);
+        try
+        {
+            // Without the opt-in, negatives are clamped and the chart stays in the empty state.
+            withoutFlag.HasPositiveData.ShouldBeFalse();
+            AutomationProperties.GetHelpText(withoutFlag).ShouldBe("No data");
+
+            // With the opt-in, the same data is signed/renderable.
+            withFlag.HasSignedData.ShouldBeTrue();
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Data_labels_render_without_throwing()
+    {
+        var labels = new[] { "A", "B", "C" };
+        var bars = new BarChart { Width = 300, Height = 160, Values = [5d, 8d, 3d], Labels = labels, ShowDataLabels = true };
+        var signed = new BarChart { Width = 300, Height = 160, Values = [6d, -4d, 9d], AllowNegative = true, ShowDataLabels = true };
+        var pie = new PieChart { Width = 200, Height = 200, Donut = true, Values = [40d, 35d, 25d], ShowDataLabels = true, DataLabelFormat = p => $"{p.Percent:P0}" };
+        var line = new LineChart { Width = 300, Height = 160, Values = [2d, 9d, 4d], ShowDataLabels = true };
+
+        new Window
+        {
+            Width = 800,
+            Height = 760,
+            Content = new StackPanel { Children = { bars, signed, pie, line } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        bars.ShowDataLabels.ShouldBeTrue();
+        signed.HasSignedData.ShouldBeTrue();
+        pie.Bounds.Width.ShouldBeGreaterThan(0);
+        line.Bounds.Height.ShouldBeGreaterThan(0);
+    }
+
     private static Window Show(Control content, ThemeVariant theme)
     {
         Avalonia.Application.Current!.RequestedThemeVariant = theme;

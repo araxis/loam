@@ -6,6 +6,24 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.2.0
+
+First milestone of the **`Loam.Charts` enrichment** roadmap — all additive, no breaking changes:
+
+- **Per-point snapshot.** `ChartBase` gains `Labels` and a `ResolvedPoints` projection (`ChartPoint`
+  record struct: index, value, percent-of-positive-total, label, color). Labels enrich the chart's
+  accessibility help text; the snapshot is the shared source for rendering, automation, and later
+  tooltips/legends.
+- **Donut center text.** `PieChart` can fill the hole with a KPI via `CenterText`/`CenterSubText` or an
+  auto-formatted `CenterValue`/`CenterValueFormat` (defaults to the positive-value total).
+- **Signed values (correctness).** `BarChart`/`LineChart` gain an opt-in `AllowNegative` that draws
+  negatives below a zero baseline instead of silently clamping them to zero; new pure
+  `Charts.SignedDomain`/`ZeroBaselineOffset`/`SignedBarLayout` helpers back it. Default behavior is
+  unchanged.
+- **On-chart data labels.** Opt-in `ShowDataLabels` (+ optional `DataLabelFormat`) annotates each
+  datapoint — value above bars/line points, percentage at pie-slice centroids (with a contrast-aware
+  color) — with responsive thinning that drops colliding labels instead of overlapping them.
+
 ## 3.1.0
 
 **Modular packaging (ADR-0009).** The chart, picker, and heavy data controls move out of the core
