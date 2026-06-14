@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Text;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -84,6 +85,38 @@ public static class DataGrids
         return order
             .Select(k => new DataGridGroup<T>(ReferenceEquals(k, NullGroupKey) ? null : k, map[k]))
             .ToList();
+    }
+
+    /// <summary>
+    /// Serializes rows to delimited text (CSV when <paramref name="separator"/> is a comma, TSV for a tab):
+    /// a header row of column headers followed by one row per item using each column's display text, with
+    /// RFC-4180 quoting (fields containing the separator, a quote, or a newline are quoted and embedded
+    /// quotes doubled).
+    /// </summary>
+    public static string ToDelimited<T>(IEnumerable<T> rows, IEnumerable<DataGridColumn<T>> columns, char separator = ',')
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        ArgumentNullException.ThrowIfNull(columns);
+
+        var cols = columns.ToList();
+        var builder = new StringBuilder();
+        builder.AppendLine(string.Join(separator, cols.Select(c => QuoteField(c.Header, separator))));
+        foreach (var row in rows)
+        {
+            builder.AppendLine(string.Join(separator, cols.Select(c => QuoteField(c.Display(row), separator))));
+        }
+
+        return builder.ToString();
+    }
+
+    private static string QuoteField(string? value, char separator)
+    {
+        value ??= string.Empty;
+        var needsQuote = value.Contains(separator)
+            || value.Contains('"', StringComparison.Ordinal)
+            || value.Contains('\n', StringComparison.Ordinal)
+            || value.Contains('\r', StringComparison.Ordinal);
+        return needsQuote ? $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"" : value;
     }
 
     internal sealed class CellComparer : IComparer<object?>
@@ -351,6 +384,20 @@ public class DataGrid<T> : Decorator
 
     /// <summary>Forces a refresh — call after mutating a non-observable source in place.</summary>
     public void Refresh() => Rebuild();
+
+    /// <summary>The current view rows: filtered and sorted, across all pages.</summary>
+    private List<T> CurrentViewRows()
+    {
+        var all = _items?.ToList() ?? new List<T>();
+        var filtered = DataGrids.Filter(all, _filterText, MatchesFilter);
+        return DataGrids.Sort(filtered, _sortColumn, _sortDescending).ToList();
+    }
+
+    /// <summary>Returns the current view (filtered and sorted, all pages) as CSV.</summary>
+    public string ExportCsv() => DataGrids.ToDelimited(CurrentViewRows(), Columns, ',');
+
+    /// <summary>Returns the current view as tab-separated values (spreadsheet-paste friendly).</summary>
+    public string ExportTsv() => DataGrids.ToDelimited(CurrentViewRows(), Columns, '\t');
 
     /// <inheritdoc />
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

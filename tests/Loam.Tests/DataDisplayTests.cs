@@ -132,6 +132,39 @@ public class DataDisplayTests
     }
 
     [Fact]
+    public void DataGrids_to_delimited_quotes_per_rfc4180()
+    {
+        var rows = new[] { new Person("Alice, A", 25), new Person("Bob \"B\"", 30) };
+        var columns = new[]
+        {
+            new DataGridColumn<Person>("Name", p => p.Name),
+            new DataGridColumn<Person>("Age", p => p.Age),
+        };
+
+        var csv = DataGrids.ToDelimited(rows, columns, ',').Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
+
+        csv[0].ShouldBe("Name,Age");
+        csv[1].ShouldBe("\"Alice, A\",25");        // separator forces quoting
+        csv[2].ShouldBe("\"Bob \"\"B\"\"\",30");   // embedded quotes are doubled
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_export_csv_covers_the_current_view()
+    {
+        var grid = new DataGrid<Person>();
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        grid.Items = new List<Person> { new("Bob", 30), new("Alice", 25), new("Carol", 40) };
+        Show(grid);
+        Dispatcher.UIThread.RunJobs();
+
+        var lines = grid.ExportCsv().Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
+        lines[0].ShouldBe("Name,Age");
+        lines.Length.ShouldBe(4); // header + 3 rows (all pages)
+        lines.ShouldContain("Alice,25");
+    }
+
+    [Fact]
     public void DataGrids_group_preserves_first_appearance_order()
     {
         var people = new List<Person> { new("Bob", 30), new("Ann", 30), new("Cy", 40), new("Dee", 30) };

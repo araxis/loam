@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.5.0</Version>
-    <PackageReleaseNotes>Loam 3.5.0: Loam.Charts multi-series — grouped/stacked/100%-stacked bars and multi-line via Series/ChartSeries, with a per-series snapshot and a chart-bound legend (ChartLegend.Source). Additive; the single-series path is unchanged. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.6.0</Version>
+    <PackageReleaseNotes>Loam 3.6.0: Loam.Data DataGrid liveness and egress — observes INotifyCollectionChanged sources (live add/remove/reset) with opt-in per-row INotifyPropertyChanged, and CSV/TSV export of the current view (ExportCsv/ExportTsv, DataGrids.ToDelimited). Additive; non-observable sources are unchanged. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
