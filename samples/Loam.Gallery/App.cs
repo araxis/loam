@@ -17,6 +17,11 @@ public sealed class App : Application
         // The real subject: Loam's pure-C# theming engine layered on top.
         Styles.Add(new LoamTheme());
 
+        // Satellite control themes (3.1 package split): pickers, data controls, charts.
+        Styles.Add(new LoamPickers());
+        Styles.Add(new LoamData());
+        Styles.Add(new LoamCharts());
+
         RequestedThemeVariant = ThemeVariant.Light;
     }
 

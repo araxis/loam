@@ -7,6 +7,31 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.1 cycle — Package split Phase A (decouple theme registration in-place)
+
+Branch `work/3.1`. First step of the package split (plan: `memory/plans/package-split-3.1.md`, ADR-0009).
+
+**Done**
+- Added per-satellite `Styles` registrars in core: `LoamPickers` (DatePicker/TimePicker/ColorPicker/
+  DateRangePicker), `LoamData` (SimpleTable/Pagination/TreeView/TreeViewItem), `LoamCharts` (empty —
+  charts self-render; shipped for a uniform "add the styles" story) in `src/Loam/Theming/`.
+- Removed the 8 satellite `typeof` registrations from `LoamTheme.RegisterControlThemes` (the only
+  core→satellite coupling). Core no longer references the picker/data control themes.
+- Wired `samples/Loam.Gallery/App.cs` + `tests/Loam.Tests/TestApp.cs` to add the three registrars next
+  to `LoamTheme`.
+- Registrars live in core for now (same assembly → use the internal `*Theme.Create()` directly), so no
+  `InternalsVisibleTo` needed yet. Deferred to Phase B: `InternalsVisibleTo` for the satellite assemblies
+  and dropping the `ChartBase` `OfType<LoamTheme>` fallback (it also guards the not-yet-attached case).
+
+**Verified**
+- `dotnet build Loam.slnx -c Release` — 0/0. Full suite **425 passed** (the test app adds the registrars,
+  so picker/data control rendering/metric assertions still pass — confirms the registration mechanism).
+
+**Next:** Phase B — physical split into `src/Loam.Charts`/`Loam.Pickers`/`Loam.Data` projects (move files,
+project refs, `InternalsVisibleTo`, slnx), then Phase C (packaging/CI + docs + `v3.1.0`).
+
+---
+
 ## 2026-06-13 — v3 — Gallery per-sample layout rolled out to all groups
 
 **Done:** finished the per-sample gallery layout across every component group, so each multi-variant

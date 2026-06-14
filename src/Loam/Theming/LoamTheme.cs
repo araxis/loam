@@ -353,10 +353,6 @@ public sealed class LoamTheme : Styles
         Resources[typeof(Select)] = SelectTheme.Create();
         Resources[typeof(NumericField)] = NumericFieldTheme.Create();
         Resources[typeof(Autocomplete)] = AutocompleteTheme.Create();
-        Resources[typeof(Loam.Controls.DatePicker)] = DatePickerTheme.Create();
-        Resources[typeof(Loam.Controls.TimePicker)] = TimePickerTheme.Create();
-        Resources[typeof(Loam.Controls.ColorPicker)] = ColorPickerTheme.Create();
-        Resources[typeof(DateRangePicker)] = DateRangePickerTheme.Create();
         Resources[typeof(Radio)] = RadioTheme.Create();
         Resources[typeof(Loam.Controls.Slider)] = SliderTheme.Create();
         Resources[typeof(Rating)] = RatingTheme.Create();
@@ -367,11 +363,7 @@ public sealed class LoamTheme : Styles
         Resources[typeof(ListItem)] = ListItemTheme.Create();
         Resources[typeof(Overlay)] = OverlayTheme.Create();
         Resources[typeof(Tabs)] = TabsTheme.Create();
-        Resources[typeof(SimpleTable)] = SimpleTableTheme.Create();
         Resources[typeof(Stepper)] = StepperTheme.Create();
-        Resources[typeof(Pagination)] = PaginationTheme.Create();
-        Resources[typeof(Loam.Controls.TreeView)] = TreeViewTheme.Create();
-        Resources[typeof(Loam.Controls.TreeViewItem)] = TreeViewItemTheme.Create();
         Resources[typeof(Loam.Controls.Carousel)] = CarouselTheme.Create();
         Resources[typeof(ExpansionPanel)] = ExpansionPanelTheme.Create();
         Resources[typeof(ExpansionPanels)] = ExpansionPanelsTheme.Create();
