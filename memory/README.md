@@ -74,8 +74,10 @@ picking the project up cold. Read this file first.
   (`DataGridColumn<T>.Width`), **frozen columns** (`FrozenColumns` two-pane layout with synced
   hover/selection + `RowHeight`), and **group aggregates** (`GroupAggregate`). On top of the
   pre-existing sort/filter/page/virtualize/inline-edit/selection. **424 tests.**
-- **Next (maintainer-directed):** the **package split** is deferred (ADR-0009; needs satellite
-  theme-registration design). Open options: Phase 6 release prep (visual-regression snapshots,
-  positioning docs) toward `3.0.0`; richer DataGrid inline-edit (validation/commit). (Optional:
-  CAM16/HCT upgrade; wire/remove orphaned `DesignSystemView`/`LayoutView`.)
-- **Last updated:** 2026-06-07
+- **Shipped:** **v3.0.0 released** — merged to `main`, `Loam 3.0.0` published to NuGet, GitHub release cut.
+- **Next (planned for 3.1):** the **package split** into `Loam.Charts`/`Loam.Pickers`/`Loam.Data`
+  (ADR-0009). Concrete implementation plan: [plans/package-split-3.1.md](plans/package-split-3.1.md)
+  — registration via per-satellite `Styles` subclasses; the only core→satellite coupling is the 8
+  `typeof` lines in `LoamTheme.RegisterControlThemes`. (Optional later: CAM16/HCT upgrade; richer
+  DataGrid inline-edit.)
+- **Last updated:** 2026-06-14
