@@ -1166,6 +1166,285 @@ public class PickerTests
     }
 
     [AvaloniaFact]
+    public void DatePicker_required_flags_missing_value_and_clears_when_set()
+    {
+        var picker = new Loam.Controls.DatePicker { Required = true, RequiredText = "Pick a date" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Validate().ShouldBe("Pick a date");
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Pick a date");
+
+        picker.Date = new DateTime(2026, 6, 14);
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeFalse();
+        picker.ErrorText.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_required_error_returns_after_clear()
+    {
+        var picker = new Loam.Controls.DatePicker { Required = true, Date = new DateTime(2026, 6, 14) };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeFalse();
+
+        picker.Clear();
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Required");
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_validation_func_sets_and_clears_error()
+    {
+        var picker = new Loam.Controls.DatePicker
+        {
+            Validation = d => d == new DateTime(2026, 6, 14) ? "Blocked date" : null,
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date = new DateTime(2026, 6, 14);
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Blocked date");
+
+        picker.Date = new DateTime(2026, 6, 15);
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_validate_preserves_manual_error_when_unconfigured()
+    {
+        var picker = new Loam.Controls.DatePicker { Error = true, ErrorText = "Manual" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date = new DateTime(2026, 6, 14); // value change triggers Validate, but none is configured
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Manual");   // untouched
+        picker.Validate().ShouldBe("Manual");  // self-gates and returns the existing error
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_commit_runs_business_validation()
+    {
+        var picker = new Loam.Controls.DatePicker
+        {
+            Editable = true,
+            DateFormat = "yyyy-MM-dd",
+            Validation = d => d == new DateTime(2026, 6, 14) ? "Blocked" : null,
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "2026-06-14"; // parses fine, but fails business validation
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Date.ShouldBe(new DateTime(2026, 6, 14)); // committed
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Blocked"); // validation error (not the parse error)
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_required_and_validation()
+    {
+        var picker = new Loam.Controls.TimePicker
+        {
+            Required = true,
+            Validation = t => t is { } x && x < new TimeSpan(9, 0, 0) ? "Too early" : null,
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue(); // Required, no time
+        picker.ErrorText.ShouldBe("Required");
+
+        picker.Time = new TimeSpan(8, 0, 0);
+        Dispatcher.UIThread.RunJobs();
+        picker.ErrorText.ShouldBe("Too early");
+
+        picker.Time = new TimeSpan(10, 0, 0);
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_required_and_validation()
+    {
+        var picker = new DateRangePicker
+        {
+            Required = true,
+            Validation = (s, e) => s is { } a && e is { } b && (b - a).Days > 7 ? "Max 7 days" : null,
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue(); // Required, no start
+        picker.ErrorText.ShouldBe("Required");
+
+        picker.Start = new DateTime(2026, 6, 1);
+        picker.End = new DateTime(2026, 6, 20);
+        Dispatcher.UIThread.RunJobs();
+        picker.ErrorText.ShouldBe("Max 7 days");
+
+        picker.End = new DateTime(2026, 6, 5);
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_validate_preserves_manual_error_when_unconfigured()
+    {
+        var picker = new Loam.Controls.TimePicker { Error = true, ErrorText = "Manual" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Time = new TimeSpan(10, 0, 0); // value change triggers Validate, but none configured
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Manual");
+        picker.Validate().ShouldBe("Manual");
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_validate_preserves_manual_error_when_unconfigured()
+    {
+        var picker = new DateRangePicker { Error = true, ErrorText = "Manual" };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Start = new DateTime(2026, 6, 1); // value change triggers Validate, but none configured
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("Manual");
+        picker.Validate().ShouldBe("Manual");
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_editable_parse_error_precedes_validation()
+    {
+        var picker = new Loam.Controls.TimePicker
+        {
+            Editable = true,
+            TimeFormat = "HH:mm",
+            Validation = _ => "always invalid",
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "not a time";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidTimeText); // parse error wins over business validation
+        picker.Time.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_editable_parse_error_precedes_validation()
+    {
+        var picker = new DateRangePicker
+        {
+            Editable = true,
+            DateFormat = "yyyy-MM-dd",
+            Validation = (_, _) => "always invalid",
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+
+        var input = EditableInput(picker);
+        input.Text = "garbage";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe(picker.InvalidRangeText); // parse error wins
+        picker.Start.ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void DatePicker_editable_same_value_recommit_re_runs_validation()
+    {
+        var picker = new Loam.Controls.DatePicker
+        {
+            Editable = true,
+            DateFormat = "yyyy-MM-dd",
+            Date = new DateTime(2026, 6, 14),
+            Validation = _ => "blocked",
+        };
+        Show(picker);
+        picker.ApplyTemplate();
+        Dispatcher.UIThread.RunJobs();
+        picker.Error.ShouldBeTrue(); // validated on init
+
+        picker.Error = false; // clear, then re-commit the SAME value (OnPropertyChanged won't fire)
+        var input = EditableInput(picker);
+        input.Text = "2026-06-14";
+        input.RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();          // explicit Validate() in CommitText re-flags it
+        picker.ErrorText.ShouldBe("blocked");
+    }
+
+    [AvaloniaFact]
+    public void TimePicker_flyout_ok_runs_validation()
+    {
+        var picker = new Loam.Controls.TimePicker { Validation = _ => "rejected" };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+        picker.Error = false; // isolate the OK path
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("rejected"); // committing via OK runs Validate()
+    }
+
+    [AvaloniaFact]
+    public void DateRangePicker_flyout_ok_runs_validation()
+    {
+        var picker = new DateRangePicker { DateFormat = "yyyy-MM-dd", Start = new DateTime(2026, 6, 1), Validation = (_, _) => "rejected" };
+        Show(picker);
+        picker.OpenPicker();
+        Dispatcher.UIThread.RunJobs();
+        picker.Error = false; // isolate the OK path
+
+        var paper = OpenedFlyout(picker).Content.ShouldBeOfType<Paper>();
+        var calendar = paper.GetVisualDescendants().OfType<MonthCalendar>().Single();
+        CalendarDay(calendar, new DateTime(2026, 6, 10)).RaiseEvent(KeyArgs(Key.Enter));
+        Dispatcher.UIThread.RunJobs();
+        PopupButton(paper, "OK").RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        picker.Error.ShouldBeTrue();
+        picker.ErrorText.ShouldBe("rejected"); // committing via OK runs Validate()
+    }
+
+    [AvaloniaFact]
     public void DatePicker_display_shows_placeholder_then_formatted_date()
     {
         var picker = new Loam.Controls.DatePicker { DateFormat = "yyyy-MM-dd", Placeholder = "Pick a date" };

@@ -116,6 +116,18 @@ public class DateRangePicker : TemplatedControl
     public static readonly StyledProperty<string> InvalidRangeTextProperty =
         AvaloniaProperty.Register<DateRangePicker, string>(nameof(InvalidRangeText), "Invalid range");
 
+    /// <summary>Identifies the <see cref="Required"/> property.</summary>
+    public static readonly StyledProperty<bool> RequiredProperty =
+        AvaloniaProperty.Register<DateRangePicker, bool>(nameof(Required));
+
+    /// <summary>Identifies the <see cref="RequiredText"/> property.</summary>
+    public static readonly StyledProperty<string> RequiredTextProperty =
+        AvaloniaProperty.Register<DateRangePicker, string>(nameof(RequiredText), "Required");
+
+    /// <summary>Identifies the <see cref="Validation"/> property.</summary>
+    public static readonly StyledProperty<Func<DateTime?, DateTime?, string?>?> ValidationProperty =
+        AvaloniaProperty.Register<DateRangePicker, Func<DateTime?, DateTime?, string?>?>(nameof(Validation));
+
     /// <summary>Separators accepted between the start and end of a typed range (the first matches the displayed en-dash).</summary>
     private static readonly string[] RangeSeparators = { "–", " to ", " - " };
 
@@ -196,6 +208,27 @@ public class DateRangePicker : TemplatedControl
     {
         get => GetValue(InvalidRangeTextProperty);
         set => SetValue(InvalidRangeTextProperty, value);
+    }
+
+    /// <summary>When true, a missing <see cref="Start"/> fails <see cref="Validate"/> with <see cref="RequiredText"/>.</summary>
+    public bool Required
+    {
+        get => GetValue(RequiredProperty);
+        set => SetValue(RequiredProperty, value);
+    }
+
+    /// <summary>Error message used when <see cref="Required"/> fails.</summary>
+    public string RequiredText
+    {
+        get => GetValue(RequiredTextProperty);
+        set => SetValue(RequiredTextProperty, value);
+    }
+
+    /// <summary>A validator returning an error message (or null when valid) for the current <see cref="Start"/>/<see cref="End"/>.</summary>
+    public Func<DateTime?, DateTime?, string?>? Validation
+    {
+        get => GetValue(ValidationProperty);
+        set => SetValue(ValidationProperty, value);
     }
 
     /// <summary>When true, the flyout shows a quick-select rail of <see cref="Presets"/> (or <see cref="DefaultPresets"/> when none are set).</summary>
@@ -321,6 +354,32 @@ public class DateRangePicker : TemplatedControl
     {
         Start = null;
         End = null;
+    }
+
+    /// <summary>
+    /// Runs <see cref="Required"/>/<see cref="Validation"/>, updates <see cref="Error"/>/<see cref="ErrorText"/>,
+    /// and returns the error (or null). A no-op that preserves any manually-set error when neither is configured.
+    /// </summary>
+    public string? Validate()
+    {
+        if (!Required && Validation is null)
+        {
+            return ErrorText;
+        }
+
+        string? error = null;
+        if (Required && Start is null)
+        {
+            error = RequiredText;
+        }
+        else if (Validation is { } validate)
+        {
+            error = validate(Start, End);
+        }
+
+        Error = error is not null;
+        ErrorText = error;
+        return error;
     }
 
     /// <summary>Returns the first and last day of the calendar month before <paramref name="anchor"/>.</summary>
@@ -548,6 +607,7 @@ public class DateRangePicker : TemplatedControl
         Start = start;
         End = end;
         UpdateDisplay();        // reformat the text box even when the parsed value is unchanged
+        Validate();             // business validation runs even on a same-value commit
         RangeSelected?.Invoke(Start, End);
     }
 
@@ -582,6 +642,13 @@ public class DateRangePicker : TemplatedControl
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
             UpdateLabel();
+        }
+
+        if (change.Property == StartProperty || change.Property == EndProperty ||
+            change.Property == RequiredProperty || change.Property == ValidationProperty ||
+            change.Property == RequiredTextProperty)
+        {
+            Validate();
         }
 
         if (change.Property == AdornmentIconProperty)
@@ -716,6 +783,7 @@ public class DateRangePicker : TemplatedControl
             Start = pendingStart;
             End = pendingEnd;
             UpdateDisplay();
+            Validate();    // re-run business validation on the committed range
             RangeSelected?.Invoke(Start, End);
             _flyout?.Hide();
             ApplyBoxChrome();

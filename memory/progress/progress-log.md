@@ -7,6 +7,39 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.17 — Field-picker validation hooks (Required + Validation)
+
+Ninth Pickers milestone. `DatePicker`, `TimePicker`, `DateRangePicker` each gain `Required` (bool) +
+`RequiredText` (default "Required") + `Validation` (Func returning an error message; signatures: DatePicker
+`Func<DateTime?,string?>`, TimePicker `Func<TimeSpan?,string?>`, DateRangePicker `Func<DateTime?,DateTime?,string?>`)
++ a public `Validate()`, mirroring `TextField.Validate()`. **Self-gating:** if neither Required nor Validation
+is set, `Validate()` returns the current ErrorText WITHOUT touching Error/ErrorText (so manual error state is
+preserved) — a deliberate improvement over TextField (which relies on the caller gating). Wired centrally:
+`OnPropertyChanged` calls `Validate()` when the value OR Required/Validation/RequiredText change (covers
+programmatic, flyout OK, Clear), and the editable `CommitText` + flyout OK call `Validate()` explicitly too
+(covers same-value commits where OnPropertyChanged doesn't fire). Editable parse/range error still takes
+precedence (CommitText returns before setting the value on parse failure, so Validate isn't reached).
+
+**Adversarial review (workflow, 3 dims × verify):** validation-correctness and parity dims came back CLEAN
+(no loops, self-gating, precedence, same-value, init-ordering, three-way consistency all verified). 6 confirmed
+test/doc parity gaps closed: Time+Range self-gating (preserve-manual-error) tests; Time+Range editable
+parse-error-precedence tests; DatePicker same-value re-commit re-runs Validate; Time+Range flyout-OK runs
+Validate; and the Required/RequiredText/Validation/Validate() rows added to the Time+Range doc tables. No
+production bugs.
+
+**Verified:** build 0/0 (solution); full suite **567** (+14). Tests: Required flags missing value + custom
+RequiredText + clears when set; Required error returns after Clear(); Validation func sets/clears; self-gating
+preserves manual error; editable commit of a parseable-but-business-invalid date shows the validation error;
+TimePicker + DateRangePicker Required+Validation combined (range validation uses start/end span). Gallery:
+"Required & validation" DatePicker sample (Required + weekday-only). Docs: shared validation intro note +
+DatePicker table rows (note states Time/Range share the same members); changelog 3.17.0. ColorPicker omitted
+(non-null Value → Required N/A); could add a Validation-only overload later.
+
+**Next:** ColorPicker Validation (Func<Color,string?>); HSV spectrum editor; CalendarView state machine.
+Loose end: Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.16 — ColorPicker editable hex entry (editable across all 4 field pickers)
 
 Eighth Pickers milestone. `ColorPicker` gains `Editable` + `InvalidHexText` and a public static
