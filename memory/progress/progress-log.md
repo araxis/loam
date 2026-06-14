@@ -7,6 +7,36 @@ Next.
 
 ---
 
+## 2026-06-14 — 3.15 — DateRangePicker editable text entry (completes the editable trio)
+
+Seventh Pickers milestone. `DateRangePicker` gains `Editable` + `InvalidRangeText` and a public static
+`TryParseRange(text, format, out start, out end)`: empty→(null,null); single date→start only; two dates split
+on `RangeSeparators` ("–", " to ", " - ") via `SplitRange`, each half parsed by **reusing
+`DatePicker.TryParseDate`**, then auto-ordered. Theme: `PART_Input` TextBox + calendar `Icon`→`IconButton`
+`PART_CalendarButton` ("Open calendar"). Control mirrors Date/Time editable exactly with all carried fixes
+(same-value reformat via explicit UpdateDisplay, `_flyoutOpening` tunnel guard + CommitText skips when
+flyout open/opening, flyout OK clears Error + reformats, input automation name, IBeam cursor, IsActive
+includes `_input.IsFocused`, OnKeyDown activation guarded by `!Editable`, box PointerPressed focuses input).
+CommitText validates both endpoints via `IsOutOfRange` (compares `.Date` vs Min/Max).
+
+**Adversarial review (workflow, 3 dims × verify):** range-parse and parity dims came back CLEAN (separator scan,
+single-date, auto-order, empty-half, and all carried-over fixes verified). 5 confirmed minor test-coverage gaps
+closed: " - " separator case, single-date round-trip reformat assertion, non-editable activation opens flyout,
+editable+ShowPresets coexistence (typed range commits + rail renders). No production bugs.
+
+**Verified:** build 0/0 (solution); full suite **542** (+12). Metrics test simplified: all three field pickers
+now expose an IconButton calendar/clock affordance ("Open calendar"/"Open clock"). Tests: TryParseRange table
+(empty/single/pair/" to "/reversed-auto-order/invalid); typed range Enter commits + RangeSelected; single date
+= start only; invalid→Error + ErrorText==InvalidRangeText unchanged; out-of-range rejected; empty clears +
+sync; "to"+reversed reformats to ordered en-dash; calendar button opens + OK syncs; Alt+Down; non-editable
+hides input. Gallery: "Editable text entry" sample. Docs: pickers.md note generalized to all three +
+Editable/InvalidRangeText/TryParseRange rows; changelog 3.15.0.
+
+**Next:** CalendarView state machine; ColorPicker HSV editor; per-picker validation hooks. Loose end:
+Avalonia 12 clipboard API + DataGrid copy.
+
+---
+
 ## 2026-06-14 — 3.14 — TimePicker editable text entry
 
 Sixth Pickers milestone. Extended the proven DatePicker 3.13 editable pattern to `TimePicker`: `Editable` +

@@ -48,15 +48,23 @@ internal static class DateRangePickerTheme
             }
                 .Named("PART_Display", scope);
 
-            var icon = new Icon
+            // Hosted, chrome-stripped text box shown only in Editable mode (see DateRangePicker.UpdateEditMode).
+            var input = new TextBox
             {
-                Data = Icons.Material.Filled.CalendarToday,
-                Color = LoamColor.Default,
-                Size = LoamSize.Small,
-                Margin = new Thickness(12, 0, 0, 0),
+                IsVisible = false,
                 VerticalAlignment = VerticalAlignment.Center,
-            };
-            DockPanel.SetDock(icon, Dock.Right);
+                VerticalContentAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            }.Named("PART_Input", scope);
+
+            var calendarButton = new IconButton
+            {
+                Icon = Icons.Material.Filled.CalendarToday,
+                Size = LoamSize.Small,
+                Margin = new Thickness(4, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            }.Named("PART_CalendarButton", scope);
+            DockPanel.SetDock(calendarButton, Dock.Right);
 
             var clear = new IconButton
             {
@@ -82,13 +90,13 @@ internal static class DateRangePickerTheme
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
-                Children = { display, restingLabel },
+                Children = { display, input, restingLabel },
             };
             var box = new Border
             {
                 MinWidth = PopupSurface.PickerWidth,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
-                Child = new DockPanel { LastChildFill = true, Children = { icon, clear, adornment, textLayer } },
+                Child = new DockPanel { LastChildFill = true, Children = { calendarButton, clear, adornment, textLayer } },
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Focusable = true,
             }.Named("PART_Box", scope);
