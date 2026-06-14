@@ -82,8 +82,13 @@ public class TimePicker : TemplatedControl
     public static readonly StyledProperty<bool> ClearableProperty =
         AvaloniaProperty.Register<TimePicker, bool>(nameof(Clearable));
 
+    /// <summary>Identifies the <see cref="AdornmentIcon"/> property.</summary>
+    public static readonly StyledProperty<string?> AdornmentIconProperty =
+        AvaloniaProperty.Register<TimePicker, string?>(nameof(AdornmentIcon));
+
     private Border? _box;
     private IconButton? _clear;
+    private Icon? _adornment;
     private Border? _labelHost;
     private Text? _display;
     private Text? _label;
@@ -125,6 +130,13 @@ public class TimePicker : TemplatedControl
     {
         get => GetValue(ClearableProperty);
         set => SetValue(ClearableProperty, value);
+    }
+
+    /// <summary>Optional glyph (e.g. from <see cref="Icons"/>) shown as a leading icon at the start of the field.</summary>
+    public string? AdornmentIcon
+    {
+        get => GetValue(AdornmentIconProperty);
+        set => SetValue(AdornmentIconProperty, value);
     }
 
     /// <summary>The field label. Mirrors the reference API's <c>Label</c>.</summary>
@@ -245,6 +257,7 @@ public class TimePicker : TemplatedControl
         _restingLabel = e.NameScope.Find("PART_RestingLabel") as Text;
         _helper = e.NameScope.Find("PART_HelperText") as Text;
         _clear = e.NameScope.Find("PART_Clear") as IconButton;
+        _adornment = e.NameScope.Find("PART_Adornment") as Icon;
         if (_clear is not null)
         {
             Avalonia.Automation.AutomationProperties.SetName(_clear, "Clear time");
@@ -272,6 +285,7 @@ public class TimePicker : TemplatedControl
             };
         }
 
+        UpdateAdornment();
         UpdateLabel();
         UpdateDisplay();
         ApplyBoxChrome();
@@ -283,6 +297,15 @@ public class TimePicker : TemplatedControl
         if (_clear is not null)
         {
             _clear.IsVisible = Clearable && Time is not null;
+        }
+    }
+
+    private void UpdateAdornment()
+    {
+        if (_adornment is not null)
+        {
+            _adornment.Data = AdornmentIcon;
+            _adornment.IsVisible = !string.IsNullOrEmpty(AdornmentIcon);
         }
     }
 
@@ -303,6 +326,12 @@ public class TimePicker : TemplatedControl
         else if (change.Property == LabelProperty || change.Property == ShrinkLabelProperty ||
                  change.Property == HelperTextProperty || change.Property == ErrorTextProperty)
         {
+            UpdateLabel();
+        }
+
+        if (change.Property == AdornmentIconProperty)
+        {
+            UpdateAdornment();
             UpdateLabel();
         }
 
@@ -721,7 +750,8 @@ public class TimePicker : TemplatedControl
             _display.IsVisible = !resting;
         }
 
-        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant);
+        var leadingInset = string.IsNullOrEmpty(AdornmentIcon) ? 0 : FieldChrome.LeadingAdornmentInset(this);
+        FieldChrome.ApplyLabelLayout(this, _box, _labelHost, floating, Variant, leadingInset);
 
         if (_helper is not null)
         {

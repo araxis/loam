@@ -828,6 +828,7 @@ public sealed class ComponentsView : UserControl
             Sample("Variants", BuildDatePickerVariants),
             Sample("Selected & custom format", BuildDatePickerSelected),
             Sample("Clearable", BuildDatePickerClearable),
+            Sample("Leading icon", BuildDatePickerAdornment),
             Sample("Constrained & floating label", BuildDatePickerConstrained),
             Sample("States", BuildDatePickerStates)),
         PageWithSamples("Pickers", "TimePicker", "Time input with hour and minute columns.",
@@ -835,6 +836,7 @@ public sealed class ComponentsView : UserControl
             Sample("Selected & custom format", BuildTimePickerSelected),
             Sample("Opens at selected time", BuildTimePickerScrollToSelection),
             Sample("Clearable", BuildTimePickerClearable),
+            Sample("Leading icon", BuildTimePickerAdornment),
             Sample("Floating label", BuildTimePickerConstrained),
             Sample("States", BuildTimePickerStates)),
         PageWithSamples("Pickers", "DateRangePicker", "Two-click date range selection.",
@@ -842,6 +844,7 @@ public sealed class ComponentsView : UserControl
             Sample("Selected & custom format", BuildDateRangePickerSelected),
             Sample("Clearable", BuildDateRangePickerClearable),
             Sample("Quick-select presets", BuildDateRangePickerPresets),
+            Sample("Leading icon", BuildDateRangePickerAdornment),
             Sample("Constrained & floating label", BuildDateRangePickerConstrained),
             Sample("States", BuildDateRangePickerStates)),
         PageWithSamples("Pickers", "ColorPicker", "Swatch picker with hex display.",
@@ -7680,6 +7683,29 @@ public sealed class ComponentsView : UserControl
         };
     }
 
+    private static WrapPanel BuildDateRangePickerAdornment()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DateRangePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Trip dates",
+                    AdornmentIcon = Icons.Material.Filled.Favorite,
+                    Start = new DateTime(2026, 6, 1),
+                    End = new DateTime(2026, 6, 14),
+                    DateFormat = "MMM d",
+                    HelperText = "The whole range text indents past the icon",
+                },
+            },
+        };
+    }
+
     private static WrapPanel BuildDateRangePickerConstrained()
     {
         return new WrapPanel
@@ -7847,6 +7873,36 @@ public sealed class ComponentsView : UserControl
                     Clearable = true,
                     Placeholder = "Pick a date",
                     HelperText = "Clear button appears once a date is set",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildDatePickerAdornment()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Date of birth",
+                    AdornmentIcon = Icons.Material.Filled.Person,
+                    HelperText = "Leading icon clears space for the value and label",
+                },
+                new Loam.Controls.DatePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Filled",
+                    Variant = Variant.Filled,
+                    AdornmentIcon = Icons.Material.Filled.Edit,
+                    Date = new DateTime(2026, 6, 14),
+                    HelperText = "Works across every field variant",
                 },
             },
         };
@@ -8059,6 +8115,28 @@ public sealed class ComponentsView : UserControl
                     Clearable = true,
                     Placeholder = "Pick a time",
                     HelperText = "Clear button appears once a time is set",
+                },
+            },
+        };
+    }
+
+    private static WrapPanel BuildTimePickerAdornment()
+    {
+        return new WrapPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                new Loam.Controls.TimePicker
+                {
+                    Width = 360,
+                    Margin = new Thickness(0, 0, 24, 24),
+                    Label = "Reminder",
+                    AdornmentIcon = Icons.Material.Filled.Notifications,
+                    Time = new TimeSpan(9, 0, 0),
+                    TimeFormat = "HH:mm",
+                    HelperText = "A leading icon makes the field's purpose scannable",
                 },
             },
         };
