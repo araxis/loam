@@ -53,6 +53,8 @@ export default defineConfig({
             { text: 'Getting Started', link: '/guide/getting-started' },
             { text: 'Theming', link: '/guide/theming' },
             { text: 'Authoring UI in C#', link: '/guide/csharp-ui' },
+            { text: 'Recipes', link: '/guide/recipes' },
+            { text: 'Accessibility', link: '/guide/accessibility' },
             { text: 'Changelog', link: '/guide/changelog' },
           ],
         },

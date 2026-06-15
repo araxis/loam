@@ -8,11 +8,59 @@ This page documents Loam's surface and layout controls. Surface controls (`Paper
 
 All controls live in `Loam.Controls`. Enums such as `Breakpoint`, `LoamColor`, and `HiddenMode` live in the `Loam` namespace. The responsive grid is named `ResponsiveGrid` (renamed from `Grid` in v3) so it no longer collides with `Avalonia.Controls.Grid` — no alias needed. The old `Grid`/`Item` names remain as deprecated aliases; see the [v2 → v3 migration guide](../migration/v2-to-v3).
 
+```csharp
+using Loam;          // Breakpoint, LoamColor, HiddenMode, Icons
+using Loam.Controls; // Paper, Card, Container, ResponsiveGrid, Layout, …
+```
+
+::: tip Mental model
+Think in three layers, from the inside out. **Surfaces** (`Paper`, `Card`) give content a background, an
+elevation, and a shape. **Layout** controls (`Container`, `ResponsiveGrid`/`Col`, `Stack`, `Spacer`,
+`Hidden`) decide where surfaces sit and how they reflow. **Shell** controls (`Layout`, `AppBar`,
+`Drawer`, `MainContent`) frame the whole window. You rarely reach below the layer you're working in —
+compose downward, not sideways.
+:::
+
+Two cross-cutting ideas show up repeatedly below, so learn them once:
+
+- **Breakpoints are container-relative.** `ResponsiveGrid` resolves a column's span from *its own*
+  available width, not the window — so a grid nested in a narrow column behaves like a phone even on a
+  desktop. The thresholds are `Sm 600`, `Md 960`, `Lg 1280`, `Xl 1920`, `Xxl 2560` (dip); anything
+  below `Sm` is `Xs`. `Hidden` is the exception — it watches the host window width.
+- **Generated anatomy vs custom content.** Surfaces and `Drawer` can either build a layout from typed
+  properties (`Title`, `Subtitle`, `Body`, …) **or** host your own `Content`. Custom `Content` always
+  wins; the precedence note under [Paper](#paper) spells this out.
+
+## Choosing a surface or layout control
+
+| Need | Reach for |
+| --- | --- |
+| A plain elevated background for any content | [`Paper`](#paper) |
+| A content + media + actions block (the standard card anatomy) | [`Card`](#card) |
+| Center page content and cap its width | [`Container`](#container) |
+| Reflow blocks into responsive columns | [`ResponsiveGrid`](#responsivegrid) + [`Col`](#col) |
+| Fixed 2D row/column placement | `Avalonia.Controls.Grid` (not a Loam control) |
+| A simple spaced row or column of children | `StackPanel` (or the deprecated [`Stack`](#stack)) |
+| Push siblings apart inside a `DockPanel` | [`Spacer`](#spacer) |
+| Show/hide a region by screen size | [`Hidden`](#hidden) |
+| A "back to top" affordance on a long scroll | [`ScrollToTop`](#scrolltotop) |
+| The whole app frame (bar + drawer + content) | [`Layout`](#layout) + [`AppBar`](#appbar) + [`Drawer`](#drawer) + [`MainContent`](#maincontent) |
+
+::: tip Loam grid vs Avalonia grid
+`ResponsiveGrid` is for *breakpoint reflow* — twelve columns that wrap as width shrinks. For a fixed
+table-like arrangement (a settings form, a labelled field row), use Avalonia's own `Grid` with explicit
+`RowDefinitions`/`ColumnDefinitions`. They solve different problems; reach for the one that matches the
+job. The [`ScrollToTop`](#scrolltotop) example below uses Avalonia's `Grid` for exactly this reason.
+:::
+
 ---
 
 ## Paper
 
 Equivalent of the reference API's `Paper`. A `ContentControl` that renders on a token-driven surface background with an elevation shadow. Optionally removes corner rounding (`Square`) or replaces the shadow with a 1 px outline (`Outlined`).
+
+**Use it when** you need a neutral elevated background for arbitrary content and don't need the
+title/media/actions anatomy a [`Card`](#card) adds.
 
 > **Generated anatomy vs custom content.** `Paper` (and `Card`, `Drawer`) can either build a generated
 > layout from typed properties (`Title`, `Subtitle`, `Body`, …) **or** host your own `Content`. The
@@ -52,6 +100,9 @@ var outlined = new Paper
 ## Card
 
 Equivalent of the reference API's `Card`. Inherits `Paper` and applies card-specific styling. Compose children using `CardHeader`, `CardMedia`, `CardContent`, and `CardActions`.
+
+**Use it when** a block of content reads as a discrete unit — a list tile, a dashboard widget, a preview
+with a header and actions. Use the sub-parts for layout, or set `Content` directly for a fully custom body.
 
 ### Properties
 
@@ -129,11 +180,24 @@ var card = new Card
 };
 ```
 
+::: details Composing by hand vs the generated card anatomy
+The example above composes `CardHeader`/`CardMedia`/`CardContent`/`CardActions` explicitly into a
+`StackPanel` and sets `Content` — full control, predictable order. `Card` *also* exposes a typed
+shorthand for the same shape: set `Title`, `Subtitle`, `HeaderAvatar`, `HeaderAction`, `BodyText` (or
+`Body`), `MediaSource`/`MediaHeight`/`ShowMedia`, and `PrimaryActionText`/`SecondaryActionText` (with
+`ActionColor` and the `PrimaryActionClick`/`SecondaryActionClick` events), or add live controls to the
+`Actions` collection. Leave `Content` unset to use that generated path. Remember the precedence rule:
+set one or the other on a given card, never both.
+:::
+
 ---
 
 ## Container
 
 Equivalent of the reference API's `Container`. A `Decorator` that centers its child and caps its width at a responsive breakpoint. Optional `Gutters` add `16 px` horizontal padding on each side.
+
+**Use it when** a page's content would otherwise stretch uncomfortably wide on large screens — wrap the
+body of a [`MainContent`](#maincontent) in a `Container` capped at `Md` or `Lg` for a readable measure.
 
 ### Properties
 
@@ -141,6 +205,9 @@ Equivalent of the reference API's `Container`. A `Decorator` that centers its ch
 |---|---|---|---|
 | `MaxWidthBreakpoint` | `Breakpoint` | `Breakpoint.Lg` | The breakpoint whose max-width caps the content. |
 | `Gutters` | `bool` | `true` | Adds 16 px horizontal padding inside the width cap. |
+
+The cap maps to the breakpoint's lower bound — `Md` caps at `960 dip`, `Lg` at `1280 dip`, and so on.
+`Breakpoint.None` (and `Always`) leave the width uncapped.
 
 ### Example
 
@@ -161,6 +228,9 @@ var container = new Container
 ## ResponsiveGrid
 
 A `Panel` that arranges `Col` children (or arbitrary controls, treated as full-width) in a responsive 12-column grid. Column spans are resolved from the grid's own available width (container-query style), not the window width.
+
+**Use it when** a set of blocks should sit side by side on wide screens and stack on narrow ones — a card
+gallery, a dashboard, a two-up form.
 
 > **Renamed in v3.** This control was called `Grid` in v2. It now has a distinct name so it no longer shadows `Avalonia.Controls.Grid` — use Avalonia's `Grid` for fixed 2D placement and `ResponsiveGrid` for breakpoint reflow. The old `Grid` name remains as a deprecated alias (diagnostic `LOAM0001`); see the [migration guide](../migration/v2-to-v3).
 
@@ -184,6 +254,13 @@ A `Decorator` child of `ResponsiveGrid` that declares how many of the 12 columns
 | `Xxl` | `int` | `0` | Columns at the extra-extra-large breakpoint. |
 
 A value of `0` means "not set" — span cascades to the next smaller breakpoint that is set.
+
+::: tip Set the smallest breakpoint that matters
+Because spans cascade *upward* from the nearest smaller value that's set, you usually only set `Xs` (the
+mobile baseline) plus the one or two breakpoints where the layout actually changes. `Xs = 12, Md = 6`
+reads as "full width on phones, half width from medium up" — no need to also fill in `Sm`, `Lg`, `Xl`.
+A span is clamped to `1–12`.
+:::
 
 ### Example
 
@@ -209,6 +286,9 @@ var grid = new ResponsiveGrid
 ## Stack
 
 Equivalent of the reference API's `Stack`. Extends `StackPanel` with a `Row` toggle and a sensible default `Spacing` of `8 px`. Vertical by default; set `Row = true` for horizontal layout.
+
+**Use it when** maintaining v2 code. For new code, prefer `StackPanel` directly — `Stack` is deprecated
+(see below).
 
 > **Deprecated in v3 (`LOAM0003`).** `Stack` is a thin wrapper over `Avalonia.Controls.StackPanel` and will be removed in a future release. Use `StackPanel` directly: set `Orientation = Orientation.Horizontal` for the old `Row = true`, and set `Spacing` (Loam's `Stack` defaulted it to `8`). See the [migration guide](../migration/v2-to-v3).
 
@@ -251,6 +331,9 @@ var row = new Stack
 
 Equivalent of the reference API's `Spacer`. An empty `Control` with `HorizontalAlignment = Stretch` and `VerticalAlignment = Stretch`. Place it as the fill child of a `DockPanel` or a star-sized `Grid` cell to push surrounding siblings to the edges.
 
+**Use it when** you want a flexible gap that pushes a left group and a right group apart — toolbars, app
+bars, dialog footers.
+
 ### Properties
 
 No configurable properties. Uses `HorizontalAlignment.Stretch` and `VerticalAlignment.Stretch` by default.
@@ -280,6 +363,15 @@ var toolbar = new DockPanel
 ## Hidden
 
 Equivalent of the reference API's `Hidden`. A `Decorator` that monitors the host `TopLevel` (window) width and toggles `IsVisible` on its `Child` based on a breakpoint rule. The rule compares the current `Breakpoint` bucket to the configured `Breakpoint` value using the `HiddenMode` strategy.
+
+**Use it when** a region should appear only on certain screen sizes — a desktop-only sidebar, a
+mobile-only menu button.
+
+::: warning Hidden watches the window, not the parent
+Unlike [`ResponsiveGrid`](#responsivegrid), which measures its own available width, `Hidden` evaluates
+its rule against the host **window** width (`TopLevel`). That makes it the right tool for global
+"mobile vs desktop" decisions, but it will *not* respond to a narrow parent on a wide screen.
+:::
 
 ### HiddenMode enum
 
@@ -327,6 +419,9 @@ var mobileOnly = new Hidden
 
 Equivalent of the reference API's `ScrollToTop`. A `Decorator` that watches a `ScrollViewer` and shows its `Child` once the scroll position passes `VisibleOffset`. Clicking the control scrolls the target back to the top. The default `Child` is an up-arrow FAB.
 
+**Use it when** a scroll region is long enough that getting back to the top is a chore — a feed, a long
+document, a chat log.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -371,6 +466,9 @@ var page = new Avalonia.Controls.Grid
 
 Equivalent of the reference API's `Layout`. A `ContentControl` that forms the application shell. It docks an `AppBar` at the top (full width), a `Drawer` on the left below the bar, and fills the remaining space with its `Content` (typically a `MainContent`).
 
+**Use it when** building the top-level window frame. It wires the bar, drawer, and content together so
+docked drawers reserve space and temporary drawers overlay it.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -379,11 +477,20 @@ Equivalent of the reference API's `Layout`. A `ContentControl` that forms the ap
 | `Drawer` | `object?` | `null` | The side drawer slot (typically a `Drawer`). Docked drawers reserve space; temporary drawers overlay content. |
 | `Content` | `object?` | `null` | The main content slot (inherited from `ContentControl`). |
 
+::: tip Esc closes a temporary drawer
+When the `Drawer` slot holds a `Drawer` in `Temporary` mode that is currently `Open`, pressing
+<kbd>Esc</kbd> while the shell has focus closes it. `Docked` drawers ignore <kbd>Esc</kbd> — they're
+part of the layout, not a transient overlay.
+:::
+
 ---
 
 ## AppBar
 
 Equivalent of the reference API's `AppBar`. A full-width, elevated, colored toolbar surface hosted in the `Layout.AppBar` slot. The default color follows the theme's app-bar palette; set `Color` to any `LoamColor` to override. Height is `64 px` normally and `48 px` when `Dense` is `true`.
+
+**Use it when** the window needs a persistent top toolbar with a title, a navigation icon, and trailing
+actions.
 
 ### Properties
 
@@ -407,9 +514,13 @@ var bar = new AppBar
     Title = "Inbox",
     NavigationIcon = Icons.Material.Filled.Menu,
     CustomActions = { searchField, new ToggleIconButton { Icon = Icons.Material.Filled.DarkMode } },
-    Actions = { new AppBarAction { Icon = Icons.Material.Filled.MoreVert, Label = "More" } },
+    Actions = { new AppBarAction { Icon = Icons.Material.Filled.MoreHoriz, Label = "More" } },
 };
 ```
+
+An `AppBarAction` is an immutable record-like object — set `Icon`, `Label` (its accessible name),
+`OnClick`, and optionally `Variant`/`Color`/`Size`/`IsEnabled`. Because it's not a live control, mutate
+state through `CustomActions` instead when an action needs to change after render.
 
 ---
 
@@ -417,17 +528,23 @@ var bar = new AppBar
 
 Equivalent of the reference API's `Drawer`. A left-anchored `ContentControl` that slides open or closed by animating its `Width`. Toggling `Open` switches between `DrawerWidth` and `0`; enabling `Mini` collapses to `MiniWidth` instead of hiding entirely.
 
+**Use it when** the app needs side navigation. Use `Docked` for a persistent desktop rail and
+`Temporary` for an overlay that slides in on smaller screens.
+
 ### Properties
 
 | Property | Type | Default | Description |
 |---|---|---|---|
 | `Open` | `bool` | `true` | Whether the drawer is expanded. |
-| `Mini` | `bool` | `false` | Collapses to `MiniWidth` when closed instead of hiding. |
+| `Mini` | `bool` | `false` | While open, shows the drawer collapsed at `MiniWidth` instead of full `Width`. (Closing always hides it to zero width.) |
 | `DrawerWidth` | `double` | `240` | Expanded width in pixels. |
 | `MiniWidth` | `double` | `56` | Collapsed (mini) width in pixels. |
 | `Mode` | `DrawerMode` | `DrawerMode.Docked` | `Docked` reserves layout space; `Temporary` overlays the main content. |
 | `ShowScrim` | `bool` | `true` | Shows a scrim behind a temporary drawer while open. |
 | `CloseOnScrimClick` | `bool` | `true` | Closes a temporary drawer when its scrim is clicked. |
+
+The width animates over a short motion-token duration, so toggling `Open` or `Mini` glides rather than
+snaps. For imperative control, `OpenDrawer()`, `CloseDrawer()`, and `Toggle()` set `Open` for you.
 
 ### DrawerMode
 
@@ -436,15 +553,30 @@ Equivalent of the reference API's `Drawer`. A left-anchored `ContentControl` tha
 | `Docked` | Drawer participates in layout and shifts `MainContent` to the right. |
 | `Temporary` | Drawer overlays `MainContent`; `Layout` shows the scrim between content and drawer. |
 
+::: details Generated navigation vs custom content
+Like the surfaces, `Drawer` has a generated path: add `DrawerItem` entries to the `Items` collection and
+set `Title`/`Subtitle`/`FooterText` (or `Header`/`Footer`) to get a `NavMenu` of `NavLink`s with active
+tracking via `SelectedIndex`. A `Temporary` drawer auto-closes after a generated item is chosen unless
+`AutoCloseTemporary` is `false`. Setting `Content` directly opts out of all of that — custom content
+wins, same precedence rule as `Paper`/`Card`.
+:::
+
 ---
 
 ## MainContent
 
 Equivalent of the reference API's `MainContent`. A `ContentControl` that provides the scrollable, padded main content region of a `Layout`. Place page content inside this control rather than directly in `Layout.Content`.
 
+**Use it when** filling the `Layout.Content` slot — it gives the page region consistent padding and a
+scroll viewer, and optionally a generated page header.
+
 ### Properties
 
 No additional properties beyond the `ContentControl` base (`Content`, `ContentTemplate`, etc.).
+
+> Beyond hosting `Content`, `MainContent` can render a generated page header: set `Title`/`Subtitle`,
+> add header `Actions`, or supply `PrimaryActionText`/`SecondaryActionText` (with `ActionColor` and the
+> `PrimaryActionClick`/`SecondaryActionClick` events). Supply a custom `Header` to replace that anatomy.
 
 ---
 
@@ -527,3 +659,126 @@ var shell = new Layout
 ```
 
 > Replace the `drawer.Open = !drawer.Open` lambda with a `[RelayCommand]` on your view model when wiring via binding.
+
+---
+
+## Recipe: a responsive dashboard page
+
+The layers working together: an `AppBar` with a navigation icon and live trailing actions, a docked
+`Drawer` for navigation, and a `MainContent` whose body is a `Container`-capped `ResponsiveGrid` of
+`Card` widgets that reflow from three-up to one-up as the window narrows. Everything is plain C#; the
+glyphs are verified entries from `Icons.Material.Filled`.
+
+```csharp
+using Avalonia;
+using Avalonia.Controls;
+using Loam;
+using Loam.Controls;
+
+Card Widget(string title, string body) => new()
+{
+    Elevation = 1,
+    Title = title,
+    BodyText = body,
+};
+
+var drawer = new Drawer
+{
+    Mode = DrawerMode.Docked,
+    Title = "Acme",
+    Items =
+    {
+        new DrawerItem { Icon = Icons.Material.Filled.Dashboard, Text = "Overview", IsActive = true },
+        new DrawerItem { Icon = Icons.Material.Filled.Notifications, Text = "Alerts" },
+        new DrawerItem { Icon = Icons.Material.Filled.Settings, Text = "Settings" },
+    },
+};
+
+var appBar = new AppBar
+{
+    Title = "Dashboard",
+    NavigationIcon = Icons.Material.Filled.Menu,
+    NavigationAction = () => drawer.Toggle(),
+    CustomActions =
+    {
+        new ToggleIconButton { Icon = Icons.Material.Filled.DarkMode },
+    },
+    Actions =
+    {
+        new AppBarAction { Icon = Icons.Material.Filled.Search, Label = "Search" },
+    },
+};
+
+// Cards reflow: three-up on md+, one-up on phones.
+var grid = new ResponsiveGrid
+{
+    Spacing = 16,
+    Children =
+    {
+        new Col { Xs = 12, Md = 4, Child = Widget("Revenue", "Up 12% week over week.") },
+        new Col { Xs = 12, Md = 4, Child = Widget("Active users", "8,204 in the last 24h.") },
+        new Col { Xs = 12, Md = 4, Child = Widget("Open tickets", "31 awaiting triage.") },
+    },
+};
+
+var shell = new Layout
+{
+    AppBar = appBar,
+    Drawer = drawer,
+    Content = new MainContent
+    {
+        Content = new Container
+        {
+            MaxWidthBreakpoint = Breakpoint.Lg,
+            Child = grid,
+        },
+    },
+};
+```
+
+---
+
+## Accessibility & keyboard
+
+Loam's surface and layout controls are structural, so accessibility is mostly about *naming* and the
+small amount of keyboard behavior the shell adds:
+
+- **Automation names** — `Container`, `ResponsiveGrid`, `Col`, `Spacer`, `Hidden`, `ScrollToTop`,
+  `Drawer`, `AppBar`, `MainContent`, and `Layout` each set a default automation name, so they surface
+  sensibly to screen readers without extra work. Generated surface content derives its name from `Title`/
+  `Subtitle`/`Body`.
+- **`Layout` — Esc closes a temporary drawer** — when the `Drawer` slot holds a `Temporary`, `Open`
+  drawer and the shell has focus, <kbd>Esc</kbd> closes it. A focused `Drawer` itself also closes on
+  <kbd>Esc</kbd> under the same conditions. `Docked` drawers ignore the key.
+- **`Drawer` — scrim dismissal** — a `Temporary` drawer shows a scrim while open (`ShowScrim`); clicking
+  it closes the drawer when `CloseOnScrimClick` is `true`. Disabling a drawer dims it and blocks the
+  <kbd>Esc</kbd> shortcut.
+- **`AppBar` — name your icon actions** — the built-in navigation button takes its accessible name from
+  `NavigationLabel` (default `"Navigation"`), and each `AppBarAction` from its `Label`. Always set
+  `Label` on actions so the generated `IconButton`s announce their purpose. Anything in `CustomActions`
+  is your own control — name it the way you would any [icon-only button](./buttons#accessibility-keyboard).
+- **`ScrollToTop`** — the default child is a labelled up-arrow `Fab`; activating it (click or keyboard,
+  since it's a button) scrolls the target home. It stays hidden until the target scrolls past
+  `VisibleOffset`, so it isn't in the tab order while irrelevant.
+
+::: tip Name custom surfaces
+A bare `Paper` or `Card` holding a custom `Content` has no inherent label. If the surface represents a
+distinct region (a settings panel, a stat tile), give it an accessible name so assistive tech can
+announce it:
+
+```csharp
+using Avalonia.Automation;
+using Loam.Controls;
+
+var panel = new Paper { Elevation = 1, Content = settingsForm };
+AutomationProperties.SetName(panel, "Display settings");
+```
+:::
+
+## See also
+
+- [Buttons & menus](./buttons) — the actions you place inside `AppBar`, `CardActions`, and toolbars.
+- [Components overview → common parameters](./overview#common-parameters) — how `Color` and `Size` map across controls.
+- [Navigation](./navigation) — `NavMenu` / `NavLink`, the controls a generated `Drawer` builds internally.
+- [Theming](/guide/theming) — how `Elevation`, surface tokens, and `LoamColor` resolve.
+- [v2 → v3 migration guide](../migration/v2-to-v3) — the `Grid → ResponsiveGrid`, `Item → Col`, and `Stack` deprecations.

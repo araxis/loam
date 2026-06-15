@@ -4,13 +4,53 @@ title: Overlays & feedback
 
 # Overlays & feedback
 
-This page covers all overlay and feedback controls in Loam: modal dialogs, snackbar notifications, the full-area overlay scrim, popovers, tooltips, and the inline feedback controls (alert banners, progress indicators, skeleton placeholders, and collapse containers). All controls live in the `Loam.Controls` namespace; enums (`LoamColor`, `LoamSize`, `Variant`) are in the `Loam` namespace.
+This page covers all overlay and feedback controls in Loam: modal dialogs, snackbar notifications, the full-area overlay scrim, popovers, tooltips, and the inline feedback controls (alert banners, progress indicators, skeleton placeholders, and collapse containers). All controls live in the `Loam.Controls` namespace; enums (`LoamColor`, `LoamSize`, `Variant`, `Typo`) are in the `Loam` namespace.
+
+```csharp
+using Loam;          // LoamColor, LoamSize, Variant, Typo, Icons
+using Loam.Controls; // DialogService, SnackbarService, Overlay, Popover, Alert, …
+```
+
+::: tip Mental model
+There are two families here. **Services** (`DialogService`, `SnackbarService`) render *into the
+window's overlay layer* — you call them imperatively and they manage their own surface, scrim, and
+lifetime. **Controls** (`Overlay`, `Popover`, `Tooltip`, `Alert`, the progress/skeleton/collapse set)
+are things you place in the visual tree yourself and toggle with a property. Reach for a service when
+the interaction is transient and not part of your layout; reach for a control when the feedback lives
+inside a specific view.
+:::
+
+## Choosing a surface
+
+Several of these controls overlap. The decision usually comes down to *how much the user is interrupted*
+and *who owns the surface in the tree*.
+
+| Use | When | Reach for |
+| --- | --- | --- |
+| Blocking decision | The user must answer before continuing (confirm a delete, save changes) | [`DialogService`](#dialogservice-idialogservice) |
+| Transient confirmation | "Saved", "Copied", an undoable action — no interruption | [`SnackbarService`](#snackbarservice-isnackbar) |
+| Manual scrim over a view | Dim a region while something runs (a spinner, a custom panel) | [`Overlay`](#overlay) |
+| Anchored rich content | A details card, mini-form, or picker hung off a button | [`Popover`](#popover) |
+| One-line hint on hover | Explain an icon-only control | [`Tooltip`](#tooltip) |
+| Persistent inline message | A banner that stays in the layout (warning, info, error) | [`Alert`](#alert) |
+| Determinate / busy progress | Show how far along, or that work is happening | [`ProgressLinear`](#progresslinear) / [`ProgressCircular`](#progresscircular) |
+| Loading placeholder | Reserve layout while content streams in | [`Skeleton`](#skeleton) |
+| Show / hide a region | Reveal secondary content in place | [`Collapse`](#collapse) |
+| Searchable action launcher | Ctrl+K-style "jump to command" | [`CommandPalette`](#commandpalette) |
+
+::: tip Dialog vs Snackbar
+If the user *must* act, use a `DialogService` — it blocks and returns a result you `await`. If you're
+just acknowledging something that already happened (even with an "Undo"), use a `SnackbarService`. A
+snackbar that demands a decision will be missed when it auto-dismisses.
+:::
 
 ---
 
 ## DialogService / IDialogService
 
 Mirrors the reference API's `IDialogService`. Renders a scrim and a centered `Paper` dialog directly into the window's `OverlayLayer` — no provider component is required. Create an instance with the `DialogService.For(visual)` factory from any attached control.
+
+**Use it when** the user must make a decision or complete a focused task before continuing — confirming a destructive action, resolving unsaved changes, or filling a small modal form.
 
 ### Factory
 
@@ -43,6 +83,11 @@ IDialogService dialogs = DialogService.For(this);
 | `DismissOnScrimClick` | `bool` | `true` | Whether clicking the backdrop scrim cancels the dialog. |
 | `DismissOnEscape` | `bool` | `true` | Whether pressing Escape cancels the dialog. |
 | `AutoFocus` | `bool` | `true` | Whether the first enabled focusable child receives focus when the dialog opens. |
+
+::: warning Don't let a destructive flow dismiss itself
+For an irreversible action, set both `DismissOnScrimClick = false` and `DismissOnEscape = false` so a
+stray click or keystroke can't silently cancel — force the user to choose a real button.
+:::
 
 ### DialogInstance
 
@@ -113,6 +158,13 @@ if (!result.Canceled)
 
 Mirrors the reference API's `ISnackbar`. Stacks auto-dismissing snackbar surfaces in the window's overlay layer. Create an instance with `SnackbarService.For(visual)`.
 
+**Use it when** you want to acknowledge an action without interrupting — "Record saved", a failed
+validation, or an undoable change with an inline "Undo" action.
+
+The service keeps at most `MaxVisible` toasts on screen (default **3**) and stacks them at
+`Position` (default `SnackbarPosition.BottomRight`); newer toasts trim the oldest. Both can be set per
+toast through `SnackbarOptions`.
+
 ### Factory
 
 ```csharp
@@ -141,6 +193,14 @@ ISnackbar snackbar = SnackbarService.For(this);
 | `MaxVisible` | `int?` | `null` | Maximum visible toast count after this toast is added. Uses the service default when null. |
 | `DismissText` | `string?` | `null` | Optional dismiss button text. Escape still dismisses the snackbar. |
 | `Position` | `SnackbarPosition?` | `null` | Optional stack placement for this snackbar. Uses the service default when null. |
+
+`SnackbarPosition` values: `BottomRight` (default), `BottomLeft`, `TopRight`, `TopLeft`, `BottomCenter`, `TopCenter`.
+
+::: tip Pair "Undo" with a longer duration
+An undoable toast is only useful if the user can reach the button before it disappears. When you set
+`ActionText`/`Action`, bump `Duration` (e.g. 8 seconds) — or use `Timeout.InfiniteTimeSpan` with a
+`DismissText` so it waits for the user.
+:::
 
 ### Example
 
@@ -179,12 +239,16 @@ snackbar.Add(new SnackbarOptions("Waiting for approval")
 
 Mirrors the reference API's `Overlay`. A `ContentControl` that fills its parent with a translucent scrim and centers its content over it. Toggled by the two-way `Visible` property.
 
+**Use it when** you need to dim a region of your own layout and float something over it — a loading
+spinner, a custom blocking panel — without going through the dialog service. For a *managed* modal with
+a result, prefer [`DialogService`](#dialogservice-idialogservice).
+
 ### Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `Visible` | `bool` | `false` | Shows or hides the scrim (two-way). |
-| `DarkBackground` | `bool` | `false` | Uses a darker scrim (`#99000000`) instead of the light default (`#22000000`). |
+| `DarkBackground` | `bool` | `false` | Uses the darker `OverlayDark` scrim token instead of the default translucent `OverlayLight` one. |
 | `AutoClose` | `bool` | `false` | Sets `Visible = false` when the scrim is clicked or Escape is pressed while enabled. |
 | `OnClick` | `Action?` | `null` | Invoked when the enabled scrim is clicked or Escape closes an auto-close overlay. |
 
@@ -212,11 +276,20 @@ close.Click += (_, _) => manualOverlay.Visible = false;
 manualOverlay.Content = close;
 ```
 
+::: warning A busy overlay should not auto-close
+When the overlay is masking work in progress (an indeterminate spinner), leave `AutoClose = false` so a
+scrim click or Escape can't dismiss the scrim while the operation is still running.
+:::
+
 ---
 
 ## Popover
 
 Mirrors the reference API's `Popover`. A `Decorator` wrapping an Avalonia `Popup`. Set `Content`, optionally `Target` and `Placement`, then toggle the two-way `Open` property. Assign `Trigger` when the popover should open from a button or other control without custom event wiring. Light-dismiss automatically sets `Open = false`; Escape closes the open surface while the popover is enabled.
+
+**Use it when** you want richer, interactive content anchored to a control — a details card, a small
+form, a color picker. For a single line of explanatory text on hover, use [`Tooltip`](#tooltip)
+instead.
 
 ### Properties
 
@@ -258,6 +331,10 @@ var popover = new Popover
 
 Mirrors the reference API's `Tooltip`. A static helper that attaches a Loam-styled tooltip (small elevated `Paper` with `Caption` typography) to any `Control`, wrapping Avalonia's built-in `ToolTip`.
 
+**Use it when** a control needs a short, non-interactive hint — most often to name an icon-only
+button. A tooltip is supplementary; never hide essential information behind one, since it only appears
+on hover/focus.
+
 ### Methods
 
 | Member | Signature | Description |
@@ -269,7 +346,7 @@ Mirrors the reference API's `Tooltip`. A static helper that attaches a Loam-styl
 ```csharp
 using Loam.Controls;
 
-var icon = new Icon { Data = Icons.Info };
+var icon = new Icon { Data = Icons.Material.Filled.Info };
 Tooltip.Set(icon, "More information");
 ```
 
@@ -281,6 +358,10 @@ Contextual message banner colored by severity (`Color`) and styled by `Variant`.
 `Title`, `Message`, `Action`, and `Closeable` regions for standard alert anatomy, or keep using raw
 `Content` for compatibility. Closeable alerts use a generated icon button with keyboard access and
 raise `Closed` after `Close()` hides the alert.
+
+**Use it when** a message should stay in the layout until the situation changes or the user dismisses
+it — a validation summary, a degraded-state warning, an informational banner. For transient
+acknowledgements, use a [`SnackbarService`](#snackbarservice-isnackbar) instead.
 
 ### Properties
 
@@ -322,6 +403,9 @@ alert.Closed += (_, _) => viewModel.DismissWarning();
 ## ProgressLinear
 
 Mirrors the reference API's `ProgressLinear`. A horizontal progress bar tinted by `Color`; use `Indeterminate = true` for a moving fill when no value is available. The bar resolves its track, fill, disabled state, motion, and size metrics from theme tokens.
+
+**Use it when** progress is tied to a width — a page-top load bar, an upload row, a stepper. Set a
+known `Value` for determinate work; switch to `Indeterminate` when you can't estimate completion.
 
 ### Properties
 
@@ -376,6 +460,10 @@ var compact = new ProgressLinear
 
 Mirrors the reference API's `ProgressCircular`. Draws an arc tinted by `Color`: a determinate sweep from `Value`, or a continuously spinning arc when `Indeterminate` (the default).
 
+**Use it when** progress sits in a compact spot — inside a button, an [`Overlay`](#overlay), or a card
+— where a circular indicator reads better than a bar. Note it defaults to `Indeterminate = true`; set
+it `false` to show a `Value`.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -425,6 +513,10 @@ var compact = new ProgressCircular
 
 Mirrors the reference API's `Skeleton`. A themed placeholder block shown while content is loading. Extends `Border` with a skeleton palette color and rounded corners. Use the public factories for common loading anatomy, or set `Circle = true` for a custom round placeholder.
 
+**Use it when** content is on its way and you want to reserve its layout — a list row, an avatar, a
+card — so the page doesn't jump when data arrives. For "something is happening but I don't know the
+shape", a [progress indicator](#progresscircular) is the better fit.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -462,6 +554,10 @@ var card = Skeleton.Card(260, 96, animate: false, label: "Card loading");
 
 Mirrors the reference API's `Collapse`. A `Decorator` that reveals its single `Child` when `Expanded`, clipping it to zero height when collapsed.
 
+**Use it when** you want to hide secondary content in place and reveal it on demand — an expander
+section, "show more" details, an inline edit panel. The reveal is animated by default; set
+`Animated = false` (or `Duration = TimeSpan.Zero`) for reduced-motion scenarios.
+
 ### Properties
 
 | Property | Type | Default | Description |
@@ -496,11 +592,14 @@ var staticCollapse = new Collapse
 
 A searchable command palette: a search field over a live-filtered list of commands, with keyboard navigation (Down/Up to move, Enter to run, Escape to close). Host it inside an `Overlay`, a dialog, or place it inline. Matching is exposed as the pure static `CommandPalette.Filter(commands, query)` (case-insensitive contains on `Title` or any `Keywords`).
 
+**Use it when** there are many actions a power user might want to reach quickly — a Ctrl+K launcher.
+Hosting it in an [`Overlay`](#overlay) gives you the familiar dimmed, click-away-to-close behavior.
+
 ### CommandPalette properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `Commands` | `IList<CommandPaletteItem>` | `(empty)` | The commands to search. |
+| `Commands` | `AvaloniaList<CommandPaletteItem>` | `(empty)` | The commands to search. |
 | `FilterText` | `string?` | `null` | The current query (two-way; bound to the search field). |
 | `IsOpen` | `bool` | `true` | Whether the palette is shown (two-way). Escape sets it `false`. |
 | `SelectedIndex` | `int` (get) | `-1` | Highlighted index within the filtered results. |
@@ -524,3 +623,107 @@ var palette = new CommandPalette
 };
 palette.Invoked += (_, command) => Run(command);
 ```
+
+---
+
+## Recipe: a long-running task with progress and feedback
+
+A typical end-to-end flow: confirm the action with a dialog, dim the view with an `Overlay` carrying a
+`ProgressCircular` while the work runs, then acknowledge the result with a snackbar. Everything is
+plain C# — wire the pieces from a button click handler.
+
+```csharp
+using Avalonia.Controls;
+using Loam;
+using Loam.Controls;
+
+// 'this' is a control already attached to the window.
+var busy = new Overlay
+{
+    DarkBackground = true,
+    AutoClose = false, // don't let a click dismiss the scrim mid-run
+    Content = new ProgressCircular
+    {
+        Color = LoamColor.Primary,
+        Size = LoamSize.Large,
+        Label = "Publishing",
+    },
+};
+rootPanel.Children.Add(busy); // overlay fills its parent
+
+var publish = new Button
+{
+    Content = "Publish",
+    Variant = Variant.Filled,
+    Color = LoamColor.Primary,
+    StartIcon = Icons.Material.Filled.CloudUpload,
+};
+
+publish.Click += async (_, _) =>
+{
+    bool ok = await DialogService.For(this).ConfirmAsync(
+        "Publish changes",
+        "This will make your edits live.",
+        okText: "Publish",
+        cancelText: "Not yet");
+    if (!ok)
+    {
+        return;
+    }
+
+    busy.Visible = true;
+    try
+    {
+        await viewModel.PublishAsync();
+        SnackbarService.For(this).Add("Published.", LoamColor.Success);
+    }
+    catch
+    {
+        SnackbarService.For(this).Add(new SnackbarOptions("Publish failed")
+        {
+            Severity = LoamColor.Error,
+            ActionText = "Retry",
+            Action = () => publish.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)),
+            Duration = TimeSpan.FromSeconds(8),
+        });
+    }
+    finally
+    {
+        busy.Visible = false;
+    }
+};
+```
+
+## Accessibility & keyboard
+
+These controls cover the focus and keyboard behavior you'd expect from overlay UI:
+
+- **Dialogs** — when `AutoFocus` is `true` (the default) the first enabled focusable child receives focus on open. <kbd>Esc</kbd> cancels while `DismissOnEscape` is `true`; clicking the scrim cancels while `DismissOnScrimClick` is `true`. Turn both off for irreversible actions.
+- **Snackbars** — each toast is focusable and announced to assistive technology (its message is the automation name). <kbd>Esc</kbd> dismisses the focused toast even when no `DismissText` button is shown.
+- **Overlay** — when `AutoClose` is enabled, <kbd>Esc</kbd> and a scrim click both set `Visible = false` and invoke `OnClick`. Leave `AutoClose` off to make the scrim non-dismissible.
+- **Popover** — assigning a `Trigger` makes it open via <kbd>Space</kbd>/<kbd>Enter</kbd> as well as click. <kbd>Esc</kbd> closes the open surface, and clicking outside light-dismisses it; placement is reflected to assistive tech as help text.
+- **CommandPalette** — <kbd>↓</kbd>/<kbd>↑</kbd> move the highlight, <kbd>Enter</kbd> runs the highlighted command, <kbd>Esc</kbd> closes the palette.
+- **Alert** — a `Closeable` alert's close affordance is a keyboard-accessible icon button; `Close()` and the button both raise `Closed`.
+
+::: tip Name your indicators and icon triggers
+A bare [`ProgressCircular`](#progresscircular)/[`ProgressLinear`](#progresslinear) or
+[`Skeleton`](#skeleton) has no text for a screen reader. Set `Label` so the busy/loading state is
+announced. Likewise, give an icon-only [`Popover`](#popover) trigger an accessible name:
+
+```csharp
+using Avalonia.Automation;
+
+var spinner = new ProgressCircular { Label = "Loading results" };
+
+var info = new IconButton { Icon = Icons.Material.Filled.Info };
+AutomationProperties.SetName(info, "Show details");
+```
+:::
+
+## See also
+
+- [Buttons & menus](./buttons) — `Button`, `IconButton`, and `Menu` triggers used throughout these examples.
+- [Form inputs](./inputs) — `TextField` and friends for dialog form content.
+- [Display primitives](./display) — `Text`, `Icon`, `Paper`, and the glyph set behind `Icon`/`StartIcon`.
+- [Components overview → common parameters](./overview#common-parameters) — how `Color`, `Size`, and `Variant` behave across controls.
+- [Theming](/guide/theming) — how severity colors and motion resolve to tokens.

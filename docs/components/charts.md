@@ -6,11 +6,45 @@ title: Charts & effects
 
 Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
 
+The charts are not wrappers around a third-party plotting engine — each one overrides `Render` and draws its slices, bars, or polyline directly with an Avalonia `DrawingContext`. That keeps them light and theme-aware, but it also means there is no XAML template to restyle: you shape a chart entirely through its C# properties. Every chart projects its data into one shared `ChartPoint` snapshot that feeds rendering, hover, tooltips, data labels, accessibility text, and the legend — so what you see, what a screen reader speaks, and what a bound `ChartLegend` shows can never drift apart.
+
+```csharp
+using Loam;          // LoamColor, Typo, enums
+using Loam.Controls; // PieChart, BarChart, LineChart, ChartLegend, Ripple, Charts
+using Avalonia.Media; // Color
+```
+
 > **Package (since 3.1).** The chart controls ship in the **`Loam.Charts`** satellite package. Add the
 > package reference and register its themes with `Styles.Add(new LoamCharts())` after `LoamTheme`.
 > Namespaces are unchanged (`Loam.Controls`). See the [v3 → v3.1 migration guide](/migration/v3-to-v3.1).
 
+::: tip Mental model
+Pick the chart by the **shape of the comparison**: `PieChart` for parts of a whole, `BarChart` for
+comparing discrete categories, `LineChart` for a trend across an ordered sequence. Then layer features
+in the same order on all three — give it data (`Values`, or bind `ItemsSource`), turn on `ShowAxes` for
+quantitative reading, add `ShowDataLabels`/`ShowTooltip` for precision, and attach a `ChartLegend` to
+name the series. `Ripple` is unrelated to charts; it is a feedback decorator that happens to ship in the
+same package family.
+:::
+
+## Choosing a chart
+
+| Use | When | Reach for |
+| --- | --- | --- |
+| Parts of a whole | A handful of values that sum to a meaningful total (share, mix, split) | [`PieChart`](#piechart) |
+| KPI total + breakdown | A donut whose hole carries the headline number | [`PieChart`](#piechart) with `Donut` |
+| Compare categories | Discrete, unordered items measured on one scale (revenue by month, count by type) | [`BarChart`](#barchart) |
+| Diverging / signed data | Values that go above and below zero (P&L, variance, net flow) | [`BarChart`](#barchart) with `AllowNegative` |
+| Trend over a sequence | An ordered series where the *direction* matters (time, steps) | [`LineChart`](#linechart) |
+| Several series together | More than one series across the same categories | [`BarChart`](#barchart) / [`LineChart`](#linechart) with `Series` |
+| Press feedback on any control | A Material ripple when the user clicks | [`Ripple`](#ripple) |
+
+`BarChart` and `LineChart` share a `CartesianChartBase`, so axes, `Series`, `Min`/`Max`, and the
+`StackMode`/multi-line behaviors below apply to both. `PieChart` is its own shape and ignores axes.
+
+::: tip Theme first, colors second
 Chart visuals are theme-aware by default. If `Colors` is `null`, series colors resolve from the active light/dark role tokens. Supplying `Colors` overrides theme roles for that chart. `Charts.Palette` remains available as a compatibility fallback for custom math/rendering scenarios.
+:::
 
 ### Per-point labels and snapshot (all charts)
 
@@ -19,7 +53,6 @@ All chart controls share two members on their `ChartBase`:
 | Member | Type | Default | Description |
 |---|---|---|---|
 | `Labels` | `IReadOnlyList<string>?` | `null` | Optional per-point labels aligned by index to `Values`. When set, they enrich the chart's accessibility help text (e.g. `"3 values: Web, Direct, Mobile"`). |
-| `ResolvedPoints` | `IReadOnlyList<ChartPoint>` | — | The current per-point snapshot, rebuilt whenever `Values`, `Colors`, or `Labels` change. |
 | `ShowDataLabels` | `bool` | `false` | When `true`, draws per-point value annotations on the chart, with responsive thinning that drops colliding labels rather than overlapping them. |
 | `DataLabelFormat` | `Func<ChartPoint, string>?` | `null` | Formats each data label from its `ChartPoint`. When `null`, a per-chart default is used (value for bars/lines, percentage for pie slices). |
 
@@ -96,6 +129,12 @@ new BarChart
 };
 ```
 
+::: tip Comparable scales across charts
+Two charts only read as comparable if they share a scale. When you place several charts side by side, pin
+the same `Min`/`Max` on each — otherwise each chart auto-fits its own data and a smaller series can look
+just as "tall" as a larger one.
+:::
+
 ### Multiple series (bar & line)
 
 Set `Series` (a list of `ChartSeries`) to plot several series. It overrides `Values`; categories come
@@ -144,6 +183,9 @@ chart.TooltipFormat = p => $"{p.Label}: {p.Value:C0}"; // customize, or set Show
 
 Draws one filled slice per positive value, sized by its share of the positive-value total. Negative values are clamped to zero. Set `Donut = true` to punch a center hole; control the hole size with `HoleRatio`, and fill the hole with a KPI total via the `Center*` properties. Empty and zero-only charts render a tokenized `No data` state instead of a blank surface.
 
+**Use it when** a few values add up to a meaningful whole and the *share* of each is the story — a traffic
+split, a budget mix. With more than five or six slices, prefer a `BarChart`; thin slices are hard to read.
+
 ### Properties
 
 | Member | Type | Default | Description |
@@ -156,6 +198,13 @@ Draws one filled slice per positive value, sized by its share of the positive-va
 | `CenterSubText` | `string?` | `null` | Secondary caption drawn under `CenterText`. |
 | `CenterValue` | `double?` | `null` | Value formatted by `CenterValueFormat`; when `null`, the positive-value total is used. |
 | `CenterValueFormat` | `string?` | `null` | .NET numeric format string (e.g. `"C0"`, `"N0"`) rendered in the hole when `CenterText` is not set. |
+
+::: details How the donut hole picks its text
+The hole shows `CenterText` if you set it. Otherwise, if `CenterValueFormat` is set, it formats
+`CenterValue` — or the positive-value total when `CenterValue` is `null`. `CenterSubText` is the caption
+drawn beneath either. So a donut summing to 1,240 with `CenterValueFormat = "N0"` and
+`CenterSubText = "sessions"` reads "1,240 / sessions" without you computing the total.
+:::
 
 ### Example
 
@@ -212,6 +261,10 @@ new PieChart
 
 Renders a vertical bar per value, scaled against the largest positive value in the series. By default negative values are clamped to zero; set `AllowNegative = true` to draw them as bars below a zero baseline (for P&L, variance, net-flow, and similar diverging data). The default measured size is 320 x 180. Bars are drawn with tokenized grid lines and rounded corners. Empty and zero-only charts render the shared `No data` state.
 
+**Use it when** you are comparing discrete categories on one scale and the exact magnitudes matter. Add
+`ShowAxes` so the values can be read off the gutter, and `Series` when each category carries more than one
+measure.
+
 ### Properties
 
 | Member | Type | Default | Description |
@@ -249,11 +302,21 @@ new BarChart
 }
 ```
 
+::: warning Signed bars are single-series only
+`AllowNegative` draws below-baseline bars only for a single `Values` series. Multi-series bars (via
+`Series`) are positive-stacked or grouped in this release — negative values in a `Series` are treated as
+zero. Keep diverging data on a single-series `BarChart`.
+:::
+
 ---
 
 ## LineChart
 
 Plots values as a connected polyline with a dot at each data point, scaled against the largest positive value. By default negative values are clamped to zero; set `AllowNegative = true` to plot them below a zero baseline. Set `Area = true` to fill the region beneath the line with a tokenized translucent wash (filled to the zero baseline when `AllowNegative` is set). Empty and zero-only charts render the shared `No data` state; a single positive value renders as one centered dot.
+
+**Use it when** the data is an ordered sequence and the *shape* of the change — rising, dipping,
+recovering — is what you want the reader to see. Reach for `Area` to emphasize cumulative volume, and
+`Series` for several trends on one axis.
 
 ### Properties
 
@@ -284,6 +347,38 @@ new LineChart
     Area = true,
     Values = new[] { 4d, -2d, 6d, -1d, 3d, -4d },
 }
+```
+
+---
+
+## ChartLegend
+
+A vertical list of legend rows — a color swatch plus a caption — that pairs with the charts above. It can
+read its rows from a bound chart (`Source`), or you can drive them manually with `Labels`/`Colors`.
+`ChartLegend` is a `StackPanel`, so you place it like any panel (beside or beneath the chart).
+
+**Use it when** a chart has more than one series, or its slices/bars need named keys. Prefer the bound
+form (`Source`) so the legend rebuilds itself whenever the chart's data changes.
+
+### Properties
+
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `Source` | `ChartBase?` | `null` | Chart to derive rows from — one per series for multi-series charts, otherwise one per category. Refreshes automatically and overrides manual `Labels`/`Colors`. |
+| `Labels` | `AvaloniaList<string>` | `[]` | Manual legend captions (used when `Source` is `null`). |
+| `Colors` | `IReadOnlyList<Color>?` | `null` | Optional explicit swatch colors; when omitted, swatches bind to theme role tokens in the same order charts use. |
+| `ShowSwatches` | `bool` | `true` | When `false`, renders captions only (no color swatch). |
+
+```csharp
+// Bound to a chart — rows follow the data
+var chart = new BarChart { Labels = quarters, Series = series };
+var legend = new ChartLegend { Source = chart };
+
+// Manual rows when there is no single source chart
+var manual = new ChartLegend
+{
+    Labels = { "Desktop", "Browser", "Mobile" },
+};
 ```
 
 ---
@@ -323,19 +418,36 @@ var layout = Charts.SignedBarLayout(new[] { 10d, -5d, 0d }, min, max, plotHeight
 Color first = Charts.Palette[0]; // #2196F3
 ```
 
+::: tip These helpers are pure
+Everything on `Charts` (besides `Palette`) is a side-effect-free function over numbers. That makes them
+unit-testable on their own and reusable from a custom `Control.Render` override when you need a chart
+shape the built-in controls do not draw.
+:::
+
 ---
 
 ## Ripple
 
 A click-ripple `Decorator`. Wraps a child control and, on each pointer press, animates a translucent circle that expands from the press point to the farthest corner and fades out. `ClipToBounds` is enabled automatically.
 
+`Ripple` ships in the core **Loam** package (namespace `Loam.Controls`), not the `Loam.Charts` satellite —
+it is grouped here only because it is the library's other custom-drawn visual. Loam's own buttons already
+host a ripple internally, so reach for `Ripple` to add the same feedback to a custom surface (a card, a
+list row, a tile).
+
+**Use it when** you build a clickable surface that is not already a Loam button and want Material-style
+press feedback on it.
+
 ### Properties / Members
 
-| Member | Type | Description |
-|---|---|---|
-| `Progress` | `double` (styled property) | Current ripple animation progress from 0 to 1. Driven by the internal animation; triggers `Render` via `AffectsRender`. |
-| `Child` | `Control?` | The wrapped content (inherited from `Decorator`). |
-| `MaxReach(origin, size)` | `static double` | Returns the distance from `origin` to the farthest corner of `size` — the radius the ripple expands to. |
+| Member | Type | Default | Description |
+|---|---|---|---|
+| `Progress` | `double` (styled property) | `0` | Current ripple animation progress from 0 to 1. Driven by the internal animation; triggers `Render` via `AffectsRender`. |
+| `RippleOpacity` | `double` (styled property) | `0.12` | Maximum opacity of the ripple at its strongest, before it fades out. |
+| `Duration` | `TimeSpan` (styled property) | `150 ms` | How long the expand-and-fade animation runs. |
+| `RippleBrush` | `IBrush?` (styled property) | `null` | Color of the ripple. When unset (or not a solid brush) it falls back to black. |
+| `Child` | `Control?` | `null` | The wrapped content (inherited from `Decorator`). |
+| `MaxReach(origin, size)` | `static double` | — | Returns the distance from `origin` to the farthest corner of `size` — the radius the ripple expands to. |
 
 ### Example
 
@@ -345,6 +457,106 @@ new Ripple
     Child = new Button { Content = "Click me" },
 }
 
+// A tinted, slower ripple on a custom surface
+new Ripple
+{
+    RippleBrush = new SolidColorBrush(Color.Parse("#6750A4")),
+    RippleOpacity = 0.2,
+    Duration = TimeSpan.FromMilliseconds(250),
+    Child = myCard,
+}
+
 // Using the static helper directly in a custom renderer
 double reach = Ripple.MaxReach(pressPoint, controlBounds.Size);
 ```
+
+---
+
+## Recipe: a KPI card with chart, legend, and live readout
+
+A common dashboard tile — a titled card holding a multi-series chart, a bound legend beside it, and a
+status line that updates as the user hovers. Everything is plain C#; the chart, legend, and text stay in
+sync through the bound `Source` and the `HoverChanged` event. Lay the pieces out with the surfaces in
+[Surfaces & layout](./layout) and the typography in [Display primitives](./display#text).
+
+```csharp
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Loam;
+using Loam.Controls;
+
+var quarters = new[] { "Q1", "Q2", "Q3", "Q4" };
+var series = new[]
+{
+    new ChartSeries(new[] { 30d, 45d, 28d, 60d }, "Web"),
+    new ChartSeries(new[] { 18d, 22d, 35d, 30d }, "Mobile"),
+};
+
+var chart = new BarChart
+{
+    Labels   = quarters,
+    Series   = series,
+    ShowAxes = true,
+    Height   = 200,
+};
+
+var readout = new Text { Typo = Typo.Caption };
+chart.HoverChanged += (_, e) =>
+    readout.Text = e.Point is { } p ? $"{p.Label}: {p.Value:N0}" : "Hover a bar";
+
+var card = new Card
+{
+    Elevation = 2,
+    Content = new CardContent
+    {
+        Child = new StackPanel
+        {
+            Spacing = 12,
+            Children =
+            {
+                new Text { Text = "Sessions by quarter", Typo = Typo.H6 },
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 16,
+                    Children =
+                    {
+                        new Border { Child = chart, Width = 360 },
+                        new ChartLegend { Source = chart },
+                    },
+                },
+                readout,
+            },
+        },
+    },
+};
+```
+
+## Accessibility & keyboard
+
+The charts are custom-drawn `Control`s, so they are not focusable or keyboard-operable on their own — they
+are read by assistive technology rather than navigated. Build accordingly:
+
+- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
+- **Spoken summary** — the chart keeps an automation *help text* in sync with its data: the count of positive values, plus the `Labels` when you provide them (e.g. `"3 values: Web, Direct, Mobile"`). Always set `Labels` so the summary is meaningful.
+- **Don't rely on color alone** — series colors come from theme roles; pair the chart with a `ChartLegend` (and consider `ShowDataLabels`) so the data is legible without distinguishing hues.
+- **Interaction is pointer-based** — `HoverChanged` and `PointClicked` fire on pointer move/press. If a datapoint must be actionable from the keyboard, mirror that action on a focusable control (a `Button`, a list row) elsewhere in the view.
+- **`Ripple`** is decoration only; it adds no semantics. Keep the real action on the `Child` control, which carries its own focus and activation.
+
+::: tip Name the chart and label its points
+```csharp
+using Avalonia.Automation;
+
+var chart = new PieChart { Values = data, Labels = new[] { "Web", "Direct", "Mobile" } };
+AutomationProperties.SetName(chart, "Traffic sources");
+// Help text becomes "3 values: Web, Direct, Mobile"
+```
+:::
+
+## See also
+
+- [Surfaces & layout](./layout) — `Card`, `Paper`, and the panels that frame a chart tile.
+- [Display primitives → Text](./display#text) — `Text`/`Typo` for chart titles, captions, and readouts.
+- [Buttons & menus](./buttons) — focusable, keyboard-operable actions to pair with a chart's `PointClicked`.
+- [v3 → v3.1 migration](/migration/v3-to-v3.1) — how the charts moved into the `Loam.Charts` package.
+- [Theming](/guide/theming) — how series colors resolve from `LoamColor` role tokens when `Colors` is `null`.
