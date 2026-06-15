@@ -1031,6 +1031,10 @@ public sealed class ComponentsView : UserControl
             Sample("Line", BuildSparklineLine),
             Sample("Bar", BuildSparklineBar),
             Sample("KPI row", BuildSparklineRow)),
+        PageWithSamples("Charts", "RadarChart", "Multi-axis radar (spider) chart.",
+            Sample("Single series", BuildRadarChartSingle),
+            Sample("Multiple series", BuildRadarChartSeries),
+            Sample("Empty state", BuildRadarChartEmpty)),
     ];
 
     private NavMenu BuildSideMenu()
@@ -8799,6 +8803,82 @@ public sealed class ComponentsView : UserControl
                     new Text { Text = "Sessions", Typo = Typo.Body2 },
                     new Sparkline { Width = 120, Height = 24, Values = [12d, 18d, 15d, 22d, 19d, 28d] },
                     new Text { Text = "28", Typo = Typo.Subtitle2, Color = LoamColor.Primary },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildRadarChartSingle()
+    {
+        var labels = new[] { "Speed", "Power", "Range", "Cost", "Comfort" };
+        var values = new[] { 8d, 6d, 9d, 4d, 7d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "One series across five axes; the fill follows the theme primary role.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new RadarChart { Width = 260, Height = 260, Labels = labels, Values = values },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildRadarChartSeries()
+    {
+        var labels = new[] { "Speed", "Power", "Range", "Cost", "Comfort" };
+        var modelA = new[] { 8d, 6d, 9d, 4d, 7d };
+        var modelB = new[] { 5d, 9d, 6d, 7d, 5d };
+        var radar = new RadarChart
+        {
+            Width = 260,
+            Height = 260,
+            Labels = labels,
+            Series = new[]
+            {
+                new ChartSeries(modelA, "Model A"),
+                new ChartSeries(modelB, "Model B"),
+            },
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    radar,
+                    new ChartLegend { Source = radar },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildRadarChartEmpty()
+    {
+        var values = new[] { 1d, 2d }; // fewer than three axes -> empty state
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new RadarChart { Width = 260, Height = 260, Values = values },
                 },
             },
         };

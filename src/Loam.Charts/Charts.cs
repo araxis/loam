@@ -65,6 +65,31 @@ public static class Charts
         return Math.Clamp((value - min) / span, 0, 1);
     }
 
+    /// <summary>
+    /// Maps each value to a vertex on a radar/spider plot: one axis per value, evenly spaced clockwise from the
+    /// top (12 o'clock), with radius proportional to <c>value / max</c> (clamped to <c>[0, max]</c>). Returns empty
+    /// when there is no data, a non-positive <paramref name="max"/>, or no room.
+    /// </summary>
+    internal static IReadOnlyList<Point> RadarPoints(IReadOnlyList<double> values, double max, Point center, double maxRadius)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count == 0 || max <= 0 || maxRadius <= 0)
+        {
+            return Array.Empty<Point>();
+        }
+
+        var count = values.Count;
+        var result = new Point[count];
+        for (var i = 0; i < count; i++)
+        {
+            var angle = (-90 + i * 360.0 / count) * Math.PI / 180;
+            var radius = Math.Clamp(values[i], 0, max) / max * maxRadius;
+            result[i] = new Point(center.X + radius * Math.Cos(angle), center.Y + radius * Math.Sin(angle));
+        }
+
+        return result;
+    }
+
     internal static IReadOnlyList<Point> LinePoints(IReadOnlyList<double> values, double width, double height, double pad = 4)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -829,7 +854,8 @@ public abstract class ChartBase : Control
             AutomationProperties.SetName(this, ChartAutomationName);
         }
 
-        var positiveCount = Values.Count(value => value > 0);
+        // Count from the snapshot, not Values, so multi-series charts (driven by Series, with Values empty) still report.
+        var positiveCount = _points.Count(point => point.Value > 0);
         string helpText;
         if (positiveCount == 0)
         {
@@ -843,7 +869,8 @@ public abstract class ChartBase : Control
                 var labelled = string.Join(
                     ", ",
                     _points.Where(point => point.Value > 0 && !string.IsNullOrEmpty(point.Label))
-                        .Select(point => point.Label));
+                        .Select(point => point.Label)
+                        .Distinct()); // distinct so multi-series doesn't repeat each category label per series
                 if (!string.IsNullOrEmpty(labelled))
                 {
                     helpText = $"{helpText}: {labelled}";
@@ -1191,50 +1218,9 @@ public sealed class PieChart : ChartBase
     }
 }
 
-/// <summary>Shared base for Cartesian charts (bar, line): value-axis domain, optional axes, and gutters.</summary>
-public abstract class CartesianChartBase : ChartBase
+/// <summary>Shared base for charts that accept an optional multi-<see cref="ChartSeries"/> collection (bar, line, radar).</summary>
+public abstract class MultiSeriesChartBase : ChartBase
 {
-    private bool _showAxes;
-    private double? _min;
-    private double? _max;
-    private int _yAxisTickCount = 4;
-    private Func<double, string>? _yAxisFormat;
-
-    /// <summary>When true, draws a numeric Y-axis and category X-axis (nice-number scaled) in reserved gutters.</summary>
-    public bool ShowAxes
-    {
-        get => _showAxes;
-        set { _showAxes = value; InvalidateVisual(); }
-    }
-
-    /// <summary>Explicit value-axis minimum; when null, derived from the data (and zero).</summary>
-    public double? Min
-    {
-        get => _min;
-        set { _min = value; InvalidateVisual(); }
-    }
-
-    /// <summary>Explicit value-axis maximum; when null, derived from the data.</summary>
-    public double? Max
-    {
-        get => _max;
-        set { _max = value; InvalidateVisual(); }
-    }
-
-    /// <summary>Approximate number of Y-axis tick intervals used for nice-number scaling.</summary>
-    public int YAxisTickCount
-    {
-        get => _yAxisTickCount;
-        set { _yAxisTickCount = Math.Max(1, value); InvalidateVisual(); }
-    }
-
-    /// <summary>Formats Y-axis tick labels; when null, a compact numeric format is used.</summary>
-    public Func<double, string>? YAxisFormat
-    {
-        get => _yAxisFormat;
-        set { _yAxisFormat = value; InvalidateVisual(); }
-    }
-
     private IReadOnlyList<ChartSeries>? _series;
 
     /// <summary>Optional multiple data series. When set (non-empty), it drives rendering and the snapshot instead of <see cref="ChartBase.Values"/>.</summary>
@@ -1297,6 +1283,51 @@ public abstract class CartesianChartBase : ChartBase
         }
 
         return points.ToArray();
+    }
+}
+
+/// <summary>Shared base for Cartesian charts (bar, line): value-axis domain, optional axes, and gutters.</summary>
+public abstract class CartesianChartBase : MultiSeriesChartBase
+{
+    private bool _showAxes;
+    private double? _min;
+    private double? _max;
+    private int _yAxisTickCount = 4;
+    private Func<double, string>? _yAxisFormat;
+
+    /// <summary>When true, draws a numeric Y-axis and category X-axis (nice-number scaled) in reserved gutters.</summary>
+    public bool ShowAxes
+    {
+        get => _showAxes;
+        set { _showAxes = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Explicit value-axis minimum; when null, derived from the data (and zero).</summary>
+    public double? Min
+    {
+        get => _min;
+        set { _min = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Explicit value-axis maximum; when null, derived from the data.</summary>
+    public double? Max
+    {
+        get => _max;
+        set { _max = value; InvalidateVisual(); }
+    }
+
+    /// <summary>Approximate number of Y-axis tick intervals used for nice-number scaling.</summary>
+    public int YAxisTickCount
+    {
+        get => _yAxisTickCount;
+        set { _yAxisTickCount = Math.Max(1, value); InvalidateVisual(); }
+    }
+
+    /// <summary>Formats Y-axis tick labels; when null, a compact numeric format is used.</summary>
+    public Func<double, string>? YAxisFormat
+    {
+        get => _yAxisFormat;
+        set { _yAxisFormat = value; InvalidateVisual(); }
     }
 
     /// <summary>True when per-point <see cref="ChartBase.Labels"/> are available for the X axis.</summary>

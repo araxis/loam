@@ -4,7 +4,7 @@ title: Charts & effects
 
 # Charts & effects
 
-Loam provides five custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`, `RadialGauge`, `Sparkline`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
+Loam provides six custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`, `RadialGauge`, `Sparkline`, `RadarChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
 
 The charts are not wrappers around a third-party plotting engine — each one overrides `Render` and draws its slices, bars, or polyline directly with an Avalonia `DrawingContext`. That keeps them light and theme-aware, but it also means there is no XAML template to restyle: you shape a chart entirely through its C# properties. Every chart projects its data into one shared `ChartPoint` snapshot that feeds rendering, hover, tooltips, data labels, accessibility text, and the legend — so what you see, what a screen reader speaks, and what a bound `ChartLegend` shows can never drift apart.
 
@@ -39,6 +39,7 @@ same package family.
 | Several series together | More than one series across the same categories | [`BarChart`](#barchart) / [`LineChart`](#linechart) with `Series` |
 | One value against a range | A KPI dial — utilization, score, progress toward a target | [`RadialGauge`](#radialgauge) |
 | Trend in a tiny space | An inline mini-chart for a table cell, list row, or KPI tile | [`Sparkline`](#sparkline) |
+| Compare items across many axes | Profiles measured on several shared dimensions (skills, specs, scores) | [`RadarChart`](#radarchart) |
 | Press feedback on any control | A Material ripple when the user clicks | [`Ripple`](#ripple) |
 
 `BarChart` and `LineChart` share a `CartesianChartBase`, so axes, `Series`, `Min`/`Max`, and the
@@ -426,6 +427,53 @@ var bars  = new Sparkline { Width = 160, Height = 32, Mode = SparklineMode.Bar, 
 
 ---
 
+## RadarChart
+
+A radar (spider) chart: one axis per category arranged radially, with each series drawn as a polygon whose
+vertices sit at `value / max` along their axes. `RadarChart` subclasses `MultiSeriesChartBase` (shared with
+`BarChart`/`LineChart`), so it supports the same multi-`ChartSeries` collection, legend, theme palette,
+tooltip, hover/click, and empty state. Category names come from `Labels`; a radar needs at least three axes.
+
+**Use it when** you're comparing one or more profiles across several shared dimensions (product specs,
+skill ratings, review scores). For a single value against a range use [`RadialGauge`](#radialgauge); for an
+ordered trend use [`LineChart`](#linechart).
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Max` | `double?` | `null` | The outer value for every axis; when null, the largest value across the data is used. |
+| `Levels` | `int` | `4` | Number of concentric grid rings. |
+| `Filled` | `bool` | `true` | Whether each series polygon is filled with a translucent area. |
+
+Single-series data comes from `Values`; multi-series from the inherited `Series`. `Colors`, hover/click, and the legend behave as on the other charts.
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+// Single series.
+var radar = new RadarChart
+{
+    Labels = new[] { "Speed", "Power", "Range", "Cost", "Comfort" },
+    Values = new[] { 8d, 6d, 9d, 4d, 7d },
+};
+
+// Multiple series compared on the same axes (pair with a ChartLegend).
+var compare = new RadarChart
+{
+    Labels = new[] { "Speed", "Power", "Range", "Cost", "Comfort" },
+    Series = new[]
+    {
+        new ChartSeries(new[] { 8d, 6d, 9d, 4d, 7d }, "Model A"),
+        new ChartSeries(new[] { 5d, 9d, 6d, 7d, 5d }, "Model B"),
+    },
+};
+```
+
+---
+
 ## ChartLegend
 
 A vertical list of legend rows — a color swatch plus a caption — that pairs with the charts above. It can
@@ -613,7 +661,7 @@ var card = new Card
 The charts are custom-drawn `Control`s, so they are not focusable or keyboard-operable on their own — they
 are read by assistive technology rather than navigated. Build accordingly:
 
-- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`, `"Gauge"`, `"Sparkline"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
+- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`, `"Gauge"`, `"Sparkline"`, `"Radar chart"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
 - **`RadialGauge` summary** — the gauge keeps a help text describing its readout and range (e.g. `"CPU load: 72% (0 to 100)"`); set `Caption` and `Format`/`CenterText` so it reads well.
 - **Spoken summary** — the chart keeps an automation *help text* in sync with its data: the count of positive values, plus the `Labels` when you provide them (e.g. `"3 values: Web, Direct, Mobile"`). Always set `Labels` so the summary is meaningful.
 - **Don't rely on color alone** — series colors come from theme roles; pair the chart with a `ChartLegend` (and consider `ShowDataLabels`) so the data is legible without distinguishing hues.
