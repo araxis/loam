@@ -7,6 +7,36 @@ Next.
 
 ---
 
+## 2026-06-15 — 3.23 — Charts: RadarChart (spider)
+
+Second charts roadmap item. **RadarChart** (`src/Loam.Charts/RadarChart.cs`): one axis per category arranged radially,
+each series a polygon at `value/max`; `Max`/`Levels`/`Filled`; single-series via `Values`, multi via `Series`; category names
+from `Labels`; needs ≥3 axes (else no-data); transparent-fill hit-test; flat vertex array (series-major `s*categories+c`)
+matching `ResolvedPoints`. New internal pure helper `Charts.RadarPoints(values,max,center,maxRadius)` (angle `-90+i*360/n`,
+radius clamped).
+
+**Refactor:** extracted **`MultiSeriesChartBase : ChartBase`** holding the Series machinery (`Series`, `HasSeries`, `SeriesList`,
+`SeriesCategoryCount`, `SeriesColor`, `GetLegendEntries`, `BuildPoints`) out of `CartesianChartBase` (which now derives from it).
+BarChart/LineChart inherit transitively — unchanged. RadarChart extends `MultiSeriesChartBase` directly (no Cartesian axes).
+This avoids duplicating ~60 lines of series logic. Existing 33 ChartTests stayed green through the refactor (no regression).
+
+**Verified:** solution 0/0; full suite **622 → 626 (+4)** — RadarPoints math (axes/radius/clamp/empty), render-without-throwing
+(single/multi/<3-axes/zero), multi-series snapshot series-index, vertex hover+click+payload; gallery (single/series+legend/empty)
++ acceptance green; docs (charts.md RadarChart section + Choosing row + intro "six" + a11y name), overview, changelog 3.23.0,
+Directory.Build.props → 3.23.0.
+
+**Adversarial review (12 agents, 5/9 confirmed) → fixes:** (major) multi-series charts announced "No data" to screen
+readers because `UpdateAutomation` counted `Values` (empty for Series-driven charts) → now counts the `_points` snapshot and
+de-dupes labels, fixing radar AND bar/line multi-series a11y (+ test). (minor) added a multi-series radar hover test (series-1
+vertex → series-major flat index 4, SeriesIndex 1) and legend assertions. (nit) removed an unreachable `verts.Count < 3` guard
+that could have desynced the flat index. (nit) empty-state now also requires a positive value, so an explicit positive `Max`
+with all-zero data shows "No data" instead of a collapsed polygon. (nit) reworded changelog/notes — `RadarPoints` is internal,
+not a public helper. Net suite **626 → 627**; all green, docs build clean.
+
+**Next (charts roadmap):** 3.24 Scatter/Bubble (numeric X axis via XYChartBase). Then StackedArea / Heatmap.
+
+---
+
 ## 2026-06-15 — 3.22 — Charts: RadialGauge + Sparkline
 
 First charts milestone after the roadmap plan (user picked Gauge+Sparkline as the lowest-risk pair on `ChartBase`).

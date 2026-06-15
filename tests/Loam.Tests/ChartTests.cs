@@ -769,6 +769,165 @@ public class ChartTests
         new RadialGauge().ShowTooltip.ShouldBeTrue();
     }
 
+    [Fact]
+    public void Charts_radar_points_map_axes_and_radius()
+    {
+        var center = new Avalonia.Point(100, 100);
+
+        // 4 axes all at max -> on the circle at top / right / bottom / left.
+        var allMax = new[] { 10d, 10d, 10d, 10d };
+        var pts = Charts.RadarPoints(allMax, 10, center, 50);
+        pts.Count.ShouldBe(4);
+        pts[0].X.ShouldBe(100, 0.01); pts[0].Y.ShouldBe(50, 0.01);   // top   (-90°)
+        pts[1].X.ShouldBe(150, 0.01); pts[1].Y.ShouldBe(100, 0.01);  // right (0°)
+        pts[2].X.ShouldBe(100, 0.01); pts[2].Y.ShouldBe(150, 0.01);  // bottom (90°)
+        pts[3].X.ShouldBe(50, 0.01); pts[3].Y.ShouldBe(100, 0.01);   // left  (180°)
+
+        // Zero value sits at the center; values above max clamp to the outer ring.
+        var mixedValues = new[] { 0d, 20d };
+        var mixed = Charts.RadarPoints(mixedValues, 10, center, 50);
+        mixed[0].ShouldBe(center);
+        mixed[1].X.ShouldBe(100, 0.01); mixed[1].Y.ShouldBe(150, 0.01);
+
+        var three = new[] { 1d, 2d, 3d };
+        Charts.RadarPoints(System.Array.Empty<double>(), 10, center, 50).ShouldBeEmpty();
+        Charts.RadarPoints(three, 0, center, 50).ShouldBeEmpty(); // non-positive max
+    }
+
+    [AvaloniaFact]
+    public void Radar_chart_renders_without_throwing()
+    {
+        var single = new RadarChart
+        {
+            Width = 240, Height = 240,
+            Labels = ["Speed", "Power", "Range", "Cost", "Comfort"],
+            Values = [8d, 6d, 9d, 4d, 7d],
+        };
+        var multi = new RadarChart
+        {
+            Width = 240, Height = 240,
+            Labels = ["A", "B", "C", "D"],
+            Series = new[] { new ChartSeries([8d, 6d, 9d, 4d], "X"), new ChartSeries([5d, 7d, 3d, 8d], "Y") },
+        };
+        var tooFew = new RadarChart { Width = 240, Height = 240, Values = [1d, 2d] };   // < 3 axes -> no data
+        var empty = new RadarChart { Width = 240, Height = 240, Values = [0d, 0d, 0d] }; // zero -> no data
+
+        new Window
+        {
+            Width = 600,
+            Height = 700,
+            Content = new StackPanel { Children = { single, multi, tooFew, empty } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        single.Bounds.Width.ShouldBeGreaterThan(0);
+        multi.Bounds.Width.ShouldBeGreaterThan(0);
+    }
+
+    [AvaloniaFact]
+    public void Radar_chart_multi_series_snapshot_carries_series_index()
+    {
+        var radar = new RadarChart
+        {
+            Labels = ["A", "B", "C"],
+            Series = new[] { new ChartSeries([8d, 6d, 9d], "X"), new ChartSeries([5d, 7d, 3d], "Y") },
+        };
+        var window = Show(radar, ThemeVariant.Light);
+        try
+        {
+            radar.ResolvedPoints.Count.ShouldBe(6); // 2 series x 3 categories, series-major
+            radar.ResolvedPoints[0].SeriesIndex.ShouldBe(0);
+            radar.ResolvedPoints[0].Value.ShouldBe(8);
+            radar.ResolvedPoints[0].Label.ShouldBe("A");
+            radar.ResolvedPoints[3].SeriesIndex.ShouldBe(1); // series 1, category 0
+            radar.ResolvedPoints[3].Value.ShouldBe(5);
+
+            // Multi-series automation reports a real count from the snapshot, not "No data" (Values is empty here).
+            AutomationProperties.GetHelpText(radar).ShouldNotBe("No data");
+
+            // The legend derives one row per series, in order, with the series names.
+            var legend = radar.GetLegendEntries();
+            legend.Count.ShouldBe(2);
+            legend[0].Label.ShouldBe("X");
+            legend[1].Label.ShouldBe("Y");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Radar_chart_multi_series_hover_resolves_the_series_vertex()
+    {
+        // Series 0 peaks on axis 0 (top); series 1 peaks on axis 1 — so the outer vertex on axis 1 is series 1's.
+        var radar = new RadarChart
+        {
+            Width = 260,
+            Height = 260,
+            Labels = ["A", "B", "C"],
+            Series = new[] { new ChartSeries([10d, 1d, 1d], "X"), new ChartSeries([1d, 10d, 1d], "Y") },
+        };
+        var window = new Window { Width = 260, Height = 260, Content = radar };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        radar.HoverChanged += (_, e) => hovered = e;
+
+        var cx = radar.Bounds.Width / 2;
+        var cy = radar.Bounds.Height / 2;
+        var maxRadius = Math.Min(radar.Bounds.Width, radar.Bounds.Height) / 2 - 24;
+        var angle = (-90 + 1 * 360.0 / 3) * Math.PI / 180; // axis 1
+        var vertex = new Avalonia.Point(cx + maxRadius * Math.Cos(angle), cy + maxRadius * Math.Sin(angle));
+
+        window.MouseMove(vertex);
+        Dispatcher.UIThread.RunJobs();
+
+        radar.HoveredIndex.ShouldBe(4); // series-major flat index: series 1 (s=1) * 3 categories + category 1
+        hovered.ShouldNotBeNull();
+        hovered!.Point!.Value.SeriesIndex.ShouldBe(1);
+        hovered.Point.Value.Value.ShouldBe(10d);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Radar_chart_hover_and_click_hit_test_a_vertex()
+    {
+        var radar = new RadarChart { Width = 240, Height = 240, Labels = ["A", "B", "C"], Values = [10d, 5d, 5d] };
+        var window = new Window { Width = 240, Height = 240, Content = radar };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        radar.HoverChanged += (_, e) => hovered = e;
+        ChartPointEventArgs? clicked = null;
+        radar.PointClicked += (_, e) => clicked = e;
+
+        var cx = radar.Bounds.Width / 2;
+        var cy = radar.Bounds.Height / 2;
+        var maxRadius = Math.Min(radar.Bounds.Width, radar.Bounds.Height) / 2 - 24; // labels present -> 24px margin
+        var top = new Avalonia.Point(cx, cy - maxRadius); // axis 0 (top) with value == max sits on the outer ring
+
+        window.MouseMove(top);
+        Dispatcher.UIThread.RunJobs();
+        radar.HoveredIndex.ShouldBe(0);
+        hovered.ShouldNotBeNull();
+        hovered!.Point!.Value.Value.ShouldBe(10d);
+        hovered.Point.Value.Label.ShouldBe("A");
+
+        window.MouseDown(top, MouseButton.Left);
+        window.MouseUp(top, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        clicked.ShouldNotBeNull();
+        clicked!.Index.ShouldBe(0);
+
+        window.Close();
+    }
+
     private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)

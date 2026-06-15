@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.23.0
+
+**`Loam.Charts` radar chart.** A new **`RadarChart`** (spider chart) draws one axis per category radially, with
+each series as a polygon whose vertices sit at `value / max`. It introduces a shared **`MultiSeriesChartBase`**
+(extracted from `CartesianChartBase`, which now derives from it) so radar reuses the same multi-`ChartSeries`
+collection, legend, theme palette, tooltip, hover/click, and empty state as bar/line — without inheriting
+Cartesian axes. Single-series via `Values`, multi-series via `Series`; category names from `Labels`; `Max`,
+`Levels`, and `Filled` tune the scale, grid rings, and fill. Backed by an internal `Charts.RadarPoints` mapping
+helper. Needs at least three axes. Additive.
+
 ## 3.22.0
 
 **`Loam.Charts` gauge and sparkline.** Two new chart controls join `PieChart`/`BarChart`/`LineChart` on the

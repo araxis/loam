@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.22.0</Version>
-    <PackageReleaseNotes>Loam 3.22.0: Loam.Charts gains two chart controls on the shared ChartBase — RadialGauge (a single value as a filled arc with an optional center readout; Value/Minimum/Maximum, StartAngle/SweepAngle/Thickness, Format/CenterText/Caption) and Sparkline (a compact inline line/bar strip via Mode, chrome and tooltip off by default). Both inherit the theme palette, hover/click, and empty state, and expose their value to assistive technology. Adds Charts.GaugeFraction. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.23.0</Version>
+    <PackageReleaseNotes>Loam 3.23.0: Loam.Charts adds RadarChart (spider chart) — one axis per category arranged radially, each series a polygon at value/max, with Max/Levels/Filled. It introduces a shared MultiSeriesChartBase (extracted from CartesianChartBase) so radar reuses the same multi-series collection, legend, theme palette, hover/click, and empty state as bar/line. Single-series via Values, multi-series via Series; labels from Labels; needs at least three axes. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
