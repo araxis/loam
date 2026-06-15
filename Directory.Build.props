@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.21.0</Version>
-    <PackageReleaseNotes>Loam 3.21.0: Loam.Data DataGrid keyboard navigation — focused rows support Up/Down to move, Home/End to jump, Shift+Up/Down/Home/End to extend the selection (Multiple), Ctrl+A to select the rendered rows, and Esc to clear. Single mode selection follows focus; navigation stays within the current page. Cell editors and headers keep their own keys. Builds on 3.20 row selection. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.22.0</Version>
+    <PackageReleaseNotes>Loam 3.22.0: Loam.Charts gains two chart controls on the shared ChartBase — RadialGauge (a single value as a filled arc with an optional center readout; Value/Minimum/Maximum, StartAngle/SweepAngle/Thickness, Format/CenterText/Caption) and Sparkline (a compact inline line/bar strip via Mode, chrome and tooltip off by default). Both inherit the theme palette, hover/click, and empty state, and expose their value to assistive technology. Adds Charts.GaugeFraction. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

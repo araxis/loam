@@ -7,6 +7,38 @@ Next.
 
 ---
 
+## 2026-06-15 — 3.22 — Charts: RadialGauge + Sparkline
+
+First charts milestone after the roadmap plan (user picked Gauge+Sparkline as the lowest-risk pair on `ChartBase`).
+**RadialGauge** (`src/Loam.Charts/RadialGauge.cs`): a single `Value` over `Minimum`/`Maximum` drawn as a filled arc
+(`StartAngle`/`SweepAngle`/`Thickness`) on a theme grid track, with a center readout (`Format`/`CenterText`/`Caption`).
+Dedicated `Value` (not `ChartBase.Values`); overrides `BuildPoints` to emit one `ChartPoint`; sets automation help text
+in `RefreshGauge` after `RefreshData`; empty state when `Maximum<=Minimum`. **Sparkline** (`Sparkline.cs`): compact inline
+`Line`/`Bar` strip (`Mode`), chrome+tooltip off by default (`ShowTooltip=false` in ctor), reuses `Charts.LinePoints`/
+`BarHeights`; magnitude-only (non-positive→0). New pure helper `Charts.GaugeFraction(value,min,max)` (clamped 0..1).
+
+**Key discovery — hit-testability:** custom-drawn `ChartBase` controls are hit-tested by *rendered content*; the gauge's
+*stroked* arc wasn't registering pointer events (BarChart works because its bars are filled). Fix: both Render methods
+`FillRectangle(Brushes.Transparent, Bounds)` so the whole control receives hover/click. (Headless caveat: `hovered.Point`
+snapshot capture is timing-flaky, so the hover test asserts the deterministic `HoveredIndex`/`Index` only.)
+
+**Verified:** solution 0/0; full suite **616 → 621 (+5)** — GaugeFraction clamp, gauge+sparkline render-without-throwing
+(incl. empty range / empty / bar), gauge automation name+help text, gauge arc hover hit-test, sparkline tooltip-off default;
+gallery acceptance 37 green; docs (charts.md RadialGauge/Sparkline sections + Choosing table + GaugeFraction row + a11y),
+overview, changelog 3.22.0, Directory.Build.props → 3.22.0.
+
+**Adversarial review (15 agents, 6/12 confirmed, all minor/nit) → fixes:** (1) gauge HitTest used the raw `SweepAngle` while
+ArcGeometry clamps to 359.999 → clamp `_arcSweep = Math.Clamp(SweepAngle,0,359.999)` so the hit band matches the drawn arc.
+(2,4) empty-range gauge announced a numeric readout while showing "No data" → `GaugeHelpText` returns "No data" when
+`Maximum<=Minimum` (+ test). (3) hover tests didn't check the `ChartPoint` payload → gauge test now asserts `Point.Value`/`Label`
+and `PointClicked`, plus a new `Sparkline_hover_hit_tests_a_point`; the earlier "Point null" flake was a duplicate-line bug, not
+timing. (5) docs intro "three chart controls" → "five". (6) NaN `Value` surfaced "NaN" → `FormatValue` guards non-finite to
+`Minimum`. Net suite **621 → 622**; all green, docs build clean.
+
+**Next (charts roadmap):** 3.23 RadarChart; 3.24 Scatter/Bubble (numeric X axis via XYChartBase). Then StackedArea/Heatmap.
+
+---
+
 ## 2026-06-15 — 3.21 — DataGrid keyboard navigation (completes row selection)
 
 Natural follow-on to 3.20: focused rows now navigate by keyboard. Grid-level `OnKeyDown` (after the Ctrl+C block) handles

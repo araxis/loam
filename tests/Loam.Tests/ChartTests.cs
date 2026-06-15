@@ -644,6 +644,131 @@ public class ChartTests
         }
     }
 
+    [Fact]
+    public void Charts_gauge_fraction_clamps_to_range()
+    {
+        Charts.GaugeFraction(50, 0, 100).ShouldBe(0.5);
+        Charts.GaugeFraction(-10, 0, 100).ShouldBe(0);  // below min clamps to 0
+        Charts.GaugeFraction(150, 0, 100).ShouldBe(1);  // above max clamps to 1
+        Charts.GaugeFraction(15, 10, 20).ShouldBe(0.5); // offset range
+        Charts.GaugeFraction(5, 0, 0).ShouldBe(0);      // non-positive span
+    }
+
+    [AvaloniaFact]
+    public void Radial_gauge_and_sparkline_render_without_throwing()
+    {
+        var gauge = new RadialGauge { Width = 160, Height = 160, Value = 64, Maximum = 100, Caption = "CPU" };
+        var emptyGauge = new RadialGauge { Width = 160, Height = 160, Minimum = 5, Maximum = 5, Value = 5 }; // empty range
+        var line = new Sparkline { Width = 120, Height = 28, Values = [3d, 7d, 4d, 9d, 6d] };
+        var bars = new Sparkline { Width = 120, Height = 28, Mode = SparklineMode.Bar, Values = [3d, 7d, 4d, 9d, 6d] };
+        var emptySpark = new Sparkline { Width = 120, Height = 28, Values = [] };
+
+        new Window
+        {
+            Width = 400,
+            Height = 500,
+            Content = new StackPanel { Children = { gauge, emptyGauge, line, bars, emptySpark } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        gauge.Bounds.Width.ShouldBeGreaterThan(0);
+        line.Bounds.Width.ShouldBeGreaterThan(0);
+        bars.Bounds.Width.ShouldBeGreaterThan(0);
+    }
+
+    [AvaloniaFact]
+    public void Radial_gauge_exposes_automation_name_and_help_text()
+    {
+        var gauge = new RadialGauge { Width = 160, Height = 160, Value = 42, Maximum = 50, Caption = "Load" };
+        new Window { Width = 200, Height = 200, Content = gauge }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        AutomationProperties.GetName(gauge).ShouldBe("Gauge");
+        var help = AutomationProperties.GetHelpText(gauge);
+        help.ShouldNotBeNull();
+        help!.ShouldContain("Load");
+        help.ShouldContain("42");
+
+        // An empty range announces the same "No data" the visual empty state shows.
+        var empty = new RadialGauge { Width = 160, Height = 160, Minimum = 0, Maximum = 0 };
+        new Window { Width = 200, Height = 200, Content = empty }.Show();
+        Dispatcher.UIThread.RunJobs();
+        AutomationProperties.GetHelpText(empty).ShouldBe("No data");
+    }
+
+    [AvaloniaFact]
+    public void Radial_gauge_hover_and_click_hit_test_the_arc()
+    {
+        var gauge = new RadialGauge { Value = 70, Caption = "Speed" };
+        var window = new Window { Width = 200, Height = 200, Content = gauge };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        gauge.HoverChanged += (_, e) => hovered = e;
+        ChartPointEventArgs? clicked = null;
+        gauge.PointClicked += (_, e) => clicked = e;
+
+        var cx = gauge.Bounds.Width / 2;
+        var cy = gauge.Bounds.Height / 2;
+        var radius = Math.Min(gauge.Bounds.Width, gauge.Bounds.Height) / 2 - gauge.Thickness / 2 - 1;
+        var arc = new Avalonia.Point(cx - radius, cy); // left-middle — inside the 135°..405° sweep band
+
+        window.MouseMove(arc);
+        Dispatcher.UIThread.RunJobs();
+        gauge.HoveredIndex.ShouldBe(0); // the arc band hit-tests to the single datapoint
+        hovered.ShouldNotBeNull();
+        hovered!.Index.ShouldBe(0);
+        hovered.Point.ShouldNotBeNull();
+        hovered.Point!.Value.Value.ShouldBe(70d);     // BuildPoints carries Value...
+        hovered.Point.Value.Label.ShouldBe("Speed");  // ...and Caption as the point label
+
+        window.MouseDown(arc, MouseButton.Left);
+        window.MouseUp(arc, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        clicked.ShouldNotBeNull();
+        clicked!.Index.ShouldBe(0);
+
+        window.MouseMove(new Avalonia.Point(cx, cy)); // center hole — off the arc band
+        Dispatcher.UIThread.RunJobs();
+        gauge.HoveredIndex.ShouldBe(-1);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Sparkline_hover_hit_tests_a_point()
+    {
+        var spark = new Sparkline { Values = [10d, 20d, 30d] };
+        var window = new Window { Width = 200, Height = 60, Content = spark };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        spark.HoverChanged += (_, e) => hovered = e;
+
+        // Middle point (value 20 of max 30): x at the midpoint, y mapped by magnitude (matches Charts.LinePoints, pad = 2).
+        var x = spark.Bounds.Width / 2;
+        var y = 2 + (1 - 20d / 30d) * (spark.Bounds.Height - 4);
+        window.MouseMove(new Avalonia.Point(x, y));
+        Dispatcher.UIThread.RunJobs();
+
+        spark.HoveredIndex.ShouldBe(1);
+        hovered.ShouldNotBeNull();
+        hovered!.Point!.Value.Value.ShouldBe(20d);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Sparkline_disables_tooltip_by_default_unlike_other_charts()
+    {
+        new Sparkline().ShowTooltip.ShouldBeFalse();
+        new RadialGauge().ShowTooltip.ShouldBeTrue();
+    }
+
     private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)

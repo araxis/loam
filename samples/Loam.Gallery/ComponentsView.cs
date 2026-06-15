@@ -1023,6 +1023,14 @@ public sealed class ComponentsView : UserControl
             Sample("Area", BuildLineChartArea),
             Sample("Signed values", BuildLineChartSigned),
             Sample("Data labels", BuildLineChartDataLabels)),
+        PageWithSamples("Charts", "RadialGauge", "Single-value radial gauge with a center readout.",
+            Sample("KPI gauge", BuildRadialGaugeKpi),
+            Sample("Custom range and arc", BuildRadialGaugeCustom),
+            Sample("Empty state", BuildRadialGaugeEmpty)),
+        PageWithSamples("Charts", "Sparkline", "Compact inline line and bar sparklines.",
+            Sample("Line", BuildSparklineLine),
+            Sample("Bar", BuildSparklineBar),
+            Sample("KPI row", BuildSparklineRow)),
     ];
 
     private NavMenu BuildSideMenu()
@@ -8660,6 +8668,140 @@ public sealed class ComponentsView : UserControl
         };
         border.Bind(Border.BackgroundProperty, border.GetResourceObservable(LoamTokens.Palette(nameof(LoamPalette.BackgroundGray))));
         return border;
+    }
+
+    private static Paper BuildRadialGaugeKpi()
+    {
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Fill and readout follow the theme primary role.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new RadialGauge { Width = 180, Height = 160, Value = 72, Maximum = 100, CenterText = "72%", Caption = "CPU load" },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildRadialGaugeCustom()
+    {
+        var explicitColor = new[] { Color.Parse("#2E7D32") };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "A top half-circle arc over a custom 0–10 range.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new RadialGauge
+                    {
+                        Width = 200,
+                        Height = 130,
+                        Value = 8.2,
+                        Minimum = 0,
+                        Maximum = 10,
+                        StartAngle = 180,
+                        SweepAngle = 180,
+                        Thickness = 18,
+                        Format = "0.0",
+                        Caption = "Rating",
+                        Colors = explicitColor,
+                    },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildRadialGaugeEmpty()
+    {
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new RadialGauge { Width = 180, Height = 160, Minimum = 0, Maximum = 0 },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildSparklineLine()
+    {
+        var trend = new[] { 4d, 7d, 5d, 9d, 6d, 11d, 8d, 13d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "A chrome-less inline line strip.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new Sparkline { Width = 160, Height = 36, Values = trend },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildSparklineBar()
+    {
+        var weekly = new[] { 3d, 6d, 2d, 8d, 5d, 9d, 4d };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Bar mode for discrete buckets.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new Sparkline { Width = 160, Height = 36, Mode = SparklineMode.Bar, Values = weekly },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildSparklineRow()
+    {
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 12,
+                Children =
+                {
+                    new Text { Text = "Sessions", Typo = Typo.Body2 },
+                    new Sparkline { Width = 120, Height = 24, Values = [12d, 18d, 15d, 22d, 19d, 28d] },
+                    new Text { Text = "28", Typo = Typo.Subtitle2, Color = LoamColor.Primary },
+                },
+            },
+        };
     }
 
     private static Paper BuildPieChartThemedPie()

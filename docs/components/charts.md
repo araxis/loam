@@ -4,7 +4,7 @@ title: Charts & effects
 
 # Charts & effects
 
-Loam provides three custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
+Loam provides five custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`, `RadialGauge`, `Sparkline`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
 
 The charts are not wrappers around a third-party plotting engine — each one overrides `Render` and draws its slices, bars, or polyline directly with an Avalonia `DrawingContext`. That keeps them light and theme-aware, but it also means there is no XAML template to restyle: you shape a chart entirely through its C# properties. Every chart projects its data into one shared `ChartPoint` snapshot that feeds rendering, hover, tooltips, data labels, accessibility text, and the legend — so what you see, what a screen reader speaks, and what a bound `ChartLegend` shows can never drift apart.
 
@@ -37,6 +37,8 @@ same package family.
 | Diverging / signed data | Values that go above and below zero (P&L, variance, net flow) | [`BarChart`](#barchart) with `AllowNegative` |
 | Trend over a sequence | An ordered series where the *direction* matters (time, steps) | [`LineChart`](#linechart) |
 | Several series together | More than one series across the same categories | [`BarChart`](#barchart) / [`LineChart`](#linechart) with `Series` |
+| One value against a range | A KPI dial — utilization, score, progress toward a target | [`RadialGauge`](#radialgauge) |
+| Trend in a tiny space | An inline mini-chart for a table cell, list row, or KPI tile | [`Sparkline`](#sparkline) |
 | Press feedback on any control | A Material ripple when the user clicks | [`Ripple`](#ripple) |
 
 `BarChart` and `LineChart` share a `CartesianChartBase`, so axes, `Series`, `Min`/`Max`, and the
@@ -351,6 +353,79 @@ new LineChart
 
 ---
 
+## RadialGauge
+
+A single value drawn as a filled arc over a track, with an optional center readout — a KPI dial.
+`RadialGauge` subclasses `ChartBase`, so it shares the theme palette, tooltip, hover/click, and empty state.
+The fill is the resolved series color (override with `Colors`); the track uses the theme grid color.
+
+**Use it when** you have one number to show against a range (utilization, a score, progress toward a
+target). For several values, reach for [`BarChart`](#barchart); for a part-of-whole split, [`PieChart`](#piechart).
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Value` | `double` | `0` | The value to display; clamped to `[Minimum, Maximum]` for the fill. |
+| `Minimum` | `double` | `0` | The low end of the range. |
+| `Maximum` | `double` | `100` | The high end of the range. When `Maximum <= Minimum` the gauge shows the empty state. |
+| `StartAngle` | `double` | `135` | Arc start angle in degrees, clockwise from due-east (135 = lower-left). |
+| `SweepAngle` | `double` | `270` | Total arc length in degrees (270 = a bottom-open speedometer arc; use 180 for a top half-circle). |
+| `Thickness` | `double` | `14` | Ring thickness in pixels. |
+| `Format` | `string?` | `null` | .NET numeric format for the readout (e.g. `"0.0"`, `"P0"`); when null, a compact default is used. |
+| `CenterText` | `string?` | `null` | Explicit readout text; when null, `Value` formatted by `Format` is shown. |
+| `Caption` | `string?` | `null` | Optional caption drawn beneath the readout (e.g. the metric name). |
+
+`Colors`, `ShowTooltip`, `TooltipFormat`, `HoveredIndex`, `HoverChanged`, and `PointClicked` are inherited from `ChartBase`.
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+var gauge = new RadialGauge
+{
+    Width   = 180,
+    Height  = 160,
+    Value   = 72,
+    Maximum = 100,
+    CenterText = "72%",
+    Caption = "CPU load",
+};
+```
+
+---
+
+## Sparkline
+
+A compact, inline chart for tables, lists, and KPI tiles: it draws `Values` as a small line or bar strip
+with no axes or data labels, and no tooltip by default. `Sparkline` subclasses `ChartBase`, so it still
+resolves theme colors and supports hover/click when you opt in. Values are shown by magnitude (non-positive
+values read as zero) — for signed data use [`LineChart`](#linechart).
+
+**Use it when** you want a trend glance in a tight space. For a full, axis-labeled chart, use
+[`LineChart`](#linechart) or [`BarChart`](#barchart).
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Mode` | `SparklineMode` | `Line` | Draw a connected `Line` or one `Bar` per value. |
+| `ShowTooltip` | `bool` | `false` | Off by default (inherited from `ChartBase`); set `true` to enable hover tooltips. |
+
+`Values`, `Colors`, `ItemsSource`, and the hover/click members are inherited from `ChartBase`.
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+var spark = new Sparkline { Width = 160, Height = 32, Values = new[] { 4d, 7d, 5d, 9d, 6d, 11d } };
+var bars  = new Sparkline { Width = 160, Height = 32, Mode = SparklineMode.Bar, Values = new[] { 3d, 6d, 2d, 8d } };
+```
+
+---
+
 ## ChartLegend
 
 A vertical list of legend rows — a color swatch plus a caption — that pairs with the charts above. It can
@@ -394,6 +469,7 @@ Static class containing the compatibility series color palette and math helpers 
 | `Palette` | `IReadOnlyList<Color>` | Eight categorical colors retained as a compatibility fallback and for custom code. Built-in charts prefer theme roles when `Colors` is `null`. |
 | `SliceSweeps(values)` | `IReadOnlyList<double>` | Converts positive values to per-slice sweep angles in degrees summing to 360. Negative values count as zero; returns empty when the positive total is less than or equal to zero. |
 | `BarHeights(values, maxPixels)` | `IReadOnlyList<double>` | Scales positive values to pixel heights proportional to the largest value. Negative values count as zero; returns all zeros when the maximum is less than or equal to zero. |
+| `GaugeFraction(value, min, max)` | `double` | The clamped 0..1 position of `value` within `[min, max]` — the fill fraction for a [`RadialGauge`](#radialgauge). Returns 0 when the range is non-positive. |
 | `SignedDomain(values)` | `(double Min, double Max)` | The value-axis domain for signed data, always including zero (`Min ≤ 0 ≤ Max`) so positive and negative values share one scale. |
 | `ZeroBaselineOffset(min, max, plotHeight)` | `double` | The pixel offset of the zero baseline from the top of a plot for a signed `min..max` domain. |
 | `SignedBarLayout(values, min, max, plotHeight)` | `IReadOnlyList<(double Y, double Height)>` | Lays out signed bars: each `(Y, Height)` is the bar's top offset from the plot top and its pixel height, growing up from the zero baseline for positive values and down for negative. |
@@ -537,7 +613,8 @@ var card = new Card
 The charts are custom-drawn `Control`s, so they are not focusable or keyboard-operable on their own — they
 are read by assistive technology rather than navigated. Build accordingly:
 
-- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
+- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`, `"Gauge"`, `"Sparkline"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
+- **`RadialGauge` summary** — the gauge keeps a help text describing its readout and range (e.g. `"CPU load: 72% (0 to 100)"`); set `Caption` and `Format`/`CenterText` so it reads well.
 - **Spoken summary** — the chart keeps an automation *help text* in sync with its data: the count of positive values, plus the `Labels` when you provide them (e.g. `"3 values: Web, Direct, Mobile"`). Always set `Labels` so the summary is meaningful.
 - **Don't rely on color alone** — series colors come from theme roles; pair the chart with a `ChartLegend` (and consider `ShowDataLabels`) so the data is legible without distinguishing hues.
 - **Interaction is pointer-based** — `HoverChanged` and `PointClicked` fire on pointer move/press. If a datapoint must be actionable from the keyboard, mirror that action on a focusable control (a `Button`, a list row) elsewhere in the view.

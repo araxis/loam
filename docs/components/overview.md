@@ -38,7 +38,7 @@ knobs, so once you've learned one you've learned the pattern for the rest.
 | [Data display](./data-display) | `List`, `SimpleTable`, `DataGrid<T>`, `TreeView`, `Tabs`, `ExpansionPanels`, `Timeline`, `Carousel`, `Pagination`, `Stepper` |
 | [Navigation](./navigation) | `Link`, `Breadcrumbs`, `NavMenu`/`NavLink`/`NavGroup` |
 | [Overlays & feedback](./overlays) | `DialogService`, `SnackbarService`, `Overlay`, `Popover`, `Tooltip`, `Alert`, `ProgressLinear`/`ProgressCircular`, `Skeleton`, `Collapse` |
-| [Charts & effects](./charts) | `PieChart`, `BarChart`, `LineChart`, `Ripple` |
+| [Charts & effects](./charts) | `PieChart`, `BarChart`, `LineChart`, `RadialGauge`, `Sparkline`, `Ripple` |
 
 ## How to read these pages
 
