@@ -7,6 +7,41 @@ Next.
 
 ---
 
+## 2026-06-15 — 3.21 — DataGrid keyboard navigation (completes row selection)
+
+Natural follow-on to 3.20: focused rows now navigate by keyboard. Grid-level `OnKeyDown` (after the Ctrl+C block) handles
+Up/Down (move focus), Home/End (first/last rendered), Shift+Up/Down/Home/End (extend range in Multiple), Ctrl+A (select the
+rendered view in Multiple), Esc (clear). Single mode: selection follows focus. Gated on `IsRowFocused(e.Source)` — e.Source is
+a Control whose automation name starts with "Row " — so cell editors and headers keep their own keys. New state: `_focusedItem`
+(set in row GotFocus), `_renderedRows` (List<T>) + `_rowFocusTargets` (List<Border>) filled incrementally in
+`AddRowBackgroundTo` when `isFocusTarget` (single grid + LEFT frozen pane; right pane=false) so index↔row maps in VISUAL order
+across grouping/frozen/paging; both cleared atop `RebuildCore`. `MoveRowFocus`/`ExtendSelectionTo`/`SelectViewRows` pass list
+COPIES (GetRange/ToList) since SetSelection→Rebuild clears `_renderedRows`. Navigation is page-scoped and does not wrap.
+
+**Decision — focus after rebuild:** a synchronous `Focus()` on a row created by the selection-driven rebuild did NOT stick
+(tests showed IsFocused false only after a rebuild). Fix: `FocusRow` sets `_focusedItem` synchronously (so chained nav indexes
+correctly) but posts `target.Focus()` via `Dispatcher.UIThread.Post` so it lands after the new tree is attached+laid out. Required
+`using Avalonia.Threading;`.
+
+**Verified:** solution build 0/0; full suite **611 (+13)** — arrow down/up(no-focus)/home/end, plain-arrow-moves-focus-only
+(Multiple), Shift extend + shrink, Ctrl+A (Multiple) + no-op (Single), Escape clears, None moves focus only, header arrow ignored,
+End stays within page, frozen both-panes highlight. Docs: data-display.md Keyboard table + SelectionMode note; changelog 3.21.0;
+Directory.Build.props → 3.21.0. Gallery: selection sample caption + status mention arrows/Ctrl+A.
+
+**Adversarial review (20 agents, 6/17 confirmed) → fixes:** (1 major) keyboard Shift-extend collapsed cross-page selections —
+rerouted through `SelectRow(target, Shift)` (same all-pages path as Shift-click; seeds anchor on the focused row for the first
+extend), removing the page-scoped `ExtendSelectionTo`. (2 major) navigation snapped to the first value-equal row (records/structs)
+— now track `_focusedIndex` directly (captured per rendered border in GotFocus) instead of FindIndex-by-value; `FocusedRowIndex`
+is range-checked. (3 major) disabled grid was keyboard-selectable — nav block now gated on `IsEnabled`. (4 minor) `IsRowFocused`
+keyed off the "Row " name prefix (locale/custom-content fragile) — now structural via a `_rowBorders` HashSet. (5 minor) docs/
+changelog/notes said Ctrl+A selects "the current view" — corrected to "rendered rows (current page; expanded groups)". (6 minor)
+added Shift+Home and Ctrl+A→Escape tests. Net tests **611 → 616 (+5)**: index-exact nav over value-equal rows, cross-page
+Shift-extend, disabled-grid inert, Shift+Home, Ctrl+A→Escape. Suite 616 green, build 0/0.
+
+**Next:** AutomationPeers (SelectionItemPattern) / header context-menu / true virtualization for DataGrid; HSV editor; CalendarView.
+
+---
+
 ## 2026-06-14 — 3.20 — DataGrid row selection (single + multiple)
 
 Built on an existing single-select foundation (`_selectedItem`, `SelectRow`, `SelectionChanged`,

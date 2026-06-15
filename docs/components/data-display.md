@@ -164,6 +164,22 @@ A typed data grid that renders `Items` across strongly typed `DataGridColumn<T>`
 | `Filter<T>` | `(IReadOnlyList<T> items, string? text, Func<T, string, bool> predicate) → IReadOnlyList<T>` | Returns matching rows when `text` has content; otherwise returns the original rows. |
 | `Group<T>` | `(IReadOnlyList<T> items, Func<T, object?> selector) → IReadOnlyList<DataGridGroup<T>>` | Groups rows by key in first-appearance order; a `null` key forms its own group. |
 
+### Keyboard
+
+Rows are focusable. When a row has focus:
+
+| Key | Action |
+|-----|--------|
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Move focus to the previous / next rendered row. |
+| <kbd>Home</kbd> / <kbd>End</kbd> | Move focus to the first / last rendered row. |
+| <kbd>Space</kbd> / <kbd>Enter</kbd> | Select the focused row (toggles it in `Multiple`). |
+| <kbd>Shift</kbd> + <kbd>↑</kbd>/<kbd>↓</kbd>/<kbd>Home</kbd>/<kbd>End</kbd> | Extend the selection to the focused row (`Multiple`). |
+| <kbd>Ctrl</kbd> + <kbd>A</kbd> | Select every rendered row — the current page, expanded groups only (`Multiple`). |
+| <kbd>Esc</kbd> | Clear the selection. |
+| <kbd>Ctrl</kbd> + <kbd>C</kbd> / <kbd>Cmd</kbd> + <kbd>C</kbd> | Copy the selection (or the whole view) as TSV. |
+
+In `Single` mode the selection follows focus as you move; navigation stays within the current page and never wraps.
+
 ```csharp
 class Employee
 {

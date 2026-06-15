@@ -10,6 +10,7 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Loam;
 using Loam.Controls.Internal;
 using Loam.Theming;
@@ -194,6 +195,11 @@ public class DataGrid<T> : Decorator
     private DataGridSelectionMode _selectionMode = DataGridSelectionMode.Single;
     private List<T> _selection = new();
     private T? _anchorItem;
+    private T? _focusedItem;
+    private int _focusedIndex = -1;
+    private readonly List<T> _renderedRows = new();
+    private readonly List<Border> _rowFocusTargets = new();
+    private readonly HashSet<Border> _rowBorders = new();
     private bool _rebuilding;
     private bool _rebuildRequested;
     private bool _striped = true;
@@ -544,7 +550,123 @@ public class DataGrid<T> : Decorator
         {
             _ = CopyToClipboardAsync();
             e.Handled = true;
+            return;
         }
+
+        // Keyboard navigation, only while an enabled grid has a row focused (so cell editors and headers keep their
+        // own keys, and a disabled grid stays inert): Up/Down/Home/End move row focus — extending the selection with
+        // Shift in Multiple mode; in Single mode selection follows focus. Ctrl+A selects the rendered rows
+        // (Multiple); Escape clears the selection.
+        if (!e.Handled && IsEnabled && _renderedRows.Count > 0 && IsRowFocused(e.Source))
+        {
+            var extend = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+            var index = FocusedRowIndex();
+            switch (e.Key)
+            {
+                case Key.Down:
+                    MoveRowFocus(index < 0 ? 0 : index + 1, extend);
+                    e.Handled = true;
+                    break;
+                case Key.Up:
+                    MoveRowFocus(index < 0 ? _renderedRows.Count - 1 : index - 1, extend);
+                    e.Handled = true;
+                    break;
+                case Key.Home:
+                    MoveRowFocus(0, extend);
+                    e.Handled = true;
+                    break;
+                case Key.End:
+                    MoveRowFocus(_renderedRows.Count - 1, extend);
+                    e.Handled = true;
+                    break;
+                case Key.A when _selectionMode == DataGridSelectionMode.Multiple &&
+                    (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta)):
+                    SelectViewRows();
+                    e.Handled = true;
+                    break;
+                case Key.Escape when _selection.Count > 0:
+                    ClearSelectionKeepingFocus();
+                    e.Handled = true;
+                    break;
+            }
+        }
+    }
+
+    // A row is "focused" for navigation when the key event's source is one of this grid's rendered row backgrounds
+    // (either frozen pane). Structural identity — not the automation name — so custom cell content can't masquerade
+    // as a row and localized names can't break navigation.
+    private bool IsRowFocused(object? source) => source is Border border && _rowBorders.Contains(border);
+
+    // The rendered (visual) index of the focused row, tracked directly so navigation is exact even when rows are
+    // value-equal (records/structs). Returns -1 when nothing in the current render is focused.
+    private int FocusedRowIndex() => _focusedIndex >= 0 && _focusedIndex < _renderedRows.Count ? _focusedIndex : -1;
+
+    // Moves keyboard focus to the rendered row at <paramref name="targetIndex"/> (clamped, no wrap). In Single mode
+    // the selection follows focus; in Multiple mode a Shift move extends the range (via the same path as a Shift-click,
+    // so it spans pages and matches mouse selection); None mode and a plain Multiple move change focus only.
+    private void MoveRowFocus(int targetIndex, bool extend)
+    {
+        if (_renderedRows.Count == 0)
+        {
+            return;
+        }
+
+        targetIndex = Math.Clamp(targetIndex, 0, _renderedRows.Count - 1);
+        var target = _renderedRows[targetIndex];
+
+        if (_selectionMode == DataGridSelectionMode.Single)
+        {
+            SetSelection(new[] { target }, target);
+        }
+        else if (_selectionMode == DataGridSelectionMode.Multiple && extend)
+        {
+            // Seed the anchor on the focused row for the first extend, then reuse the Shift-click range logic
+            // (operates over the whole view, so it extends across pages and never collapses an off-page anchor).
+            if (_selection.Count == 0 && _focusedItem is T focused)
+            {
+                _anchorItem = focused;
+            }
+
+            SelectRow(target, KeyModifiers.Shift);
+        }
+
+        FocusRow(targetIndex);
+    }
+
+    private void SelectViewRows()
+    {
+        if (_renderedRows.Count == 0)
+        {
+            return;
+        }
+
+        var keep = FocusedRowIndex();
+        SetSelection(_renderedRows.ToList(), _renderedRows[0]);
+        FocusRow(keep < 0 ? 0 : keep);
+    }
+
+    private void ClearSelectionKeepingFocus()
+    {
+        var keep = FocusedRowIndex();
+        SetSelection(Array.Empty<T>(), default);
+        FocusRow(keep < 0 ? 0 : keep);
+    }
+
+    // Focuses the rendered row's focus-target Border (the single/left-pane background). The current row is tracked
+    // synchronously so chained navigation computes the right index immediately; the actual Focus() is posted so it
+    // lands after a selection-driven rebuild has replaced and laid out the visual tree (a synchronous Focus() on a
+    // just-attached row does not stick).
+    private void FocusRow(int index)
+    {
+        if (index < 0 || index >= _rowFocusTargets.Count)
+        {
+            return;
+        }
+
+        _focusedItem = _renderedRows[index];
+        _focusedIndex = index;
+        var target = _rowFocusTargets[index];
+        Dispatcher.UIThread.Post(() => target.Focus()); // a no-op if a later rebuild already detached this row
     }
 
     /// <inheritdoc />
@@ -657,6 +779,11 @@ public class DataGrid<T> : Decorator
 
     private void RebuildCore()
     {
+        // Rebuilt fresh below as rows are constructed; keyboard navigation reads them in rendered (visual) order.
+        _renderedRows.Clear();
+        _rowFocusTargets.Clear();
+        _rowBorders.Clear();
+
         if (Columns.Count == 0)
         {
             Child = null;
@@ -878,8 +1005,8 @@ public class DataGrid<T> : Decorator
             // Avalonia keeps those Borders (and therefore the closures) alive for the lifetime of the rebuilt tree.
             var visual = new RowVisual { Selected = IsSelected(item) };
             var striped = _striped && dataIndex % 2 == 1;
-            AddRowBackgroundTo(leftGrid, rowIndex, 0, frozen, item, dataIndex, visual, striped);
-            AddRowBackgroundTo(rightGrid, rowIndex, 0, scrollCount, item, dataIndex, visual, striped);
+            AddRowBackgroundTo(leftGrid, rowIndex, 0, frozen, item, dataIndex, visual, striped, isFocusTarget: true);
+            AddRowBackgroundTo(rightGrid, rowIndex, 0, scrollCount, item, dataIndex, visual, striped, isFocusTarget: false);
             ApplyRowBackgrounds(visual, striped);
 
             for (var c = 0; c < frozen; c++)
@@ -1279,11 +1406,11 @@ public class DataGrid<T> : Decorator
     {
         var visual = new RowVisual { Selected = IsSelected(item) };
         var striped = _striped && dataIndex % 2 == 1;
-        AddRowBackgroundTo(grid, rowIndex, 0, Columns.Count, item, dataIndex, visual, striped);
+        AddRowBackgroundTo(grid, rowIndex, 0, Columns.Count, item, dataIndex, visual, striped, isFocusTarget: true);
         ApplyRowBackgrounds(visual, striped);
     }
 
-    private void AddRowBackgroundTo(AvaGrid grid, int rowIndex, int columnStart, int columnSpan, T item, int dataIndex, RowVisual visual, bool striped)
+    private void AddRowBackgroundTo(AvaGrid grid, int rowIndex, int columnStart, int columnSpan, T item, int dataIndex, RowVisual visual, bool striped, bool isFocusTarget)
     {
         var background = new Border
         {
@@ -1301,10 +1428,23 @@ public class DataGrid<T> : Decorator
         AvaGrid.SetColumnSpan(background, columnSpan);
         grid.Children.Add(background);
         visual.Backgrounds.Add(background);
+        _rowBorders.Add(background); // every row background (both frozen panes) counts as a focusable row
+
+        // Register the per-row focus target (the single/left-pane background) in rendered order so keyboard
+        // navigation can step between rows and select the rendered view, even under grouping/frozen/paging. The
+        // row's rendered index is the same whether focus lands on the left (focus-target) or right (frozen) border.
+        var renderedIndex = isFocusTarget ? _renderedRows.Count : _renderedRows.Count - 1;
+        if (isFocusTarget)
+        {
+            _rowFocusTargets.Add(background);
+            _renderedRows.Add(item);
+        }
 
         background.GotFocus += (_, _) =>
         {
             visual.Focused = true;
+            _focusedItem = item;
+            _focusedIndex = renderedIndex;
             ApplyRowBackgrounds(visual, striped);
         };
         background.LostFocus += (_, _) =>

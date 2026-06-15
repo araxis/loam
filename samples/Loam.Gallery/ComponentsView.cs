@@ -900,7 +900,7 @@ public sealed class ComponentsView : UserControl
             Sample("Empty", BuildTableEmpty)),
         PageWithSamples("Data", "DataGrid", "Typed sortable, pageable, filterable data grid.",
             Sample("Sortable · filtered · paged", BuildDataGridPaged),
-            Sample("Row selection — click, Ctrl/Shift, Ctrl+C to copy", BuildDataGridSelection),
+            Sample("Row selection — click or arrows, Ctrl/Shift, Ctrl+A, Ctrl+C", BuildDataGridSelection),
             Sample("Live data — bound to an ObservableCollection", BuildDataGridLive),
             Sample("Async states — loading / error / ready", BuildDataGridAsyncStates),
             Sample("Footer totals", BuildDataGridFooter),
@@ -6972,7 +6972,7 @@ public sealed class ComponentsView : UserControl
         AddDessertColumns(grid);
         grid.Items = SampleDesserts();
 
-        const string Idle = "No rows selected — click a row; Ctrl-click adds, Shift-click ranges, Ctrl+C copies.";
+        const string Idle = "No rows selected — click or arrow between rows; Ctrl/Shift extend, Ctrl+A all, Ctrl+C copies.";
         var status = new TextBlock { Text = Idle, Opacity = 0.75 };
         grid.SelectionChanged += _ =>
         {
