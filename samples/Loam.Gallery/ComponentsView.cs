@@ -1035,6 +1035,13 @@ public sealed class ComponentsView : UserControl
             Sample("Single series", BuildRadarChartSingle),
             Sample("Multiple series", BuildRadarChartSeries),
             Sample("Empty state", BuildRadarChartEmpty)),
+        PageWithSamples("Charts", "ScatterChart", "Point cloud on two numeric axes.",
+            Sample("Single series", BuildScatterChartSingle),
+            Sample("Multiple series", BuildScatterChartSeries),
+            Sample("Empty state", BuildScatterChartEmpty)),
+        PageWithSamples("Charts", "BubbleChart", "Scatter with markers sized by a third value.",
+            Sample("Sized bubbles", BuildBubbleChartBasic),
+            Sample("Multiple series", BuildBubbleChartSeries)),
     ];
 
     private NavMenu BuildSideMenu()
@@ -8879,6 +8886,131 @@ public sealed class ComponentsView : UserControl
                 Children =
                 {
                     new RadarChart { Width = 260, Height = 260, Values = values },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildScatterChartSingle()
+    {
+        var points = new[]
+        {
+            new ScatterPoint(1, 2.4), new ScatterPoint(2, 3.1), new ScatterPoint(3, 2.8), new ScatterPoint(4, 4.2),
+            new ScatterPoint(5, 3.9), new ScatterPoint(6, 5.1), new ScatterPoint(7, 4.7), new ScatterPoint(8, 6.0),
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Numeric X and Y axes; markers use the theme primary role.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new ScatterChart { Width = 360, Height = 240, Points = points },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildScatterChartSeries()
+    {
+        var groupA = new[] { new ScatterPoint(1, 2), new ScatterPoint(2, 3.5), new ScatterPoint(3, 3), new ScatterPoint(4, 4.5) };
+        var groupB = new[] { new ScatterPoint(1.5, 5), new ScatterPoint(2.5, 4), new ScatterPoint(3.5, 5.5), new ScatterPoint(4.5, 4.8) };
+        var chart = new ScatterChart
+        {
+            Width = 360,
+            Height = 240,
+            Series = new[] { new ScatterSeries(groupA, "Group A"), new ScatterSeries(groupB, "Group B") },
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    chart,
+                    new ChartLegend { Source = chart },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildScatterChartEmpty()
+    {
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new ScatterChart { Width = 360, Height = 240 },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBubbleChartBasic()
+    {
+        var points = new[]
+        {
+            new ScatterPoint(2, 3, 12, "North"), new ScatterPoint(4, 6, 38, "South"),
+            new ScatterPoint(6, 4, 22, "East"), new ScatterPoint(8, 7, 55, "West"),
+            new ScatterPoint(5, 2, 8, "Central"),
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new Text { Text = "Marker area is proportional to the third value.", Typo = Typo.Caption, Color = LoamColor.Secondary },
+                    new BubbleChart { Width = 360, Height = 260, Points = points },
+                },
+            },
+        };
+    }
+
+    private static Paper BuildBubbleChartSeries()
+    {
+        var q1 = new[] { new ScatterPoint(1, 2, 10), new ScatterPoint(3, 4, 30), new ScatterPoint(5, 3, 18) };
+        var q2 = new[] { new ScatterPoint(2, 5, 22), new ScatterPoint(4, 6, 44), new ScatterPoint(6, 4, 14) };
+        var chart = new BubbleChart
+        {
+            Width = 360,
+            Height = 260,
+            Series = new[] { new ScatterSeries(q1, "Q1"), new ScatterSeries(q2, "Q2") },
+        };
+
+        return new Paper
+        {
+            Outlined = true,
+            Elevation = 0,
+            Padding = new Thickness(16),
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    chart,
+                    new ChartLegend { Source = chart },
                 },
             },
         };

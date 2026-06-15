@@ -6,6 +6,16 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.24.0
+
+**`Loam.Charts` scatter and bubble charts.** Two new controls plot `(X, Y)` data on **numeric** axes (the first
+charts with a numeric X axis, not a category index): **`ScatterChart`** draws evenly sized markers, and
+**`BubbleChart`** sizes each marker by a third value (`ScatterPoint.Size`, area-proportional). They share a new
+`XYChartBase` with nice-number X/Y domains (`XMin`/`XMax`/`YMin`/`YMax`, `AxisTickCount`, `XAxisFormat`/`YAxisFormat`,
+`ShowAxes`). Data is a `ScatterPoint(X, Y, Size, Label)` list via `Points`, or multiple `ScatterSeries` via `Series`;
+hover/click resolve the datapoint and the tooltip shows the `(x, y)` pair. `ChartPoint` gains `X`/`Size`; new public
+helpers `Charts.MapLinear`, `Charts.Extent`, and `Charts.BubbleRadius`. Additive.
+
 ## 3.23.0
 
 **`Loam.Charts` radar chart.** A new **`RadarChart`** (spider chart) draws one axis per category radially, with

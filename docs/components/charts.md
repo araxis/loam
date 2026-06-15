@@ -4,7 +4,7 @@ title: Charts & effects
 
 # Charts & effects
 
-Loam provides six custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`, `RadialGauge`, `Sparkline`, `RadarChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
+Loam provides eight custom-drawn chart controls (`PieChart`, `BarChart`, `LineChart`, `RadialGauge`, `Sparkline`, `RadarChart`, `ScatterChart`, `BubbleChart`), a static math helper (`Charts`), and a click-ripple effect (`Ripple`). Chart controls are located in `Loam.Controls`; enums and palette types live in `Loam`. Colors use `Avalonia.Media.Color`.
 
 The charts are not wrappers around a third-party plotting engine — each one overrides `Render` and draws its slices, bars, or polyline directly with an Avalonia `DrawingContext`. That keeps them light and theme-aware, but it also means there is no XAML template to restyle: you shape a chart entirely through its C# properties. Every chart projects its data into one shared `ChartPoint` snapshot that feeds rendering, hover, tooltips, data labels, accessibility text, and the legend — so what you see, what a screen reader speaks, and what a bound `ChartLegend` shows can never drift apart.
 
@@ -40,6 +40,8 @@ same package family.
 | One value against a range | A KPI dial — utilization, score, progress toward a target | [`RadialGauge`](#radialgauge) |
 | Trend in a tiny space | An inline mini-chart for a table cell, list row, or KPI tile | [`Sparkline`](#sparkline) |
 | Compare items across many axes | Profiles measured on several shared dimensions (skills, specs, scores) | [`RadarChart`](#radarchart) |
+| Correlation of two measures | Each datapoint is an (x, y) pair on two numeric axes | [`ScatterChart`](#scatterchart) |
+| Three measures at once | (x, y) plus a magnitude shown as marker size | [`BubbleChart`](#bubblechart) |
 | Press feedback on any control | A Material ripple when the user clicks | [`Ripple`](#ripple) |
 
 `BarChart` and `LineChart` share a `CartesianChartBase`, so axes, `Series`, `Min`/`Max`, and the
@@ -474,6 +476,79 @@ var compare = new RadarChart
 
 ---
 
+## ScatterChart
+
+Plots `(X, Y)` datapoints as evenly sized markers on two **numeric** axes (unlike bar/line, whose X is a
+category index). `ScatterChart` and `BubbleChart` share an `XYChartBase`. Each point is a `ScatterPoint(X, Y,
+Size, Label)`; use `Points` for one series or `Series` (a list of `ScatterSeries`) for several. Subclasses
+`ChartBase`, so it shares the snapshot, theme palette, tooltip, hover/click, and empty state.
+
+**Use it when** you're showing how two measures relate (correlation, distribution). For an ordered trend use
+[`LineChart`](#linechart); to add a third measure use [`BubbleChart`](#bubblechart).
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `Points` | `IReadOnlyList<ScatterPoint>?` | `null` | The single-series (x, y) data. |
+| `Series` | `IReadOnlyList<ScatterSeries>?` | `null` | Multiple series; takes precedence over `Points`. |
+| `MarkerSize` | `double` | `8` | Marker diameter in pixels. |
+| `ShowAxes` | `bool` | `true` | Draws numeric X and Y axes with nice-number gridlines and tick labels. |
+| `XMin` / `XMax` / `YMin` / `YMax` | `double?` | `null` | Explicit axis bounds; when null, derived from the data. |
+| `AxisTickCount` | `int` | `5` | Approximate tick intervals per axis. |
+| `XAxisFormat` / `YAxisFormat` | `Func<double, string>?` | `null` | Tick label formatters; a compact numeric default is used when null. |
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+var scatter = new ScatterChart
+{
+    Points = new[]
+    {
+        new ScatterPoint(1, 2.4), new ScatterPoint(2, 3.1), new ScatterPoint(3, 2.8), new ScatterPoint(4, 4.2),
+    },
+};
+```
+
+---
+
+## BubbleChart
+
+A scatter chart whose markers are sized by each point's `Size` — area-proportional between `MinRadius` and
+`MaxRadius` — and drawn as translucent outlined circles so overlaps stay readable. Same data shape and axes as
+[`ScatterChart`](#scatterchart); the third dimension rides on `ScatterPoint.Size`.
+
+**Use it when** you want a third quantitative dimension on a scatter plot (e.g. revenue as the bubble size).
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `MinRadius` | `double` | `4` | Radius (px) of the smallest bubble. |
+| `MaxRadius` | `double` | `22` | Radius (px) of the largest bubble. |
+
+Inherits `Points`/`Series`/`ShowAxes`/`XMin`…`YMax`/`AxisTickCount`/`XAxisFormat`/`YAxisFormat` from `XYChartBase`.
+
+### Example
+
+```csharp
+using Loam.Controls;
+
+var bubble = new BubbleChart
+{
+    Points = new[]
+    {
+        new ScatterPoint(2, 3, Size: 12, Label: "North"),
+        new ScatterPoint(4, 6, Size: 38, Label: "South"),
+        new ScatterPoint(8, 7, Size: 55, Label: "West"),
+    },
+};
+```
+
+---
+
 ## ChartLegend
 
 A vertical list of legend rows — a color swatch plus a caption — that pairs with the charts above. It can
@@ -518,6 +593,9 @@ Static class containing the compatibility series color palette and math helpers 
 | `SliceSweeps(values)` | `IReadOnlyList<double>` | Converts positive values to per-slice sweep angles in degrees summing to 360. Negative values count as zero; returns empty when the positive total is less than or equal to zero. |
 | `BarHeights(values, maxPixels)` | `IReadOnlyList<double>` | Scales positive values to pixel heights proportional to the largest value. Negative values count as zero; returns all zeros when the maximum is less than or equal to zero. |
 | `GaugeFraction(value, min, max)` | `double` | The clamped 0..1 position of `value` within `[min, max]` — the fill fraction for a [`RadialGauge`](#radialgauge). Returns 0 when the range is non-positive. |
+| `MapLinear(value, fromMin, fromMax, toMin, toMax)` | `double` | Linearly maps `value` between two ranges (used to place [`ScatterChart`](#scatterchart)/[`BubbleChart`](#bubblechart) points on their axes). Pass a descending target to invert an axis; returns the target midpoint for an empty source range. |
+| `Extent(values)` | `(double Min, double Max)` | The min/max of `values` (or `(0, 0)` when empty). |
+| `BubbleRadius(size, maxSize, minRadius, maxRadius)` | `double` | The area-proportional radius for a [`BubbleChart`](#bubblechart) marker of magnitude `size`. |
 | `SignedDomain(values)` | `(double Min, double Max)` | The value-axis domain for signed data, always including zero (`Min ≤ 0 ≤ Max`) so positive and negative values share one scale. |
 | `ZeroBaselineOffset(min, max, plotHeight)` | `double` | The pixel offset of the zero baseline from the top of a plot for a signed `min..max` domain. |
 | `SignedBarLayout(values, min, max, plotHeight)` | `IReadOnlyList<(double Y, double Height)>` | Lays out signed bars: each `(Y, Height)` is the bar's top offset from the plot top and its pixel height, growing up from the zero baseline for positive values and down for negative. |
@@ -661,9 +739,9 @@ var card = new Card
 The charts are custom-drawn `Control`s, so they are not focusable or keyboard-operable on their own — they
 are read by assistive technology rather than navigated. Build accordingly:
 
-- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`, `"Gauge"`, `"Sparkline"`, `"Radar chart"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
+- **Automation name** — each chart sets a default name (`"Pie chart"`, `"Bar chart"`, `"Line chart"`, `"Gauge"`, `"Sparkline"`, `"Radar chart"`, `"Scatter chart"`, `"Bubble chart"`). Override it with `AutomationProperties.SetName(chart, "Sessions by quarter")` so screen readers announce the chart's purpose, not just its type.
 - **`RadialGauge` summary** — the gauge keeps a help text describing its readout and range (e.g. `"CPU load: 72% (0 to 100)"`); set `Caption` and `Format`/`CenterText` so it reads well.
-- **Spoken summary** — the chart keeps an automation *help text* in sync with its data: the count of positive values, plus the `Labels` when you provide them (e.g. `"3 values: Web, Direct, Mobile"`). Always set `Labels` so the summary is meaningful.
+- **Spoken summary** — the chart keeps an automation *help text* in sync with its data. Index charts (pie/bar/line/radar) report the count of positive values plus the `Labels` when you provide them (e.g. `"3 values: Web, Direct, Mobile"`); scatter/bubble report the number of plotted points (Y can be negative) plus any `ScatterPoint` labels. `RadialGauge` reports its readout and range. Set labels so the summary is meaningful.
 - **Don't rely on color alone** — series colors come from theme roles; pair the chart with a `ChartLegend` (and consider `ShowDataLabels`) so the data is legible without distinguishing hues.
 - **Interaction is pointer-based** — `HoverChanged` and `PointClicked` fire on pointer move/press. If a datapoint must be actionable from the keyboard, mirror that action on a focusable control (a `Button`, a list row) elsewhere in the view.
 - **`Ripple`** is decoration only; it adds no semantics. Keep the real action on the `Child` control, which carries its own focus and activation.

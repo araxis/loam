@@ -928,6 +928,170 @@ public class ChartTests
         window.Close();
     }
 
+    [Fact]
+    public void Charts_map_linear_extent_and_bubble_radius()
+    {
+        Charts.MapLinear(5, 0, 10, 0, 100).ShouldBe(50);
+        Charts.MapLinear(0, 0, 10, 100, 0).ShouldBe(100); // inverted target range (axis flip)
+        Charts.MapLinear(10, 0, 10, 100, 0).ShouldBe(0);
+        Charts.MapLinear(7, 5, 5, 0, 100).ShouldBe(50);   // empty source span -> target midpoint
+
+        var values = new[] { 3d, -2d, 8d, 1d };
+        var ext = Charts.Extent(values);
+        ext.Min.ShouldBe(-2);
+        ext.Max.ShouldBe(8);
+        Charts.Extent(System.Array.Empty<double>()).ShouldBe((0d, 0d));
+
+        Charts.BubbleRadius(100, 100, 4, 24).ShouldBe(24);          // max magnitude -> max radius
+        Charts.BubbleRadius(25, 100, 4, 24).ShouldBe(4 + 0.5 * 20); // sqrt(0.25) = 0.5 -> area-proportional
+        Charts.BubbleRadius(0, 100, 4, 24).ShouldBe(4);             // zero -> min radius
+        Charts.BubbleRadius(50, 0, 4, 24).ShouldBe(4);             // non-positive maxSize -> min radius
+    }
+
+    [AvaloniaFact]
+    public void Scatter_and_bubble_render_without_throwing()
+    {
+        var pa = new[] { new ScatterPoint(1, 2), new ScatterPoint(3, 5), new ScatterPoint(6, 4) };
+        var pb = new[] { new ScatterPoint(2, 8), new ScatterPoint(5, 3) };
+        var bubbles = new[] { new ScatterPoint(1, 2, 10), new ScatterPoint(4, 6, 40), new ScatterPoint(7, 3, 5) };
+
+        var scatter = new ScatterChart { Width = 320, Height = 220, Points = pa };
+        var multi = new ScatterChart { Width = 320, Height = 220, Series = new[] { new ScatterSeries(pa, "A"), new ScatterSeries(pb, "B") } };
+        var bubble = new BubbleChart { Width = 320, Height = 240, Points = bubbles };
+        var empty = new ScatterChart { Width = 320, Height = 220 };
+
+        new Window
+        {
+            Width = 700,
+            Height = 860,
+            Content = new StackPanel { Children = { scatter, multi, bubble, empty } },
+        }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        scatter.Bounds.Width.ShouldBeGreaterThan(0);
+        multi.Bounds.Width.ShouldBeGreaterThan(0);
+        bubble.Bounds.Width.ShouldBeGreaterThan(0);
+    }
+
+    [AvaloniaFact]
+    public void Scatter_snapshot_carries_xy_size_and_series()
+    {
+        var s1 = new[] { new ScatterPoint(1, 2, 10, "p0"), new ScatterPoint(3, 5, 20) };
+        var s2 = new[] { new ScatterPoint(7, 4, 30) };
+        var chart = new BubbleChart { Series = new[] { new ScatterSeries(s1, "A"), new ScatterSeries(s2, "B") } };
+        var window = Show(chart, ThemeVariant.Light);
+        try
+        {
+            chart.ResolvedPoints.Count.ShouldBe(3); // 2 + 1, series-major
+            chart.ResolvedPoints[0].SeriesIndex.ShouldBe(0);
+            chart.ResolvedPoints[0].X.ShouldBe(1);
+            chart.ResolvedPoints[0].Value.ShouldBe(2); // Y maps to Value
+            chart.ResolvedPoints[0].Size.ShouldBe(10);
+            chart.ResolvedPoints[0].Label.ShouldBe("p0");
+            chart.ResolvedPoints[2].SeriesIndex.ShouldBe(1);
+            chart.ResolvedPoints[2].X.ShouldBe(7);
+
+            var legend = chart.GetLegendEntries();
+            legend.Count.ShouldBe(2);
+            legend[0].Label.ShouldBe("A");
+            legend[1].Label.ShouldBe("B");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public void Scatter_hover_and_click_hit_test_a_marker()
+    {
+        // Axes off + explicit 0..10 domains make the middle point (5,5) map to the exact plot center.
+        var pts = new[] { new ScatterPoint(0, 0), new ScatterPoint(5, 5, 0, "mid"), new ScatterPoint(10, 10) };
+        var chart = new ScatterChart { Width = 200, Height = 200, ShowAxes = false, XMin = 0, XMax = 10, YMin = 0, YMax = 10, Points = pts };
+        var window = new Window { Width = 200, Height = 200, Content = chart };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        chart.HoverChanged += (_, e) => hovered = e;
+        ChartPointEventArgs? clicked = null;
+        chart.PointClicked += (_, e) => clicked = e;
+
+        var center = new Avalonia.Point(chart.Bounds.Width / 2, chart.Bounds.Height / 2);
+
+        window.MouseMove(center);
+        Dispatcher.UIThread.RunJobs();
+        chart.HoveredIndex.ShouldBe(1);
+        hovered.ShouldNotBeNull();
+        hovered!.Point!.Value.X.ShouldBe(5);
+        hovered.Point.Value.Value.ShouldBe(5); // Y
+        hovered.Point.Value.Label.ShouldBe("mid");
+
+        window.MouseDown(center, MouseButton.Left);
+        window.MouseUp(center, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+        clicked.ShouldNotBeNull();
+        clicked!.Index.ShouldBe(1);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Scatter_with_negative_y_reports_point_count_not_no_data()
+    {
+        // Y can be negative for XY charts; every marker still renders, so the summary must not say "No data".
+        var pts = new[] { new ScatterPoint(1, -2), new ScatterPoint(2, -5, 0, "low") };
+        var chart = new ScatterChart { Width = 200, Height = 200, Points = pts };
+        new Window { Width = 220, Height = 220, Content = chart }.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var help = AutomationProperties.GetHelpText(chart);
+        help.ShouldNotBeNull();
+        help.ShouldNotBe("No data");
+        help!.ShouldContain("2 points");
+        help.ShouldContain("low");
+    }
+
+    [AvaloniaFact]
+    public void Bubble_multi_series_hover_resolves_size_and_radius_scales()
+    {
+        var seriesA = new[] { new ScatterPoint(5, 5, 100, "big") };  // global-max size -> ~MaxRadius
+        var seriesB = new[] { new ScatterPoint(2, 2, 25, "small") };
+        var chart = new BubbleChart
+        {
+            Width = 200,
+            Height = 200,
+            ShowAxes = false,
+            XMin = 0, XMax = 10, YMin = 0, YMax = 10,
+            MinRadius = 4, MaxRadius = 22,
+            Series = new[] { new ScatterSeries(seriesA, "A"), new ScatterSeries(seriesB, "B") },
+        };
+        var window = new Window { Width = 200, Height = 200, Content = chart };
+        Avalonia.Application.Current!.RequestedThemeVariant = ThemeVariant.Light;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ChartPointEventArgs? hovered = null;
+        chart.HoverChanged += (_, e) => hovered = e;
+
+        // The big bubble (5,5) maps to the symmetric plot center regardless of padding.
+        var center = new Avalonia.Point(chart.Bounds.Width / 2, chart.Bounds.Height / 2);
+        window.MouseMove(center);
+        Dispatcher.UIThread.RunJobs();
+        chart.HoveredIndex.ShouldBe(0); // series-major flat index: series A, point 0
+        hovered.ShouldNotBeNull();
+        hovered!.Point!.Value.Size.ShouldBe(100);
+        hovered.Point.Value.SeriesIndex.ShouldBe(0);
+
+        // 20px off-center still hits the big bubble (radius ~22), confirming Size scales the marker radius.
+        window.MouseMove(new Avalonia.Point(center.X, center.Y - 20));
+        Dispatcher.UIThread.RunJobs();
+        chart.HoveredIndex.ShouldBe(0);
+
+        window.Close();
+    }
+
     private sealed record Order(string Name, double Total);
 
     private static Window Show(Control content, ThemeVariant theme)

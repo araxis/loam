@@ -7,6 +7,38 @@ Next.
 
 ---
 
+## 2026-06-15 — 3.24 — Charts: ScatterChart + BubbleChart (numeric XY axes)
+
+Third charts roadmap item, the biggest lift: the first charts with a NUMERIC X axis (existing X was a category index).
+New **`XYChartBase : ChartBase`** (`src/Loam.Charts/XYCharts.cs`) holds (X,Y) data — `Points` (single) or `Series`
+(`ScatterSeries` list, takes precedence) — resolves nice-number X/Y domains (`XMin`/`XMax`/`YMin`/`YMax`, `AxisTickCount`,
+`XAxisFormat`/`YAxisFormat`, `ShowAxes` default true), draws both axes, and maps points via `Charts.MapLinear` (Y inverted
+via descending target). **`ScatterChart`** = fixed `MarkerSize`; **`BubbleChart`** = markers sized by `ScatterPoint.Size`
+(area-proportional via `Charts.BubbleRadius`), translucent+outlined. `BuildPoints` flattens series-major to ChartPoint with
+X/Size; Render iterates `ResolvedPoints` and records (center,radius) for a slack-based nearest-marker `HitTest` (handles bubble
+overlap). New records `ScatterPoint(X,Y,Size,Label)` / `ScatterSeries`. `ChartPoint` gained init-only `X`/`Size` (non-breaking —
+all call sites positional). New public helpers `Charts.MapLinear`, `Charts.Extent`, `Charts.BubbleRadius`.
+
+**Grounded** by an understand workflow (confirmed ChartPoint extension safety + the axis machinery to mirror).
+
+**Verified:** solution 0/0; full suite **627 → 631 (+4)** — MapLinear/Extent/BubbleRadius math, scatter+bubble render-without-
+throwing (single/multi/empty), snapshot carries X/Y/Size/SeriesIndex + legend, marker hover+click (ShowAxes off + explicit
+0..10 domains → middle point maps to exact plot center). Gallery (scatter single/series+legend/empty; bubble basic/series) +
+acceptance green; docs (charts.md Scatter/Bubble sections + Choosing rows + 3 helper rows + a11y), overview, changelog 3.24.0,
+Directory.Build.props → 3.24.0.
+
+**Adversarial review (13 agents, 7/10 confirmed) → fixes:** (major, x3 dupes) scatter/bubble announced "No data"/undercounted
+because automation counted `Value > 0` — but Y is a signed coordinate. Extracted `ChartBase.ComputeAutomationHelpText()`
+(protected virtual; default keeps the positive-magnitude logic) and overrode it in `XYChartBase` to count plotted points + list
+labels regardless of Y sign (+ negative-Y a11y test). (major/minor) bubble multi-series sizing + hover untested → added a
+multi-series bubble hover test asserting Size/SeriesIndex and that the global-max bubble keeps a large radius (hits 20px
+off-center). (nit) edge markers clipped by the fixed 8px pad → plot now insets by the largest marker radius. (minor) a11y docs
+reworded to describe the XY point-count summary. Net suite **631 → 633**; all green, docs build clean.
+
+**Next (charts roadmap):** StackedArea (LineChart area+stacked mode) or Heatmap. Then financial/hierarchical (candlestick/treemap).
+
+---
+
 ## 2026-06-15 — 3.23 — Charts: RadarChart (spider)
 
 Second charts roadmap item. **RadarChart** (`src/Loam.Charts/RadarChart.cs`): one axis per category arranged radially,
