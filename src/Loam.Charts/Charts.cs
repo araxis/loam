@@ -50,6 +50,21 @@ public static class Charts
         return values.Select(v => Math.Max(0, v) / max * availablePixels).ToList();
     }
 
+    /// <summary>
+    /// The clamped 0..1 position of <paramref name="value"/> within the range [<paramref name="min"/>,
+    /// <paramref name="max"/>] — the fill fraction for a gauge. Returns 0 when the range is non-positive.
+    /// </summary>
+    public static double GaugeFraction(double value, double min, double max)
+    {
+        var span = max - min;
+        if (span <= 0)
+        {
+            return 0;
+        }
+
+        return Math.Clamp((value - min) / span, 0, 1);
+    }
+
     internal static IReadOnlyList<Point> LinePoints(IReadOnlyList<double> values, double width, double height, double pad = 4)
     {
         ArgumentNullException.ThrowIfNull(values);

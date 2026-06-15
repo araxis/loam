@@ -6,6 +6,15 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.22.0
+
+**`Loam.Charts` gauge and sparkline.** Two new chart controls join `PieChart`/`BarChart`/`LineChart` on the
+shared `ChartBase`: **`RadialGauge`** draws a single value as a filled arc over a track with an optional
+center readout (`Value`/`Minimum`/`Maximum`, `StartAngle`/`SweepAngle`/`Thickness`, `Format`/`CenterText`/
+`Caption`), and **`Sparkline`** is a compact inline line/bar strip (`Mode`) for tables and KPI tiles, with
+chrome and tooltips off by default. Both inherit the theme palette, hover/click, and empty state, and expose
+their value to assistive technology. Adds the `Charts.GaugeFraction` helper. Additive.
+
 ## 3.21.0
 
 **`Loam.Data` DataGrid keyboard navigation.** `DataGrid<T>` rows now support full keyboard navigation when focused:
