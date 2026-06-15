@@ -694,6 +694,311 @@ public class DataDisplayTests
     }
 
     [AvaloniaFact]
+    public void DataGrid_arrow_down_moves_focus_and_selects_in_single()
+    {
+        var grid = SelectableGrid(out _, out var bob, out _);
+        Show(grid);
+
+        RowBg(grid, 1).Focus(); // Alice
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Down));
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItem.ShouldBe(bob);                          // selection follows focus in Single mode
+        RowBg(grid, 2).IsFocused.ShouldBeTrue();
+        RowBg(grid, 2).Background.ShouldNotBe(Brushes.Transparent);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_arrow_up_with_no_prior_focus_selects_last_in_single()
+    {
+        var grid = SelectableGrid(out _, out _, out var carol);
+        Show(grid);
+
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Up)); // nothing focused yet -> Up targets the last row
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItem.ShouldBe(carol);
+        RowBg(grid, 3).IsFocused.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_home_and_end_jump_to_first_and_last()
+    {
+        var grid = SelectableGrid(out var alice, out _, out var carol);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.End));
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItem.ShouldBe(carol);
+        RowBg(grid, 3).IsFocused.ShouldBeTrue();
+
+        RowBg(grid, 3).RaiseEvent(KeyArgs(Key.Home));
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItem.ShouldBe(alice);
+        RowBg(grid, 1).IsFocused.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_plain_arrow_moves_focus_without_changing_selection_in_multiple()
+    {
+        var grid = SelectableGrid(out var alice, out _, out _, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Space)); // select Alice
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBe(new[] { alice });
+
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Down)); // a plain Down moves focus only
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBe(new[] { alice });
+        RowBg(grid, 2).IsFocused.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_shift_arrow_extends_selection_in_multiple()
+    {
+        var grid = SelectableGrid(out var alice, out var bob, out var carol, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 1).Focus(); // focus Alice (no selection yet)
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Shift)); // anchor Alice -> Alice..Bob
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBe(new[] { alice, bob });
+
+        RowBg(grid, 2).RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Shift)); // extend -> Alice..Carol
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBe(new[] { alice, bob, carol });
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_shift_arrow_shrinks_when_reversing_direction()
+    {
+        var grid = SelectableGrid(out var alice, out var bob, out var carol, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.End, KeyModifiers.Shift)); // Alice..Carol
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBe(new[] { alice, bob, carol });
+
+        RowBg(grid, 3).RaiseEvent(KeyArgs(Key.Up, KeyModifiers.Shift)); // shrink to Alice..Bob
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBe(new[] { alice, bob });
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_ctrl_a_selects_all_rendered_rows_in_multiple()
+    {
+        var grid = SelectableGrid(out var alice, out var bob, out var carol, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.A, KeyModifiers.Control));
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBe(new[] { alice, bob, carol });
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_ctrl_a_does_not_select_all_in_single()
+    {
+        var grid = SelectableGrid(out var alice, out _, out _);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Space)); // Alice selected
+        Dispatcher.UIThread.RunJobs();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.A, KeyModifiers.Control)); // Ctrl+A is a no-op in Single mode
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBe(new[] { alice });
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_escape_clears_selection()
+    {
+        var grid = SelectableGrid(out _, out _, out _, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.A, KeyModifiers.Control)); // select all
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.Count.ShouldBe(3);
+
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Escape));
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_none_mode_arrows_move_focus_without_selecting()
+    {
+        var grid = SelectableGrid(out _, out _, out _, DataGridSelectionMode.None);
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Down));
+        Dispatcher.UIThread.RunJobs();
+
+        RowBg(grid, 2).IsFocused.ShouldBeTrue(); // focus moved
+        grid.SelectedItems.ShouldBeEmpty();       // but None mode never selects
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_arrow_on_header_does_not_move_row_focus()
+    {
+        var grid = SelectableGrid(out _, out _, out _);
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age));
+        Show(grid);
+
+        var ageHeader = grid.GetVisualDescendants().OfType<Border>()
+            .Single(b => AutomationProperties.GetName(b) == "Sort by Age");
+        ageHeader.Focus();
+        ageHeader.RaiseEvent(KeyArgs(Key.Down)); // a focused header is not a row -> no navigation
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_end_stays_within_the_current_page()
+    {
+        var alice = new Person("Alice", 25);
+        var bob = new Person("Bob", 30);
+        var carol = new Person("Carol", 40);
+        var grid = new DataGrid<Person> { SelectionMode = DataGridSelectionMode.Single, PageSize = 2 };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { alice, bob, carol };
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.End)); // page 1 renders Alice, Bob -> End selects Bob, not Carol
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItem.ShouldBe(bob);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_keyboard_navigation_highlights_both_frozen_panes()
+    {
+        var grid = new DataGrid<Person>
+        {
+            FrozenColumns = 1,
+            SelectionMode = DataGridSelectionMode.Single,
+            Striped = false,
+        };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name) { Width = 120 });
+        grid.Columns.Add(new DataGridColumn<Person>("Age", p => p.Age) { Width = 200 });
+        grid.Items = new List<Person> { new("Alice", 25), new("Bob", 30) };
+        Show(grid);
+
+        Border AliceLeft() => grid.GetVisualDescendants().OfType<Border>()
+            .First(b => AutomationProperties.GetName(b) == "Row 1: Alice");
+        List<Border> BobRows() => grid.GetVisualDescendants().OfType<Border>()
+            .Where(b => AutomationProperties.GetName(b) == "Row 2: Bob").ToList();
+
+        AliceLeft().Focus();
+        AliceLeft().RaiseEvent(KeyArgs(Key.Down)); // Single mode: selects Bob and focuses the frozen-pane row
+        Dispatcher.UIThread.RunJobs();
+
+        var bobs = BobRows();
+        bobs.Count.ShouldBe(2);
+        bobs.ShouldAllBe(b => b.Background != Brushes.Transparent); // both panes highlight in lock-step
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_navigation_is_index_exact_for_value_equal_rows()
+    {
+        var dupA = new Person("Dup", 1);
+        var dupB = new Person("Dup", 1); // value-equal to dupA (Person is a record)
+        var tail = new Person("Tail", 9);
+        var grid = new DataGrid<Person> { SelectionMode = DataGridSelectionMode.Single };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { new("Head", 0), dupA, dupB, tail };
+        Show(grid);
+
+        RowBg(grid, 3).Focus(); // the SECOND "Dup" row (rendered index 2)
+        RowBg(grid, 3).RaiseEvent(KeyArgs(Key.Down));
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItem.ShouldBe(tail); // index-based nav steps to row 4 (Tail), not back onto a "Dup" row
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_shift_arrow_extends_across_pages_without_wiping()
+    {
+        var a = new Person("A", 1);
+        var b = new Person("B", 2);
+        var c = new Person("C", 3);
+        var d = new Person("D", 4);
+        var grid = new DataGrid<Person> { SelectionMode = DataGridSelectionMode.Multiple, PageSize = 2 };
+        grid.Columns.Add(new DataGridColumn<Person>("Name", p => p.Name));
+        grid.Items = new List<Person> { a, b, c, d };
+        Show(grid);
+
+        RowBg(grid, 1).Focus();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Space)); // select A on page 1; anchor = A
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBe(new[] { a });
+
+        grid.Page = 2; // page 2 renders C, D; the page-1 anchor persists
+        Dispatcher.UIThread.RunJobs();
+
+        RowBg(grid, 1).Focus(); // C (first row on page 2)
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Down, KeyModifiers.Shift)); // extend toward D, anchored back at A
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBe(new[] { a, b, c, d }); // range spans both pages; the prior selection is not wiped
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_disabled_grid_ignores_keyboard_navigation()
+    {
+        var grid = SelectableGrid(out _, out _, out _, DataGridSelectionMode.Multiple);
+        grid.IsEnabled = false;
+        Show(grid);
+
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.Down));
+        Dispatcher.UIThread.RunJobs();
+        RowBg(grid, 1).RaiseEvent(KeyArgs(Key.A, KeyModifiers.Control));
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBeEmpty(); // a disabled grid is inert to navigation and select-all
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_shift_home_extends_to_first_row()
+    {
+        var grid = SelectableGrid(out var alice, out var bob, out var carol, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 3).Focus(); // Carol
+        RowBg(grid, 3).RaiseEvent(KeyArgs(Key.Home, KeyModifiers.Shift)); // extend Carol..Alice
+        Dispatcher.UIThread.RunJobs();
+
+        grid.SelectedItems.ShouldBe(new[] { alice, bob, carol });
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_ctrl_a_then_escape_clears_selection()
+    {
+        var grid = SelectableGrid(out _, out _, out _, DataGridSelectionMode.Multiple);
+        Show(grid);
+
+        RowBg(grid, 2).Focus();
+        RowBg(grid, 2).RaiseEvent(KeyArgs(Key.A, KeyModifiers.Control));
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.Count.ShouldBe(3);
+
+        RowBg(grid, 2).RaiseEvent(KeyArgs(Key.Escape)); // Escape on the still-focused row clears
+        Dispatcher.UIThread.RunJobs();
+        grid.SelectedItems.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
     public void DataGrid_loading_state_shows_skeleton_and_hides_rows()
     {
         var grid = new DataGrid<Person> { IsLoading = true };

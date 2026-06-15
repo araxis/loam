@@ -6,6 +6,15 @@ title: Changelog
 
 Notable changes per release. Dates are when the work landed on the development branch.
 
+## 3.21.0
+
+**`Loam.Data` DataGrid keyboard navigation.** `DataGrid<T>` rows now support full keyboard navigation when focused:
+**↑/↓** move row focus, **Home/End** jump to the first/last rendered row, **Shift**+↑/↓/Home/End extend the selection
+to the focused row in `Multiple` mode, **Ctrl+A** selects the rendered rows (current page), and **Esc** clears the selection. In
+`Single` mode the selection follows focus; navigation stays within the current page and does not wrap. Cell editors
+and column headers keep their own keys (navigation only engages while a row is focused). Builds on 3.20 row selection.
+Additive.
+
 ## 3.20.0
 
 **`Loam.Data` DataGrid row selection.** `DataGrid<T>` gains opt-in `SelectionMode` (`None` / `Single` /
