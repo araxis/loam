@@ -90,6 +90,61 @@ public static class Charts
         return result;
     }
 
+    /// <summary>
+    /// Linearly maps <paramref name="value"/> from the source range [<paramref name="fromMin"/>,
+    /// <paramref name="fromMax"/>] to the target range [<paramref name="toMin"/>, <paramref name="toMax"/>].
+    /// Returns the target midpoint when the source range is empty. Pass a descending target (e.g. bottom→top)
+    /// to invert an axis.
+    /// </summary>
+    public static double MapLinear(double value, double fromMin, double fromMax, double toMin, double toMax)
+    {
+        var span = fromMax - fromMin;
+        return span == 0 ? (toMin + toMax) / 2 : toMin + (value - fromMin) / span * (toMax - toMin);
+    }
+
+    /// <summary>The (min, max) extent of <paramref name="values"/>, or (0, 0) when empty.</summary>
+    public static (double Min, double Max) Extent(IReadOnlyList<double> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        if (values.Count == 0)
+        {
+            return (0, 0);
+        }
+
+        var min = double.PositiveInfinity;
+        var max = double.NegativeInfinity;
+        foreach (var value in values)
+        {
+            if (value < min)
+            {
+                min = value;
+            }
+
+            if (value > max)
+            {
+                max = value;
+            }
+        }
+
+        return (min, max);
+    }
+
+    /// <summary>
+    /// The radius for a bubble of magnitude <paramref name="size"/>, scaled so bubble <em>area</em> is proportional
+    /// to size (the perceptually correct mapping): <c>minRadius + sqrt(size/maxSize) * (maxRadius - minRadius)</c>.
+    /// Returns <paramref name="minRadius"/> when <paramref name="maxSize"/> is non-positive or the radius range is empty.
+    /// </summary>
+    public static double BubbleRadius(double size, double maxSize, double minRadius, double maxRadius)
+    {
+        if (maxSize <= 0 || maxRadius <= minRadius)
+        {
+            return minRadius;
+        }
+
+        var fraction = Math.Sqrt(Math.Clamp(size, 0, maxSize) / maxSize);
+        return minRadius + fraction * (maxRadius - minRadius);
+    }
+
     internal static IReadOnlyList<Point> LinePoints(IReadOnlyList<double> values, double width, double height, double pad = 4)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -290,6 +345,12 @@ public readonly record struct ChartPoint(int Index, double Value, double Percent
 {
     /// <summary>The series this point belongs to (0 for single-series charts).</summary>
     public int SeriesIndex { get; init; }
+
+    /// <summary>The X coordinate for XY charts (scatter/bubble); 0 for index-based charts. <see cref="Value"/> is the Y.</summary>
+    public double X { get; init; }
+
+    /// <summary>The bubble magnitude for a <see cref="BubbleChart"/>; 0 otherwise.</summary>
+    public double Size { get; init; }
 }
 
 /// <summary>One named, optionally colored data series for a multi-series chart.</summary>
@@ -854,31 +915,38 @@ public abstract class ChartBase : Control
             AutomationProperties.SetName(this, ChartAutomationName);
         }
 
+        AutomationProperties.SetHelpText(this, ComputeAutomationHelpText());
+    }
+
+    /// <summary>
+    /// Builds the spoken accessibility summary from the current snapshot. The default counts positive
+    /// <em>magnitudes</em> (a non-positive value means an unrendered bar/slice). Charts whose value is a
+    /// coordinate rather than a magnitude (e.g. an XY scatter Y) override this to count plotted points instead.
+    /// </summary>
+    protected virtual string ComputeAutomationHelpText()
+    {
         // Count from the snapshot, not Values, so multi-series charts (driven by Series, with Values empty) still report.
         var positiveCount = _points.Count(point => point.Value > 0);
-        string helpText;
         if (positiveCount == 0)
         {
-            helpText = "No data";
+            return "No data";
         }
-        else
+
+        var helpText = $"{positiveCount} value{(positiveCount == 1 ? string.Empty : "s")}";
+        if (_labels is { Count: > 0 })
         {
-            helpText = $"{positiveCount} value{(positiveCount == 1 ? string.Empty : "s")}";
-            if (_labels is { Count: > 0 })
+            var labelled = string.Join(
+                ", ",
+                _points.Where(point => point.Value > 0 && !string.IsNullOrEmpty(point.Label))
+                    .Select(point => point.Label)
+                    .Distinct()); // distinct so multi-series doesn't repeat each category label per series
+            if (!string.IsNullOrEmpty(labelled))
             {
-                var labelled = string.Join(
-                    ", ",
-                    _points.Where(point => point.Value > 0 && !string.IsNullOrEmpty(point.Label))
-                        .Select(point => point.Label)
-                        .Distinct()); // distinct so multi-series doesn't repeat each category label per series
-                if (!string.IsNullOrEmpty(labelled))
-                {
-                    helpText = $"{helpText}: {labelled}";
-                }
+                helpText = $"{helpText}: {labelled}";
             }
         }
 
-        AutomationProperties.SetHelpText(this, helpText);
+        return helpText;
     }
 
     private Color ColorToken(string token, Color fallback)

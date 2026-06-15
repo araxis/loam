@@ -21,8 +21,8 @@
        The four packages (Loam, Loam.Charts, Loam.Pickers, Loam.Data) version in lockstep.
        CI overrides the published version from the git tag via /p:PackageVersion. -->
   <PropertyGroup>
-    <Version>3.23.0</Version>
-    <PackageReleaseNotes>Loam 3.23.0: Loam.Charts adds RadarChart (spider chart) — one axis per category arranged radially, each series a polygon at value/max, with Max/Levels/Filled. It introduces a shared MultiSeriesChartBase (extracted from CartesianChartBase) so radar reuses the same multi-series collection, legend, theme palette, hover/click, and empty state as bar/line. Single-series via Values, multi-series via Series; labels from Labels; needs at least three axes. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
+    <Version>3.24.0</Version>
+    <PackageReleaseNotes>Loam 3.24.0: Loam.Charts adds ScatterChart and BubbleChart — the first charts on numeric X and Y axes (a new XYChartBase with nice-number domains, XMin/XMax/YMin/YMax, AxisTickCount, axis formatters). Data is a ScatterPoint(X, Y, Size, Label) list via Points or multiple ScatterSeries via Series; scatter draws even markers, bubble sizes markers by Size (area-proportional). Hover/click resolve the datapoint; tooltips show (x, y). ChartPoint gains X/Size; adds public helpers Charts.MapLinear, Charts.Extent, Charts.BubbleRadius. Additive. See https://araxis.github.io/loam/guide/changelog</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>loam-icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
